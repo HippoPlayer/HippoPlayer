@@ -1,5 +1,8 @@
 Build {
 	Units = "units.lua",
+
+	SyntaxExtensions = { "tundra.syntax.glob" },
+
 	Configs = {
 		{
 			Name = "macosx-gcc",
