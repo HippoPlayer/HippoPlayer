@@ -1,0 +1,171 @@
+# Makefile template for use under win32
+#
+# libmikmod subdirectory
+
+# Make utilities that can't be used :
+#   - Borland Make (complains that some command lines are too long)
+
+# Compilers that can't be used :
+#   - Borland C++ 4 (doesn't like DirectX header files)
+#   - LCC-win32 (preprocessor is *awfully broken*)
+
+# Your compiler here
+CC=gcc
+
+# Compiler flags
+CFLAGS=-O2 -mthreads -g -DWIN32 -DDRV_DS -DDRV_WIN -DHAVE_FCNTL_H -DHAVE_MALLOC_H -DHAVE_LIMITS_H
+
+COMPILE=$(CC) -c $(CFLAGS) -I../include -I.. -I../win32
+RANLIB=ranlib
+
+.SUFFIXES:
+.SUFFIXES: .o .c
+
+LIBNAME=libmikmod.a
+
+LIBS=$(LIBNAME)
+
+DRIVER_OBJ=drv_ds.o drv_win.o
+
+OBJ=$(DRIVER_OBJ) \
+    drv_nos.o drv_raw.o drv_stdout.o drv_wav.o \
+    load_669.o load_amf.o load_asy.o load_dsm.o load_far.o load_gdm.o load_it.o  \
+    load_imf.o load_m15.o load_med.o load_mod.o load_mtm.o load_okt.o \
+    load_s3m.o load_stm.o load_stx.o load_ult.o load_uni.o load_xm.o \
+    mmalloc.o mmerror.o mmio.o \
+    mdriver.o mdreg.o mloader.o mlreg.o mlutil.o mplayer.o munitrk.o mwav.o \
+    npertab.o sloader.o virtch.o virtch2.o virtch_common.o
+
+all:            $(LIBS)
+
+clean:
+	del $(LIBNAME) $(DLLNAME) *.o
+
+$(LIBNAME):     $(OBJ)
+	ar rc $@ $(OBJ)
+	$(RANLIB) $@
+
+
+drv_ds.o:       ../drivers/drv_ds.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../drivers/drv_ds.c -o drv_ds.o
+drv_nos.o:      ../drivers/drv_nos.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../drivers/drv_nos.c -o drv_nos.o
+drv_raw.o:      ../drivers/drv_raw.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../drivers/drv_raw.c -o drv_raw.o
+drv_stdout.o:   ../drivers/drv_stdout.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../drivers/drv_stdout.c -o drv_stdout.o
+drv_wav.o:      ../drivers/drv_wav.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../drivers/drv_wav.c -o drv_wav.o
+drv_win.o:       ../drivers/drv_win.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../drivers/drv_win.c -o drv_win.o
+load_669.o:     ../loaders/load_669.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../loaders/load_669.c -o load_669.o
+load_amf.o:     ../loaders/load_amf.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../loaders/load_amf.c -o load_amf.o
+load_asy.o:     ../loaders/load_asy.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../loaders/load_asy.c -o load_asy.o
+load_dsm.o:     ../loaders/load_dsm.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../loaders/load_dsm.c -o load_dsm.o
+load_far.o:     ../loaders/load_far.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../loaders/load_far.c -o load_far.o
+load_gdm.o:     ../loaders/load_gdm.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../loaders/load_gdm.c -o load_gdm.o
+load_it.o:      ../loaders/load_it.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../loaders/load_it.c -o load_it.o
+load_imf.o:     ../loaders/load_imf.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../loaders/load_imf.c -o load_imf.o
+load_m15.o:     ../loaders/load_m15.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../loaders/load_m15.c -o load_m15.o
+load_med.o:     ../loaders/load_med.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../loaders/load_med.c -o load_med.o
+load_mod.o:     ../loaders/load_mod.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../loaders/load_mod.c -o load_mod.o
+load_mtm.o:     ../loaders/load_mtm.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../loaders/load_mtm.c -o load_mtm.o
+load_okt.o:     ../loaders/load_okt.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../loaders/load_okt.c -o load_okt.o
+load_s3m.o:     ../loaders/load_s3m.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../loaders/load_s3m.c -o load_s3m.o
+load_stm.o:     ../loaders/load_stm.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../loaders/load_stm.c -o load_stm.o
+load_stx.o:     ../loaders/load_stx.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../loaders/load_stx.c -o load_stx.o
+load_ult.o:     ../loaders/load_ult.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../loaders/load_ult.c -o load_ult.o
+load_uni.o:     ../loaders/load_uni.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../loaders/load_uni.c -o load_uni.o
+load_xm.o:      ../loaders/load_xm.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../loaders/load_xm.c -o load_xm.o
+mmalloc.o:      ../mmio/mmalloc.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../mmio/mmalloc.c -o mmalloc.o
+mmerror.o:      ../mmio/mmerror.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../mmio/mmerror.c -o mmerror.o
+mmio.o:         ../mmio/mmio.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../mmio/mmio.c -o mmio.o
+mdriver.o:      ../playercode/mdriver.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../playercode/mdriver.c -o mdriver.o
+mdreg.o:        ../playercode/mdreg.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../playercode/mdreg.c -o mdreg.o
+mloader.o:      ../playercode/mloader.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../playercode/mloader.c -o mloader.o
+mlreg.o:        ../playercode/mlreg.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../playercode/mlreg.c -o mlreg.o
+mlutil.o:       ../playercode/mlutil.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../playercode/mlutil.c -o mlutil.o
+mplayer.o:      ../playercode/mplayer.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../playercode/mplayer.c -o mplayer.o
+munitrk.o:      ../playercode/munitrk.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../playercode/munitrk.c -o munitrk.o
+mwav.o:         ../playercode/mwav.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../playercode/mwav.c -o mwav.o
+npertab.o:      ../playercode/npertab.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../playercode/npertab.c -o npertab.o
+sloader.o:      ../playercode/sloader.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../playercode/sloader.c -o sloader.o
+virtch.o:       ../playercode/virtch.c ../playercode/virtch_common.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../playercode/virtch.c -o virtch.o
+virtch2.o:      ../playercode/virtch2.c ../playercode/virtch_common.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../playercode/virtch2.c -o virtch2.o
+virtch_common.o:        ../playercode/virtch_common.c \
+	                ../win32/mikmod_build.h ../include/mikmod_internals.h
+	$(COMPILE) ../playercode/virtch_common.c -o virtch_common.o

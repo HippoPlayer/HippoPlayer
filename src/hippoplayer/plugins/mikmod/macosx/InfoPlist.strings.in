@@ -1,0 +1,6 @@
+/* Localized versions of Info.plist keys */
+
+CFBundleName = "libmikmod";
+CFBundleShortVersionString = "libmikmod version @LIBMIKMOD_VERSION@";
+CFBundleGetInfoString = "libmikmod version @LIBMIKMOD_VERSION@";
+NSHumanReadableCopyright = "Copyright 1998, 1999, 2000 Miodrag Vallat and others.";
