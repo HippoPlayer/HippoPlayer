@@ -9,6 +9,9 @@ StaticLibrary {
 
 	Env = {
 		CPPPATH = { "thirdparty/SDL-1.3.0-5605/include" },
+		CCOPTS = {
+			{ "/MD"; Config = "*-msvc-debug" },
+		}
 	},
 	
 	Sources = {
@@ -25,6 +28,22 @@ StaticLibrary {
 
 Program {
 	Name = "player",
+
+	Env = {
+		CPPPATH = { "thirdparty/SDL-1.3.0-5605/include" },
+		CCOPTS = {
+			{ "/MD"; Config = "*-msvc-debug" },
+		},
+
+		PROGOPTS = {
+			{ "/SUBSYSTEM:WINDOWS"; Config = { "win32-*-*", "win64-*-*" } },
+		},
+	},
+
+	Libs = { 
+		{ "user32.lib", "imm32.lib", "gdi32.lib", "ole32.lib", "version.lib", "shell32.lib", "Winmm.lib"; Config = "win*-*-*" }, 
+	},
+
 	Sources = { "hippoplayer/player/main.c" },
 	Depends = { "zlib", "sdl" },
 }
