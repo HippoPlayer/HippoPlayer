@@ -29,6 +29,8 @@
  *
  *  SDL_config.h for any platform that doesn't build using the configure system.
  */
+
+#define SDL_JOYSTICK_DISABLED
  
 /* Add any platform that doesn't build using the configure system. */
 #if defined(__WIN32__)
