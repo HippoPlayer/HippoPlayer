@@ -8,17 +8,16 @@ StaticLibrary {
 	Name = "sdl",
 
 	Env = {
-		CPPPATH = { "thirdparty/sdl-1.2.14/include" },
+		CPPPATH = { "thirdparty/SDL-1.3.0-5605/include" },
 	},
 	
 	Sources = {
 		FGlob {
-			Dir = "thirdparty/sdl-1.2.14",
+			Dir = "thirdparty/SDL-1.3.0-5605",
 			Extensions = { ".c" },
 			Filters = {
-				{ Pattern = "win32"; Config = "win32-*-*" },
+				{ Pattern = "windows"; Config = "win32-*-*" },
 				{ Pattern = "macosx"; Config = "macosx-*-*" },
-				{ Pattern = "bsd"; Config = "bsd-*-*" },
 			}
 		}
 	}
