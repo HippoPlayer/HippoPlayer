@@ -543,9 +543,9 @@ promoteLocalToGlobal(struct dlstatus *dls)
 {
     static int (*p) (NSModule module) = 0;
     debug("promoting");
-    if (!p)
-        _dyld_func_lookup("__dyld_NSMakePrivateModulePublic", (void **) &p);
-    return (dls->module == MAGIC_DYLIB_MOD) || (p && p(dls->module));
+    //if (!p)
+    //    _dyld_func_lookup("__dyld_NSMakePrivateModulePublic", (void **) &p);
+    return -1; //(dls->module == MAGIC_DYLIB_MOD) || (p && p(dls->module));
 }
 
 static void *
@@ -876,7 +876,7 @@ dlcompat_init_check(void)
 
     pthread_mutex_lock(&l);
     if (!init_done) {
-        dlcompat_init_func();
+        //dlcompat_init_func();
         init_done = 1;
     }
     pthread_mutex_unlock(&l);
