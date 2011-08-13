@@ -19,6 +19,7 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 #include "SDL_config.h"
+#include <math.h>
 
 #ifdef _WIN32_WCE
 #define SDL_DISABLE_WINDOWS_IME
@@ -981,7 +982,7 @@ UILess_GetCandidateList(SDL_VideoData *videodata, ITfCandidateListUIElement *pca
         if (SUCCEEDED(pcandlist->lpVtbl->GetString(pcandlist, i, &bstr))) {
             if (bstr) {
                 IME_AddCandidate(videodata, j, bstr);
-                SysFreeString(bstr);
+                //SysFreeString(bstr);
             }
         }
     }
@@ -1049,7 +1050,7 @@ STDMETHODIMP UIElementSink_BeginUIElement(TSFSink *sink, DWORD dwUIElementId, BO
         BSTR bstr;
         if (SUCCEEDED(preading->lpVtbl->GetString(preading, &bstr)) && bstr) {
             WCHAR *s = (WCHAR *)bstr;
-            SysFreeString(bstr);
+            //SysFreeString(bstr);
         }
         preading->lpVtbl->Release(preading);
     }
@@ -1076,7 +1077,7 @@ STDMETHODIMP UIElementSink_UpdateUIElement(TSFSink *sink, DWORD dwUIElementId)
             WCHAR *s = (WCHAR *)bstr;
             SDL_wcslcpy(videodata->ime_readingstring, s, sizeof(videodata->ime_readingstring));
             IME_SendEditingEvent(videodata);
-            SysFreeString(bstr);
+            //SysFreeString(bstr);
         }
         preading->lpVtbl->Release(preading);
     }
@@ -1278,7 +1279,7 @@ static void
 DrawRect(HDC hdc, int left, int top, int right, int bottom, int pensize)
 {
     /* The case of no pen (PenSize = 0) is automatically taken care of. */
-    const int penadjust = (int)SDL_floor(pensize / 2.0f - 0.5f);
+    const int penadjust = (int)floor(pensize / 2.0f - 0.5f);
     left += pensize / 2;
     top += pensize / 2;
     right -= penadjust;

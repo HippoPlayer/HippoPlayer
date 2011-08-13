@@ -26,7 +26,6 @@
 #include "SDL_syswm.h"
 #include "SDL_vkeys.h"
 #include "../../events/SDL_events_c.h"
-#include "../../events/SDL_touch_c.h"
 
 
 
@@ -534,70 +533,6 @@ WIN_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         }
         returnCode = 0;
         break;
-
-	case WM_TOUCH:
-		{
-			UINT i, num_inputs = LOWORD(wParam);
-			PTOUCHINPUT inputs = SDL_stack_alloc(TOUCHINPUT, num_inputs);
-			if (data->videodata->GetTouchInputInfo((HTOUCHINPUT)lParam, num_inputs, inputs, sizeof(TOUCHINPUT))) {
-				RECT rect;
-				float x, y;
-
-				if (!GetClientRect(hwnd, &rect) ||
-				    (rect.right == rect.left && rect.bottom == rect.top)) {
-					break;
-				}
-				ClientToScreen(hwnd, (LPPOINT) & rect);
-				ClientToScreen(hwnd, (LPPOINT) & rect + 1);
-				rect.top *= 100;
-				rect.left *= 100;
-				rect.bottom *= 100;
-				rect.right *= 100;
-
-				for (i = 0; i < num_inputs; ++i) {
-					PTOUCHINPUT input = &inputs[i];
-
-					SDL_TouchID touchId = (SDL_TouchID)input->hSource;
-					if (!SDL_GetTouch(touchId)) {
-						SDL_Touch touch;
-
-						touch.id = touchId;
-						touch.x_min = 0;
-						touch.x_max = 1;
-						touch.native_xres = touch.x_max - touch.x_min;
-						touch.y_min = 0;
-						touch.y_max = 1;
-						touch.native_yres = touch.y_max - touch.y_min;
-						touch.pressure_min = 0;
-						touch.pressure_max = 1;
-						touch.native_pressureres = touch.pressure_max - touch.pressure_min;
-
-						if (SDL_AddTouch(&touch, "") < 0) {
-							continue;
-						}
-					}
-
-					// Get the normalized coordinates for the window
-					x = (float)(input->x - rect.left)/(rect.right - rect.left);
-					y = (float)(input->y - rect.top)/(rect.bottom - rect.top);
-
-					if (input->dwFlags & TOUCHEVENTF_DOWN) {
-						SDL_SendFingerDown(touchId, input->dwID, SDL_TRUE, x, y, 1);
-					}
-					if (input->dwFlags & TOUCHEVENTF_MOVE) {
-						SDL_SendTouchMotion(touchId, input->dwID, SDL_FALSE, x, y, 1);
-					}
-					if (input->dwFlags & TOUCHEVENTF_UP) {
-						SDL_SendFingerDown(touchId, input->dwID, SDL_FALSE, x, y, 1);
-					}
-				}
-			}
-			SDL_stack_free(inputs);
-
-			data->videodata->CloseTouchInputHandle((HTOUCHINPUT)lParam);
-			return 0;
-		}
-		break;
 	}
 
     /* If there's a window proc, assume it's going to handle messages */
