@@ -420,7 +420,6 @@ SDL_VideoInit(const char *driver_name)
     if (SDL_StartEventLoop() < 0 ||
         SDL_KeyboardInit() < 0 ||
         SDL_MouseInit() < 0 ||
-        SDL_TouchInit() < 0 ||
         SDL_QuitInit() < 0) {
         return -1;
     }

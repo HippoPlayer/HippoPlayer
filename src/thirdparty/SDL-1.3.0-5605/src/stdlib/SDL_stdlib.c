@@ -31,7 +31,7 @@
 
 #ifndef __FLTUSED__
 #define __FLTUSED__
-__declspec(selectany) int _fltused = 1;
+//__declspec(selectany) int _fltused = 1;
 #endif
 
 /* The optimizer on Visual Studio 2010 generates memcpy() calls */

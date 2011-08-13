@@ -19,6 +19,7 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 #include "SDL_config.h"
+#include <math.h>
 
 /* General (mostly internal) pixel/color manipulation routines for SDL */
 
@@ -1063,7 +1064,7 @@ SDL_CalculateGammaRamp(float gamma, Uint16 * ramp)
         gamma = 1.0f / gamma;
         for (i = 0; i < 256; ++i) {
             value =
-                (int) (SDL_pow((double) i / 256.0, gamma) * 65535.0 + 0.5);
+                (int) (pow((double) i / 256.0, gamma) * 65535.0 + 0.5);
             if (value > 65535) {
                 value = 65535;
             }
