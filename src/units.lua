@@ -8,6 +8,7 @@ Program {
 	Name = "player",
 
 	Env = {
+		CPPPATH = { "hippoplayer/player" },
 		CCOPTS = {
 			{ "/MD"; Config = "*-msvc-debug" },
 		},
