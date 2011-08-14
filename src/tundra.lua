@@ -7,7 +7,7 @@ Build {
 		{
 			Name = "macosx-gcc",
 			DefaultOnHost = "macosx",
-			Tools = { "gcc" },
+			Tools = { "clang-osx" },
 		},
 		{
 			Name = "win32-msvc",
