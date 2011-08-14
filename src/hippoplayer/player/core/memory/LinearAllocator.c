@@ -1,6 +1,6 @@
 #include "LinearAllocator.h"
+#include "core/debug/Assert.h"
 #include <string.h>
-#include <core/debug/Assert.h>
 #include <stdlib.h>
 
 static LinearAllocator g_scratchPad;
