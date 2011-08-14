@@ -25,7 +25,6 @@
 #include "../SDL_sysvideo.h"
 #include "../../events/SDL_keyboard_c.h"
 #include "../../events/SDL_mouse_c.h"
-#include "../../events/SDL_touch_c.h"
 #include "../../events/SDL_windowevents_c.h"
 #include "SDL_cocoavideo.h"
 #include "SDL_cocoashape.h"
@@ -358,6 +357,8 @@ static __inline__ void ConvertNSRect(NSRect *r)
     Cocoa_HandleMouseWheel(_data->window, theEvent);
 }
 
+/*
+
 - (void)touchesBeganWithEvent:(NSEvent *) theEvent
 {
     [self handleTouches:COCOA_TOUCH_DOWN withEvent:theEvent];
@@ -424,7 +425,7 @@ static __inline__ void ConvertNSRect(NSRect *r)
         SDL_FingerID fingerId = (SDL_FingerID)[touch identity];
         float x = [touch normalizedPosition].x;
         float y = [touch normalizedPosition].y;
-        /* Make the origin the upper left instead of the lower left */
+        // Make the origin the upper left instead of the lower left
         y = 1.0f - y;
 
         switch (type) {
@@ -442,8 +443,9 @@ static __inline__ void ConvertNSRect(NSRect *r)
         
         touch = (NSTouch*)[enumerator nextObject];
     }
-#endif /* MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6 */
+#endif
 }
+*/
 
 @end
 

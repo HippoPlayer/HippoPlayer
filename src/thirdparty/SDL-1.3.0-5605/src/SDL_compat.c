@@ -519,12 +519,15 @@ SDL_SetVideoMode(int width, int height, int bpp, Uint32 flags)
         SDL_SetEventFilter(SDL_CompatEventFilter, NULL);
     }
 
+    printf("yah\n");
+
     /* Create a new window */
     window_flags = SDL_WINDOW_SHOWN;
     if (flags & SDL_FULLSCREEN) {
         window_flags |= SDL_WINDOW_FULLSCREEN;
     }
     if (flags & SDL_OPENGL) {
+        printf("has opengl flag\n");
         window_flags |= SDL_WINDOW_OPENGL;
     }
     if (flags & SDL_RESIZABLE) {
@@ -550,6 +553,7 @@ SDL_SetVideoMode(int width, int height, int bpp, Uint32 flags)
         surface_flags |= SDL_FULLSCREEN;
     }
     if ((window_flags & SDL_WINDOW_OPENGL) && (flags & SDL_OPENGL)) {
+        printf("has opengl flag\n");
         surface_flags |= SDL_OPENGL;
     }
     if (window_flags & SDL_WINDOW_RESIZABLE) {
@@ -580,11 +584,15 @@ SDL_SetVideoMode(int width, int height, int bpp, Uint32 flags)
         return SDL_PublicSurface;
     }
 
+    printf("%d\n", __LINE__);
+
     /* Create the screen surface */
     SDL_WindowSurface = SDL_GetWindowSurface(SDL_VideoWindow);
     if (!SDL_WindowSurface) {
         return NULL;
     }
+
+    printf("%d\n", __LINE__);
 
     /* Center the public surface in the window surface */
     SDL_GetWindowSize(SDL_VideoWindow, &window_w, &window_h);
@@ -592,6 +600,8 @@ SDL_SetVideoMode(int width, int height, int bpp, Uint32 flags)
     SDL_VideoViewport.y = (window_h - height)/2;
     SDL_VideoViewport.w = width;
     SDL_VideoViewport.h = height;
+
+    printf("%d\n", __LINE__);
 
     SDL_VideoSurface = SDL_CreateRGBSurfaceFrom(NULL, 0, 0, 32, 0, 0, 0, 0, 0);
     SDL_VideoSurface->flags |= surface_flags;
@@ -606,6 +616,8 @@ SDL_SetVideoMode(int width, int height, int bpp, Uint32 flags)
         SDL_VideoViewport.y * SDL_VideoSurface->pitch +
         SDL_VideoViewport.x  * SDL_VideoSurface->format->BytesPerPixel);
     SDL_SetClipRect(SDL_VideoSurface, NULL);
+
+    printf("%d\n", __LINE__);
 
     /* Create a shadow surface if necessary */
     if ((bpp != SDL_VideoSurface->format->BitsPerPixel)
@@ -629,6 +641,8 @@ SDL_SetVideoMode(int width, int height, int bpp, Uint32 flags)
     }
     SDL_PublicSurface =
         (SDL_ShadowSurface ? SDL_ShadowSurface : SDL_VideoSurface);
+
+    printf("%d\n", __LINE__);
 
     ClearVideoSurface();
 
