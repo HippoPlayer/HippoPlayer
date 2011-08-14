@@ -23,7 +23,17 @@ Program {
 
 	Frameworks = { "Cocoa", "AudioToolbox", "CoreAudio" },
 
-	Sources = { "hippoplayer/player/main.c" },
+	Sources = { 
+		FGlob {
+			Dir = "hippoplayer/player",
+			Extensions = { ".c", ".m" },
+			Filters = {
+				{ Pattern = "windows"; Config = "win32-*-*" },
+				{ Pattern = "macosx"; Config = "macosx-*-*" },
+			},
+		},
+	},
+
 	Depends = { "zlib" },
 }
 
