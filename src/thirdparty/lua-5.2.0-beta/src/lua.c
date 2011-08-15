@@ -425,6 +425,7 @@ static int handle_luainit (lua_State *L) {
     return dostring(L, init, name);
 }
 
+#if 0
 
 static int pmain (lua_State *L) {
   int argc = (int)lua_tointeger(L, 1);
@@ -481,3 +482,4 @@ int main (int argc, char **argv) {
   return (result && status == LUA_OK) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
+#endif
