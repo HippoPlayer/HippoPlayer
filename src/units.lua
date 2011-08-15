@@ -4,6 +4,11 @@ StaticLibrary {
 	Sources = { Glob { Dir = "thirdparty/zlib-1.2.5", Extensions = { ".c" } } },
 }
 
+StaticLibrary {
+	Name = "lua",
+	Sources = { Glob { Dir = "thirdparty/lua-5.2.0-beta", Extensions = { ".c" } } },
+}
+
 Program {
 	Name = "player",
 
@@ -35,7 +40,7 @@ Program {
 		},
 	},
 
-	Depends = { "zlib" },
+	Depends = { "zlib", "lua" },
 }
 
 Default "player"
