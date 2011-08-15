@@ -1,7 +1,9 @@
 
 #include "../HippoWindow.h"
 #include "core/memory/LinearAllocator.h"
+#include "HippoOSXWindow.h"
 #include <Cocoa/Cocoa.h>
+#include <unistd.h>
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -52,16 +54,16 @@ HippoWindow* HippoWindow_create(struct LinearAllocator* allocator, const char* n
 	[NSApplication sharedApplication];
 	[NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
 		
-	unsigned int styles = NSResizableWindowMask | NSClosableWindowMask | NSTitledWindowMask;
+	unsigned int styles = NSBorderlessWindowMask; //NSResizableWindowMask | NSClosableWindowMask | NSTitledWindowMask;
 		
 	NSRect rectangle = NSMakeRect(100, 100, 640, 480);
-	window_ = [[NSWindow alloc] initWithContentRect:rectangle styleMask:styles backing:NSBackingStoreBuffered defer:NO];
+	window_ = [[HippoOSXWindow alloc] initWithContentRect:rectangle styleMask:styles backing:NSBackingStoreBuffered defer:NO];
 	[window_ setTitle:@"(none)"];
 	[window_ setReleasedWhenClosed:NO];
 	[window_ performSelectorOnMainThread:@selector(makeKeyAndOrderFront:) withObject:nil waitUntilDone:YES];
 	[NSApp activateIgnoringOtherApps:YES];
 	[NSApp finishLaunching];
-		
+
 	[pool release];
 
 	return window;
@@ -93,5 +95,7 @@ void HippoWindow_updateEvents()
 		[NSApp updateWindows];
 	}
 	[pool release];
+
+	usleep(100);
 }
 
