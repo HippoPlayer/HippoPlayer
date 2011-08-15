@@ -19,6 +19,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 #else
 int main()
 {
+	HippoWindowRect rect;
 	struct HippoWindow* window;
 #endif
 
