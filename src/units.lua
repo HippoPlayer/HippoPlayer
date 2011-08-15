@@ -10,11 +10,11 @@ Program {
 	Env = {
 		CPPPATH = { "hippoplayer/player" },
 		CCOPTS = {
-			{ "/MD"; Config = "*-msvc-debug" },
+			{ "/MD", "/Od", "/Zi"; Config = "*-msvc-debug" },
 		},
 
 		PROGOPTS = {
-			{ "/SUBSYSTEM:WINDOWS"; Config = { "win32-*-*", "win64-*-*" } },
+			{ "/SUBSYSTEM:WINDOWS", "/DEBUG"; Config = { "win32-*-*", "win64-*-*" } },
 		},
 	},
 
