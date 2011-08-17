@@ -1,0 +1,19 @@
+Subject: RE: AHX .cpp replay code
+Date: Tue, 19 Sep 2000 21:57:35 +0200
+From: "Bernhard Wodok" <bwodok@shinen.com>
+To: "laurent clévy" <lclevy@club-internet.fr>
+
+Hi,
+
+I don't mind the source being published,
+however if it's possible I'd attach some kinda GPL-style license to it.
+I have the permission of the original Amiga-AHX author to release
+the source code.
+However, I can't provide any support for anyone.
+
+have fun with the source, spread it as u like
+
+bye
+
+-bartO
+
