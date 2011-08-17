@@ -9,11 +9,16 @@ StaticLibrary {
 	Sources = { Glob { Dir = "thirdparty/lua-5.2.0-beta", Extensions = { ".c" } } },
 }
 
+StaticLibrary {
+	Name = "stb_image",
+	Sources = { "thirdparty/stb_image/stb_image.c" },
+}
+
 Program {
 	Name = "player",
 
 	Env = {
-		CPPPATH = { "hippoplayer/player" },
+		CPPPATH = { "hippoplayer/player", "thirdparty" },
 		CCOPTS = {
 			{ "/MD", "/Od", "/Zi"; Config = "*-msvc-debug" },
 		},
@@ -40,7 +45,7 @@ Program {
 		},
 	},
 
-	Depends = { "zlib", "lua" },
+	Depends = { "zlib", "lua", "stb_image" },
 }
 
 Default "player"
