@@ -19,10 +19,6 @@ Program {
 
 	Env = {
 		CPPPATH = { "hippoplayer/player", "thirdparty" },
-		CCOPTS = {
-			{ "/MD", "/Od", "/Zi"; Config = "*-msvc-debug" },
-		},
-
 		PROGOPTS = {
 			{ "/SUBSYSTEM:WINDOWS", "/DEBUG"; Config = { "win32-*-*", "win64-*-*" } },
 		},

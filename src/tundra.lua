@@ -10,6 +10,9 @@ Build {
 			Tools = { "clang-osx" },
 			Env = {
 				CPPDEFS = { "HIPPO_MACOSX" },
+				CCOPTS = {
+					{ "-g", "-O0"; Config = "macosx-gcc-debug" },
+				},
 			},
 		},
 		{
@@ -18,6 +21,9 @@ Build {
 			Tools = { "msvc-vs2008" },
 			Env = {
 				CPPDEFS = { "HIPPO_WIN32" },
+				CCOPTS = {
+					{ "/MD", "/Od", "/Zi"; Config = "*-msvc-debug" },
+				},
 			},
 		},
 	},
