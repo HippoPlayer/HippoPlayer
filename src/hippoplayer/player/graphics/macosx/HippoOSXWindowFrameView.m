@@ -13,6 +13,7 @@
 //
 
 #import "HippoOSXWindowFrameView.h"
+#include <graphics/gui/HippoGui.h>
 
 @implementation HippoOSXWindowFrameView
 
@@ -36,6 +37,24 @@
 	return resizeRect;
 }
 
+- (void)mouseMoved:(NSEvent *)event
+{
+	NSWindow* window = [self window];
+	NSPoint originalMouseLocation = [window convertBaseToScreen:[event locationInWindow]];
+	NSRect originalFrame = [window frame];
+	NSPoint location = [window mouseLocationOutsideOfEventStream];
+
+	g_hippoGuiState.mousex = (int)location.x; 
+	g_hippoGuiState.mousey = (int)originalFrame.size.height - (int)location.y; 
+
+	printf("%d %d\n", g_hippoGuiState.mousex, g_hippoGuiState.mousey);  
+}
+
+- (void)mouseUp:(NSEvent *)event
+{
+	g_hippoGuiState.mouseDown = 0;
+}
+
 //
 // mouseDown:
 //
@@ -45,23 +64,19 @@
 //
 - (void)mouseDown:(NSEvent *)event
 {
-	NSPoint pointInView = [self convertPoint:[event locationInWindow] fromView:nil];
-	
-	BOOL resize = NO;
-	if (NSPointInRect(pointInView, [self resizeRect]))
-	{
-		resize = YES;
-	}
-	
 	NSWindow *window = [self window];
 	NSPoint originalMouseLocation = [window convertBaseToScreen:[event locationInWindow]];
 	NSRect originalFrame = [window frame];
+	NSPoint location = [window mouseLocationOutsideOfEventStream];
+
+	g_hippoGuiState.mouseDown = 1;
 	
     while (YES)
 	{
 		//
 		// Lock focus and take all the dragged and mouse up events until we
 		// receive a mouse up.
+		//
 		//
         NSEvent *newEvent = [window
 			nextEventMatchingMask:(NSLeftMouseDraggedMask | NSLeftMouseUpMask)];
@@ -81,48 +96,8 @@
 		
 		NSRect newFrame = originalFrame;
 		
-		if (!resize)
-		{
-			//
-			// Alter the frame for a drag
-			//
-			newFrame.origin.x += delta.x;
-			newFrame.origin.y += delta.y;
-		}
-		else
-		{
-			//
-			// Alter the frame for a resize
-			//
-			newFrame.size.width += delta.x;
-			newFrame.size.height -= delta.y;
-			newFrame.origin.y += delta.y;
-			
-			//
-			// Constrain to the window's min and max size
-			//
-			NSRect newContentRect = [window contentRectForFrameRect:newFrame];
-			NSSize maxSize = [window maxSize];
-			NSSize minSize = [window minSize];
-			if (newContentRect.size.width > maxSize.width)
-			{
-				newFrame.size.width -= newContentRect.size.width - maxSize.width;
-			}
-			else if (newContentRect.size.width < minSize.width)
-			{
-				newFrame.size.width += minSize.width - newContentRect.size.width;
-			}
-			if (newContentRect.size.height > maxSize.height)
-			{
-				newFrame.size.height -= newContentRect.size.height - maxSize.height;
-				newFrame.origin.y += newContentRect.size.height - maxSize.height;
-			}
-			else if (newContentRect.size.height < minSize.height)
-			{
-				newFrame.size.height += minSize.height - newContentRect.size.height;
-				newFrame.origin.y -= minSize.height - newContentRect.size.height;
-			}
-		}
+		newFrame.origin.x += delta.x;
+		newFrame.origin.y += delta.y;
 		
 		[window setFrame:newFrame display:YES animate:NO];
 	}
@@ -135,51 +110,6 @@
 //
 - (void)drawRect:(NSRect)rect
 {
-	/*
-	[[NSColor clearColor] set];
-	NSRectFill(rect);
-	
-	NSBezierPath *circlePath = [NSBezierPath bezierPathWithOvalInRect:[self bounds]];
-	
-	NSGradient* aGradient =
-		[[[NSGradient alloc]
-			initWithColorsAndLocations:
-				[NSColor whiteColor], (CGFloat)0.0,
-				[NSColor lightGrayColor], (CGFloat)1.0,
-				nil]
-		autorelease];
-	[aGradient drawInBezierPath:circlePath angle:90];
-
-	[[NSColor whiteColor] set];
-	[circlePath stroke];
-	
-	NSRect resizeRect = [self resizeRect];
-	NSBezierPath *resizePath = [NSBezierPath bezierPathWithRect:resizeRect];
-
-	[[NSColor lightGrayColor] set];
-	[resizePath fill];
-
-	[[NSColor darkGrayColor] set];
-	[resizePath stroke];
-	
-	[[NSColor blackColor] set];
-	NSString *windowTitle = [[self window] title];
-	NSRect titleRect = [self bounds];
-	titleRect.origin.y = titleRect.size.height - (WINDOW_FRAME_PADDING - 7);
-	titleRect.size.height = (WINDOW_FRAME_PADDING - 7);
-	NSMutableParagraphStyle *paragraphStyle =
-		[[[NSMutableParagraphStyle alloc] init] autorelease];
-	[paragraphStyle setAlignment:NSCenterTextAlignment];
-	[windowTitle
-		drawWithRect:titleRect
-		options:0
-		attributes:[NSDictionary
-			dictionaryWithObjectsAndKeys:
-				paragraphStyle, NSParagraphStyleAttributeName,
-				[NSFont systemFontOfSize:14], NSFontAttributeName,
-			nil]];
-	*/
-
 	CGContextRef myContext = [[NSGraphicsContext // 1
                                 currentContext] graphicsPort];
    // ********** Your drawing code here ********** // 2

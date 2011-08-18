@@ -106,7 +106,7 @@
 
 		closeButton = [NSWindow standardWindowButton:NSWindowCloseButton forStyleMask:NSTitledWindowMask];
 		NSRect closeButtonRect = [closeButton frame];
-		[closeButton setFrame:NSMakeRect(WINDOW_FRAME_PADDING - 20, bounds.size.height - (WINDOW_FRAME_PADDING - 20) - closeButtonRect.size.height, closeButtonRect.size.width, closeButtonRect.size.height)];
+		//[closeButton setFrame:NSMakeRect(WINDOW_FRAME_PADDING - 20, bounds.size.height - (WINDOW_FRAME_PADDING - 20) - closeButtonRect.size.height, closeButtonRect.size.width, closeButtonRect.size.height)];
 		[closeButton setAutoresizingMask:NSViewMaxXMargin | NSViewMinYMargin];
 		[frameView addSubview:closeButton];
 	}
@@ -156,20 +156,24 @@
 //
 // Returns the rect for the content rect, taking the frame.
 //
+/*
 - (NSRect)contentRectForFrameRect:(NSRect)windowFrame
 {
 	windowFrame.origin = NSZeroPoint;
 	return NSInsetRect(windowFrame, WINDOW_FRAME_PADDING, WINDOW_FRAME_PADDING);
 }
+*/
 
 //
 // frameRectForContentRect:styleMask:
 //
 // Ensure that the window is make the appropriate amount bigger than the content.
 //
+/*
 + (NSRect)frameRectForContentRect:(NSRect)windowContentRect styleMask:(NSUInteger)windowStyle
 {
 	return NSInsetRect(windowContentRect, -WINDOW_FRAME_PADDING, -WINDOW_FRAME_PADDING);
 }
+*/
 
 @end

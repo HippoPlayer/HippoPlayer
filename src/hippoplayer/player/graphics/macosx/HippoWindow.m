@@ -22,31 +22,6 @@ NSWindow* window_;
 HippoWindow* HippoWindow_create(struct LinearAllocator* allocator, const char* name, const HippoWindow* parent, 
 								const HippoWindowRect* windowRect)
 {
-	/*
-	NSRect rect;
-	NSUInteger windowStyle;
-	NSBackingStoreType bsType;
-	NSOpenGLPixelFormat* pixFormat;
-
-	rect.origin.x = windowRect->x;
-	rect.origin.y = windowRect->y; 
-	rect.size.width = windowRect->sizeX;
-	rect.size.height = windowRect->sizeY;
-
-	window = LinearAllocator_allocZero(allocator, HippoWindow);
-
-	windowStyle = NSTitledWindowMask | NSClosableWindowMask | NSResizableWindowMask;
-
-	bsType = NSBackingStoreBuffered;
-
-	window->wnd = [[NSWindow alloc] initWithContentRect:rect styleMask:windowStyle backing:bsType defer:NO];
-	window->rect = *windowRect;
-
-	[window->wnd makeKeyAndOrderFront:nil];
-
-	return window;
-	*/
-
 	HippoWindow* window = 0;
 
 	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
@@ -56,7 +31,7 @@ HippoWindow* HippoWindow_create(struct LinearAllocator* allocator, const char* n
 		
 	unsigned int styles = NSBorderlessWindowMask; //NSResizableWindowMask | NSClosableWindowMask | NSTitledWindowMask;
 		
-	NSRect rectangle = NSMakeRect(100, 100, 640, 480);
+	NSRect rectangle = NSMakeRect(0, 0, 264, 136);
 	window_ = [[HippoOSXWindow alloc] initWithContentRect:rectangle styleMask:styles backing:NSBackingStoreBuffered defer:NO];
 	[window_ setTitle:@"(none)"];
 	[window_ setReleasedWhenClosed:NO];
@@ -96,6 +71,6 @@ void HippoWindow_updateEvents()
 	}
 	[pool release];
 
-	usleep(100);
+	usleep(500);
 }
 
