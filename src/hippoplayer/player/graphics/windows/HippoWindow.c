@@ -1,6 +1,7 @@
 #include "../HippoWindow.h"
 #include <core/memory/LinearAllocator.h>
 #include <core/debug/Assert.h>
+#include <graphics/gui/HippoGui.h>
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -39,6 +40,27 @@ static LRESULT CALLBACK WndProc(HWND hWnd,UINT message,WPARAM wParam,LPARAM lPar
 										window->frameBuffer, &window->bitmapHeader, DIB_RGB_COLORS, SRCCOPY);
 				ValidateRect(window->hwnd, NULL);
 			}
+			break;
+		}
+
+		case WM_MOUSEMOVE:
+		{
+			g_hippoGuiState.mousex = LOWORD(lParam); 
+			g_hippoGuiState.mousey = HIWORD(lParam); 
+			break;
+		}
+
+		case WM_LBUTTONDOWN:
+		{
+			if (wParam == MK_LBUTTON)
+				g_hippoGuiState.mouseDown = 1;
+			break;
+		}
+
+		case WM_LBUTTONUP:
+		{
+			if (wParam == MK_LBUTTON)
+				g_hippoGuiState.mouseDown = 0;
 			break;
 		}
 
