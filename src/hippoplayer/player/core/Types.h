@@ -82,7 +82,7 @@ typedef __m128 int128_t;
 #define HIPPO_ALIGNOF(t) __alignof__(t)
 #define HIPPO_BREAK ((*(volatile uint32_t *)(0)) = 0x666)
 
-typedef unsigned char bool;
+#include <stdbool.h>
 
 #ifndef true
 #define true	1
