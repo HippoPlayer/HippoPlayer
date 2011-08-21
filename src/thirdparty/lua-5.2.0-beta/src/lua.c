@@ -4,6 +4,7 @@
 ** See Copyright Notice in lua.h
 */
 
+#if 0
 
 #include <signal.h>
 #include <stdio.h>
@@ -481,5 +482,7 @@ int main (int argc, char **argv) {
   lua_close(L);
   return (result && status == LUA_OK) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
+
+#endif
 
 #endif
