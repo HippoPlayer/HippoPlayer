@@ -156,24 +156,24 @@
 //
 // Returns the rect for the content rect, taking the frame.
 //
-/*
+
 - (NSRect)contentRectForFrameRect:(NSRect)windowFrame
 {
 	windowFrame.origin = NSZeroPoint;
-	return NSInsetRect(windowFrame, WINDOW_FRAME_PADDING, WINDOW_FRAME_PADDING);
+	return NSInsetRect(windowFrame, 0, 0);
 }
-*/
+
 
 //
 // frameRectForContentRect:styleMask:
 //
 // Ensure that the window is make the appropriate amount bigger than the content.
 //
-/*
+
 + (NSRect)frameRectForContentRect:(NSRect)windowContentRect styleMask:(NSUInteger)windowStyle
 {
-	return NSInsetRect(windowContentRect, -WINDOW_FRAME_PADDING, -WINDOW_FRAME_PADDING);
+	return NSInsetRect(windowContentRect, 0, 0);
 }
-*/
+
 
 @end
