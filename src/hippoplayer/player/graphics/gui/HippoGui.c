@@ -121,14 +121,31 @@ bool HippoGui_regionHit(const HippoControlInfo* control)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool HippoGui_buttonImage(const char* filename)
+void HippoGui_fill(uint32_t color, int x, int y, int w, int h)
+{
+	uint32_t controlId = 0;
+	HippoControlInfo* control = 0; 
+
+	// Setup the control
+	controlId = s_controlId++;
+	control = &g_controls[controlId];
+	control->type = DRAWTYPE_FILL;
+	control->x = x;
+	control->y = y;
+	control->width = w;
+	control->height = h;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static uint32_t genericImageControl(const char* filename)
 {
 	uint32_t controlId = 0;
 	HippoControlInfo* control = 0; 
 	HippoImage* image = loadImage(filename);
 
 	if (!image)
-		return false;
+		return ~0;
 
 	// Setup the control
 	
@@ -160,6 +177,30 @@ bool HippoGui_buttonImage(const char* filename)
 			break;
 		}
 	}
+
+	return controlId;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void HippoGui_staticImage(const char* filename)
+{
+	genericImageControl(filename);	
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool HippoGui_buttonImage(const char* filename)
+{
+	HippoControlInfo* control;
+	uint32_t controlId = 0;
+	
+	controlId = genericImageControl(filename);
+
+	if (controlId == ~0)
+		return false;
+
+	control = &g_controls[controlId];
 
 	if (HippoGui_regionHit(control))
 	{

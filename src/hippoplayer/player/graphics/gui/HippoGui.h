@@ -66,8 +66,8 @@ void HippoGui_beginHorizontalStackPanel();
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Different controlls and gui functions
 
-void HippoGui_staticImage(struct HippoImage* image);
-void HippoGui_fill(uint32_t color, uint32_t x, uint32_t y, uint32_t w, uint32_t h);
+void HippoGui_staticImage(const char* filename);
+void HippoGui_fill(uint32_t color, int x, int y, int w, int h);
 
 bool HippoGui_buttonCoords(const char* text, int x, int y);
 bool HippoGui_buttonCoordsImage(const char* text, int x, int y);

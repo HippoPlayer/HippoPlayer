@@ -61,8 +61,6 @@
 
 	g_hippoGuiState.mousex = (int)location.x; 
 	g_hippoGuiState.mousey = (int)originalFrame.size.height - (int)location.y; 
-
-	printf("%d %d\n", g_hippoGuiState.mousex, g_hippoGuiState.mousey);  
 }
 
 static NSPoint s_prevDragPos;
@@ -180,7 +178,16 @@ static NSPoint s_prevDragPos;
 				break;
 
 			case DRAWTYPE_FILL :
+			{
+				uint32_t color = 0xa0a0a0;
+				CGContextSetRGBFillColor(context, 
+										((color >> 16) & 0xff) * 1.0f / 255.f, 
+										((color >> 8) & 0xff) * 1.0f / 255.f, 
+										((color >> 0) & 0xff) * 1.0f / 255.f, 
+										1.0);
+				CGContextFillRect(context, CGRectMake(control->x, control->y, control->width, control->height));
 				break;
+			}
 
 			case DRAWTYPE_IMAGE :
 			{
