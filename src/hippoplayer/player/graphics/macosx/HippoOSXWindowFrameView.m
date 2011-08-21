@@ -13,7 +13,10 @@
 //
 
 #import "HippoOSXWindowFrameView.h"
-#include <graphics/gui/HippoGui.h>
+#include "graphics/HippoImageLoader.h"
+#include "graphics/gui/HippoGui.h"
+#include "core/debug/Assert.h"
+#include <ApplicationServices/ApplicationServices.h>
 
 @implementation HippoOSXWindowFrameView
 
@@ -37,6 +40,8 @@
 	return resizeRect;
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 - (void)mouseMoved:(NSEvent *)event
 {
 	NSWindow* window = [self window];
@@ -49,6 +54,8 @@
 
 	printf("%d %d\n", g_hippoGuiState.mousex, g_hippoGuiState.mousey);  
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 - (void)mouseUp:(NSEvent *)event
 {
@@ -110,13 +117,54 @@
 //
 - (void)drawRect:(NSRect)rect
 {
-	CGContextRef myContext = [[NSGraphicsContext // 1
-                                currentContext] graphicsPort];
-   // ********** Your drawing code here ********** // 2
-    CGContextSetRGBFillColor (myContext, 1, 0, 0, 1);// 3
-    CGContextFillRect (myContext, CGRectMake (0, 0, 200, 100 ));// 4
-    CGContextSetRGBFillColor (myContext, 0, 0, 1, .5);// 5
-    CGContextFillRect (myContext, CGRectMake (0, 0, 100, 200));// 6
+	CGContextRef context = [[NSGraphicsContext currentContext] graphicsPort];
+	NSWindow *window = [self window];
+	NSRect originalFrame = [window frame];
+
+	uint32_t controlCount = s_controlId; 
+	HippoControlInfo* controls = (HippoControlInfo*)&g_controls;
+
+	for (uint i = 0; i < controlCount; ++i)
+	{
+		HippoControlInfo* control = &g_controls[i]; 
+
+		switch (controls[i].type)
+		{
+			case DRAWTYPE_NONE :
+				break;
+
+			case DRAWTYPE_FILL :
+				break;
+
+			case DRAWTYPE_IMAGE :
+			{
+				HIPPO_ASSERT(control->imageData);
+
+				// if we have no userData, we need to initialize it with CimageDataRef
+
+				if (!control->imageData->userData)
+				{
+					CGColorSpaceRef space = CGColorSpaceCreateDeviceRGB();
+					CGDataProviderRef provider = CGDataProviderCreateWithData(
+						NULL, control->imageData->data, control->imageData->width * control->imageData->height * 3, NULL);
+
+					CGImageRef img = CGImageCreate(
+						control->imageData->width, control->imageData->height, 8, 24,
+						control->imageData->width * 3, space, kCGImageAlphaNoneSkipFirst,
+						provider, NULL, false, kCGRenderingIntentDefault);
+
+					control->imageData->userData = (void*)img; 
+					CGColorSpaceRelease(space);
+					CGDataProviderRelease(provider);
+				}
+
+				CGContextDrawImage(context, CGRectMake(control->x, (originalFrame.size.height - control->y) - control->height, control->width, control->height), 
+								  (CGImageRef)control->imageData->userData);
+				
+				break;	
+			}
+		}
+	}
 }
 
 @end
