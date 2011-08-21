@@ -53,7 +53,8 @@ void HippoGui_beginHorizontalStackPanelXY(int x, int y)
 
 void HippoGui_begin()
 {
-	s_controlId = 0;
+	s_controlId = 1;
+	g_controls[0].type = DRAWTYPE_NONE;
 	memset(&g_placementInfo, 0, sizeof(GuiPlacementInfo));
 }
 
@@ -104,8 +105,8 @@ static HippoImage* loadImage(const char* filename)
 
 bool HippoGui_regionHit(const HippoControlInfo* control)
 {
-	printf("mouse xy %d %d\n", g_hippoGuiState.mousex,g_hippoGuiState.mousey);
-	printf("rect %d %d %d %d\n", control->x, control->y, control->width, control->height); 
+	//printf("%d %d\n", g_hippoGuiState.mousex, g_hippoGuiState.mousey);  
+	//printf("%d %d %d %d\n", control->x, control->y, control->width, control->height);
 
 	if (g_hippoGuiState.mousex < control->x ||
 		g_hippoGuiState.mousey < control->y ||
@@ -160,7 +161,17 @@ bool HippoGui_buttonImage(const char* filename)
 		}
 	}
 
-	return HippoGui_regionHit(control);
+	if (HippoGui_regionHit(control))
+	{
+		g_hippoGuiState.hotItem = controlId;
+    	if (g_hippoGuiState.activeItem == 0 && g_hippoGuiState.mouseDown)
+      		g_hippoGuiState.activeItem = controlId;
+	}
+
+	if (g_hippoGuiState.mouseDown == 0 && g_hippoGuiState.hotItem == controlId && g_hippoGuiState.activeItem == controlId)
+		return true;
+
+	return false;
 }
 
 
@@ -168,6 +179,16 @@ bool HippoGui_buttonImage(const char* filename)
 
 void HippoGui_end()
 {
+	if (g_hippoGuiState.mouseDown == 0)
+	{
+		g_hippoGuiState.activeItem = 0;
+	}
+	else
+	{
+		if (g_hippoGuiState.activeItem == 0)
+			g_hippoGuiState.activeItem = -1;
+	}
+
 	HippoWindow_refresh();
 }
 
