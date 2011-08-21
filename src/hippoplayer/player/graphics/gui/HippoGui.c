@@ -134,6 +134,7 @@ void HippoGui_fill(uint32_t color, int x, int y, int w, int h)
 	control->y = y;
 	control->width = w;
 	control->height = h;
+	control->color = color;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
