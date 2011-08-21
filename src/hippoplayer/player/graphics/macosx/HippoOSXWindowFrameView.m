@@ -42,6 +42,16 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+-(void) viewWillMoveToWindow:(NSWindow *)newWindow 
+{
+    // Setup a new tracking area when the view is added to the window.
+    NSTrackingArea* trackingArea = [[NSTrackingArea alloc] initWithRect:[self frame] 
+    	options: (NSTrackingMouseMoved | NSTrackingActiveAlways) owner:self userInfo:nil];
+    [self addTrackingArea:trackingArea];
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 - (void)mouseMoved:(NSEvent *)event
 {
 	NSWindow* window = [self window];
@@ -59,6 +69,7 @@
 
 - (void)mouseUp:(NSEvent *)event
 {
+	printf("mouse up\n");
 	g_hippoGuiState.mouseDown = 0;
 }
 
@@ -74,11 +85,18 @@
 	NSWindow *window = [self window];
 	NSPoint originalMouseLocation = [window convertBaseToScreen:[event locationInWindow]];
 	NSRect originalFrame = [window frame];
-	//NSPoint location = [window mouseLocationOutsideOfEventStream];
+	NSPoint location = [window mouseLocationOutsideOfEventStream];
+
+	g_hippoGuiState.mousex = (int)location.x; 
+	g_hippoGuiState.mousey = (int)originalFrame.size.height - (int)location.y; 
+	
+	printf("%f %f\n", originalMouseLocation.x, originalMouseLocation.y); 
+	printf("mouse down\n");
 
 	g_hippoGuiState.mouseDown = 1;
-	
-    while (YES)
+
+	/*
+    //while (YES)
 	{
 		//
 		// Lock focus and take all the dragged and mouse up events until we
@@ -90,12 +108,14 @@
 		
         if ([newEvent type] == NSLeftMouseUp)
 		{
+			g_hippoGuiState.mouseDown = 0;
 			break;
 		}
 		
 		//
 		// Work out how much the mouse has moved
 		//
+
 		NSPoint newMouseLocation = [window convertBaseToScreen:[newEvent locationInWindow]];
 		NSPoint delta = NSMakePoint(
 			newMouseLocation.x - originalMouseLocation.x,
@@ -108,6 +128,7 @@
 		
 		[window setFrame:newFrame display:YES animate:NO];
 	}
+	*/
 }
 
 //
