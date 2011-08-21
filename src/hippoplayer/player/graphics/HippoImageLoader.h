@@ -9,6 +9,7 @@
 typedef struct HippoImage
 {
 	const uint32_t* data;
+	void* userData;	// used by platform implementation (quartz 2D on Mac OS X for example)
 	int width;
 	int height;
 	int comp;

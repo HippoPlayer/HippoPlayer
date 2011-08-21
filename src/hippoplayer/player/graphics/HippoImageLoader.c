@@ -11,6 +11,7 @@ bool HippoImageLoader_loadFile(HippoImage* image, const char* filename)
 	{
 		// TODO: Report errer
 		image->data = imageData;
+		image->userData = 0;
 		return true;
 	}
 
@@ -27,6 +28,7 @@ bool HippoImageLoader_loadBuffer(HippoImage* image, const void* buffer, size_t s
 	{
 		// TODO: Report errer
 		image->data = imageData;
+		image->userData = 0;
 		return true;
 	}
 
