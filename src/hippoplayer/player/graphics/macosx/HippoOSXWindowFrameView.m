@@ -65,6 +65,28 @@
 	printf("%d %d\n", g_hippoGuiState.mousex, g_hippoGuiState.mousey);  
 }
 
+static NSPoint s_prevDragPos;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+- (void)mouseDragged:(NSEvent *)event
+{
+	NSWindow *window = [self window];
+	NSRect originalFrame = [window frame];
+	NSPoint newMouseLocation = [window convertBaseToScreen:[event locationInWindow]];
+	NSPoint delta = NSMakePoint(newMouseLocation.x - s_prevDragPos.x,
+								newMouseLocation.y - s_prevDragPos.y);
+
+	NSRect newFrame = originalFrame;
+	
+	newFrame.origin.x += delta.x;
+	newFrame.origin.y += delta.y;
+
+	s_prevDragPos = newMouseLocation;
+	
+	[window setFrame:newFrame display:YES animate:NO];
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 - (void)mouseUp:(NSEvent *)event
@@ -80,17 +102,20 @@
 //	- click in the resize box should resize the window
 //	- click anywhere else will drag the window.
 //
+
+
+
 - (void)mouseDown:(NSEvent *)event
 {
 	NSWindow *window = [self window];
-	NSPoint originalMouseLocation = [window convertBaseToScreen:[event locationInWindow]];
+	s_prevDragPos = [window convertBaseToScreen:[event locationInWindow]];
 	NSRect originalFrame = [window frame];
 	NSPoint location = [window mouseLocationOutsideOfEventStream];
 
 	g_hippoGuiState.mousex = (int)location.x; 
 	g_hippoGuiState.mousey = (int)originalFrame.size.height - (int)location.y; 
 	
-	printf("%f %f\n", originalMouseLocation.x, originalMouseLocation.y); 
+	//printf("%f %f\n", originalMouseLocation.x, originalMouseLocation.y); 
 	printf("mouse down\n");
 
 	g_hippoGuiState.mouseDown = 1;
