@@ -121,6 +121,16 @@ bool HippoGui_regionHit(const HippoControlInfo* control)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void HippoGui_drawBorder(uint32_t color0, uint32_t color1, int x, int y, int w, int h)
+{
+	HippoGui_fill(color0, x, y, 1, h);
+	HippoGui_fill(color0, x, y, w, 1);
+	HippoGui_fill(color1, x + w, y, 1, h);
+	HippoGui_fill(color1, x, y + h, w, 1);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void HippoGui_fill(uint32_t color, int x, int y, int w, int h)
 {
 	uint32_t controlId = 0;
