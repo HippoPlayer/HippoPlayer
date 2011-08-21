@@ -171,6 +171,7 @@ static NSPoint s_prevDragPos;
 	for (uint i = 0; i < controlCount; ++i)
 	{
 		HippoControlInfo* control = &g_controls[i]; 
+		int y_pos = (originalFrame.size.height - control->y) - control->height;
 
 		switch (controls[i].type)
 		{
@@ -185,7 +186,7 @@ static NSPoint s_prevDragPos;
 										((color >> 8) & 0xff) * 1.0f / 255.f, 
 										((color >> 0) & 0xff) * 1.0f / 255.f, 
 										1.0);
-				CGContextFillRect(context, CGRectMake(control->x, control->y, control->width, control->height));
+				CGContextFillRect(context, CGRectMake(control->x, y_pos, control->width, control->height));
 				break;
 			}
 
@@ -211,7 +212,7 @@ static NSPoint s_prevDragPos;
 					CGDataProviderRelease(provider);
 				}
 
-				CGContextDrawImage(context, CGRectMake(control->x, (originalFrame.size.height - control->y) - control->height, control->width, control->height), 
+				CGContextDrawImage(context, CGRectMake(control->x, y_pos, control->width, control->height), 
 								  (CGImageRef)control->imageData->userData);
 				
 				break;	
