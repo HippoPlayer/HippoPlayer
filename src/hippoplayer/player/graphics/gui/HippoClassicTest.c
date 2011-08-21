@@ -9,8 +9,10 @@ void HippoGui_drawClassic()
 	HippoGui_begin();
 
 	// Some initial drawing
-
+	
 	HippoGui_fill(0x00a0a0a0, 0, 0, 264, 136);
+
+	HippoGui_drawBorder(0x0000000, 0x00ffffff, 2, 14, 256, 20);
 	HippoGui_drawBorder(0x00ffffff, 0x00000000, 25, 65, 224, 67);
 	HippoGui_fill(0x00aaaaaa, 26, 66, 157, 67);
 
