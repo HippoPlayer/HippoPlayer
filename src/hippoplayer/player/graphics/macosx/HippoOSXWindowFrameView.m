@@ -40,7 +40,7 @@
 - (void)mouseMoved:(NSEvent *)event
 {
 	NSWindow* window = [self window];
-	NSPoint originalMouseLocation = [window convertBaseToScreen:[event locationInWindow]];
+	//NSPoint originalMouseLocation = [window convertBaseToScreen:[event locationInWindow]];
 	NSRect originalFrame = [window frame];
 	NSPoint location = [window mouseLocationOutsideOfEventStream];
 
@@ -67,7 +67,7 @@
 	NSWindow *window = [self window];
 	NSPoint originalMouseLocation = [window convertBaseToScreen:[event locationInWindow]];
 	NSRect originalFrame = [window frame];
-	NSPoint location = [window mouseLocationOutsideOfEventStream];
+	//NSPoint location = [window mouseLocationOutsideOfEventStream];
 
 	g_hippoGuiState.mouseDown = 1;
 	

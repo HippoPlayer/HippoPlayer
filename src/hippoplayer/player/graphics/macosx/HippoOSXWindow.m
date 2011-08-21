@@ -105,7 +105,7 @@
 		[super setContentView:frameView];
 
 		closeButton = [NSWindow standardWindowButton:NSWindowCloseButton forStyleMask:NSTitledWindowMask];
-		NSRect closeButtonRect = [closeButton frame];
+		//NSRect closeButtonRect = [closeButton frame];
 		//[closeButton setFrame:NSMakeRect(WINDOW_FRAME_PADDING - 20, bounds.size.height - (WINDOW_FRAME_PADDING - 20) - closeButtonRect.size.height, closeButtonRect.size.width, closeButtonRect.size.height)];
 		[closeButton setAutoresizingMask:NSViewMaxXMargin | NSViewMinYMargin];
 		[frameView addSubview:closeButton];

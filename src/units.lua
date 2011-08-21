@@ -22,6 +22,10 @@ Program {
 		PROGOPTS = {
 			{ "/SUBSYSTEM:WINDOWS", "/DEBUG"; Config = { "win32-*-*", "win64-*-*" } },
 		},
+
+		CCOPTS = {
+			{ "-Werror", "-pedantic-errors", "-Wall"; Config = "macosx-gcc-debug" },
+		},
 	},
 
 	Libs = { 
