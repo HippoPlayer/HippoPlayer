@@ -168,6 +168,12 @@ static NSPoint s_prevDragPos;
 	uint32_t controlCount = s_controlId; 
 	HippoControlInfo* controls = (HippoControlInfo*)&g_controls;
 
+	// Some hacky text drawing for testing
+
+	float w, h;
+    w = 200;
+    h = 100;
+ 
 	for (uint i = 0; i < controlCount; ++i)
 	{
 		HippoControlInfo* control = &g_controls[i]; 
@@ -219,6 +225,12 @@ static NSPoint s_prevDragPos;
 			}
 		}
 	}
+
+    CGContextSelectFont(context, "Monaco", 10, kCGEncodingMacRoman);
+    CGContextSetCharacterSpacing (context, 1); 
+    CGContextSetTextDrawingMode (context, kCGTextFill); 
+    CGContextSetRGBFillColor(context, 0, 0, 0, 1); 
+    CGContextShowTextAtPoint(context, 10, 110, "HippoPlayer 3.00 by Daniel Collin", 33); 
 }
 
 @end
