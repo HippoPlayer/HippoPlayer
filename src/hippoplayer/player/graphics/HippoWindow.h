@@ -23,6 +23,7 @@ struct LinearAllocator;
 struct HippoWindow* HippoWindow_create(struct LinearAllocator* allocator, const char* name, const struct HippoWindow* parent, 
 									   const HippoWindowRect* rect);
 void HippoWindow_destroy(struct HippoWindow* window);
+void HippoWindow_refresh();
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
