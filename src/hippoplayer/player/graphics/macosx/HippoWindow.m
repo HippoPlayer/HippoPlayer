@@ -29,7 +29,7 @@ HippoWindow* HippoWindow_create(struct LinearAllocator* allocator, const char* n
 	[NSApplication sharedApplication];
 	[NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
 		
-	unsigned int styles = NSBorderlessWindowMask; //NSResizableWindowMask | NSClosableWindowMask | NSTitledWindowMask;
+	unsigned int styles = NSResizableWindowMask | NSClosableWindowMask | NSTitledWindowMask;
 		
 	NSRect rectangle = NSMakeRect(0, 0, 264, 136);
 	window_ = [[HippoOSXWindow alloc] initWithContentRect:rectangle styleMask:styles backing:NSBackingStoreBuffered defer:NO];
@@ -49,6 +49,13 @@ HippoWindow* HippoWindow_create(struct LinearAllocator* allocator, const char* n
 void HippoWindow_destroy(HippoWindow* window)
 {
 	[window->wnd release];
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void HippoWindow_refresh()
+{
+	[[window_ contentView] setNeedsDisplay:YES];
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
