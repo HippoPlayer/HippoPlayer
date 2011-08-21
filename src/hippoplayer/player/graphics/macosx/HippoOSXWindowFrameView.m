@@ -179,7 +179,7 @@ static NSPoint s_prevDragPos;
 
 			case DRAWTYPE_FILL :
 			{
-				uint32_t color = 0xa0a0a0;
+				uint32_t color = control->color;
 				CGContextSetRGBFillColor(context, 
 										((color >> 16) & 0xff) * 1.0f / 255.f, 
 										((color >> 8) & 0xff) * 1.0f / 255.f, 
