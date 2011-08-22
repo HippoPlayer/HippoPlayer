@@ -1,7 +1,12 @@
 
 #include "../HippoAudio.h"
 #include "core/debug/Assert.h" 
+#include "plugin_api/HippoPlugin.h" 
 #include <CoreAudio/CoreAudio.h>
+#include <AudioUnit/AudioUnit.h>
+#include <CoreServices/CoreServices.h>
+
+static AudioUnit gOutputUnit = 0;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -45,3 +50,111 @@ int HippoAudio_buildDeviceList(struct HippoAudioDevice* devices, size_t maxSize)
 	
 	return theNumDevices;
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static OSStatus renderCallback(void* inRefCon, AudioUnitRenderActionFlags* inActionFlags,
+							   const AudioTimeStamp* inTimeStamp, UInt32 inBusNumber,
+							   UInt32 inNumFrames, AudioBufferList* ioData)
+
+{
+	HippoPlaybackPlugin* plugin = (HippoPlaybackPlugin*)inRefCon;
+
+	for (UInt32 channel = 1; channel < ioData->mNumberBuffers; channel++)
+		plugin->readData(plugin->userData, ioData->mBuffers[channel].mData, inNumFrames);
+
+	return noErr;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void HippoAudio_openDefaultOutput(HippoPlaybackPlugin* plugin)
+{
+	OSStatus err = noErr;
+
+	// Open the default output unit
+	ComponentDescription desc;
+	desc.componentType = kAudioUnitType_Output;
+	desc.componentSubType = kAudioUnitSubType_DefaultOutput;
+	desc.componentManufacturer = kAudioUnitManufacturer_Apple;
+	desc.componentFlags = 0;
+	desc.componentFlagsMask = 0;
+
+	Component comp = FindNextComponent(NULL, &desc);
+	if (comp == NULL) { printf ("FindNextComponent\n"); return; }
+
+	err = OpenAComponent(comp, &gOutputUnit);
+	if (comp == NULL) { printf ("OpenAComponent=%d\n", err); return; }
+
+	// Set up a callback function to generate output to the output unit
+	AURenderCallbackStruct input;
+	input.inputProc = renderCallback;
+	input.inputProcRefCon = plugin;
+
+	err = AudioUnitSetProperty(gOutputUnit, kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Output,
+							   0, &input, sizeof(input));
+	if (err) { printf ("AudioUnitSetProperty-CB=%d\n", err); return; }
+
+	Float64 sSampleRate = 48000;
+	SInt32 sNumChannels = 2;
+	UInt32 theFormatID = kAudioFormatLinearPCM;
+	int theFormatFlags =  kAudioFormatFlagsNativeFloatPacked | kAudioFormatFlagIsNonInterleaved;
+    int theBytesPerFrame = 4, theBytesInAPacket = 4, theBitsPerChannel = 32;
+    
+	AudioStreamBasicDescription streamFormat;
+	streamFormat.mSampleRate = sSampleRate;     //  the sample rate of the audio stream
+	streamFormat.mFormatID = theFormatID;           //  the specific encoding type of audio stream
+	streamFormat.mFormatFlags = theFormatFlags;     //  flags specific to each format
+	streamFormat.mBytesPerPacket = theBytesInAPacket;   
+	streamFormat.mFramesPerPacket = 1; 
+	streamFormat.mBytesPerFrame = theBytesPerFrame;     
+	streamFormat.mChannelsPerFrame = sNumChannels;  
+	streamFormat.mBitsPerChannel = theBitsPerChannel;   
+ 
+    printf("Rendering source:\n\t");
+    printf ("SampleRate=%f,", streamFormat.mSampleRate);
+    printf ("BytesPerPacket=%d,", streamFormat.mBytesPerPacket);
+    printf ("FramesPerPacket=%d,", streamFormat.mFramesPerPacket);
+    printf ("BytesPerFrame=%d,", streamFormat.mBytesPerFrame);
+    printf ("BitsPerChannel=%d,", streamFormat.mBitsPerChannel);
+    printf ("ChannelsPerFrame=%d\n", streamFormat.mChannelsPerFrame);
+    
+    err = AudioUnitSetProperty (gOutputUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, 0, &streamFormat, sizeof(AudioStreamBasicDescription));
+    if (err) { printf ("AudioUnitSetProperty-SF=%4.4s, %d\n", (char*)&err, err); return; }
+    
+    // Initialize unit
+    err = AudioUnitInitialize(gOutputUnit);
+    if (err) { printf ("AudioUnitInitialize=%d\n", err); return; }
+    
+    Float64 outSampleRate;
+    UInt32 size = sizeof(Float64);
+    err = AudioUnitGetProperty (gOutputUnit, kAudioUnitProperty_SampleRate, kAudioUnitScope_Input, 0, &outSampleRate, &size);
+    if (err) { printf ("AudioUnitSetProperty-GF=%4.4s, %d\n", (char*)&err, err); return; }
+
+    // Start the rendering
+    // The DefaultOutputUnit will do any format conversions to the format of the default device
+    err = AudioOutputUnitStart (gOutputUnit);
+    if (err) { printf ("AudioOutputUnitStart=%d\n", err); return; }
+            
+    // we call the CFRunLoopRunInMode to service any notifications that the audio
+    // system has to deal with
+    // CFRunLoopRunInMode(kCFRunLoopDefaultMode, 2, false);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void HippoAudio_close()
+{
+	OSStatus err = noErr;
+
+	if (gOutputUnit == 0)
+		return;
+	
+	AudioOutputUnitStop(gOutputUnit);
+    
+    err = AudioUnitUninitialize (gOutputUnit);
+    if (err) { printf ("AudioUnitUninitialize=%d\n", err); return; }
+
+    gOutputUnit = 0;
+}
+
