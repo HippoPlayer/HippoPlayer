@@ -32,7 +32,7 @@ Program {
 		{ "user32.lib", "imm32.lib", "gdi32.lib", "ole32.lib", "version.lib", "shell32.lib", "Winmm.lib"; Config = "win*-*-*" }, 
 	},
 
-	Frameworks = { "Cocoa", "AudioToolbox", "CoreAudio" },
+	Frameworks = { "Cocoa", "AudioUnit", "AudioToolbox", "CoreAudio" },
 
 	Sources = { 
 		FGlob {
