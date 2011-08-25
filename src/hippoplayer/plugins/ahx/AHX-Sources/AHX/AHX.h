@@ -138,7 +138,7 @@ public:
 
 class  AHXPlayer {
 public:
-	void Init(AHXWaves* Waves = NULL);
+	void Init(AHXWaves* Waves = 0);
 
 	int LoadSong(char* Filename);
 	int LoadSong(void* Buffer, int Len);
@@ -152,7 +152,7 @@ public:
 	int PlayingTime;
 	AHXSong Song;
 
-protected:
+//protected:
 	void ProcessStep(int v);
 	void ProcessFrame(int v);
 	void SetAudio(int v);

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "ahx/AHX.h"
 //#include "Debug.h"
@@ -106,9 +107,11 @@ int AHXPlayer::LoadSong(void* Buffer, int Len)
 	Song.InstrumentNr = SongBuffer[12];
 	Song.SubsongNr = SongBuffer[13];
 
+	int i;
+
 	// Subsongs //////////////////////////////////////////
 	Song.Subsongs = new int[Song.SubsongNr];
-	for(int i = 0; i < Song.SubsongNr; i++) {
+	for(i = 0; i < Song.SubsongNr; i++) {
 		if(SBPtr - SongBuffer > SongLength) return 0;
 		Song.Subsongs[i] = (SBPtr[0]<<8)|SBPtr[1];
 		SBPtr += 2;
@@ -185,6 +188,9 @@ int AHXPlayer::LoadSong(void* Buffer, int Len)
 			SBPtr += 4;
 		}
 	}
+
+	InitSubsong(0);
+
 	return 1;
 }
 
@@ -843,12 +849,13 @@ void AHXWaves::GenerateFilterWaveforms(char* Buffer, char* Low, char* High)
 		for(int waves = 0; waves < 6+6+0x20+1; waves++) {
 			float fre = (float)freq*1.25f/100.f;
 			float high, mid = 0.f, low = 0.f;
-			for(int i = 0; i <= LengthTable[waves]; i++) {
+			int i;
+			for(i = 0; i <= LengthTable[waves]; i++) {
 				high = a0[i] - mid - low; clip(&high);
 				mid += high*fre; clip(&mid);
 				low += mid*fre; clip(&low);
 			}
-			for(    i = 0; i <= LengthTable[waves]; i++) {
+			for(i = 0; i <= LengthTable[waves]; i++) {
 				high = a0[i] - mid - low; clip(&high);
 				mid += high*fre; clip(&mid);
 				low += mid*fre; clip(&low);
@@ -868,7 +875,8 @@ void AHXWaves::GenerateTriangle(char* Buffer, int Len)
 	int d4 = -(d2 >> 1);
 	char* edi = Buffer;
 	int eax = 0;
-	for(int ecx = 0; ecx < d5; ecx++) {
+	int ecx;
+	for(ecx = 0; ecx < d5; ecx++) {
 		*edi++ = eax;
 		eax += d1;
 	}
@@ -891,9 +899,11 @@ void AHXWaves::GenerateTriangle(char* Buffer, int Len)
 void AHXWaves::GenerateSquare(char* Buffer)
 {
 	char* edi = Buffer;
+	int ebx = 0;
 	for(int ebx = 1; ebx <= 0x20; ebx++) {
-		for(int ecx = 0; ecx < (0x40-ebx)*2; ecx++) *edi++ = 0x80;
-		for(    ecx = 0; ecx <       ebx *2; ecx++) *edi++ = 0x7f;
+		int ecx;
+		for(ecx = 0; ecx < (0x40-ebx)*2; ecx++) *edi++ = 0x80;
+		for(ecx = 0; ecx <       ebx *2; ecx++) *edi++ = 0x7f;
 	}
 }
 
@@ -909,6 +919,9 @@ void AHXWaves::GenerateSawtooth(char* Buffer, int Len)
 
 void AHXWaves::GenerateWhiteNoise(char* Buffer, int Len)
 {
+	// todo: Rewrite in C
+
+/*
 	__asm {
 		mov edi, Buffer
 		mov ecx, Len
@@ -933,7 +946,26 @@ weida:	inc edi
 		dec ecx
 		jnz loop0
 	}
+*/
 
+	/* Setup constants */
+	const static int q = 15;
+	const static float c1 = (1 << q) - 1;
+	const static float c2 = ((int)(c1 / 3)) + 1;
+	const static float c3 = 1.f / c1;
+
+	/* random number in range 0 - 1 not including 1 */
+	float random = 0.f;
+
+	/* the white noise */
+	float noise = 0.f;
+
+	for (int i = 0; i < Len; i++)
+	{
+		random = ((float)rand() / (float)(RAND_MAX + 1));
+		noise = (2.f * ((random * c2) + (random * c2) + (random * c2)) - 3.f * (c2 - 1.f)) * c3;
+		Buffer[i] = (char)(noise * 255.0f);
+	}
 }
 
 // AHXOutput ///////////////////////////////////////////////////////////////////////////////////////////////

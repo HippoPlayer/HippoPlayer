@@ -1,3 +1,8 @@
+
+int fisk = 0;
+
+#if 0
+
 #include <windows.h>
 #include <mmsystem.h>
 #include <process.h>
@@ -207,4 +212,7 @@ void AHXWaveOut::OutputBuffer(int num)
 int AHXWaveOut::CopyBuffer(void* lpBuffer, int* lpValid)
 {
 	return 0;
+
 }
+
+#endif
