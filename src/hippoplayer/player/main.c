@@ -15,11 +15,14 @@
 
 extern void HippoGui_drawClassic();
 static HippoAudioDevice g_audioDevices[64];
+extern HippoPlaybackPlugin* HivelyPlugin_getPlugin();
 
 struct MyData
 {
 	float sinWave;
 };
+
+/*
 
 static int readData(void* userData, void* dest, int size)
 {
@@ -34,6 +37,7 @@ static int readData(void* userData, void* dest, int size)
 
 	return size;
 }
+*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #if defined(HIPPO_WIN32)
@@ -61,11 +65,15 @@ int main()
 	struct MyData data;
 	data.sinWave = 0.0f;
 
-	HippoPlaybackPlugin plugin;
-	plugin.userData = &data;
-	plugin.readData = readData;
+	//HippoPlaybackPlugin plugin;
+	//plugin.userData = &data;
+	//plugin.readData = readData;
 
-	HippoAudio_openDefaultOutput(&plugin);
+	HippoPlaybackPlugin* plugin = HivelyPlugin_getPlugin();
+	plugin->create(plugin->userData);
+	plugin->open(plugin->userData, "songs/ahx/geir_tjelta_-_a_new_beginning.ahx");
+
+	HippoAudio_openDefaultOutput(plugin);
 
 	/*
 	HippoImage image;
