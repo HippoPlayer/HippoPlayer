@@ -10,6 +10,9 @@ Build {
 			Tools = { "clang-osx" },
 			Env = {
 				CPPDEFS = { "HIPPO_MACOSX" },
+				CPPOPTS = {
+					{ "-g", "-O0"; Config = "macosx-gcc-debug" },
+				},
 				CCOPTS = {
 					{ "-g", "-O0"; Config = "macosx-gcc-debug" },
 				},
