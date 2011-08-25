@@ -51,6 +51,8 @@ int HippoAudio_buildDeviceList(struct HippoAudioDevice* devices, size_t maxSize)
 	return theNumDevices;
 }
 
+uint32_t tempBuffer[8192];
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static OSStatus renderCallback(void* inRefCon, AudioUnitRenderActionFlags* inActionFlags,
@@ -58,10 +60,13 @@ static OSStatus renderCallback(void* inRefCon, AudioUnitRenderActionFlags* inAct
 							   UInt32 inNumFrames, AudioBufferList* ioData)
 
 {
-	HippoPlaybackPlugin* plugin = (HippoPlaybackPlugin*)inRefCon;
+	//memset(tempBuffer, 0, sizeof(tempBuffer));
 
-	for (UInt32 channel = 1; channel < ioData->mNumberBuffers; channel++)
-		plugin->readData(plugin->userData, ioData->mBuffers[channel].mData, inNumFrames);
+	HippoPlaybackPlugin* plugin = (HippoPlaybackPlugin*)inRefCon;
+	plugin->readData(plugin->userData, tempBuffer, inNumFrames);
+
+	for (UInt32 channel = 0; channel < ioData->mNumberBuffers; channel++)
+		memcpy(ioData->mBuffers[channel].mData, tempBuffer, inNumFrames * sizeof(uint16_t));
 
 	return noErr;
 }
@@ -95,11 +100,18 @@ void HippoAudio_openDefaultOutput(HippoPlaybackPlugin* plugin)
 							   0, &input, sizeof(input));
 	if (err) { printf ("AudioUnitSetProperty-CB=%d\n", err); return; }
 
-	Float64 sSampleRate = 48000;
+	Float64 sSampleRate = 44100;
 	SInt32 sNumChannels = 2;
 	UInt32 theFormatID = kAudioFormatLinearPCM;
-	int theFormatFlags =  kAudioFormatFlagsNativeFloatPacked | kAudioFormatFlagIsNonInterleaved;
-    int theBytesPerFrame = 4, theBytesInAPacket = 4, theBitsPerChannel = 32;
+	// 32 bit floats
+	//int theFormatFlags =  kAudioFormatFlagsNativeFloatPacked | kAudioFormatFlagIsNonInterleaved;
+    //int theBytesPerFrame = 4, theBytesInAPacket = 4, theBitsPerChannel = 32;
+
+	// 16 bits
+	SInt32 theFormatFlags =  kLinearPCMFormatFlagIsSignedInteger | kAudioFormatFlagsNativeEndian | 
+	                         kLinearPCMFormatFlagIsPacked | kAudioFormatFlagIsNonInterleaved;
+    int theBytesPerFrame = 2, theBytesInAPacket = 2, theBitsPerChannel = 16;    
+    
     
 	AudioStreamBasicDescription streamFormat;
 	streamFormat.mSampleRate = sSampleRate;     //  the sample rate of the audio stream
