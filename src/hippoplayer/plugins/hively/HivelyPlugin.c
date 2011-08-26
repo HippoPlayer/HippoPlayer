@@ -139,7 +139,7 @@ static HippoPlaybackPlugin g_hivelyPlugin =
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-HippoPlaybackPlugin* HivelyPlugin_getPlugin()
+HippoPlaybackPlugin* getPlugin()
 {
 	return &g_hivelyPlugin;
 }
