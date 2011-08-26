@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "core/file/HippoSharedObject.h"
 #include "audio/HippoAudio.h"
 #include "graphics/HippoWindow.h"
 #include "graphics/HippoImageLoader.h"
@@ -15,29 +16,6 @@
 
 extern void HippoGui_drawClassic();
 static HippoAudioDevice g_audioDevices[64];
-extern HippoPlaybackPlugin* HivelyPlugin_getPlugin();
-
-struct MyData
-{
-	float sinWave;
-};
-
-/*
-
-static int readData(void* userData, void* dest, int size)
-{
-	struct MyData* data = (struct MyData*)userData;
-	float* destOut = (float*)dest;
-
-	for (int i = 0; i < size; ++i)
-	{
-		data->sinWave += 0.01f;
-		*destOut++ = (float)sin(data->sinWave);
-	}
-
-	return size;
-}
-*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #if defined(HIPPO_WIN32)
@@ -62,18 +40,37 @@ int main()
 		printf("name %s id %p\n", g_audioDevices[i].name, g_audioDevices[i].deviceId);
 	}
 
-	struct MyData data;
-	data.sinWave = 0.0f;
+	HippoHandle handle = HippoSharedObject_open("../../src/tundra-output/macosx-gcc-debug-default/libHivelyPlugin.dylib");
+
+	if(!handle)
+	{
+		printf("Unable to open sharedlib\n");
+		return 0;
+	}
+	
+	void* function = HippoSharedObject_getSym(handle, "getPlugin");
+
+	if(!function)
+	{
+		printf("Unable to find getPlugin\n");
+		return 0;
+	}
+
+	void* (*funcPtr)();
+	*(void **)(&funcPtr) = function;
+	HippoPlaybackPlugin* plugin = (HippoPlaybackPlugin*)funcPtr();
+
+	printf("%p\n", plugin);
 
 	//HippoPlaybackPlugin plugin;
 	//plugin.userData = &data;
 	//plugin.readData = readData;
 
-	HippoPlaybackPlugin* plugin = HivelyPlugin_getPlugin();
-	plugin->create(plugin->userData);
-	plugin->open(plugin->userData, "songs/ahx/geir_tjelta_-_a_new_beginning.ahx");
+	//HippoPlaybackPlugin* plugin = HivelyPlugin_getPlugin();
+	//plugin->create(plugin->userData);
+	//plugin->open(plugin->userData, "songs/ahx/geir_tjelta_-_a_new_beginning.ahx");
 
-	HippoAudio_openDefaultOutput(plugin);
+	//HippoAudio_openDefaultOutput(plugin);
 
 	/*
 	HippoImage image;
