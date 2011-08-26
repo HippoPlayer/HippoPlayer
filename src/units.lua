@@ -14,9 +14,7 @@ StaticLibrary {
 	Sources = { "thirdparty/stb_image/stb_image.c" },
 }
 
--- A bit temporary but for testing now (should be a proper plugin later one)
-
-StaticLibrary {
+SharedLibrary {
 	Name = "HivelyPlugin",
 	Sources = { 
 		"hippoplayer/plugins/hively/HivelyPlugin.c", 
@@ -55,7 +53,7 @@ Program {
 		},
 	},
 
-	Depends = { "zlib", "lua", "stb_image", "HivelyPlugin" },
+	Depends = { "zlib", "lua", "stb_image" },
 }
 
 Default "player"
