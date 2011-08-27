@@ -50,8 +50,11 @@ extern HippoControlInfo g_controls[1024];
 extern uint32_t s_controlId;
 
 struct HippoImage;
+struct lua_State;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void HippoGui_registerLuaFunctions(struct lua_State* luaState);
 
 void HippoGui_reset();
 void HippoGui_begin();

@@ -6,6 +6,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <sys/syslimits.h>
+#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
 
 ///
 
@@ -242,6 +245,99 @@ void HippoGui_end()
 	}
 
 	HippoWindow_refresh();
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static int luaButtonImage(lua_State* luaState)
+{
+	const char* path = luaL_checkstring(luaState, 1);
+	int ret = HippoGui_buttonImage(path);
+	if (ret)
+		lua_pushnumber(luaState, 1);
+	else
+		lua_pushnil(luaState);
+
+
+	return 1;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static int luaFill(lua_State* luaState)
+{
+	uint32_t color = (uint32_t)luaL_checklong(luaState, 1);
+	int x = luaL_checkint(luaState, 2);
+	int y = luaL_checkint(luaState, 3);
+	int w = luaL_checkint(luaState, 4);
+	int h = luaL_checkint(luaState, 5);
+	HippoGui_fill(color, x, y, w, h);
+
+	return 1;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static int luaDrawBorder(lua_State* luaState)
+{
+	uint32_t color0 = (uint32_t)luaL_checklong(luaState, 1);
+	uint32_t color1 = (uint32_t)luaL_checklong(luaState, 2);
+	int x = luaL_checkint(luaState, 3);
+	int y = luaL_checkint(luaState, 4);
+	int w = luaL_checkint(luaState, 5);
+	int h = luaL_checkint(luaState, 6);
+	HippoGui_drawBorder(color0, color1, x, y, w, h);
+
+	return 1;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static int luaBeginHorizontalStackPanelXY(lua_State* luaState)
+{
+	int x = luaL_checkint(luaState, 1);
+	int y = luaL_checkint(luaState, 2);
+	HippoGui_beginHorizontalStackPanelXY(x, y);
+
+	return 1;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static int luaStaticImage(lua_State* luaState)
+{
+	const char* name = luaL_checkstring(luaState, 1);
+	HippoGui_staticImage(name);
+	return 0;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static const luaL_Reg uiLib[] =
+{
+	{ "buttonImage", luaButtonImage },
+	{ "fill", luaFill },
+	{ "drawBorder", luaDrawBorder },
+	{ "beginHorizontalStackPanelXY", luaBeginHorizontalStackPanelXY },
+	{ "staticImage", luaStaticImage },
+	{ 0, 0 },
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static int registerUiLib(lua_State* state)
+{
+	luaL_newlib(state, uiLib);
+	return 1;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void HippoGui_registerLuaFunctions(struct lua_State* luaState)
+{
+	luaL_requiref(luaState, "hippo_ui", registerUiLib, 1);
+    lua_pop(luaState, 1);  
 }
 
 
