@@ -26,7 +26,7 @@ Program {
 	Name = "player",
 
 	Env = {
-		CPPPATH = { "hippoplayer/player", "thirdparty" },
+		CPPPATH = { "hippoplayer/player", "thirdparty", "thirdparty/lua-5.2.0-beta/src"  },
 		PROGOPTS = {
 			{ "/SUBSYSTEM:WINDOWS", "/DEBUG"; Config = { "win32-*-*", "win64-*-*" } },
 		},
