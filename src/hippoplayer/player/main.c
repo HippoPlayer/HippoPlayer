@@ -9,6 +9,9 @@
 #include "plugin_api/HippoPlugin.h"
 #include "audio/HippoAudio.h"
 #include <math.h>
+#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
 
 #if defined(HIPPO_WIN32)
 #include <windows.h>
@@ -60,30 +63,27 @@ int main()
 	*(void **)(&funcPtr) = function;
 	HippoPlaybackPlugin* plugin = (HippoPlaybackPlugin*)funcPtr();
 
-	printf("%p\n", plugin);
+	plugin->create(plugin->userData);
+	plugin->open(plugin->userData, "songs/ahx/geir_tjelta_-_a_new_beginning.ahx");
+	HippoAudio_openDefaultOutput(plugin);
 
-	//HippoPlaybackPlugin plugin;
-	//plugin.userData = &data;
-	//plugin.readData = readData;
+	struct lua_State* luaState = luaL_newstate();
 
-	//HippoPlaybackPlugin* plugin = HivelyPlugin_getPlugin();
-	//plugin->create(plugin->userData);
-	//plugin->open(plugin->userData, "songs/ahx/geir_tjelta_-_a_new_beginning.ahx");
+	luaL_openlibs(luaState);
+	HippoGui_registerLuaFunctions(luaState);
 
-	//HippoAudio_openDefaultOutput(plugin);
-
-	/*
-	HippoImage image;
-
-	if (!HippoImageLoader_loadFile(&image, "test.png"))
+	if (luaL_loadfile(luaState, "skins/classic/ui.lua") || lua_pcall(luaState, 0, 0, 0) != 0)
 	{
-		printf("Failed to open %s\n", "test.png");
+		printf("Failed to load skins/classic/ui.lua\n");
+		return 0;
 	}
-	else
-	{
-		printf("0x%p %d %d %d\n", image.data, image.width, image.height, image.comp);
-	}
-	*/
+
+	// call the creation code
+
+	lua_getglobal(luaState, "create");
+	lua_pcall(luaState, 0, 0, 0);
+
+	//lua_state* state = lua_load(state, "skins/ui.lua");
 
 	rect.x = 50;
 	rect.y = 50;
@@ -95,9 +95,16 @@ int main()
 
 	while (!HippoWindow_isClosed())
 	{
+		HippoGui_begin();
+		lua_getglobal(luaState, "update");
+		lua_call(luaState, 0, 0);
 		HippoGui_drawClassic();
+		HippoGui_end();
 		HippoWindow_updateEvents();
 	}
+
+	lua_getglobal(luaState, "destroy");
+	lua_pcall(luaState, 0, 0, 0);
 
 	HippoAudio_close();
 
