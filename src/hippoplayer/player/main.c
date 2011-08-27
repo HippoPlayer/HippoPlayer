@@ -98,7 +98,6 @@ int main()
 		HippoGui_begin();
 		lua_getglobal(luaState, "update");
 		lua_call(luaState, 0, 0);
-		HippoGui_drawClassic();
 		HippoGui_end();
 		HippoWindow_updateEvents();
 	}
