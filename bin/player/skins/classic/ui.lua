@@ -24,7 +24,9 @@ function update()
 
 	-- top row of buttons
 	hippo_ui.beginHorizontalStackPanelXY(0, 0)
-	  hippo_ui.staticImage("skins/classic/close.png")
+	  if hippo_ui.buttonImage("skins/classic/close.png") then
+	  	hippo.quit()
+	  end
 	  hippo_ui.staticImage("skins/classic/upper_bar.png")
 	  hippo_ui.staticImage("skins/classic/hide.png")
 	  hippo_ui.staticImage("skins/classic/minimize.png")
