@@ -81,6 +81,8 @@ struct LoadedImages
 void HippoGui_reset()
 {
 	memset(&g_loadedImages, 0, sizeof(struct LoadedImages)); // not really needed but good when debugging
+	g_hippoGuiState.mousex = -1;
+	g_hippoGuiState.mousey = -1; 
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -213,6 +215,13 @@ void HippoGui_staticImage(const char* filename)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void highlightControl(HippoControlInfo* control)
+{
+	HippoGui_fill(0xb0ffffff, control->x, control->y, control->width, control->height);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 bool HippoGui_buttonImage(const char* filename)
 {
 	HippoControlInfo* control;
@@ -230,6 +239,8 @@ bool HippoGui_buttonImage(const char* filename)
 		g_hippoGuiState.hotItem = controlId;
     	if (g_hippoGuiState.activeItem == 0 && g_hippoGuiState.mouseDown)
       		g_hippoGuiState.activeItem = controlId;
+
+   		highlightControl(control);
 	}
 
 	if (g_hippoGuiState.mouseDown == 0 && g_hippoGuiState.hotItem == controlId && g_hippoGuiState.activeItem == controlId)
@@ -268,7 +279,7 @@ static int luaButtonImage(lua_State* luaState)
 	else
 		lua_pushnil(luaState);
 
-	return 0;
+	return 1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
