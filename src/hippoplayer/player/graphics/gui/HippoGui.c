@@ -5,10 +5,16 @@
 #include <graphics/HippoWindow.h>
 #include <string.h>
 #include <stdio.h>
-#include <sys/syslimits.h>
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
+
+#if defined(HIPPO_MACOSX)
+#include <sys/syslimits.h>
+#else
+// TODO: Include correct path
+#define PATH_MAX 1024
+#endif
 
 ///
 
@@ -23,15 +29,17 @@ uint32_t s_controlId;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+enum GuiPlacementState
+{
+	PLACEMENTSTATE_NONE,
+	PLACEMENTSTATE_HORIZONAL,
+	PLACEMENTSTATE_VERTICAL,
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 typedef struct GuiPlacementInfo
 {
-	enum GuiPlacementState
-	{
-		PLACEMENTSTATE_NONE,
-		PLACEMENTSTATE_HORIZONAL,
-		PLACEMENTSTATE_VERTICAL,
-	};
-
 	enum GuiPlacementState state;
 	int x;
 	int y;
@@ -79,13 +87,14 @@ void HippoGui_reset()
 
 static HippoImage* loadImage(const char* filename)
 {
+	uint32_t i;
 	uint32_t index = g_loadedImages.count;
 
 	HIPPO_ASSERT(filename);
 
 	// TODO: Hash filenames?
 
-	for (uint i = 0; i != index; ++i)
+	for (i = 0; i != index; ++i)
 	{
 		if (!strcmp(filename, g_loadedImages.filename[i]))
 			return &g_loadedImages.image[i];
