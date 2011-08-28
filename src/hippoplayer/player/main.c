@@ -26,16 +26,19 @@ extern HINSTANCE g_winInstance;
 
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow)
 {
+	struct lua_State* luaState; 
 	HippoWindowRect rect;
 	struct HippoWindow* window;
 	g_winInstance = hInstance;
 #else
 int main()
 {
+	struct lua_State* luaState; 
 	HippoWindowRect rect;
 	struct HippoWindow* window;
 #endif
 
+	/*
 	int deviceCount = HippoAudio_buildDeviceList(g_audioDevices, 64);
 
 	for (int i = 0; i < deviceCount; ++i)
@@ -66,8 +69,9 @@ int main()
 	plugin->create(plugin->userData);
 	plugin->open(plugin->userData, "songs/ahx/geir_tjelta_-_a_new_beginning.ahx");
 	HippoAudio_openDefaultOutput(plugin);
+	*/
 
-	struct lua_State* luaState = luaL_newstate();
+	luaState = luaL_newstate();
 
 	luaL_openlibs(luaState);
 	HippoGui_registerLuaFunctions(luaState);
@@ -82,8 +86,6 @@ int main()
 
 	lua_getglobal(luaState, "create");
 	lua_pcall(luaState, 0, 0, 0);
-
-	//lua_state* state = lua_load(state, "skins/ui.lua");
 
 	rect.x = 50;
 	rect.y = 50;
@@ -105,7 +107,7 @@ int main()
 	lua_getglobal(luaState, "destroy");
 	lua_pcall(luaState, 0, 0, 0);
 
-	HippoAudio_close();
+	//HippoAudio_close();
 
 	return 0;
 }
