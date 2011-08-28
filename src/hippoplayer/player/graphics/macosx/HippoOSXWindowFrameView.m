@@ -16,7 +16,11 @@
 #include "graphics/HippoImageLoader.h"
 #include "graphics/gui/HippoGui.h"
 #include "core/debug/Assert.h"
+#include "core/HippoLua.h"
 #include <ApplicationServices/ApplicationServices.h>
+#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
 
 @implementation HippoOSXWindowFrameView
 
@@ -61,6 +65,8 @@
 
 	g_hippoGuiState.mousex = (int)location.x; 
 	g_hippoGuiState.mousey = (int)originalFrame.size.height - (int)location.y; 
+
+	HippoLua_updateScript();
 }
 
 static NSPoint s_prevDragPos;
@@ -91,6 +97,7 @@ static NSPoint s_prevDragPos;
 {
 	printf("mouse up\n");
 	g_hippoGuiState.mouseDown = 0;
+	HippoLua_updateScript();
 }
 
 //
@@ -100,8 +107,6 @@ static NSPoint s_prevDragPos;
 //	- click in the resize box should resize the window
 //	- click anywhere else will drag the window.
 //
-
-
 
 - (void)mouseDown:(NSEvent *)event
 {
@@ -118,40 +123,7 @@ static NSPoint s_prevDragPos;
 
 	g_hippoGuiState.mouseDown = 1;
 
-	/*
-    //while (YES)
-	{
-		//
-		// Lock focus and take all the dragged and mouse up events until we
-		// receive a mouse up.
-		//
-		//
-        NSEvent *newEvent = [window
-			nextEventMatchingMask:(NSLeftMouseDraggedMask | NSLeftMouseUpMask)];
-		
-        if ([newEvent type] == NSLeftMouseUp)
-		{
-			g_hippoGuiState.mouseDown = 0;
-			break;
-		}
-		
-		//
-		// Work out how much the mouse has moved
-		//
-
-		NSPoint newMouseLocation = [window convertBaseToScreen:[newEvent locationInWindow]];
-		NSPoint delta = NSMakePoint(
-			newMouseLocation.x - originalMouseLocation.x,
-			newMouseLocation.y - originalMouseLocation.y);
-		
-		NSRect newFrame = originalFrame;
-		
-		newFrame.origin.x += delta.x;
-		newFrame.origin.y += delta.y;
-		
-		[window setFrame:newFrame display:YES animate:NO];
-	}
-	*/
+	HippoLua_updateScript();
 }
 
 //
@@ -191,7 +163,7 @@ static NSPoint s_prevDragPos;
 										((color >> 16) & 0xff) * 1.0f / 255.f, 
 										((color >> 8) & 0xff) * 1.0f / 255.f, 
 										((color >> 0) & 0xff) * 1.0f / 255.f, 
-										1.0);
+										1.0f - ((color >> 24) & 0xff) * 1.0f / 255.f);
 				CGContextFillRect(context, CGRectMake(control->x, y_pos, control->width, control->height));
 				break;
 			}
