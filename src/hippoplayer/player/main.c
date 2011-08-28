@@ -18,7 +18,7 @@
 #endif
 
 extern void HippoGui_drawClassic();
-static HippoAudioDevice g_audioDevices[64];
+//static HippoAudioDevice g_audioDevices[64];
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #if defined(HIPPO_WIN32)
