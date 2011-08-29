@@ -38,7 +38,7 @@ function update()
 	  end
 
 	  if hippo_ui.buttonImage("skins/classic/open.png") then
-		print("open!")
+	  	hippo.openFileDialog()
 	  end
 
 end

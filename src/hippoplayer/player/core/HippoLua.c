@@ -1,4 +1,5 @@
 #include "HippoLua.h"
+#include "core/file/macosx/HippoFile.h"
 #include "graphics/gui/HippoGui.h"
 #include <lua.h>
 #include <lauxlib.h>
@@ -28,8 +29,26 @@ static int luaQuit()
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static int luaOpenFileDialog(lua_State* luaState)
+{
+	char filename[1024];
+
+	int ret = HippoFile_openDialog(filename, sizeof(filename));
+
+	if (ret)
+		lua_pushstring(luaState, filename);
+	
+	else
+		lua_pushnil(luaState);
+
+	return 1;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static const luaL_Reg hippoLib[] =
 {
+	{ "openFileDialog", luaOpenFileDialog },
 	{ "quit", luaQuit },
 	{ 0, 0 },
 };
