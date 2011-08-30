@@ -163,6 +163,22 @@ void HippoGui_fill(uint32_t color, int x, int y, int w, int h)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void HippoGui_textLabel(int x, int y, const char* text)
+{
+	uint32_t controlId = 0;
+	HippoControlInfo* control = 0; 
+
+	// Setup the control
+	controlId = s_controlId++;
+	control = &g_controls[controlId];
+	control->type = DRAWTYPE_TEXT;
+	control->x = x;
+	control->y = y;
+	control->text = (char*)text;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static uint32_t genericImageControl(const char* filename)
 {
 	uint32_t controlId = 0;

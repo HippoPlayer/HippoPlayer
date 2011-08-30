@@ -15,6 +15,7 @@
 #import "HippoOSXWindowFrameView.h"
 #include "graphics/HippoImageLoader.h"
 #include "graphics/gui/HippoGui.h"
+#include "graphics/gui/HippoFont.h"
 #include "core/debug/Assert.h"
 #include "core/HippoLua.h"
 #include <ApplicationServices/ApplicationServices.h>
@@ -126,6 +127,64 @@ static NSPoint s_prevDragPos;
 	HippoLua_updateScript();
 }
 
+extern HippoBitmapFont g_microknightFont;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void drawText(CGContextRef context, HippoControlInfo* control, int y_pos)
+{
+	// this will be a bit hacky
+
+	if (!g_microknightFont.userData)
+	{
+		uint32_t* tempColorData;
+		uint32_t* colorData = tempColorData = (uint32_t*)malloc(256 * 128 * 4);
+		const uint8_t* data = g_microknightFont.fontData; 
+
+		// Build new texture
+
+		for (uint32_t i = 0; i < 256 * 128; ++i)
+		{
+			uint32_t color = *data++;
+
+			if (color)
+				*tempColorData++ = 0x00ff00ff; 
+			else
+				*tempColorData++ = 0; 
+		}
+
+		CGColorSpaceRef space = CGColorSpaceCreateDeviceRGB();
+		CGDataProviderRef provider = CGDataProviderCreateWithData(NULL, colorData, 256 * 128 * 4, NULL);
+
+		CGImageRef img = CGImageCreate(256, 128, 8, 32, 256 * 4, space, kCGImageAlphaNoneSkipFirst, provider, NULL, false, kCGRenderingIntentDefault);
+
+		g_microknightFont.userData = (void*)img; 
+		CGColorSpaceRelease(space);
+		CGDataProviderRelease(provider);
+	}
+
+	CGImageRef img = g_microknightFont.userData;
+	const HippoMonoFontlayout* fontLayout = g_microknightFont.layOut;
+	const int charOffset = g_microknightFont.firstCharOffset; 
+
+	const char* text = control->text; 
+	char c = *text++;
+	int x = control->x;
+
+	while (c != 0)
+	{
+		int offset = c - charOffset; 
+		int xo = fontLayout[offset].x;
+		int yo = fontLayout[offset].y;
+
+		CGImageRef letter = CGImageCreateWithImageInRect(img, CGRectMake(xo, yo, 8, 16));
+
+		CGContextDrawImage(context, CGRectMake(x, y_pos, 8, 16), letter); 
+		c = *text++;
+		x += 8;
+	}
+}
+
 //
 // drawRect:
 //
@@ -140,12 +199,6 @@ static NSPoint s_prevDragPos;
 	uint32_t controlCount = s_controlId; 
 	HippoControlInfo* controls = (HippoControlInfo*)&g_controls;
 
-	// Some hacky text drawing for testing
-
-	float w, h;
-    w = 200;
-    h = 100;
- 
 	for (uint i = 0; i < controlCount; ++i)
 	{
 		HippoControlInfo* control = &g_controls[i]; 
@@ -165,6 +218,14 @@ static NSPoint s_prevDragPos;
 										((color >> 0) & 0xff) * 1.0f / 255.f, 
 										1.0f - ((color >> 24) & 0xff) * 1.0f / 255.f);
 				CGContextFillRect(context, CGRectMake(control->x, y_pos, control->width, control->height));
+				break;
+			}
+
+			// this will be hacky
+
+			case DRAWTYPE_TEXT :
+			{
+				drawText(context, control, y_pos);
 				break;
 			}
 
@@ -198,11 +259,13 @@ static NSPoint s_prevDragPos;
 		}
 	}
 
+	/*
     CGContextSelectFont(context, "Monaco", 10, kCGEncodingMacRoman);
     CGContextSetCharacterSpacing (context, 1); 
     CGContextSetTextDrawingMode (context, kCGTextFill); 
     CGContextSetRGBFillColor(context, 0, 0, 0, 1); 
     CGContextShowTextAtPoint(context, 10, 110, "HippoPlayer 3.00 by Daniel Collin", 33); 
+    */
 }
 
 @end
