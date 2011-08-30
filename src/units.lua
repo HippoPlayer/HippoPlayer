@@ -1,24 +1,9 @@
 
-StaticLibrary {
-	Name = "zlib",
-	Sources = { Glob { Dir = "thirdparty/zlib-1.2.5", Extensions = { ".c" } } },
-}
-
-StaticLibrary {
-	Name = "lua",
-	Sources = { Glob { Dir = "thirdparty/lua-5.2.0-beta", Extensions = { ".c" } } },
-}
-
-StaticLibrary {
-	Name = "stb_image",
-	Sources = { "thirdparty/stb_image/stb_image.c" },
-}
-
 SharedLibrary {
 	Name = "HivelyPlugin",
 	Sources = { 
-		"hippoplayer/plugins/hively/HivelyPlugin.c", 
-		"hippoplayer/plugins/hively/replayer/hvl_replay.c"
+		"plugins/hively/HivelyPlugin.c", 
+		"plugins/hively/replayer/hvl_replay.c"
 	},
 }
 
@@ -26,7 +11,7 @@ Program {
 	Name = "player",
 
 	Env = {
-		CPPPATH = { "hippoplayer/player", "thirdparty", "thirdparty/lua-5.2.0-beta/src"  },
+		CPPPATH = { "hippoplayer", "hippoplayer/thirdparty", "hippoplayer/thirdparty/lua-5.2.0-beta/src"  },
 		PROGOPTS = {
 			{ "/SUBSYSTEM:WINDOWS", "/DEBUG"; Config = { "win32-*-*", "win64-*-*" } },
 		},
@@ -44,7 +29,7 @@ Program {
 
 	Sources = { 
 		FGlob {
-			Dir = "hippoplayer/player",
+			Dir = "hippoplayer",
 			Extensions = { ".c", ".m" },
 			Filters = {
 				{ Pattern = "windows"; Config = "win32-*-*" },
@@ -53,7 +38,7 @@ Program {
 		},
 	},
 
-	Depends = { "zlib", "lua", "stb_image" },
+	-- Depends = { "zlib", "lua", "stb_image" },
 }
 
 Default "player"

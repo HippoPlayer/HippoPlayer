@@ -4,6 +4,8 @@
 ** See Copyright Notice in lua.h
 */
 
+#if 0
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -431,3 +433,5 @@ static void PrintFunction(const Proto* f, int full)
  if (full) PrintDebug(f);
  for (i=0; i<n; i++) PrintFunction(f->p[i],full);
 }
+
+#endif

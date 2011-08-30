@@ -4,6 +4,9 @@
  */
 
 #include "gzguts.h"
+#if defined(HIPPO_MACOSX)
+#include <unistd.h>
+#endif
 
 /* Local functions */
 local int gz_load OF((gz_statep, unsigned char *, unsigned, unsigned *));
@@ -167,12 +170,12 @@ local int gz_head(state)
                 gz_error(state, Z_DATA_ERROR, "unknown header flags set");
                 return -1;
             }
-            NEXT();                 /* modification time */
-            NEXT();
-            NEXT();
-            NEXT();
-            NEXT();                 /* extra flags */
-            NEXT();                 /* operating system */
+            (void)NEXT();                 /* modification time */
+            (void)NEXT();
+            (void)NEXT();
+            (void)NEXT();
+            (void)NEXT();                 /* extra flags */
+            (void)NEXT();                 /* operating system */
             if (flags & 4) {        /* extra field */
                 len = (unsigned)NEXT();
                 len += (unsigned)NEXT() << 8;
@@ -187,8 +190,8 @@ local int gz_head(state)
                 while (NEXT() > 0)
                     ;
             if (flags & 2) {        /* header crc */
-                NEXT();
-                NEXT();
+                (void)NEXT();
+                (void)NEXT();
             }
             /* an unexpected end of file is not checked for here -- it will be
                noticed on the first request for uncompressed data */
