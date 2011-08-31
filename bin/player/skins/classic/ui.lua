@@ -18,6 +18,11 @@ function update()
 	hippo_ui.drawBorder(0x00ffffff, 0x00000000, 25, 65, 224, 67)
 	hippo_ui.fill(0x00aaaaaa, 26, 66, 157, 67)
 
+	--
+	hippo_ui.beginVerticalStackPanelXY(10, 24)
+	  hippo_ui.textLabel("HippoPlayer X 0.1");
+	  hippo_ui.textLabel("Coded by Daniel Collin");
+
 	-- todo: Add support for staticImage with coords
 	hippo_ui.beginHorizontalStackPanelXY(158, 66)
 	  hippo_ui.staticImage("skins/classic/hippo.png")
