@@ -14,9 +14,6 @@ void HippoLua_updateScript()
 	HippoGui_begin();
 	lua_getglobal(g_luaState, "update");
 	lua_pcall(g_luaState, 0, 0, 0);
-
-	HippoGui_textLabel(10, 30, "Testing!");
-
 	HippoGui_end();
 }
 
