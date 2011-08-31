@@ -1,5 +1,5 @@
 #include "HippoLua.h"
-#include "core/file/macosx/HippoFile.h"
+#include "core/file/HippoFile.h"
 #include "graphics/gui/HippoGui.h"
 #include <lua.h>
 #include <lauxlib.h>
@@ -24,7 +24,7 @@ void HippoLua_updateScript()
 
 extern void Hippo_quit();
 
-static int luaQuit()
+static int luaQuit(lua_State* luaState)
 {
 	Hippo_quit();
 	return 0;
