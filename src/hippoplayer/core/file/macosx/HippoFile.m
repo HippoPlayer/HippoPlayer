@@ -1,4 +1,4 @@
-#include "HippoFile.h"
+#include "../HippoFile.h"
 #include <string.h>
 #import <Cocoa/Cocoa.h>
 
