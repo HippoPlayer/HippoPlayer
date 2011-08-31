@@ -62,6 +62,15 @@ void HippoGui_beginHorizontalStackPanelXY(int x, int y)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void HippoGui_beginVerticalStackPanelXY(int x, int y)
+{
+	g_placementInfo.state = PLACEMENTSTATE_VERTICAL;
+	g_placementInfo.x = x;
+	g_placementInfo.y = y;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void HippoGui_begin()
 {
 	s_controlId = 1;
@@ -117,6 +126,14 @@ static HippoImage* loadImage(const char* filename)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void updatePlacement()
+{
+
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 bool HippoGui_regionHit(const HippoControlInfo* control)
 {
 	//printf("%d %d\n", g_hippoGuiState.mousex, g_hippoGuiState.mousey);  
@@ -163,7 +180,7 @@ void HippoGui_fill(uint32_t color, int x, int y, int w, int h)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void HippoGui_textLabel(int x, int y, const char* text)
+void HippoGui_textLabelXY(const char* text, int x, int y)
 {
 	uint32_t controlId = 0;
 	HippoControlInfo* control = 0; 
@@ -175,6 +192,42 @@ void HippoGui_textLabel(int x, int y, const char* text)
 	control->x = x;
 	control->y = y;
 	control->text = (char*)text;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void HippoGui_textLabel(const char* text)
+{
+	uint32_t controlId = 0;
+	HippoControlInfo* control = 0; 
+
+	// Setup the control
+	controlId = s_controlId++;
+	control = &g_controls[controlId];
+	control->type = DRAWTYPE_TEXT;
+	control->x = g_placementInfo.x;
+	control->y = g_placementInfo.y; 
+	control->text = (char*)text;
+
+	switch (g_placementInfo.state)
+	{
+		case PLACEMENTSTATE_NONE :
+		{
+			break;
+		}
+
+		case PLACEMENTSTATE_HORIZONAL :
+		{
+			g_placementInfo.x += strlen(text) * 9;	// TODO: fix me, calculate correct using fontfuncs
+			break;
+		}
+
+		case PLACEMENTSTATE_VERTICAL :
+		{
+			g_placementInfo.y += 9; // TODO: Use correct size from font
+			break;
+		}
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -198,6 +251,8 @@ static uint32_t genericImageControl(const char* filename)
 	control->width = image->width;
 	control->height = image->height;
 	control->imageData = image; 
+
+	updatePlacement();
 
 	switch (g_placementInfo.state)
 	{
@@ -283,6 +338,14 @@ void HippoGui_end()
 	HippoWindow_refresh();
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static int luaTextLabel(lua_State* luaState)
+{
+	const char* text = luaL_checkstring(luaState, 1);
+	HippoGui_textLabel(text);
+	return 0;
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -340,6 +403,18 @@ static int luaBeginHorizontalStackPanelXY(lua_State* luaState)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static int luaBeginVerticalStackPanelXY(lua_State* luaState)
+{
+	int x = luaL_checkint(luaState, 1);
+	int y = luaL_checkint(luaState, 2);
+	HippoGui_beginVerticalStackPanelXY(x, y);
+
+	return 0;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static int luaStaticImage(lua_State* luaState)
 {
 	const char* name = luaL_checkstring(luaState, 1);
@@ -351,9 +426,11 @@ static int luaStaticImage(lua_State* luaState)
 
 static const luaL_Reg uiLib[] =
 {
+	{ "textLabel", luaTextLabel },
 	{ "buttonImage", luaButtonImage },
 	{ "fill", luaFill },
 	{ "drawBorder", luaDrawBorder },
+	{ "beginVerticalStackPanelXY", luaBeginVerticalStackPanelXY },
 	{ "beginHorizontalStackPanelXY", luaBeginHorizontalStackPanelXY },
 	{ "staticImage", luaStaticImage },
 	{ 0, 0 },

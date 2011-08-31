@@ -76,7 +76,8 @@ void HippoGui_beginHorizontalStackPanel();
 void HippoGui_staticImage(const char* filename);
 void HippoGui_fill(uint32_t color, int x, int y, int w, int h);
 void HippoGui_drawBorder(uint32_t color0, uint32_t color1, int x, int y, int w, int h);
-void HippoGui_textLabel(int x, int y, const char* text);
+void HippoGui_textLabelXY(const char* text, int x, int y);
+void HippoGui_textLabel(const char* text);
 
 bool HippoGui_buttonCoords(const char* text, int x, int y);
 bool HippoGui_buttonCoordsImage(const char* text, int x, int y);
