@@ -138,25 +138,32 @@ void drawText(CGContextRef context, HippoControlInfo* control, int y_pos)
 	if (!g_microknightFont.userData)
 	{
 		uint32_t* tempColorData;
-		uint32_t* colorData = tempColorData = (uint32_t*)malloc(256 * 128 * 4);
+		uint32_t* colorData = tempColorData = (uint32_t*)malloc(128 * 128 * 4);
 		const uint8_t* data = g_microknightFont.fontData; 
 
 		// Build new texture
 
-		for (uint32_t i = 0; i < 256 * 128; ++i)
-		{
-			uint32_t color = *data++;
+		const uint32_t fontColor = 0xff000000;
 
-			if (color)
-				*tempColorData++ = 0x00ff00ff; 
-			else
-				*tempColorData++ = 0; 
+		for (uint32_t i = 0; i < 128 * 128; ++i)
+		{
+			uint8_t color = *data++;
+			// font data is packed as 1 bit per pixel
+			*tempColorData++ = ((color >> 7) & 1) ? fontColor : 0;
+			*tempColorData++ = ((color >> 6) & 1) ? fontColor : 0;
+			*tempColorData++ = ((color >> 5) & 1) ? fontColor : 0;
+			*tempColorData++ = ((color >> 4) & 1) ? fontColor : 0;
+			*tempColorData++ = ((color >> 3) & 1) ? fontColor : 0;
+			*tempColorData++ = ((color >> 2) & 1) ? fontColor : 0;
+			*tempColorData++ = ((color >> 1) & 1) ? fontColor : 0;
+			*tempColorData++ = ((color >> 0) & 1) ? fontColor : 0;
 		}
 
 		CGColorSpaceRef space = CGColorSpaceCreateDeviceRGB();
-		CGDataProviderRef provider = CGDataProviderCreateWithData(NULL, colorData, 256 * 128 * 4, NULL);
+		CGDataProviderRef provider = CGDataProviderCreateWithData(NULL, colorData, 128 * 128 * 4, NULL);
 
-		CGImageRef img = CGImageCreate(256, 128, 8, 32, 256 * 4, space, kCGImageAlphaNoneSkipFirst, provider, NULL, false, kCGRenderingIntentDefault);
+		CGImageRef img = CGImageCreate(128, 128, 8, 32, 128 * 4, space, kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Host, 
+									   provider, NULL, false, kCGRenderingIntentDefault);
 
 		g_microknightFont.userData = (void*)img; 
 		CGColorSpaceRelease(space);
@@ -177,9 +184,9 @@ void drawText(CGContextRef context, HippoControlInfo* control, int y_pos)
 		int xo = fontLayout[offset].x;
 		int yo = fontLayout[offset].y;
 
-		CGImageRef letter = CGImageCreateWithImageInRect(img, CGRectMake(xo, yo, 8, 16));
+		CGImageRef letter = CGImageCreateWithImageInRect(img, CGRectMake(xo, yo, 8, 8));
 
-		CGContextDrawImage(context, CGRectMake(x, y_pos, 8, 16), letter); 
+		CGContextDrawImage(context, CGRectMake(x, y_pos, 8, 8), letter); 
 		c = *text++;
 		x += 8;
 	}
