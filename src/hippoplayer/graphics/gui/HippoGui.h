@@ -71,6 +71,12 @@ void HippoGui_beginVerticalStackPanel();
 void HippoGui_beginHorizontalStackPanel();
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Not really a GUI function per see but will do for now
+
+void Hippo_addToPlaylist(const char* filename);
+const char** Hippo_getPlaylistFiles(int* count, uint32_t offset);
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Different controlls and gui functions
 
 void HippoGui_staticImage(const char* filename);

@@ -8,9 +8,6 @@ end
 
 -- update is called each time the UI needs to be (re)drawn 
 
-foo = "test2 2 2"
-t = { }
-
 function update()
 
 	-- clear the whole area
@@ -22,9 +19,9 @@ function update()
 	hippo_ui.fill(0x00aaaaaa, 26, 66, 157, 67)
 
 	--
-	hippo_ui.beginVerticalStackPanelXY(10, 24)
-	  hippo_ui.textLabel("HippoPlayer X 0.1");
-	  hippo_ui.textLabel("Coded by Daniel Collin");
+	--hippo_ui.beginVerticalStackPanelXY(10, 24)
+	--  hippo_ui.textLabel("HippoPlayer X 0.1");
+	 -- hippo_ui.textLabel("Coded by Daniel Collin");
 
 	-- top row of buttons
 	hippo_ui.beginHorizontalStackPanelXY(0, 0)
@@ -42,18 +39,28 @@ function update()
 	  end
 
 	  if hippo_ui.buttonImage("skins/classic/open.png") then
-		file = hippo.openFileDialog()
-		if file then
-			table.insert(t, file)
-			print(file)
+		files = hippo.openFileDialog()
+		if files then
+			hippo.addToPlaylist(files)
 		end
 	  end
 
+	files = hippo.getPlaylistFiles(0)
+
 	-- todo: Add support for staticImage with coords
 	hippo_ui.beginHorizontalStackPanelXY(158, 66)
-		if # t == 0 then
+		if files == nil then
 			hippo_ui.staticImage("skins/classic/hippo.png")
 		end
+
+	-- Do the listbox here
+	hippo_ui.beginVerticalStackPanelXY(20, 70)
+	if files then
+		for i,v in ipairs(files) do 
+	  		hippo_ui.textLabel(v);
+		end
+	end
+
 
 	-- hippo_ui.listBoxXY(25, 56, 244, 64, t)
 

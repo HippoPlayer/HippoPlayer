@@ -53,6 +53,31 @@ HippoControlInfo g_controls[MAX_CONTROLS];
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static uint32_t g_playlistFiles = 0;
+static const char* s_playlistEntries[2048];	// remove fixed limit
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void Hippo_addToPlaylist(const char* filename)
+{
+	HIPPO_ASSERT(g_playlistFiles < 2048);
+	uint32_t index = g_playlistFiles++;
+	s_playlistEntries[index] = strdup(filename);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const char** Hippo_getPlaylistFiles(int* count, uint32_t offset)
+{
+	if (offset >= g_playlistFiles)
+		return 0;
+	
+	*count = g_playlistFiles - offset;
+	return (const char**)&s_playlistEntries[offset];
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void HippoGui_beginHorizontalStackPanelXY(int x, int y)
 {
 	g_placementInfo.state = PLACEMENTSTATE_HORIZONAL;
@@ -207,6 +232,8 @@ void HippoGui_textLabel(const char* text)
 	control->type = DRAWTYPE_TEXT;
 	control->x = g_placementInfo.x;
 	control->y = g_placementInfo.y; 
+	control->width = 0;
+	control->height = 9; 
 	control->text = (char*)text;
 
 	switch (g_placementInfo.state)
@@ -286,10 +313,12 @@ void HippoGui_staticImage(const char* filename)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/*
 static void highlightControl(HippoControlInfo* control)
 {
 	HippoGui_fill(0xb0ffffff, control->x, control->y, control->width, control->height);
 }
+*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -311,7 +340,7 @@ bool HippoGui_buttonImage(const char* filename)
     	if (g_hippoGuiState.activeItem == 0 && g_hippoGuiState.mouseDown)
       		g_hippoGuiState.activeItem = controlId;
 
-   		highlightControl(control);
+   		//highlightControl(control);
 	}
 
 	if (g_hippoGuiState.mouseDown == 0 && g_hippoGuiState.hotItem == controlId && g_hippoGuiState.activeItem == controlId)

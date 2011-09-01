@@ -46,8 +46,48 @@ static int luaOpenFileDialog(lua_State* luaState)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static int luaAddToPlaylist(lua_State* luaState)
+{
+	const char* filename = luaL_checkstring(luaState, 1);
+	Hippo_addToPlaylist(filename);
+	return 0;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static int luaGetPlaylistFiles(lua_State* luaState)
+{
+	int count;
+	int offset = (uint32_t)luaL_checkint(luaState, 1);
+
+	const char** files = Hippo_getPlaylistFiles(&count, offset);
+
+	if (!files)
+	{
+		lua_pushnil(luaState);
+		return 1;
+	}
+
+	lua_newtable(luaState);
+	int top = lua_gettop(luaState);
+
+	for (int i = 0; i < count; ++i)
+	{
+		const char* value = files[i]; 
+		lua_pushnumber(luaState, i + 1);
+		lua_pushstring(luaState, value);
+		lua_settable(luaState, top);
+	}
+
+	return 1;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static const luaL_Reg hippoLib[] =
 {
+	{ "addToPlaylist", luaAddToPlaylist },
+	{ "getPlaylistFiles", luaGetPlaylistFiles },
 	{ "openFileDialog", luaOpenFileDialog },
 	{ "quit", luaQuit },
 	{ 0, 0 },
