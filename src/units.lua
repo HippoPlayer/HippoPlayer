@@ -22,7 +22,7 @@ Program {
 	},
 
 	Libs = { 
-		{ "user32.lib", "Comdlg32.lib", "imm32.lib", "gdi32.lib", "ole32.lib", "version.lib", "shell32.lib", "Winmm.lib"; Config = "win*-*-*" }, 
+		{ "user32.lib", "Msimg32.lib", "Comdlg32.lib", "imm32.lib", "gdi32.lib", "ole32.lib", "version.lib", "shell32.lib", "Winmm.lib"; Config = "win*-*-*" }, 
 	},
 
 	Frameworks = { "Cocoa", "AudioUnit", "AudioToolbox", "CoreAudio" },

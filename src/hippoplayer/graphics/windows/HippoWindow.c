@@ -1,7 +1,8 @@
 #include "../HippoWindow.h"
-#include <core/memory/LinearAllocator.h>
-#include <core/debug/Assert.h>
-#include <graphics/gui/HippoGui.h>
+#include "core/memory/LinearAllocator.h"
+#include "core/debug/Assert.h"
+#include "graphics/gui/HippoGui.h"
+#include "graphics/gui/HippoFont.h"
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -24,15 +25,128 @@ int isRunning = true;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void updateWindow(HippoWindow* window)
+{
+	uint32_t i;
+    RECT rc;
+    HDC hdcMem;
+    HBITMAP hbmMem, hbmOld;
+    HBRUSH hbrBkGnd;
+    HFONT hfntOld;
+	uint32_t controlCount = s_controlId; 
+	HippoControlInfo* controls = (HippoControlInfo*)&g_controls;
+
+	// TODO: Create the offline screen once
+
+	GetClientRect(window->hwnd, &rc);
+    hdcMem = CreateCompatibleDC(window->hdc);
+    hbmMem = CreateCompatibleBitmap(window->hdc, rc.right-rc.left, rc.bottom-rc.top);
+    hbmOld = SelectObject(hdcMem, hbmMem);
+
+	for (i = 0; i < controlCount; ++i)
+	{
+		HippoControlInfo* control = &g_controls[i]; 
+		int y_pos = control->y;
+
+		switch (controls[i].type)
+		{
+			case DRAWTYPE_NONE :
+				break;
+
+			case DRAWTYPE_FILL :
+			{
+				// TODO: Rewrite with FillRect
+				TRIVERTEX vertex[2];
+				GRADIENT_RECT gRect;
+				uint32_t color = control->color;
+				uint16_t a = ((color >> 24) & 0xff) << 8;
+				uint16_t r = ((color >> 16) & 0xff) << 8;
+				uint16_t g = ((color >> 8) & 0xff) << 8;
+				uint16_t b = ((color >> 0) & 0xff) << 8;
+
+				vertex[0].x = control->x;
+				vertex[0].y = control->y;
+				vertex[0].Red  = r;
+				vertex[0].Green = g;
+				vertex[0].Blue  = b;
+				vertex[0].Alpha = 0;
+
+				vertex[1].x = control->x + control->width;
+				vertex[1].y = control->y + control->height;
+				vertex[1].Red  = r;
+				vertex[1].Green = g;
+				vertex[1].Blue  = b;
+				vertex[1].Alpha = 0;
+
+				gRect.UpperLeft  = 0;
+				gRect.LowerRight = 1;
+
+				// Draw a shaded rectangle. 
+				GradientFill(hdcMem, vertex, 2, &gRect, 1, GRADIENT_FILL_RECT_H);
+				break;
+			}
+
+			// this will be hacky
+
+			case DRAWTYPE_TEXT :
+			{
+				break;
+			}
+
+			case DRAWTYPE_IMAGE :
+			{
+				/*
+				HIPPO_ASSERT(control->imageData);
+
+				// if we have no userData, we need to initialize it with CimageDataRef
+
+				if (!control->imageData->userData)
+				{
+					CGColorSpaceRef space = CGColorSpaceCreateDeviceRGB();
+					CGDataProviderRef provider = CGDataProviderCreateWithData(
+						NULL, control->imageData->data, control->imageData->width * control->imageData->height * 3, NULL);
+
+					CGImageRef img = CGImageCreate(
+						control->imageData->width, control->imageData->height, 8, 24,
+						control->imageData->width * 3, space, kCGImageAlphaNoneSkipFirst,
+						provider, NULL, false, kCGRenderingIntentDefault);
+
+					control->imageData->userData = (void*)img; 
+					CGColorSpaceRelease(space);
+					CGDataProviderRelease(provider);
+				}
+
+				CGContextDrawImage(context, CGRectMake(control->x, y_pos, control->width, control->height), 
+								  (CGImageRef)control->imageData->userData);
+				
+				*/
+				break;	
+			}
+		}
+	}
+
+	// Blit ofscreen to front
+	BitBlt(window->hdc, rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top, hdcMem, 0, 0, SRCCOPY);
+    SelectObject(hdcMem, hbmOld);
+    DeleteObject(hbmMem);
+    DeleteDC(hdcMem);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static LRESULT CALLBACK WndProc(HWND hWnd,UINT message,WPARAM wParam,LPARAM lParam)
 {
 	int result = 0;
+	HippoWindow* window = (HippoWindow*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 
 	switch (message)
 	{
 		case WM_PAINT:
 		{
-			HippoWindow* window = (HippoWindow*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+			updateWindow(window);
+			break;
+			/*
 			if (window)
 			{
 				StretchDIBits(window->hdc, 0, 0, window->rect.width, window->rect.height, 
@@ -40,13 +154,18 @@ static LRESULT CALLBACK WndProc(HWND hWnd,UINT message,WPARAM wParam,LPARAM lPar
 										window->frameBuffer, &window->bitmapHeader, DIB_RGB_COLORS, SRCCOPY);
 				ValidateRect(window->hwnd, NULL);
 			}
-			break;
+			*/
 		}
+		
+		case WM_ERASEBKGND:
+			return (LRESULT)1; // Say we handled it.
+
 
 		case WM_MOUSEMOVE:
 		{
 			g_hippoGuiState.mousex = LOWORD(lParam); 
 			g_hippoGuiState.mousey = HIWORD(lParam); 
+			HippoLua_updateScript();
 			break;
 		}
 
@@ -54,6 +173,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd,UINT message,WPARAM wParam,LPARAM lPar
 		{
 			if (wParam == MK_LBUTTON)
 				g_hippoGuiState.mouseDown = 1;
+			HippoLua_updateScript();
 			break;
 		}
 
@@ -61,6 +181,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd,UINT message,WPARAM wParam,LPARAM lPar
 		{
 			if (wParam == MK_LBUTTON)
 				g_hippoGuiState.mouseDown = 0;
+			HippoLua_updateScript();
 			break;
 		}
 
@@ -177,6 +298,13 @@ void HippoWindow_destroy(HippoWindow* window)
 		return;
 
 	DestroyWindow(window->hwnd);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void Hippo_quit()
+{
+	HippoWindow_destroy(g_window);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
