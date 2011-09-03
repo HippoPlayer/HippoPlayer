@@ -32,6 +32,12 @@ enum HippoDrawType
 	DRAWTYPE_TEXT,
 };
 
+enum HippoSliderDirection
+{
+	SLIDERDIRECTION_HORIZONTAL,
+	SLIDERDIRECTION_VERTICAL,
+};
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef struct HippoControlInfo
@@ -46,6 +52,13 @@ typedef struct HippoControlInfo
 	uint32_t color;
 	struct HippoImage* imageData;
 	char* text;
+
+	// todo: Use union with all data instead
+	int sliderThumbX;
+	int sliderThumbY;
+	int sliderThumbWidth;
+	int sliderThumbHeight;
+
 
 } HippoControlInfo;
 
@@ -84,6 +97,9 @@ void HippoGui_fill(uint32_t color, int x, int y, int w, int h);
 void HippoGui_drawBorder(uint32_t color0, uint32_t color1, int x, int y, int w, int h);
 void HippoGui_textLabelXY(const char* text, int x, int y);
 void HippoGui_textLabel(const char* text);
+
+// TODO: Make this much more configurable
+void HippoGui_slider(int x, int y, int w, int h, int start, int end, enum HippoSliderDirection dir, int* value);
 
 bool HippoGui_buttonCoords(const char* text, int x, int y);
 bool HippoGui_buttonCoordsImage(const char* text, int x, int y);

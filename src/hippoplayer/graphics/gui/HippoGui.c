@@ -221,6 +221,23 @@ void HippoGui_textLabelXY(const char* text, int x, int y)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void HippoGui_slider(int x, int y, int w, int h, int start, int end, enum HippoSliderDirection dir, int* value)
+{
+	uint32_t controlId = 0;
+	HippoControlInfo* control = 0; 
+
+	// Setup the control
+	controlId = s_controlId++;
+	control = &g_controls[controlId];
+	//control->type = DRAWTYPE_SLIDER;
+	control->x = x;
+	control->y = y;
+
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void HippoGui_textLabel(const char* text)
 {
 	uint32_t controlId = 0;
