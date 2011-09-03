@@ -6,6 +6,10 @@
 
 int HippoFile_openDialog(char* filename, int maxLength)
 {
+	strcpy(filename, "test0r!12");
+	return 1;
+
+	/*
 	NSOpenPanel* open = [NSOpenPanel openPanel];
 
 	int result = [open runModal];
@@ -24,6 +28,7 @@ int HippoFile_openDialog(char* filename, int maxLength)
 
 		return 1;
 	}
+	*/
 
 	return 0;
 }
