@@ -57,7 +57,7 @@ static int luaAddToPlaylist(lua_State* luaState)
 
 static int luaGetPlaylistFiles(lua_State* luaState)
 {
-	int count;
+	int count, top, i;
 	int offset = (uint32_t)luaL_checkint(luaState, 1);
 
 	const char** files = Hippo_getPlaylistFiles(&count, offset);
@@ -69,9 +69,9 @@ static int luaGetPlaylistFiles(lua_State* luaState)
 	}
 
 	lua_newtable(luaState);
-	int top = lua_gettop(luaState);
+	top = lua_gettop(luaState);
 
-	for (int i = 0; i < count; ++i)
+	for (i = 0; i < count; ++i)
 	{
 		const char* value = files[i]; 
 		lua_pushnumber(luaState, i + 1);

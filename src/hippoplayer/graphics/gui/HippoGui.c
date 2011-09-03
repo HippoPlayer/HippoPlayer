@@ -60,8 +60,9 @@ static const char* s_playlistEntries[2048];	// remove fixed limit
 
 void Hippo_addToPlaylist(const char* filename)
 {
+	uint32_t index;
 	HIPPO_ASSERT(g_playlistFiles < 2048);
-	uint32_t index = g_playlistFiles++;
+	index = g_playlistFiles++;
 	s_playlistEntries[index] = strdup(filename);
 }
 
