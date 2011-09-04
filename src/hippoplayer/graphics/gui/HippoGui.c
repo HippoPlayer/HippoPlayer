@@ -113,6 +113,71 @@ struct LoadedImages
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static bool HippoGui_regionHit(const HippoControlInfo* control)
+{
+	if (g_hippoGuiState.mousex < control->x ||
+		g_hippoGuiState.mousey < control->y ||
+		g_hippoGuiState.mousex >= control->x + control->width ||
+		g_hippoGuiState.mousey >= control->y + control->height)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// This could be a regular listbox but as playlists can be very long having them inside a lua-array will likley
+// be slow and take way more memory
+
+const char* HippoGui_playList(int x, int y, int w, int h, int offset)
+{
+	const char* selectedEntry = 0;
+	int entries, count;
+	const char** files;
+
+	entries = (h + 9) / 9; // hardcoded for 9 pixels font
+	count = entries;
+
+	files = Hippo_getPlaylistFiles(&count,  (uint32_t)offset);
+
+	if (!files)
+		return 0;
+
+	// make sure we dont write outside buffer
+	if (count > entries)
+		count = entries;
+
+	HippoGui_beginVerticalStackPanelXY(x, y);
+
+	for (int i = 0; i < count; ++i)
+	{
+		uint32_t controlId = 0;
+		HippoControlInfo* control; 
+		HippoGui_textLabel(files[i]);
+		controlId = s_controlId - 1;
+
+		control = &g_controls[controlId]; // a bit ugly but will do for now
+
+		if (HippoGui_regionHit(control))
+		{
+			g_hippoGuiState.hotItem = controlId;
+			if (g_hippoGuiState.activeItem == 0 && g_hippoGuiState.mouseDown)
+				g_hippoGuiState.activeItem = controlId;
+		}
+
+		if (g_hippoGuiState.mouseDown == 0 && g_hippoGuiState.hotItem == controlId && g_hippoGuiState.activeItem == controlId)
+		{
+			control->color = 0x00ff;
+			selectedEntry = files[i];
+		}
+	}
+
+	return selectedEntry;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void HippoGui_reset()
 {
 	memset(&g_loadedImages, 0, sizeof(struct LoadedImages)); // not really needed but good when debugging
@@ -158,20 +223,6 @@ static void updatePlacement()
 
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-bool HippoGui_regionHit(const HippoControlInfo* control)
-{
-	if (g_hippoGuiState.mousex < control->x ||
-		g_hippoGuiState.mousey < control->y ||
-		g_hippoGuiState.mousex >= control->x + control->width ||
-		g_hippoGuiState.mousey >= control->y + control->height)
-	{
-		return false;
-	}
-
-	return true;
-}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -227,6 +278,7 @@ void HippoGui_textLabelXY(const char* text, int x, int y)
 	controlId = s_controlId++;
 	control = &g_controls[controlId];
 	control->type = DRAWTYPE_TEXT;
+	control->color = 0;
 	control->x = x;
 	control->y = y;
 	control->text = (char*)text;
@@ -344,9 +396,10 @@ void HippoGui_textLabel(const char* text)
 	control->type = DRAWTYPE_TEXT;
 	control->x = g_placementInfo.x;
 	control->y = g_placementInfo.y; 
-	control->width = 0;
-	control->height = 9; 
+	control->width = strlen(text) * 9; // fix me
+	control->height = 9; // fixme 
 	control->text = (char*)text;
+	control->color = 0;
 
 	switch (g_placementInfo.state)
 	{
@@ -357,7 +410,7 @@ void HippoGui_textLabel(const char* text)
 
 		case PLACEMENTSTATE_HORIZONAL :
 		{
-			g_placementInfo.x += strlen(text) * 9;	// TODO: fix me, calculate correct using fontfuncs
+			g_placementInfo.x += control->width;
 			break;
 		}
 
@@ -533,12 +586,34 @@ static int luaDrawBorder(lua_State* luaState)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static int luaPlaylist(lua_State* luaState)
+{
+	const char* selection;
+	int x = luaL_checkint(luaState, 1);
+	int y = luaL_checkint(luaState, 2);
+	int w = luaL_checkint(luaState, 3);
+	int h = luaL_checkint(luaState, 4);
+	int offset = luaL_checkint(luaState, 5);
+	selection = HippoGui_playList(x, y, w, h, offset);
+
+	if (selection)
+		lua_pushstring(luaState, selection);
+	else
+		lua_pushnil(luaState);
+
+	return 1;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static int luaSlider(lua_State* luaState)
 {
 	static int sliderValue = 0;
 	(void)luaState;
 	HippoGui_slider(2, 60, 20, 70, 0, 50, SLIDERDIRECTION_VERTICAL, 9, &sliderValue);
-	return 0;
+
+	lua_pushnumber(luaState, sliderValue);
+	return 1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -577,6 +652,7 @@ static int luaStaticImage(lua_State* luaState)
 
 static const luaL_Reg uiLib[] =
 {
+	{ "playList", luaPlaylist },
 	{ "slider", luaSlider },
 	{ "textLabel", luaTextLabel },
 	{ "buttonImage", luaButtonImage },

@@ -8,6 +8,8 @@ end
 
 -- update is called each time the UI needs to be (re)drawn 
 
+play_file = "testing"
+
 function update()
 
 	-- clear the whole area
@@ -35,7 +37,7 @@ function update()
 	-- buttons for playing/stop/open/etc
 	hippo_ui.beginHorizontalStackPanelXY(0, 38)
 	  if hippo_ui.buttonImage("skins/classic/play.png") then
-		print("play!")
+		print(play_file)
 	  end
 
 	  if hippo_ui.buttonImage("skins/classic/open.png") then
@@ -55,14 +57,18 @@ function update()
 
 	-- Do the listbox here
 	hippo_ui.beginVerticalStackPanelXY(20, 70)
-	if files then
-		for i,v in ipairs(files) do 
-	  		hippo_ui.textLabel(v);
-		end
+	--if files then
+	--	for i,v in ipairs(files) do 
+	 -- 		hippo_ui.textLabel(v);
+--		end
+--	end
+--
+	local pos = hippo_ui.slider()
+	local file = hippo_ui.playList(25, 70, 100, 50, pos)
+
+	if file then
+		play_file = file
 	end
-
-	hippo_ui.slider()
-
 
 	-- hippo_ui.listBoxXY(25, 56, 244, 64, t)
 

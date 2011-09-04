@@ -202,6 +202,12 @@ void drawText(CGContextRef context, HippoControlInfo* control, int y_pos)
 		c = *text++;
 		x += 8;
 	}
+
+	if (control->color != 0)
+	{
+		CGContextSetRGBFillColor(context, 1.0f, 1.0f, 1.0f, 0.5f);
+		CGContextFillRect(context, CGRectMake(control->x, y_pos, control->width, control->height));
+	}
 }
 
 //

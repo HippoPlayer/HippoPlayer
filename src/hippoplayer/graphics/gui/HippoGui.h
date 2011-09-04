@@ -108,6 +108,8 @@ bool HippoGui_buttonCoordsImage(const char* text, int x, int y);
 bool HippoGui_button(const char* text);
 bool HippoGui_buttonImage(const char* filename);
 
+const char* HippoGui_playList(int x, int y, int w, int h, int offset);
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #endif

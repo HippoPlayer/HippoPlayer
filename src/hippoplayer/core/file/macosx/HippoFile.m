@@ -6,7 +6,13 @@
 
 int HippoFile_openDialog(char* filename, int maxLength)
 {
-	strcpy(filename, "test0r!12");
+	static int count = 0;
+	count++;
+
+	if (count & 1)
+		strcpy(filename, "test0r!12");
+	else
+		strcpy(filename, "ffooo");
 	return 1;
 
 	/*
