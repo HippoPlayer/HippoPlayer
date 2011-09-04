@@ -162,13 +162,25 @@ static void updatePlacement()
 
 bool HippoGui_regionHit(const HippoControlInfo* control)
 {
-	//printf("%d %d\n", g_hippoGuiState.mousex, g_hippoGuiState.mousey);  
-	//printf("%d %d %d %d\n", control->x, control->y, control->width, control->height);
-
 	if (g_hippoGuiState.mousex < control->x ||
 		g_hippoGuiState.mousey < control->y ||
 		g_hippoGuiState.mousex >= control->x + control->width ||
 		g_hippoGuiState.mousey >= control->y + control->height)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static bool HippoGui_regionHitSlider(const HippoControlInfo* control)
+{
+	if (g_hippoGuiState.mousex < control->sliderThumbX ||
+		g_hippoGuiState.mousey < control->sliderThumbY ||
+		g_hippoGuiState.mousex >= control->sliderThumbX + control->sliderThumbWidth ||
+		g_hippoGuiState.mousey >= control->sliderThumbY + control->sliderThumbHeight)
 	{
 		return false;
 	}
@@ -222,19 +234,101 @@ void HippoGui_textLabelXY(const char* text, int x, int y)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void HippoGui_slider(int x, int y, int w, int h, int start, int end, enum HippoSliderDirection dir, int* value)
+float floatClamp(float value, float low, float high)
 {
+	if (value < low)
+		value = low;
+
+	if (value > high)
+		value = high;
+
+	return value;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool HippoGui_slider(int x, int y, int w, int h, int start, int end, enum HippoSliderDirection dir, int itemSpace, int* value)
+{
+	int thumbPosition = 0;
 	uint32_t controlId = 0;
+	float thumbSize = 0.0f;
 	HippoControlInfo* control = 0; 
 
 	// Setup the control
 	controlId = s_controlId++;
 	control = &g_controls[controlId];
-	//control->type = DRAWTYPE_SLIDER;
+	control->type = DRAWTYPE_SLIDER;
 	control->x = x;
 	control->y = y;
+	control->width = w;
+	control->height = h;
+
+	HIPPO_ASSERT(start < end);
+
+	// considering how much stuff we have have in the slider we need to calculate how much space the scolling area actually
+	// is so we can resize the thumb 
+
+	float range = end - start;
+
+	if (dir == SLIDERDIRECTION_VERTICAL)
+	{
+		int itemsHeight = (end - start) * itemSpace;
+		int sliderHeigthArea = h - y;
+		
+		if (itemsHeight <= 0)
+			itemsHeight = 1; 
+
+		float v = *value;
+
+		thumbPosition = y + ((v / range) * h);
+
+		thumbSize = (float)sliderHeigthArea / (float)itemsHeight; 
+		thumbSize = /*floatClamp(thumbSize, 0.05, 1.0f)*/ 1.0f * sliderHeigthArea;
+
+		control->sliderThumbX = x + 1;
+		control->sliderThumbY = thumbPosition + 1;
+		control->sliderThumbWidth = w - 1;
+		control->sliderThumbHeight = (int)thumbSize;
+	}
+	else
+	{
+		// handle Horizontal here:
+	}
+
+	if (HippoGui_regionHitSlider(control))
+	{
+		g_hippoGuiState.hotItem = controlId;
+    	if (g_hippoGuiState.activeItem == 0 && g_hippoGuiState.mouseDown)
+      		g_hippoGuiState.activeItem = controlId;
+	}
+
+	//
+	
+
+	if (g_hippoGuiState.activeItem == controlId)
+	{
+
+		if (dir == SLIDERDIRECTION_VERTICAL)
+		{
+			int mousePos = g_hippoGuiState.mousey - (y + control->sliderThumbHeight / 2);
+			int mouseYlimit = control->height - control->sliderThumbHeight;
+			if (mousePos < 0) mousePos = 0;
+			if (mousePos > mouseYlimit) mousePos = mouseYlimit; 
+
+			float mouseYrelative = (float)mousePos / (float)control->height;
+			control->sliderThumbY = (int)(y + mouseYrelative * h);
+			*value = start + (range * mouseYrelative);
+		}
+		else
+		{
 
 
+		}
+
+		return true;
+	}
+
+	return false;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -439,6 +533,16 @@ static int luaDrawBorder(lua_State* luaState)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static int luaSlider(lua_State* luaState)
+{
+	static int sliderValue = 0;
+	(void)luaState;
+	HippoGui_slider(2, 60, 20, 70, 0, 50, SLIDERDIRECTION_VERTICAL, 9, &sliderValue);
+	return 0;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static int luaBeginHorizontalStackPanelXY(lua_State* luaState)
 {
 	int x = luaL_checkint(luaState, 1);
@@ -473,6 +577,7 @@ static int luaStaticImage(lua_State* luaState)
 
 static const luaL_Reg uiLib[] =
 {
+	{ "slider", luaSlider },
 	{ "textLabel", luaTextLabel },
 	{ "buttonImage", luaButtonImage },
 	{ "fill", luaFill },

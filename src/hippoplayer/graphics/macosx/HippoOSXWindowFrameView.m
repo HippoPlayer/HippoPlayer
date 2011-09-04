@@ -76,8 +76,20 @@ static NSPoint s_prevDragPos;
 
 - (void)mouseDragged:(NSEvent *)event
 {
-	NSWindow *window = [self window];
+	NSWindow* window = [self window];
 	NSRect originalFrame = [window frame];
+	NSPoint location = [window mouseLocationOutsideOfEventStream];
+	g_hippoGuiState.mousex = (int)location.x; 
+	g_hippoGuiState.mousey = (int)originalFrame.size.height - (int)location.y; 
+	
+	if (g_hippoGuiState.activeItem != -1)
+	{
+		HippoLua_updateScript();
+		return;
+	}
+
+	//NSWindow *window = [self window];
+	//NSRect originalFrame = [window frame];
 	NSPoint newMouseLocation = [window convertBaseToScreen:[event locationInWindow]];
 	NSPoint delta = NSMakePoint(newMouseLocation.x - s_prevDragPos.x,
 								newMouseLocation.y - s_prevDragPos.y);
@@ -215,6 +227,16 @@ void drawText(CGContextRef context, HippoControlInfo* control, int y_pos)
 		{
 			case DRAWTYPE_NONE :
 				break;
+
+			case DRAWTYPE_SLIDER :
+			{
+				CGContextSetRGBFillColor(context, 0.0f, 0.0f, 0.0f, 1.0f);
+				CGContextFillRect(context, CGRectMake(control->x, y_pos, control->width, control->height));
+				y_pos = (originalFrame.size.height - control->sliderThumbY) - control->sliderThumbHeight;
+				CGContextSetRGBFillColor(context, 1.0f, 1.0f, 1.0f, 1.0f);
+				CGContextFillRect(context, CGRectMake(control->sliderThumbX, y_pos, control->sliderThumbWidth, control->sliderThumbHeight));
+				break;
+			}
 
 			case DRAWTYPE_FILL :
 			{

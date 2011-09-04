@@ -30,6 +30,7 @@ enum HippoDrawType
 	DRAWTYPE_FILL,
 	DRAWTYPE_IMAGE,
 	DRAWTYPE_TEXT,
+	DRAWTYPE_SLIDER,
 };
 
 enum HippoSliderDirection
@@ -99,7 +100,7 @@ void HippoGui_textLabelXY(const char* text, int x, int y);
 void HippoGui_textLabel(const char* text);
 
 // TODO: Make this much more configurable
-void HippoGui_slider(int x, int y, int w, int h, int start, int end, enum HippoSliderDirection dir, int* value);
+bool HippoGui_slider(int x, int y, int w, int h, int start, int end, enum HippoSliderDirection dir, int itemSpace, int* value);
 
 bool HippoGui_buttonCoords(const char* text, int x, int y);
 bool HippoGui_buttonCoordsImage(const char* text, int x, int y);

@@ -61,6 +61,8 @@ function update()
 		end
 	end
 
+	hippo_ui.slider()
+
 
 	-- hippo_ui.listBoxXY(25, 56, 244, 64, t)
 
