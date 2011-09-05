@@ -133,7 +133,7 @@ static bool HippoGui_regionHit(const HippoControlInfo* control)
 const char* HippoGui_playList(int x, int y, int w, int h, int offset)
 {
 	const char* selectedEntry = 0;
-	int entries, count;
+	int entries, count, i;
 	const char** files;
 
 	entries = (h + 9) / 9; // hardcoded for 9 pixels font
@@ -150,7 +150,7 @@ const char* HippoGui_playList(int x, int y, int w, int h, int offset)
 
 	HippoGui_beginVerticalStackPanelXY(x, y);
 
-	for (int i = 0; i < count; ++i)
+	for (i = 0; i < count; ++i)
 	{
 		uint32_t controlId = 0;
 		HippoControlInfo* control; 
@@ -303,7 +303,7 @@ bool HippoGui_slider(int x, int y, int w, int h, int start, int end, enum HippoS
 {
 	int thumbPosition = 0;
 	uint32_t controlId = 0;
-	float thumbSize = 0.0f;
+	float thumbSize = 0.0f, range;
 	HippoControlInfo* control = 0; 
 
 	// Setup the control
@@ -320,17 +320,16 @@ bool HippoGui_slider(int x, int y, int w, int h, int start, int end, enum HippoS
 	// considering how much stuff we have have in the slider we need to calculate how much space the scolling area actually
 	// is so we can resize the thumb 
 
-	float range = end - start;
+	range = end - start;
 
 	if (dir == SLIDERDIRECTION_VERTICAL)
 	{
+		float v = *value;
 		int itemsHeight = (end - start) * itemSpace;
 		int sliderHeigthArea = h - y;
 		
 		if (itemsHeight <= 0)
 			itemsHeight = 1; 
-
-		float v = *value;
 
 		thumbPosition = y + ((v / range) * h);
 
@@ -362,12 +361,13 @@ bool HippoGui_slider(int x, int y, int w, int h, int start, int end, enum HippoS
 
 		if (dir == SLIDERDIRECTION_VERTICAL)
 		{
+			float mouseYrelative;
 			int mousePos = g_hippoGuiState.mousey - (y + control->sliderThumbHeight / 2);
 			int mouseYlimit = control->height - control->sliderThumbHeight;
 			if (mousePos < 0) mousePos = 0;
 			if (mousePos > mouseYlimit) mousePos = mouseYlimit; 
 
-			float mouseYrelative = (float)mousePos / (float)control->height;
+			mouseYrelative = (float)mousePos / (float)control->height;
 			control->sliderThumbY = (int)(y + mouseYrelative * h);
 			*value = start + (range * mouseYrelative);
 		}
