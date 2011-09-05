@@ -28,10 +28,14 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	struct HippoWindow* window;
 	g_winInstance = hInstance;
 
+	AllocConsole();
+	freopen("CONOUT$","wb",stdout);
+
 	luaState = g_luaState = luaL_newstate();
 
 	luaL_openlibs(luaState);
 	HippoGui_registerLuaFunctions(luaState);
+	HippoLua_registerLuaFunctions(luaState);
 
 	if (luaL_loadfile(luaState, "skins/classic/ui.lua") || lua_pcall(luaState, 0, 0, 0) != 0)
 	{
@@ -54,10 +58,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 
 	while (!HippoWindow_isClosed())
 	{
-		HippoGui_begin();
-		lua_getglobal(luaState, "update");
-		lua_call(luaState, 0, 0);
-		HippoGui_end();
 		HippoWindow_updateEvents();
 	}
 
