@@ -15,7 +15,7 @@ SharedLibrary {
 		CPPPATH = { "plugins/flac/libflac/src/libFLAC/include", "plugins/flac/libflac/include"  },
 		CPPDEFS = {
 			{ "DNDEBUG", "HAVE_STDINT_H", "HAVE_ICONV", "HAVE_CXX_VARARRAYS", "HAVE_LANGINFO_CODESET", -- "FLAC__HAS_OGG", 
-			"_LARGEFILE_SOURCE", "_FILE_OFFSET_BITS=64", "FLAC__SYS_DARWIN", "WORDS_BIGENDIAN", "FLAC__INLINE=__inline__", 'VERSION=""1.2.""', 
+			"_LARGEFILE_SOURCE", "_FILE_OFFSET_BITS=64", "FLAC__SYS_DARWIN", "WORDS_BIGENDIAN", "FLAC__INLINE=__inline__", -- 'VERSION=\"1.2.\"', 
 			"FLAC__ALIGN_MALLOC_DATA"; Config = "macosx-*-*" }
 		},
 			
@@ -23,6 +23,10 @@ SharedLibrary {
 			{ "-fomit-frame-pointer", "-funroll-loops", "-finline-functions", "-W", "-Wall", 
 			"-Wmissing-prototypes", "-Wstrict-prototypes", "-Winline"; Config = "macosx-*-*" },
 		},
+	},
+
+	Libs = { 
+		{ "ogg"; Config = "macosx-*-*" }, 
 	},
 
 	Sources = { 
@@ -68,7 +72,7 @@ Program {
 		},
 	},
 
-	Depends = { "FlacPlugin" },
+	-- Depends = { "FlacPlugin" },
 }
 
 Default "player"
