@@ -52,9 +52,10 @@
 #define FLAC__U64L(x) x##LLU
 #endif
 
+#define VERSION "1.2.1"
+
 /* VERSION should come from configure */
 FLAC_API const char *FLAC__VERSION_STRING = VERSION;
-
 #if defined _MSC_VER || defined __BORLANDC__ || defined __MINW32__
 /* yet one more hack because of MSVC6: */
 FLAC_API const char *FLAC__VENDOR_STRING = "reference libFLAC 1.2.1 20070917";
