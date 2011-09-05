@@ -358,7 +358,6 @@ bool HippoGui_slider(int x, int y, int w, int h, int start, int end, enum HippoS
 
 	if (g_hippoGuiState.activeItem == controlId)
 	{
-
 		if (dir == SLIDERDIRECTION_VERTICAL)
 		{
 			float mouseYrelative;
