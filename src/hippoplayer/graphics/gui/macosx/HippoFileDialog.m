@@ -4,12 +4,13 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const char** HippoGui_openFileDialog(LinearAllocator* allocator)
+const char** HippoGui_fileOpenDialog(struct LinearAllocator* allocator, int* outCount)
 {
 	const char** files = 0;
 
 	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 	NSOpenPanel* open = [NSOpenPanel openPanel];
+	[open setAllowsMultipleSelection:YES];
 
 	int result = [open runModal];
 
@@ -17,10 +18,12 @@ const char** HippoGui_openFileDialog(LinearAllocator* allocator)
 	{
 		NSArray* selectedFiles = [open URLs];
 		uint32_t count = [selectedFiles count];
+		*outCount = 0;
 
 		char** returnFiles = LinearAllocator_allocArray(allocator, char*, count);
-		
-		for(int i = 0; i < count; ++i) 
+		*outCount = (int)count;
+
+		for (int i = 0; i < count; ++i) 
 		{
 			NSURL* url = [selectedFiles objectAtIndex:i];
 			const char* temp = [[url path] UTF8String];
@@ -30,7 +33,7 @@ const char** HippoGui_openFileDialog(LinearAllocator* allocator)
 		files = (const char**)returnFiles;
 	}
 
-	[pool release];
+	[pool drain];
 	return files;
 }
 
