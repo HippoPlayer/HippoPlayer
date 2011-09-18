@@ -6,36 +6,36 @@
 
 int HippoFile_openDialog(char* filename, int maxLength)
 {
-	static int count = 0;
-	count++;
+	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 
-	if (count & 1)
-		strcpy(filename, "test0r!12");
-	else
-		strcpy(filename, "ffooo");
-	return 1;
-
-	/*
 	NSOpenPanel* open = [NSOpenPanel openPanel];
 
 	int result = [open runModal];
 
 	if (result == NSOKButton)
 	{
-		NSArray* selectedFiles = [open URLs];
-
+		/*
 		// TODO: Proper handling of multiple files
-
-		for (NSURL* url in selectedFiles)
+		NSArray* selectedFiles = [open URLs];
+		uint32_t count = [selectedFiles count];
+		//NSURL* url;
+		
+		for(int i = 0; i < count; ++i) 
 		{
-			const char* temp = [[url path] UTF8String];
-			strncpy(filename, temp, maxLength);
+			//url = [selectedFiles objectAtIndex:i];
+			//(void)url;
+			//const char* temp = [[url path] UTF8String];
+			//printf("%s\n", temp);
+			strcpy(filename, "eunthoeustoehusnotehuseothusoenhuso");
 		}
+		*/
 
-		return 1;
+		//[open relese];
+		[pool release];
+		return 0;
 	}
-	*/
 
+	[pool release];
 	return 0;
 }
 
