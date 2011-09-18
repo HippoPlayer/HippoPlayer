@@ -157,7 +157,7 @@ void drawText(CGContextRef context, HippoControlInfo* control, int y_pos)
 
 		const uint32_t fontColor = 0xff000000;
 
-		for (uint32_t i = 0; i < 128 * 128; ++i)
+		for (uint32_t i = 0; i < (128 * 128) / 8; ++i)
 		{
 			uint8_t color = *data++;
 			// font data is packed as 1 bit per pixel
