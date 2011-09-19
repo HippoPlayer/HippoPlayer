@@ -1,8 +1,10 @@
 
 #include "HippoGui.h"
-#include <core/debug/Assert.h>
-#include <graphics/HippoImageLoader.h>
-#include <graphics/HippoWindow.h>
+#include "core/debug/Assert.h"
+#include "core/memory/LinearAllocator.h"
+#include "graphics/HippoImageLoader.h"
+#include "graphics/HippoWindow.h"
+
 #include <string.h>
 #include <stdio.h>
 #include <lua.h>
@@ -24,6 +26,7 @@ enum
 	MAX_IMAGES = 1024,
 };
 
+static LinearAllocator g_linearAllocator;
 HippoGuiState g_hippoGuiState;
 uint32_t s_controlId;
 
@@ -58,12 +61,15 @@ static const char* s_playlistEntries[2048];	// remove fixed limit
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Hippo_addToPlaylist(const char* filename)
+void Hippo_addToPlaylist(const char** files, int count)
 {
 	uint32_t index;
-	HIPPO_ASSERT(g_playlistFiles < 2048);
-	index = g_playlistFiles++;
-	s_playlistEntries[index] = strdup(filename);
+	HIPPO_ASSERT(g_playlistFiles + count < 2048);
+	index = g_playlistFiles;
+	g_playlistFiles += count;
+
+	for (int i = 0; i < count; ++i)
+		s_playlistEntries[index + i] = files[i];
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -99,6 +105,13 @@ void HippoGui_beginVerticalStackPanelXY(int x, int y)
 
 void HippoGui_begin()
 {
+	// TODO: Move to better place 
+	if (g_linearAllocator.start == 0)
+	{
+		const int size = 1 * 1024 * 1024;
+		LinearAllocator_create(&g_linearAllocator, malloc(size), size);
+	}
+
 	s_controlId = 1;
 	g_controls[0].type = DRAWTYPE_NONE;
 	memset(&g_placementInfo, 0, sizeof(GuiPlacementInfo));
@@ -153,11 +166,8 @@ const char* HippoGui_playList(int x, int y, int w, int h, int offset)
 	for (i = 0; i < count; ++i)
 	{
 		uint32_t controlId = 0;
-		HippoControlInfo* control; 
-		HippoGui_textLabel(files[i]);
+		HippoControlInfo* control = HippoGui_textLabel(files[i]);
 		controlId = s_controlId - 1;
-
-		control = &g_controls[controlId]; // a bit ugly but will do for now
 
 		if (HippoGui_regionHit(control))
 		{
@@ -384,7 +394,7 @@ bool HippoGui_slider(int x, int y, int w, int h, int start, int end, enum HippoS
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void HippoGui_textLabel(const char* text)
+HippoControlInfo* HippoGui_textLabel(const char* text)
 {
 	uint32_t controlId = 0;
 	HippoControlInfo* control = 0; 
@@ -419,6 +429,8 @@ void HippoGui_textLabel(const char* text)
 			break;
 		}
 	}
+
+	return control;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -605,6 +617,25 @@ static int luaPlaylist(lua_State* luaState)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static int luaFileDialogPlaylist(lua_State* luaState)
+{
+	int count;
+	const char** files;
+
+	printf("esuntehous\n");
+
+	files = HippoGui_fileOpenDialog(&g_linearAllocator, &count);
+	
+	if (!files)
+		return 0;
+
+	Hippo_addToPlaylist(files, count);
+
+	return 0;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static int luaSlider(lua_State* luaState)
 {
 	static int sliderValue = 0;
@@ -651,6 +682,7 @@ static int luaStaticImage(lua_State* luaState)
 
 static const luaL_Reg uiLib[] =
 {
+	{ "fileDialogPlaylist", luaFileDialogPlaylist },
 	{ "playList", luaPlaylist },
 	{ "slider", luaSlider },
 	{ "textLabel", luaTextLabel },

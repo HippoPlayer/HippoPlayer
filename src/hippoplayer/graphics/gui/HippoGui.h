@@ -69,6 +69,7 @@ extern uint32_t s_controlId;
 
 struct HippoImage;
 struct lua_State;
+struct LinearAllocator;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -87,7 +88,7 @@ void HippoGui_beginHorizontalStackPanel();
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Not really a GUI function per see but will do for now
 
-void Hippo_addToPlaylist(const char* filename);
+void Hippo_addToPlaylist(const char** filename, int count);
 const char** Hippo_getPlaylistFiles(int* count, uint32_t offset);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -97,7 +98,7 @@ void HippoGui_staticImage(const char* filename);
 void HippoGui_fill(uint32_t color, int x, int y, int w, int h);
 void HippoGui_drawBorder(uint32_t color0, uint32_t color1, int x, int y, int w, int h);
 void HippoGui_textLabelXY(const char* text, int x, int y);
-void HippoGui_textLabel(const char* text);
+HippoControlInfo* HippoGui_textLabel(const char* text);
 
 // TODO: Make this much more configurable
 bool HippoGui_slider(int x, int y, int w, int h, int start, int end, enum HippoSliderDirection dir, int itemSpace, int* value);
@@ -109,6 +110,10 @@ bool HippoGui_button(const char* text);
 bool HippoGui_buttonImage(const char* filename);
 
 const char* HippoGui_playList(int x, int y, int w, int h, int offset);
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const char** HippoGui_fileOpenDialog(struct LinearAllocator* allocator, int* count);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

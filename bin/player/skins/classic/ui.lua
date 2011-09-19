@@ -41,13 +41,10 @@ function update()
 	  end
 
 	  if hippo_ui.buttonImage("skins/classic/open.png") then
-		files = hippo.openFileDialog()
-		if files then
-			hippo.addToPlaylist(files)
-		end
+		hippo_ui.fileDialogPlaylist()
 	  end
 
-	files = hippo.getPlaylistFiles(0)
+	files = hippo.hasPlaylistFiles()
 
 	-- todo: Add support for staticImage with coords
 	hippo_ui.beginHorizontalStackPanelXY(158, 66)
@@ -57,18 +54,13 @@ function update()
 
 	-- Do the listbox here
 	hippo_ui.beginVerticalStackPanelXY(20, 70)
-	--if files then
-	--	for i,v in ipairs(files) do 
-	 -- 		hippo_ui.textLabel(v);
---		end
---	end
---
+
 	local pos = hippo_ui.slider()
 	local file = hippo_ui.playList(25, 70, 100, 50, pos)
 
 	if file then
-		play_file = file
-	end
+ 		play_file = file
+ 	end
 
 	-- hippo_ui.listBoxXY(25, 56, 244, 64, t)
 
