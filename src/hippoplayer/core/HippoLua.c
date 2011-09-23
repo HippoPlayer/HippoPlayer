@@ -1,5 +1,4 @@
 #include "HippoLua.h"
-#include "core/file/HippoFile.h"
 #include "graphics/gui/HippoGui.h"
 #include <lua.h>
 #include <lauxlib.h>
@@ -29,15 +28,46 @@ static int luaQuit(lua_State* luaState)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/*
 static int luaOpenFileDialog(lua_State* luaState)
 {
 	char filename[1024];
 
-	int ret = HippoFile_openDialog(filename, sizeof(filename));
+	int ret = 0;//HippoFile_openDialog(filename, sizeof(filename));
+	//(void)ret;
 
 	if (ret)
 		lua_pushstring(luaState, filename);
-	
+	else
+		lua_pushnil(luaState);
+
+	return 1;
+}
+*/
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*
+static int luaAddToPlaylist(lua_State* luaState)
+{
+	const char* filename = luaL_checkstring(luaState, 1);
+	printf("%s\n", filename);
+	Hippo_addToPlaylist(filename);
+	return 0;
+}
+*/
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static int luaHasPlaylistFiles(lua_State* luaState)
+{
+	int offset = 0;
+	int count = 0;
+
+	Hippo_getPlaylistFiles(&count, offset);
+
+	if (count != 0)
+		lua_pushnumber(luaState, count);
 	else
 		lua_pushnil(luaState);
 
@@ -46,15 +76,7 @@ static int luaOpenFileDialog(lua_State* luaState)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int luaAddToPlaylist(lua_State* luaState)
-{
-	const char* filename = luaL_checkstring(luaState, 1);
-	Hippo_addToPlaylist(filename);
-	return 0;
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+/*
 static int luaGetPlaylistFiles(lua_State* luaState)
 {
 	int count, top, i;
@@ -81,14 +103,15 @@ static int luaGetPlaylistFiles(lua_State* luaState)
 
 	return 1;
 }
+*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static const luaL_Reg hippoLib[] =
 {
-	{ "addToPlaylist", luaAddToPlaylist },
-	{ "getPlaylistFiles", luaGetPlaylistFiles },
-	{ "openFileDialog", luaOpenFileDialog },
+	{ "hasPlaylistFiles", luaHasPlaylistFiles },
+	//{ "getPlaylistFiles", luaGetPlaylistFiles },
+	// { "openFileDialog", luaOpenFileDialog },
 	{ "quit", luaQuit },
 	{ 0, 0 },
 };
