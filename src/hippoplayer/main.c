@@ -1,7 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "core/file/HippoSharedObject.h"
+#include "core/memory/LinearAllocator.h"
+#include "core/HippoLua.h"
+#include "core/io/HippoSharedObject.h"
+#include "core/io/HippoIo.h"
 #include "audio/HippoAudio.h"
 #include "graphics/HippoWindow.h"
 #include "graphics/HippoImageLoader.h"
@@ -15,11 +18,45 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void initPlugins()
+{
+#if defined(HIPPO_MACOSX)
+	const char* libExtension = "dylib";
+#elif defined(HIPPO_WINDOWS)
+	const char* libExtension = "dll";
+#else
+#error "Unsupported platform
+#endif
+
+	LinearAllocator* allocator = LinearAllocator_getScratchPad();
+	LinearAllocatorRewindPoint rewind = LinearAllocator_getRewindPoint(allocator);
+
+	// Find all the plugins (temporary in the current directory of the executable)
+	const char** pluginFiles = HippoIo_scanDirectory(allocator, ".", libExtension, false);
+	//HippoPlugins_addPlugins(pluginFiles);
+	
+	while (*pluginFiles)
+	{
+		printf("found plugin %s\n", *pluginFiles);
+		pluginFiles++;
+	}
+
+	LinearAllocator_rewind(allocator, rewind);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 int HippoMain_create()
 {
 	struct lua_State* luaState; 
 	HippoWindowRect rect;
 	struct HippoWindow* window;
+	uint32_t scratchSize = 2 * 1024 * 1024;  // 2 meg of scratchmemory
+
+	// TODO: Us mmap/VirtualAlloc instead of malloc
+	LinearAllocator_setScratchPad(malloc(scratchSize), scratchSize);
+
+	initPlugins();
 
 	luaState = g_luaState = luaL_newstate();
 
@@ -27,7 +64,7 @@ int HippoMain_create()
 	HippoGui_registerLuaFunctions(luaState);
 	HippoLua_registerLuaFunctions(luaState);
 
-	if (luaL_loadfile(luaState, "skins/classic/ui.lua") || lua_pcall(luaState, 0, 0, 0) != 0)
+	if (luaL_loadfile(luaState, "../../../bin/player/skins/classic/ui.lua") || lua_pcall(luaState, 0, 0, 0) != 0)
 	{
 		printf("Failed to load skins/classic/ui.lua\n");
 		return 0;
