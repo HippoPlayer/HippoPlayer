@@ -1,4 +1,3 @@
-#if 0
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,30 +13,25 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
-#if defined(HIPPO_WIN32)
-#include <windows.h>
-#endif
-
-extern void HippoGui_drawClassic();
-//static HippoAudioDevice g_audioDevices[64];
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#if defined(HIPPO_WIN32)
-extern HINSTANCE g_winInstance; 
 
-int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow)
+int HippoMain_create()
 {
 	struct lua_State* luaState; 
 	HippoWindowRect rect;
 	struct HippoWindow* window;
-	g_winInstance = hInstance;
-#else
-int main()
-{
-	struct lua_State* luaState; 
-	HippoWindowRect rect;
-	struct HippoWindow* window;
-#endif
+
+	luaState = g_luaState = luaL_newstate();
+
+	luaL_openlibs(luaState);
+	HippoGui_registerLuaFunctions(luaState);
+	HippoLua_registerLuaFunctions(luaState);
+
+	if (luaL_loadfile(luaState, "skins/classic/ui.lua") || lua_pcall(luaState, 0, 0, 0) != 0)
+	{
+		printf("Failed to load skins/classic/ui.lua\n");
+		return 0;
+	}
 
 	/*
 	int deviceCount = HippoAudio_buildDeviceList(g_audioDevices, 64);
@@ -46,7 +40,9 @@ int main()
 	{
 		printf("name %s id %p\n", g_audioDevices[i].name, g_audioDevices[i].deviceId);
 	}
+	*/
 
+	/*
 	HippoHandle handle = HippoSharedObject_open("../../src/tundra-output/macosx-gcc-debug-default/libHivelyPlugin.dylib");
 
 	if(!handle)
@@ -72,17 +68,6 @@ int main()
 	HippoAudio_openDefaultOutput(plugin);
 	*/
 
-	luaState = luaL_newstate();
-
-	luaL_openlibs(luaState);
-	HippoGui_registerLuaFunctions(luaState);
-
-	if (luaL_loadfile(luaState, "skins/classic/ui.lua") || lua_pcall(luaState, 0, 0, 0) != 0)
-	{
-		printf("Failed to load skins/classic/ui.lua\n");
-		return 0;
-	}
-
 	// call the creation code
 
 	lua_getglobal(luaState, "create");
@@ -96,20 +81,15 @@ int main()
 	window = HippoWindow_create(0, "foo", 0, &rect);
 	HippoGui_reset();
 
-	while (!HippoWindow_isClosed())
-	{
-		HippoGui_begin();
-		lua_getglobal(luaState, "update");
-		lua_call(luaState, 0, 0);
-		HippoGui_end();
-		HippoWindow_updateEvents();
-	}
-
-	lua_getglobal(luaState, "destroy");
-	lua_pcall(luaState, 0, 0, 0);
-
-	//HippoAudio_close();
-
-	return 0;
+	return 1;
 }
-#endif
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void HippoMain_destroy()
+{
+	lua_getglobal(g_luaState, "destroy");
+	lua_pcall(g_luaState, 0, 0, 0);
+}
+
+
