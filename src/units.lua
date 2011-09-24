@@ -77,5 +77,5 @@ Program {
 
 Default "player"
 Default "HivelyPlugin"
-Default "FlacPlugin"
+-- Default "FlacPlugin"
 
