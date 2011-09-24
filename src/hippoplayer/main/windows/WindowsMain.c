@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "core/file/HippoSharedObject.h"
 #include "core/HippoLua.h"
 #include "audio/HippoAudio.h"
 #include "graphics/HippoWindow.h"
@@ -16,7 +15,6 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-extern void HippoGui_drawClassic();
 extern HINSTANCE g_winInstance; 
 
 int HippoMain_create();
