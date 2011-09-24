@@ -22,7 +22,7 @@ static void initPlugins()
 {
 #if defined(HIPPO_MACOSX)
 	const char* libExtension = "dylib";
-#elif defined(HIPPO_WINDOWS)
+#elif defined(HIPPO_WIN32)
 	const char* libExtension = "dll";
 #else
 #error "Unsupported platform
