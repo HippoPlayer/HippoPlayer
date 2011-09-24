@@ -67,7 +67,7 @@ const uint16_t period_tab[] =
 
 uint32_t panning_left[256], panning_right[256];
 
-static inline void clr_l( uint32_t *src, uint32_t longs)
+static void clr_l( uint32_t *src, uint32_t longs)
 {
   do {
     *src++ = 0;
@@ -166,7 +166,7 @@ void hvl_GenSquare( int8_t *buf )
   }
 }
 
-static inline double clip( double x )
+static double clip( double x )
 {
   if( x > 127.f )
     x = 127.f;
@@ -2055,10 +2055,10 @@ void hvl_mixchunk( struct hvl_tune *ht, uint32_t samples, int8_t *buf1, int8_t *
 int hvl_DecodeFrame( struct hvl_tune *ht, int8_t *buf1, int8_t *buf2, int32_t bufmod )
 {
   uint32_t samples, loops;
+  int count = 0;
   
   samples = ht->ht_Frequency/50/ht->ht_SpeedMultiplier;
   loops   = ht->ht_SpeedMultiplier;
-  int count = 0;
   
   do
   {

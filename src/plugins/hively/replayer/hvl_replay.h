@@ -3,8 +3,13 @@
 #define MAX_CHANNELS 16
 #define Period2Freq(period) ((3546897.f * 65536.f) / (period)) 
 
+#if defined(HIPPO_MACOSX)
 #include <stdint.h>
 #include <stdbool.h>
+#else
+// temp
+#include "../../../hippoplayer/core/Types.h"
+#endif
 
 struct hvl_envelope
 {

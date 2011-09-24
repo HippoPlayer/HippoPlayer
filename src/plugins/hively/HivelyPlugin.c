@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
+//#include <unistd.h>
 #include <math.h>
 #include "replayer/hvl_replay.h"
 
@@ -63,17 +63,19 @@ static int HivelyDestroy(void* userData)
 
 static int HivelyOpen(void* userData, const char* buffer)
 {
+	struct HivelyReplayerData* replayerData;
 	static uint8_t tempData[64000];
+	int size;
 	FILE* file;
 
 	file = fopen(buffer, "rb");
 	fseek(file, 0, SEEK_END);
-	int size = (int)ftell(file);
+	size = (int)ftell(file);
 	fseek(file, 0, SEEK_SET);
 	fread(tempData, size, 1, file);
 	fclose(file);
 
-	struct HivelyReplayerData* replayerData = (struct HivelyReplayerData*)userData;	
+	replayerData = (struct HivelyReplayerData*)userData;	
 	replayerData->tune = hvl_load_ahx(tempData, size, 0, 44100);
 
 	return 0;
@@ -91,13 +93,14 @@ static int HivelyClose(void* userData)
 static int HivelyReadData(void* userData, void* dest, int size)
 {
 	int16_t* newDest = (int16_t*)dest;
+	int s, t;
 
 	struct HivelyReplayerData* replayerData = (struct HivelyReplayerData*)userData;	
 	int decodeSize = hvl_DecodeFrame(replayerData->tune, g_mixingBuffer0, &g_mixingBuffer0[2], 4);
 	int len = 44100 * sizeof( uint16_t ) * 2 / 50;;
 	//printf("%d\n", len);
 
-	for(int s = 0, t = 0; s < size; s++, t += 2) 
+	for (s = 0, t = 0; s < size; s++, t += 2) 
 	{
 		newDest[s] = g_mixTemp[0];// * 1.0f / 32767.0f;
 		g_mixTemp += 2;
