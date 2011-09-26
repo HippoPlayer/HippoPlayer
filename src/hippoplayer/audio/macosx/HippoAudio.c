@@ -51,22 +51,78 @@ int HippoAudio_buildDeviceList(struct HippoAudioDevice* devices, size_t maxSize)
 	return theNumDevices;
 }
 
-uint32_t tempBuffer[8192];
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static HippoPlaybackPlugin* currentPlugin;
+
+struct DecodeBuffer
+{
+	uint8_t* data;
+	uint32_t readOffset;	// How far we have read in the buffer
+	bool ready;				// if data has been written here
+};
+
+static struct DecodeBuffer s_decodeBuffers[2];
+static uint32_t s_pluginFrameSize = 0;
+static uint32_t s_currentBuffer = 0;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void HippoAudio_preparePlayback(HippoPlaybackPlugin* plugin) 
+{
+	pluginFrameSize = plugin->frameSize(plugin->privateData);
+	currentPlugin = plugin;
+
+	// TODO: Remove malloc here and use custom allocator
+
+	for (uint32_t i = 0; i < 2; ++i)
+	{
+		free(decodeBuffers[i].data);
+		decodeBuffers[i].data = malloc(frameSize);
+		decodeBuffers[i].readOffset = 0;
+	}
+
+	// Decode the first bit of audio here so it's prepared when starting the playback. Potentiall race here if
+	// we get a callback to the rederCallback, needs to be investigated
+	
+	plugin->readData(plugin->privateData, decodeBuffer[i].data);
+	currentBuffer = 0;
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static OSStatus renderCallback(void* inRefCon, AudioUnitRenderActionFlags* inActionFlags,
 							   const AudioTimeStamp* inTimeStamp, UInt32 inBusNumber,
-							   UInt32 inNumFrames, AudioBufferList* ioData)
+							   UInt32 frameSize, AudioBufferList* ioData)
 
 {
+	// This has to be true for now. That is that the frame decoded by the plugin needs to be bigger than then the read
+	// frame by the audio playback. This may not always be the case but should always be changed so it's true esp as
+	// the decode jobs will be kicked using GDC and decoding very little amount each time will make things slower anyway
+	// and would complicate the code more even if we could support it
+
+	if (frameSize > s_pluginFrameSize) 
+	{
+		printf("frameSize too small (%d) needs to be at least (%d)\n",  plugin->frameSize(plugin->privateData), frameSize);
+		return -1;
+	}
+
+	uint32_t currentBuffer = s_currentBuffer;
+	uint32_t size = s_decodeBuffers[currentBuffer];
+
+
+
 	//memset(tempBuffer, 0, sizeof(tempBuffer));
 
+	/*
 	HippoPlaybackPlugin* plugin = (HippoPlaybackPlugin*)inRefCon;
-	plugin->readData(plugin->userData, tempBuffer, inNumFrames);
+	plugin->readData(plugin->privateData, tempBuffer, inNumFrames);
 
 	for (UInt32 channel = 0; channel < ioData->mNumberBuffers; channel++)
+	{
 		memcpy(ioData->mBuffers[channel].mData, tempBuffer, inNumFrames * sizeof(uint16_t));
+	}
+	*/
 
 	return noErr;
 }

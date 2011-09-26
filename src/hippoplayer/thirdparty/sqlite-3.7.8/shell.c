@@ -1,3 +1,5 @@
+#if 0
+
 /*
 ** 2001 September 15
 **
@@ -2932,3 +2934,5 @@ int main(int argc, char **argv){
   }
   return rc;
 }
+
+#endif

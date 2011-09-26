@@ -36,8 +36,6 @@ HippoWindow* HippoWindow_create(struct LinearAllocator* allocator, const char* n
 	[window_ setTitle:@"(none)"];
 	[window_ setReleasedWhenClosed:NO];
 	[window_ performSelectorOnMainThread:@selector(makeKeyAndOrderFront:) withObject:nil waitUntilDone:YES];
-	//[NSApp activateIgnoringOtherApps:YES];
-	//[NSApp finishLaunching];
 
 	[pool drain];
 
