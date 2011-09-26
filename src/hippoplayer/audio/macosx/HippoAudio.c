@@ -53,13 +53,12 @@ int HippoAudio_buildDeviceList(struct HippoAudioDevice* devices, size_t maxSize)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static HippoPlaybackPlugin* currentPlugin;
+static HippoPlaybackPlugin* s_currentPlugin = 0;
 
 struct DecodeBuffer
 {
 	uint8_t* data;
 	uint32_t readOffset;	// How far we have read in the buffer
-	bool ready;				// if data has been written here
 };
 
 static struct DecodeBuffer s_decodeBuffers[2];
@@ -70,23 +69,55 @@ static uint32_t s_currentBuffer = 0;
 
 void HippoAudio_preparePlayback(HippoPlaybackPlugin* plugin) 
 {
-	pluginFrameSize = plugin->frameSize(plugin->privateData);
-	currentPlugin = plugin;
+	uint32_t pluginFrameSize = plugin->frameSize(plugin->privateData);
 
 	// TODO: Remove malloc here and use custom allocator
 
 	for (uint32_t i = 0; i < 2; ++i)
 	{
-		free(decodeBuffers[i].data);
-		decodeBuffers[i].data = malloc(frameSize);
-		decodeBuffers[i].readOffset = 0;
+		free(s_decodeBuffers[i].data);
+		s_decodeBuffers[i].data = malloc(pluginFrameSize);
+		s_decodeBuffers[i].readOffset = 0;
 	}
 
 	// Decode the first bit of audio here so it's prepared when starting the playback. Potentiall race here if
 	// we get a callback to the rederCallback, needs to be investigated
 	
-	plugin->readData(plugin->privateData, decodeBuffer[i].data);
-	currentBuffer = 0;
+	plugin->readData(plugin->privateData, s_decodeBuffers[0].data);
+	plugin->readData(plugin->privateData, s_decodeBuffers[1].data);
+	s_pluginFrameSize = pluginFrameSize;
+	s_currentBuffer = 0;
+	s_currentPlugin = plugin;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void writeAudioData(AudioBufferList* ioData, const uint8_t* data, uint32_t offset, uint32_t size)
+{
+	uint32_t copySize = size / 4; // 2 channels 2 bytes for each sample
+	const uint16_t* srcData = (uint16_t*)data;
+	uint16_t* dest0 = (uint16_t*)ioData->mBuffers[0].mData;
+	uint16_t* dest1 = (uint16_t*)ioData->mBuffers[1].mData;
+
+	dest0 += offset;
+	dest1 += offset;
+	
+	// TODO: we know that we have 2 channels here so we assume that for now
+
+	for (uint32 i = 0; i < copySize; ++i)
+	{
+		*dest0++ = srcData[0];
+		*dest1++ = srcData[1];
+		srcData += 2;
+	}
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void clearOutputBuffers(AudioBufferList* ioData, uint32_t size)
+{
+	memset(ioData->mBuffers[0].mData, 0, size * sizeof(uint16_t));
+	memset(ioData->mBuffers[1].mData, 0, size * sizeof(uint16_t));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -96,40 +127,80 @@ static OSStatus renderCallback(void* inRefCon, AudioUnitRenderActionFlags* inAct
 							   UInt32 frameSize, AudioBufferList* ioData)
 
 {
+	HippoPlaybackPlugin* plugin = s_currentPlugin;
+
+	if (!plugin)
+	{
+		clearOutputBuffers(ioData, frameSize);
+		return noErr;
+	}
+
+	frameSize *= 4; // 2 channels with 2 bytes for each sample (hard-coded for now)
+
+	const uint32_t pluginFrameSize = s_pluginFrameSize;
+
 	// This has to be true for now. That is that the frame decoded by the plugin needs to be bigger than then the read
 	// frame by the audio playback. This may not always be the case but should always be changed so it's true esp as
 	// the decode jobs will be kicked using GDC and decoding very little amount each time will make things slower anyway
 	// and would complicate the code more even if we could support it
 
-	if (frameSize > s_pluginFrameSize) 
+	if (frameSize > pluginFrameSize) 
 	{
 		printf("frameSize too small (%d) needs to be at least (%d)\n",  plugin->frameSize(plugin->privateData), frameSize);
 		return -1;
 	}
 
 	uint32_t currentBuffer = s_currentBuffer;
-	uint32_t size = s_decodeBuffers[currentBuffer];
+	struct DecodeBuffer* decodeBuffer = &s_decodeBuffers[currentBuffer];
 
+	// if readOffset + frameSize is larger than the pluginFrameSize it means that we are crossing a buffer boundry
+	// and we need to copy the first part from the currentBuffer and the remaing part from the second one
+	// When we are done with the first buffer we kick of the the next decode job 
 
-
-	//memset(tempBuffer, 0, sizeof(tempBuffer));
-
-	/*
-	HippoPlaybackPlugin* plugin = (HippoPlaybackPlugin*)inRefCon;
-	plugin->readData(plugin->privateData, tempBuffer, inNumFrames);
-
-	for (UInt32 channel = 0; channel < ioData->mNumberBuffers; channel++)
+	if (decodeBuffer->readOffset + frameSize > pluginFrameSize)
 	{
-		memcpy(ioData->mBuffers[channel].mData, tempBuffer, inNumFrames * sizeof(uint16_t));
+		uint32_t bufferSize = pluginFrameSize - decodeBuffer->readOffset;
+
+		//printf("read from two buffers\n");
+		//printf("%d %d %d %d\n", decodeBuffer->readOffset, decodeBuffer->readOffset + frameSize, pluginFrameSize, bufferSize);
+
+		// write the data remaining data in the first buffer
+		writeAudioData(ioData, decodeBuffer->data + decodeBuffer->readOffset, 0, bufferSize);
+
+		// Here we are done with the buffer, we reset the readOffset to 0 and kick of the new decode
+		decodeBuffer->readOffset = 0;
+		plugin->readData(plugin->privateData, decodeBuffer->data);
+
+		//printf("currentBuffer %d\n", currentBuffer);
+
+		currentBuffer = !currentBuffer;
+		decodeBuffer = &s_decodeBuffers[currentBuffer];
+
+		uint32_t restSize = frameSize - bufferSize; 
+		//printf("rest %d\n", restSize); 
+		writeAudioData(ioData, decodeBuffer->data, bufferSize / 4, restSize); // And the rest int the second buffer 
+		decodeBuffer->readOffset += restSize;
+
+		//printf("totalSizeWritten %d\n", (bufferSize + restSize) / 4);
 	}
-	*/
+	else
+	{
+		// Still data left in the buffer so just copy it and move along
+		//printf("read from one buffer\n");
+		//printf("%d %d %d\n", decodeBuffer->readOffset, frameSize, pluginFrameSize);
+
+		writeAudioData(ioData, decodeBuffer->data + decodeBuffer->readOffset, 0, frameSize);
+		decodeBuffer->readOffset += frameSize;
+	}
+
+	s_currentBuffer = currentBuffer;
 
 	return noErr;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void HippoAudio_openDefaultOutput(HippoPlaybackPlugin* plugin)
+void HippoAudio_openDefaultOutput()
 {
 	OSStatus err = noErr;
 
@@ -150,7 +221,7 @@ void HippoAudio_openDefaultOutput(HippoPlaybackPlugin* plugin)
 	// Set up a callback function to generate output to the output unit
 	AURenderCallbackStruct input;
 	input.inputProc = renderCallback;
-	input.inputProcRefCon = plugin;
+	input.inputProcRefCon = 0;
 
 	err = AudioUnitSetProperty(gOutputUnit, kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Output,
 							   0, &input, sizeof(input));

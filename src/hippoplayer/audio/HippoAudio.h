@@ -14,7 +14,8 @@ typedef struct HippoAudioDevice
 struct HippoPlaybackPlugin;
 
 int HippoAudio_buildDeviceList(HippoAudioDevice* devices, size_t maxSize);
-void HippoAudio_openDefaultOutput(struct HippoPlaybackPlugin* plugin);
+void HippoAudio_openDefaultOutput();
+void HippoAudio_preparePlayback(struct HippoPlaybackPlugin* plugin);
 void HippoAudio_close();
 
 #endif

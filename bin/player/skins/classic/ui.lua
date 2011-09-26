@@ -38,6 +38,7 @@ function update()
 	hippo_ui.beginHorizontalStackPanelXY(0, 38)
 	  if hippo_ui.buttonImage("skins/classic/play.png") then
 		print(play_file)
+	  	hippo.playFile(play_file)
 	  end
 
 	  if hippo_ui.buttonImage("skins/classic/open.png") then

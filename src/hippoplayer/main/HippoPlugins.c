@@ -1,6 +1,7 @@
 #include "HippoPlugins.h"
 #include "core/io/HippoSharedObject.h"
 #include "plugin_api/HippoPlugin.h"
+#include "audio/HippoAudio.h"
 #include <stdio.h>
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -61,4 +62,14 @@ next:;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void HippoPlugins_playFile(const char* file)
+{
+	// Assume the first plugin will play the correct file for now
+
+	printf("lets play!\n");
+	HippoPlaybackPlugin* plugin = (HippoPlaybackPlugin*)g_plugins[0];
+	plugin->open(plugin->privateData, file);
+	HippoAudio_preparePlayback(plugin);
+}
 

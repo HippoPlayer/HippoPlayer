@@ -8,6 +8,7 @@
 
 void* HippoPlugins_get(int* type, const char* extension, const char* bestFit);
 void HippoPlugins_add(const char** plugins); 
+void HippoPlugins_playFile(const char* file);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

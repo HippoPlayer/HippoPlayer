@@ -22,7 +22,7 @@
 static void initPlugins()
 {
 #if defined(HIPPO_MACOSX)
-	const char* libExtension = "dylib";
+	//const char* libExtension = "dylib";
 #elif defined(HIPPO_WIN32)
 	const char* libExtension = "dll";
 #else
@@ -32,15 +32,25 @@ static void initPlugins()
 	LinearAllocator* allocator = LinearAllocator_getScratchPad();
 	LinearAllocatorRewindPoint rewind = LinearAllocator_getRewindPoint(allocator);
 
+	// temp
+
+	static const char* plugins[] = 
+	{
+		"../../src/tundra-output/macosx-gcc-debug-default/libHivelyPlugin.dylib",
+		0,
+	};
+
 	// Find all the plugins (temporary in the current directory of the executable)
-	const char** pluginFiles = HippoIo_scanDirectory(allocator, ".", libExtension, false);
-	HippoPlugins_add(pluginFiles);
+	//const char** pluginFiles = HippoIo_scanDirectory(allocator, "../../src/tundra-output/macosx-gcc-debug-default", libExtension, false);
+	HippoPlugins_add(plugins);
 	
+	/*
 	while (*pluginFiles)
 	{
 		printf("found plugin %s\n", *pluginFiles);
 		pluginFiles++;
 	}
+	*/
 
 	LinearAllocator_rewind(allocator, rewind);
 }
@@ -65,7 +75,7 @@ int HippoMain_create()
 	HippoGui_registerLuaFunctions(luaState);
 	HippoLua_registerLuaFunctions(luaState);
 
-	if (luaL_loadfile(luaState, "../../../bin/player/skins/classic/ui.lua") || lua_pcall(luaState, 0, 0, 0) != 0)
+	if (luaL_loadfile(luaState, "skins/classic/ui.lua") || lua_pcall(luaState, 0, 0, 0) != 0)
 	{
 		printf("Failed to load skins/classic/ui.lua\n");
 		return 0;
@@ -74,8 +84,9 @@ int HippoMain_create()
 	/*
 	plugin->create(plugin->userData);
 	plugin->open(plugin->userData, "songs/ahx/geir_tjelta_-_a_new_beginning.ahx");
-	HippoAudio_openDefaultOutput(plugin);
 	*/
+
+	HippoAudio_openDefaultOutput();
 
 	// call the creation code
 

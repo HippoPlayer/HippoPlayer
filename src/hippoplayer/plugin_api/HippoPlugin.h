@@ -23,7 +23,7 @@ typedef struct HippoPlaybackPlugin
 	int (*destroy)(void* userData);
 	int (*open)(void* userData, const char* buffer);
 	int (*close)(void* userData);
-	int (*readData)(void* userData, void* dest, int size);
+	int (*readData)(void* userData, void* dest);
 	int (*seek)(void* userData, int ms);
 	int (*frameSize)(void* userData);
 

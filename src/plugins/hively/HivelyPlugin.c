@@ -96,7 +96,7 @@ static int hivelyClose(void* userData)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int hivelyReadData(void* userData, void* dest, int size)
+static int hivelyReadData(void* userData, void* dest)
 {
 	int8_t* newDest = (int8_t*)dest;
 
@@ -104,11 +104,14 @@ static int hivelyReadData(void* userData, void* dest, int size)
 
 	struct HivelyReplayerData* replayerData = (struct HivelyReplayerData*)userData;	
 	int decodeSize = hvl_DecodeFrame(replayerData->tune, newDest, &newDest[2], 4);
+	//printf("decodeSize %d\n", decodeSize);
 
+	/*
 	if (decodeSize != size)
 	{
 		printf("missmatching decode size %d %d\n", decodeSize, size);
 	}
+	*/
 
 	return 0;
 }

@@ -1,5 +1,7 @@
 #include "HippoLua.h"
 #include "graphics/gui/HippoGui.h"
+#include "audio/HippoAudio.h"
+#include "main/HippoPlugins.h"
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
@@ -59,6 +61,15 @@ static int luaAddToPlaylist(lua_State* luaState)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static int luaPlayFile(lua_State* luaState)
+{
+	const char* filename = luaL_checkstring(luaState, 1);
+	HippoPlugins_playFile(filename);
+	return 0;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static int luaHasPlaylistFiles(lua_State* luaState)
 {
 	int offset = 0;
@@ -113,6 +124,7 @@ static const luaL_Reg hippoLib[] =
 	//{ "getPlaylistFiles", luaGetPlaylistFiles },
 	// { "openFileDialog", luaOpenFileDialog },
 	{ "quit", luaQuit },
+	{ "playFile", luaPlayFile },
 	{ 0, 0 },
 };
 
