@@ -54,6 +54,7 @@ int HippoAudio_buildDeviceList(struct HippoAudioDevice* devices, size_t maxSize)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static HippoPlaybackPlugin* s_currentPlugin = 0;
+static HippoPlaybackPlugin* s_lastPlugin = 0;
 
 struct DecodeBuffer
 {
@@ -88,6 +89,21 @@ void HippoAudio_preparePlayback(HippoPlaybackPlugin* plugin)
 	s_pluginFrameSize = pluginFrameSize;
 	s_currentBuffer = 0;
 	s_currentPlugin = plugin;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void HippoAudio_pausePlayback()
+{
+	s_lastPlugin = s_currentPlugin;
+	s_currentPlugin = 0;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void HippoAudio_resumePlayback()
+{
+	s_currentPlugin = s_lastPlugin;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -161,9 +177,6 @@ static OSStatus renderCallback(void* inRefCon, AudioUnitRenderActionFlags* inAct
 	{
 		uint32_t bufferSize = pluginFrameSize - decodeBuffer->readOffset;
 
-		//printf("read from two buffers\n");
-		//printf("%d %d %d %d\n", decodeBuffer->readOffset, decodeBuffer->readOffset + frameSize, pluginFrameSize, bufferSize);
-
 		// write the data remaining data in the first buffer
 		writeAudioData(ioData, decodeBuffer->data + decodeBuffer->readOffset, 0, bufferSize);
 
@@ -171,23 +184,16 @@ static OSStatus renderCallback(void* inRefCon, AudioUnitRenderActionFlags* inAct
 		decodeBuffer->readOffset = 0;
 		plugin->readData(plugin->privateData, decodeBuffer->data);
 
-		//printf("currentBuffer %d\n", currentBuffer);
-
 		currentBuffer = !currentBuffer;
 		decodeBuffer = &s_decodeBuffers[currentBuffer];
 
 		uint32_t restSize = frameSize - bufferSize; 
-		//printf("rest %d\n", restSize); 
 		writeAudioData(ioData, decodeBuffer->data, bufferSize / 4, restSize); // And the rest int the second buffer 
 		decodeBuffer->readOffset += restSize;
-
-		//printf("totalSizeWritten %d\n", (bufferSize + restSize) / 4);
 	}
 	else
 	{
 		// Still data left in the buffer so just copy it and move along
-		//printf("read from one buffer\n");
-		//printf("%d %d %d\n", decodeBuffer->readOffset, frameSize, pluginFrameSize);
 
 		writeAudioData(ioData, decodeBuffer->data + decodeBuffer->readOffset, 0, frameSize);
 		decodeBuffer->readOffset += frameSize;
