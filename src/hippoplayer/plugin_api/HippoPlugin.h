@@ -13,6 +13,15 @@ extern "C"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+typedef struct HippoPlaybackBuffer
+{
+	uint8_t* data;
+	uint32_t frameSize;
+	uint32_t frameMaxSize;
+} HippoPlaybackBuffer;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 typedef struct HippoPlaybackPlugin
 {
 	int version;
@@ -23,7 +32,7 @@ typedef struct HippoPlaybackPlugin
 	int (*destroy)(void* userData);
 	int (*open)(void* userData, const char* buffer);
 	int (*close)(void* userData);
-	int (*readData)(void* userData, void* dest);
+	int (*readData)(void* userData, HippoPlaybackBuffer* dest);
 	int (*seek)(void* userData, int ms);
 	int (*frameSize)(void* userData);
 
