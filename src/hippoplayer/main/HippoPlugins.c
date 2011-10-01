@@ -3,6 +3,7 @@
 #include "plugin_api/HippoPlugin.h"
 #include "audio/HippoAudio.h"
 #include <stdio.h>
+#include <string.h>
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -62,14 +63,62 @@ next:;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// TODO: Move to string util class
+
+static const char* getFileExt(const char* file)
+{
+	int length = (int)strlen(file);
+
+	for (int i = length - 1; i > 0; --i)
+	{
+		if (file[i] == '.')
+			return &file[i + 1];
+	}
+
+	// unable to find extension
+
+	return 0;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void HippoPlugins_playFile(const char* file)
 {
 	// Assume the first plugin will play the correct file for now
 
+	const char* fileExtension = getFileExt(file);
+
+	printf("%s\n", fileExtension);
+
+	for (uint32_t i = 0, pluginCount = g_pluginCount; i < pluginCount; ++i)
+	{
+		HippoPlaybackPlugin* plugin = (HippoPlaybackPlugin*)g_plugins[i];
+
+		// TODO: We might have several plugins supporting same time so we need the user to have the abilitty to select
+		// the default one
+
+		const char** supportedTypes = plugin->supportedExtensions(plugin->privateData);
+		if (!supportedTypes)
+		{
+			printf("No supported file types registered for plugin, skipping\n");
+			continue;
+		}
+
+		while (*supportedTypes)
+		{
+			if (!strcmp(*supportedTypes, fileExtension))
+			{
+				plugin->open(plugin->privateData, file);
+				HippoAudio_preparePlayback(plugin);
+				return;
+			}
+
+			supportedTypes++;
+		}
+
+	}
+
+
 	printf("lets play!\n");
-	HippoPlaybackPlugin* plugin = (HippoPlaybackPlugin*)g_plugins[0];
-	plugin->open(plugin->privateData, file);
-	HippoAudio_preparePlayback(plugin);
 }
 
