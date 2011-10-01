@@ -15,9 +15,10 @@ extern "C"
 
 typedef struct HippoPlaybackBuffer
 {
-	uint8_t* data;
-	uint32_t frameSize;
-	uint32_t frameMaxSize;
+	unsigned char* data;
+	unsigned int readOffset;
+	unsigned int frameSize;
+	unsigned int frameMaxSize;
 } HippoPlaybackBuffer;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -54,6 +55,8 @@ typedef struct HippoDecrunchPlugin
 
 } HippoDecrunchPlugin;
 */
+
+HippoPlaybackPlugin* getPlugin();
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
