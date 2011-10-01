@@ -37,6 +37,7 @@ static void initPlugins()
 	static const char* plugins[] = 
 	{
 		"../../src/tundra-output/macosx-gcc-debug-default/libHivelyPlugin.dylib",
+		"../../src/tundra-output/macosx-gcc-debug-default/libFlacPlugin.dylib",
 		0,
 	};
 
