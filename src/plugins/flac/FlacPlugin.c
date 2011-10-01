@@ -4,8 +4,7 @@
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
-#include <FLAC/all.h> 
-
+#include <FLAC/stream_decoder.h> 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -22,6 +21,7 @@ typedef struct FlacReplayerData
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Callbacks needed by the FLAC code
 
+/*
 static FLAC__StreamDecoderReadStatus readCallback(const FLAC__StreamDecoder* decoder, FLAC__byte buffer[], size_t* bytes, void* clientData)
 {
 	FlacReplayerData* replayer = (FlacReplayerData*) clientData;
@@ -42,6 +42,7 @@ static FLAC__StreamDecoderReadStatus readCallback(const FLAC__StreamDecoder* dec
 
 	return FLAC__STREAM_DECODER_READ_STATUS_CONTINUE;
 } 
+*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -54,8 +55,6 @@ static FLAC__StreamDecoderWriteStatus writeCallback(const FLAC__StreamDecoder* d
 
     playbackBuffer->frameSize = frame->header.channels * frame->header.blocksize * frame->header.bits_per_sample / 8;
 
-    printf("bufferSize = %d\n", playbackBuffer->frameSize);
-
     if (playbackBuffer->frameSize > playbackBuffer->frameMaxSize)
     {
 		// TODO: Use allocator 
@@ -64,7 +63,7 @@ static FLAC__StreamDecoderWriteStatus writeCallback(const FLAC__StreamDecoder* d
 		playbackBuffer->frameMaxSize = playbackBuffer->frameSize;
     }
 
-    uint8_t* dst = playbackBuffer->data;
+    uint16_t* dst = (uint16_t*)playbackBuffer->data;
 
 	/* If the sample is neither exactly 8-bit nor 16-bit, it will have to
 	 * be converted. Unfortunately the buffer is read-only, so we either
@@ -98,13 +97,16 @@ static FLAC__StreamDecoderWriteStatus writeCallback(const FLAC__StreamDecoder* d
 			{
 				FLAC__int32 sample = buffer[j][i];
 
+				/*
 				if (frame->header.bits_per_sample < 16)
 					sample <<= (16 - frame->header.bits_per_sample);
 				else if (frame->header.bits_per_sample > 16)
 					sample >>= (frame->header.bits_per_sample - 16);
-
 				*dst++ = (sample & 0xff00) >> 8;
 				*dst++ = sample & 0x00ff;
+				*/
+
+				*dst++ = (uint16_t)sample;
 			} 
 		}
 	} 
@@ -114,6 +116,7 @@ static FLAC__StreamDecoderWriteStatus writeCallback(const FLAC__StreamDecoder* d
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/*
 static FLAC__StreamDecoderSeekStatus seekCallback(const FLAC__StreamDecoder* decoder, FLAC__uint64 offset, void* clientData)
 {
 	FlacReplayerData* replayer = (FlacReplayerData*) clientData;
@@ -127,9 +130,11 @@ static FLAC__StreamDecoderSeekStatus seekCallback(const FLAC__StreamDecoder* dec
 
     return FLAC__STREAM_DECODER_SEEK_STATUS_ERROR;
 } 
+*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/*
 static FLAC__StreamDecoderTellStatus tellCallback(const FLAC__StreamDecoder* decoder, FLAC__uint64* offset, void* clientData)
 {
 	FlacReplayerData* replayer = (FlacReplayerData*) clientData;
@@ -146,9 +151,11 @@ static FLAC__StreamDecoderTellStatus tellCallback(const FLAC__StreamDecoder* dec
 
 	return FLAC__STREAM_DECODER_TELL_STATUS_OK;
 } 
+*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/*
 static FLAC__StreamDecoderLengthStatus lengthCallback(const FLAC__StreamDecoder* decoder, FLAC__uint64* length, void * clientData)
 {
 	FlacReplayerData* replayer = (FlacReplayerData*) clientData;
@@ -160,9 +167,11 @@ static FLAC__StreamDecoderLengthStatus lengthCallback(const FLAC__StreamDecoder*
 
 	return FLAC__STREAM_DECODER_LENGTH_STATUS_OK;
 } 
+*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/*
 static FLAC__bool eofCallback(const FLAC__StreamDecoder* decoder, void *clientData) 
 {
 	FlacReplayerData* replayer = (FlacReplayerData*) clientData;
@@ -178,6 +187,7 @@ static FLAC__bool eofCallback(const FLAC__StreamDecoder* decoder, void *clientDa
 
     return false;
 } 
+*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -196,10 +206,21 @@ static void metadataCallback(const FLAC__StreamDecoder* decoder, const FLAC__Str
 	FlacReplayerData* replayer = (FlacReplayerData*) clientData;
 	(void)decoder;
 
-    printf("%d\n", __LINE__);
-
 	if (metadata->type == FLAC__METADATA_TYPE_STREAMINFO)
 	{
+		FLAC__uint64 total_samples = 0;
+		unsigned sample_rate = 0;
+		unsigned channels = 0;
+		unsigned bps = 0;
+		sample_rate = metadata->data.stream_info.sample_rate;
+		channels = metadata->data.stream_info.channels;
+		bps = metadata->data.stream_info.bits_per_sample;
+
+		printf("sample rate    : %u Hz\n", sample_rate);
+		printf("channels       : %u\n", channels);
+		printf("bits per sample: %u\n", bps);
+		printf("total samples  : %llu\n", total_samples);
+
 		if (metadata->data.stream_info.sample_rate == 0 || metadata->data.stream_info.total_samples == 0)
 		{
 			replayer->totalTime = -1;
@@ -281,23 +302,28 @@ static int flacOpen(void* userData, const char* buffer)
 
     FLAC__StreamDecoder* decoder = FLAC__stream_decoder_new();
 
-    printf("decoder %p\n", decoder);
+	(void)FLAC__stream_decoder_set_md5_checking(decoder, true);
 
+	/*
     FLAC__StreamDecoderInitStatus ret = FLAC__stream_decoder_init_stream(decoder, readCallback, seekCallback, 
 											   tellCallback, lengthCallback, eofCallback, writeCallback,
 											   metadataCallback, errorCallback, replayer);
-	
+	*/	
+    FLAC__StreamDecoderInitStatus ret = FLAC__stream_decoder_init_file(decoder, buffer, writeCallback, metadataCallback, 
+    																   errorCallback, replayer);
 	if (ret != FLAC__STREAM_DECODER_INIT_STATUS_OK )
 	{
 		printf("FLAC init failed. Status: %s\n", FLAC__StreamDecoderInitStatusString[ret]);
 		return -1;
 	}
 
-	replayer->file = fopen(buffer, "rb");
+	printf("%s\n", buffer);
+
+	//replayer->file = fopen(buffer, "rb");
 	replayer->decoder = decoder;
 
 	// Get metadata
-	FLAC__stream_decoder_process_until_end_of_metadata(decoder);
+	//FLAC__stream_decoder_process_until_end_of_metadata(decoder);
 
 	return 0;
 }
@@ -324,11 +350,9 @@ static int flacReadData(void* userData, HippoPlaybackBuffer* dest)
 	FlacReplayerData* replayer = (FlacReplayerData*) userData;
 	replayer->playbackBuffer = dest;
 
-	printf("decoding flac\n");
-	
 	if (!FLAC__stream_decoder_process_single(replayer->decoder))
 	{
-		printf("FLAC: Unable to decode frame\n");
+		//printf("FLAC: Unable to decode frame\n");
 	}
 
 	if (FLAC__stream_decoder_get_state(replayer->decoder) == FLAC__STREAM_DECODER_END_OF_STREAM)
@@ -356,7 +380,7 @@ static int flacFrameSize(void* userData)
 {
 	(void)userData;
 	// Temp size, the decoder will set this on a per frame basis
-	return 44100 * sizeof(uint16_t) * 2;
+	return 2048;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -378,7 +402,6 @@ static HippoPlaybackPlugin g_flacPlugin =
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 1
 
 HippoPlaybackPlugin* getPlugin()
 {
