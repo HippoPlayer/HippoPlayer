@@ -56,13 +56,7 @@ int HippoAudio_buildDeviceList(struct HippoAudioDevice* devices, size_t maxSize)
 static HippoPlaybackPlugin* s_currentPlugin = 0;
 static HippoPlaybackPlugin* s_lastPlugin = 0;
 
-struct DecodeBuffer
-{
-	uint8_t* data;
-	uint32_t readOffset;	// How far we have read in the buffer
-};
-
-static struct DecodeBuffer s_decodeBuffers[2];
+static struct HippoPlaybackBuffer s_decodeBuffers[2];
 static uint32_t s_pluginFrameSize = 0;
 static uint32_t s_currentBuffer = 0;
 
@@ -71,21 +65,24 @@ static uint32_t s_currentBuffer = 0;
 void HippoAudio_preparePlayback(HippoPlaybackPlugin* plugin) 
 {
 	uint32_t pluginFrameSize = plugin->frameSize(plugin->privateData);
+	uint32_t frameMaxSize = 64 * 1024;
 
 	// TODO: Remove malloc here and use custom allocator
 
 	for (uint32_t i = 0; i < 2; ++i)
 	{
 		free(s_decodeBuffers[i].data);
-		s_decodeBuffers[i].data = malloc(pluginFrameSize);
+		s_decodeBuffers[i].data = malloc(frameMaxSize);
 		s_decodeBuffers[i].readOffset = 0;
+		s_decodeBuffers[i].frameSize = pluginFrameSize;
+		s_decodeBuffers[i].frameMaxSize = frameMaxSize;
 	}
 
 	// Decode the first bit of audio here so it's prepared when starting the playback. Potentiall race here if
 	// we get a callback to the rederCallback, needs to be investigated
 	
-	plugin->readData(plugin->privateData, s_decodeBuffers[0].data);
-	plugin->readData(plugin->privateData, s_decodeBuffers[1].data);
+	plugin->readData(plugin->privateData, &s_decodeBuffers[0]);
+	plugin->readData(plugin->privateData, &s_decodeBuffers[1]);
 	s_pluginFrameSize = pluginFrameSize;
 	s_currentBuffer = 0;
 	s_currentPlugin = plugin;
@@ -167,22 +164,24 @@ static OSStatus renderCallback(void* inRefCon, AudioUnitRenderActionFlags* inAct
 	}
 
 	uint32_t currentBuffer = s_currentBuffer;
-	struct DecodeBuffer* decodeBuffer = &s_decodeBuffers[currentBuffer];
+	struct HippoPlaybackBuffer* decodeBuffer = &s_decodeBuffers[currentBuffer];
+
+	uint32_t decodeFrameSize = decodeBuffer->frameSize;
 
 	// if readOffset + frameSize is larger than the pluginFrameSize it means that we are crossing a buffer boundry
 	// and we need to copy the first part from the currentBuffer and the remaing part from the second one
 	// When we are done with the first buffer we kick of the the next decode job 
 
-	if (decodeBuffer->readOffset + frameSize > pluginFrameSize)
+	if (decodeBuffer->readOffset + frameSize > decodeFrameSize)
 	{
-		uint32_t bufferSize = pluginFrameSize - decodeBuffer->readOffset;
+		uint32_t bufferSize = decodeFrameSize - decodeBuffer->readOffset;
 
 		// write the data remaining data in the first buffer
 		writeAudioData(ioData, decodeBuffer->data + decodeBuffer->readOffset, 0, bufferSize);
 
 		// Here we are done with the buffer, we reset the readOffset to 0 and kick of the new decode
 		decodeBuffer->readOffset = 0;
-		plugin->readData(plugin->privateData, decodeBuffer->data);
+		plugin->readData(plugin->privateData, decodeBuffer);
 
 		currentBuffer = !currentBuffer;
 		decodeBuffer = &s_decodeBuffers[currentBuffer];
