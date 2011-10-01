@@ -141,6 +141,23 @@ static bool HippoGui_regionHit(const HippoControlInfo* control)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static const char* getNoPath(const char* file)
+{
+	int length = (int)strlen(file);
+
+	for (int i = length - 1; i > 0; --i)
+	{
+		if (file[i] == '/')
+			return &file[i + 1];
+	}
+
+	// unable to find extension
+
+	return 0;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // This could be a regular listbox but as playlists can be very long having them inside a lua-array will likley
 // be slow and take way more memory
 
@@ -167,7 +184,12 @@ const char* HippoGui_playList(int x, int y, int w, int h, int offset)
 	for (i = 0; i < count; ++i)
 	{
 		uint32_t controlId = 0;
-		HippoControlInfo* control = HippoGui_textLabel(files[i]);
+		const char* noPath = getNoPath(files[i]);
+
+		if (!noPath)
+			noPath = files[i];
+
+		HippoControlInfo* control = HippoGui_textLabel(noPath);
 		controlId = s_controlId - 1;
 
 		if (HippoGui_regionHit(control))
