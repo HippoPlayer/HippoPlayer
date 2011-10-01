@@ -18,24 +18,27 @@ SharedLibrary {
 			"_LARGEFILE_SOURCE", "_FILE_OFFSET_BITS=64", "FLAC__SYS_DARWIN", "WORDS_BIGENDIAN", "FLAC__INLINE=__inline__", -- 'VERSION=\"1.2.\"', 
 			"FLAC__ALIGN_MALLOC_DATA"; Config = "macosx-*-*" }
 		},
+
+		LIBPATH = { "plugins/flac/libflac/lib" },
 			
 		CCOPTS = { 
 			{ "-fomit-frame-pointer", "-funroll-loops", "-finline-functions", "-W", "-Wall", 
-			"-Wmissing-prototypes", "-Wstrict-prototypes", "-Winline"; Config = "macosx-*-*" },
+			"-Wstrict-prototypes", "-Winline"; Config = "macosx-*-*" },
 		},
 	},
 
 	Libs = { 
-		{ "ogg"; Config = "macosx-*-*" }, 
+		{ "ogg", "FLAC_1_2_1"; Config = "macosx-*-*" }, 
 	},
 
 	Sources = { 
-		Glob {
-			Dir = "plugins/flac/libflac/src/libFLAC",
-			Extensions = { ".c" },
-		},
 
-		-- "plugins/flac/FlacPlugin.c"
+		--Glob {
+		--	Dir = "plugins/flac/libflac/src/libFLAC",
+		--	Extensions = { ".c" },
+		--},
+
+		"plugins/flac/FlacPlugin.c"
 	},
 }
 
