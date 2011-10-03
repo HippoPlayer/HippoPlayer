@@ -38,6 +38,7 @@ static void initPlugins()
 	{
 		"../../src/tundra-output/macosx-gcc-debug-default/libHivelyPlugin.dylib",
 		"../../src/tundra-output/macosx-gcc-debug-default/libFlacPlugin.dylib",
+		"../../src/tundra-output/macosx-gcc-debug-default/libMikmodPlugin.dylib",
 		0,
 	};
 
@@ -81,6 +82,8 @@ int HippoMain_create()
 		printf("Failed to load skins/classic/ui.lua\n");
 		return 0;
 	}
+
+	//HippoPlugins_playFile("/Users/daniel/code/HippoPlayer/bin/player/songs/modules/musiklinjen.mod");
 
 	/*
 	plugin->create(plugin->userData);
