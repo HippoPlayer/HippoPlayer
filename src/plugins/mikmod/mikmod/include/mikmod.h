@@ -20,7 +20,7 @@
 
 /*==============================================================================
 
-  $Id: mikmod.h.in,v 1.20 2005/03/27 17:31:40 raph Exp $
+  $Id: mikmod.h,v 1.22 2005/03/23 15:18:33 realtech Exp $
 
   MikMod sound library include file
 
@@ -54,9 +54,9 @@ extern "C" {
  *	========== Library version
  */
 
-#define LIBMIKMOD_VERSION_MAJOR @LIBMIKMOD_MAJOR_VERSION@L
-#define LIBMIKMOD_VERSION_MINOR @LIBMIKMOD_MINOR_VERSION@L
-#define LIBMIKMOD_REVISION      @LIBMIKMOD_MICRO_VERSION@L
+#define LIBMIKMOD_VERSION_MAJOR 3L
+#define LIBMIKMOD_VERSION_MINOR 2L
+#define LIBMIKMOD_REVISION      0L
 
 #define LIBMIKMOD_VERSION \
 	((LIBMIKMOD_VERSION_MAJOR<<16)| \
@@ -83,7 +83,7 @@ MIKMODAPI extern long MikMod_GetVersion(void);
 typedef char CHAR;
 #endif
 
-@DOES_NOT_HAVE_SIGNED@
+
 
 #if defined(__arch64__) || defined(__alpha) || defined(__x86_64) || defined(__powerpc64__)
 /* 64 bit architectures */
@@ -249,7 +249,6 @@ MIKMODAPI extern void   MikMod_Lock(void);
 MIKMODAPI extern void   MikMod_Unlock(void);
 
 MIKMODAPI extern void*  MikMod_malloc(size_t);
-MIKMODAPI extern void*  MikMod_realloc(void *, size_t);
 MIKMODAPI extern void*  MikMod_calloc(size_t,size_t);
 MIKMODAPI extern void   MikMod_free(void*);
 
@@ -604,8 +603,6 @@ MIKMODAPI extern void    Player_ToggleMute(SLONG,...);
 MIKMODAPI extern int     Player_GetChannelVoice(UBYTE);
 MIKMODAPI extern UWORD   Player_GetChannelPeriod(UBYTE);
 MIKMODAPI extern int     Player_QueryVoices(UWORD numvoices, VOICEINFO *vinfo); 
-MIKMODAPI extern int     Player_GetRow(void);
-MIKMODAPI extern int     Player_GetOrder(void); 
 
 typedef void (*MikMod_player_t)(void);
 typedef void (*MikMod_callback_t)(unsigned char *data, size_t len);
@@ -642,7 +639,7 @@ enum {
 #define DMODE_SURROUND   0x0100 /* enable surround sound */
 #define DMODE_INTERP     0x0200 /* enable interpolation */
 #define DMODE_REVERSE    0x0400 /* reverse stereo */
-#define DMODE_SIMDMIXER    0x0800 /* enable SIMD mixing */
+#define DMODE_SIMDMIXER	  0x0800 /* enable SIMD mixing */
 #define DMODE_NOISEREDUCTION 0x1000 /* Low pass filtering */
 
 struct SAMPLOAD;

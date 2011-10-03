@@ -55,6 +55,11 @@
 #define open _open
 #endif
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+
 static	int rawout=-1;
 static	SBYTE *audiobuffer=NULL;
 static	CHAR *filename=NULL;
