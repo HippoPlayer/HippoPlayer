@@ -7,6 +7,26 @@ SharedLibrary {
 	},
 }
 
+-- Mikmod
+
+SharedLibrary {
+	Name = "MikmodPlugin",
+	Env = {
+		CPPPATH = { "plugins/mikmod/mikmod/include" },
+	},
+
+	Sources = { 
+		Glob {
+			Dir = "plugins/mikmod/mikmod",
+			Extensions = { ".c" },
+		},
+
+		"plugins/mikmod/MikmodPlugin.c", 
+	},
+
+	Frameworks = { "AudioUnit", "CoreAudio" },
+}
+
 -- Flac plugin
 
 SharedLibrary {
@@ -81,4 +101,5 @@ Program {
 Default "player"
 Default "HivelyPlugin"
 Default "FlacPlugin"
+Default "MikmodPlugin"
 

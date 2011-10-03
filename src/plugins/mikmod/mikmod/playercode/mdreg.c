@@ -102,7 +102,7 @@ void _mm_registeralldrivers(void)
 	
 	/* Register disk writers */
 	_mm_registerdriver(&drv_raw);
-	_mm_registerdriver(&drv_wav);
+	//_mm_registerdriver(&drv_wav);
 #ifdef DRV_AIFF
 	_mm_registerdriver(&drv_aiff);
 #endif
@@ -112,7 +112,7 @@ void _mm_registeralldrivers(void)
 	_mm_registerdriver(&drv_pipe);
 #endif
 #ifndef macintosh
-	_mm_registerdriver(&drv_stdout);
+	//_mm_registerdriver(&drv_stdout);
 #endif
 
 	_mm_registerdriver(&drv_nos);

@@ -200,6 +200,8 @@ void UniReset(void)
 	unibuf[0] = 0;   /* clear rep/len byte */
 }
 
+void* MikMod_realloc(void *data, size_t size);
+
 /* Expands the buffer */
 static BOOL UniExpand(int wanted)
 {
@@ -290,7 +292,7 @@ BOOL UniInit(void)
 {
 	unimax = BUFPAGE;
 
-	if(!(unibuf=(UBYTE*)MikMod_malloc(unimax*sizeof(UBYTE)))) return 0;
+	if(!(unibuf=(UBYTE*)MikMod_malloc(unimax * 4 * sizeof(UBYTE)))) return 0;
 	return 1;
 }
 

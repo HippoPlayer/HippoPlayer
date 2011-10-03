@@ -54,6 +54,7 @@ static void *get_pointer(void *data)
 	return (void*)_ptr;
 }
 
+void* MikMod_malloc(size_t size);
 
 void* MikMod_realloc(void *data, size_t size)
 {

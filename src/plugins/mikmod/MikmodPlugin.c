@@ -3,17 +3,16 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-//#include <unistd.h>
 #include <math.h>
-#include "replayer/hvl_replay.h"
-
+#include "mikmod.h"
+#include <unistd.h>
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct MikmodReplayerData
+typedef struct MikmodReplayerData
 {
-	HMODULE* module;
-};
+	MODULE* module;
+} MikmodReplayerData;
 
 static struct MikmodReplayerData g_replayerData;
 
@@ -70,20 +69,15 @@ static void* mikmodCreate()
 	memset(replayerData, 0, sizeof(struct MikmodReplayerData));
 
 	MikMod_RegisterDriver(&drv_nos);
+	//MikMod_RegisterDriver(&drv_raw);
+	//MikMod_RegisterDriver(&drv_osx);
 	MikMod_RegisterAllLoaders();
 
-	/*
-	* Both DMODE_SOFT_MUSIC and DMODE_16BITS should be set by default,
-	* so this is just for clarity. I haven't experimented with any of
-	* the other flags. There are a few which are said to give better
-	* sound quality.
-	*/
-
-	md_mode |= (DMODE_SOFT_MUSIC | DMODE_16BITS);
-	md_mixfreq = 0;
+	md_mode |= (DMODE_SOFT_MUSIC | DMODE_STEREO | DMODE_16BITS | DMODE_HQMIXER);
+	md_mixfreq = 44100;
 	md_reverb = 1;
 
-	MikMod_Init(""), MikMod_strerror(MikMod_errno), 0;
+	MikMod_Init(""); //, MikMod_strerror(MikMod_errno), 0;
 
 	return replayerData;
 }
@@ -102,10 +96,10 @@ static int mikmodDestroy(void* userData)
 static int mikmodOpen(void* userData, const char* buffer)
 {
     MODULE* module;
-	struct mikmodReplayerData* replayerData = (struct MikmodReplayerData*)userData;	
+	MikmodReplayerData* replayerData = (MikmodReplayerData*)userData;	
 
 	// TODO: Use IO-api 
-	module = Player_Load(buffer, 64, 0);
+	module = Player_Load((char*)buffer, 64, 0);
 
 	if (!module)
 		return 0;
@@ -115,25 +109,20 @@ static int mikmodOpen(void* userData, const char* buffer)
     module->wrap = 0;
     module->loop = 0;
 
-    if (md_mixfreq == 0)
-        md_mixfreq = (!sample->desired.rate) ? 44100 : sample->desired.rate;
+    //if (md_mixfreq == 0)
+    md_mixfreq = 44100;
 
-    Player_Start(module);
     Player_SetPosition(0);
+    Player_Start(module);
 
-    sample->flags = SOUND_SAMPLEFLAG_NONE;
-
-    internal->total_time = (module->sngtime * 1000) / (1<<10);
+    //internal->total_time = (module->sngtime * 1000) / (1<<10);
 
     printf("MIKMOD: Name: %s\n", module->songname);
     printf("MIKMOD: Type: %s\n", module->modtype);
 
-    Player_SetPosition(0);
-    MikMod_Update();
+    replayerData->module = module;
 
-    return(1); 
-
-	return 0;
+	return 1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -145,22 +134,16 @@ static int mikmodClose(void* userData)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int mikmodReadData(void* userData, void* dest)
+static int mikmodReadData(void* userData, HippoPlaybackBuffer* dest)
 {
-	int8_t* newDest = (int8_t*)dest;
+	MikmodReplayerData* replayer = (MikmodReplayerData*)userData;
 
-	// TODO: Support more than one tune
+	if (!Player_Active())
+		Player_Start(replayer->module);
 
-	struct mikmodReplayerData* replayerData = (struct mikmodReplayerData*)userData;	
-	int decodeSize = hvl_DecodeFrame(replayerData->tune, newDest, &newDest[2], 4);
-	//printf("decodeSize %d\n", decodeSize);
+    int size = VC_WriteBytes((SBYTE*)dest->data, dest->frameSize);
 
-	/*
-	if (decodeSize != size)
-	{
-		printf("missmatching decode size %d %d\n", decodeSize, size);
-	}
-	*/
+    printf("%d : %d\n", replayer->module->sngpos, replayer->module->patpos);
 
 	return 0;
 }
@@ -176,7 +159,7 @@ static int mikmodSeek(void* userData, int ms)
 
 static int mikmodFrameSize(void* userData)
 {
-	return 44100 * sizeof(uint16_t) * 2 / 50;
+	return 16 * 1024;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -194,9 +177,11 @@ static HippoPlaybackPlugin g_mikmodPlugin =
 	mikmodReadData,
 	mikmodSeek,
 	mikmodFrameSize,
+	0,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 HippoPlaybackPlugin* getPlugin()
 {

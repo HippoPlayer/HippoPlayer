@@ -1,5 +1,5 @@
 /*	MikMod sound library
-	(c) 1998, 1999, 2005 Miodrag Vallat and others - see file AUTHORS for
+	(c) 1998, 1999, 2000 Miodrag Vallat and others - see file AUTHORS for
 	complete list.
 
 	This library is free software; you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 
 /*==============================================================================
 
-  $Id: mikmod_internals.h,v 1.2 2005/03/30 19:09:29 realtech Exp $
+  $Id: mikmod_internals.h,v 1.4 2004/02/18 13:29:17 raph Exp $
 
   MikMod sound library internal definitions
 
@@ -33,22 +33,30 @@
 extern "C" {
 #endif
 
+#ifdef HAVE_MALLOC_H
+#include <malloc.h>
+#endif
 #include <stdarg.h>
 #if defined(__OS2__)||defined(__EMX__)||defined(WIN32)
 #define strcasecmp(s,t) stricmp(s,t)
 #endif
 
-#include <mikmod_build.h>
+#include <mikmod.h>
+
+#ifdef WIN32
+#pragma warning(disable:4761)
+#endif
+
+#ifndef __arch64__
+#define __arch64__
+#endif
 
 /*========== More type definitions */
 
 /* SLONGLONG: 64bit, signed */
 #if defined (__arch64__) || defined(__alpha)
 typedef long		SLONGLONG;
-#define NATIVE_64BIT_INT
-#elif defined(__powerpc64__)
-typedef long long	SLONGLONG;
-#define NATIVE_64BIT_INT
+//#define NATIVE_64BIT_INT
 #elif defined(__WATCOMC__)
 typedef __int64		SLONGLONG;
 #elif defined(WIN32) && !defined(__MWERKS__)
@@ -65,6 +73,12 @@ typedef long long	SLONGLONG;
 #define _mm_errno MikMod_errno
 #define _mm_critical MikMod_critical
 extern MikMod_handler_t _mm_errorhandler;
+
+/*========== Memory allocation */
+
+extern void* _mm_malloc(size_t);
+extern void* _mm_calloc(size_t,size_t);
+#define _mm_free(p) do { if (p) free(p); p = NULL; } while(0)
 
 /*========== MT stuff */
 
@@ -106,9 +120,6 @@ DECLARE_MUTEX(lists);
 DECLARE_MUTEX(vars);
 
 /*========== Portable file I/O */
-
-extern MREADER* _mm_new_mem_reader(const void *buffer, int len);
-extern void _mm_delete_mem_reader(MREADER *reader);
 
 extern MREADER* _mm_new_file_reader(FILE* fp);
 extern void _mm_delete_file_reader(MREADER*);
@@ -672,123 +683,6 @@ extern BOOL Voice_Stopped_internal(SBYTE);
 #ifdef __cplusplus
 }
 #endif
-
-/*========== SIMD mixing routines */
-
-#if defined(__APPLE__) && defined(__MACH__)
-#ifndef HAVE_ALTIVEC
-#define HAVE_ALTIVEC
-#elif defined WIN32 || defined __WIN64
-
-// FIXME: emmintrin.h requires VC6 processor pack or VC2003+
-#ifndef HAVE_SSE2
-#define HAVE_SSE2
-#endif // HAVE_SSE2
-/* Fixes couples warnings */
-#pragma warning(disable:4761)
-#pragma warning(disable:4391)
-#pragma warning(disable:4244)
-#endif
-#endif
-// TODO: Test for GCC Linux
-
-/*========== SIMD mixing helper functions =============*/
-
-#define IS_ALIGNED_16(ptr) (!(((int)(ptr)) & 15))
-
-/* Altivec helper function */
-#if defined HAVE_ALTIVEC
-
-#define simd_m128i vector signed int
-#define simd_m128 vector float
-
-#include <ppc_intrinsics.h>
-
-// Helper functions
-
-// Set single float across the four values
-static inline vector float vec_mul( const vector float a, const vector float b)
-{
-    return vec_madd(a, b, (const vector float)(0.f));
-}
-
-// Set single float across the four values
-static inline vector float vec_load_ps1(const float *pF )
-{
-    vector float data = vec_lde(0, pF);
-    return vec_splat(vec_perm(data, data, vec_lvsl(0, pF)), 0);
-}
-
-// Set vector to 0
-static inline const vector float vec_setzero()
-{
-    return (const vector float) (0.);
-}
-
-static inline vector signed char vec_set1_8(unsigned char splatchar)
-{
-	vector unsigned char splatmap = vec_lvsl(0, &splatchar); 
-	vector unsigned char result = vec_lde(0, &splatchar);       
-	splatmap = vec_splat(splatmap, 0);        
-	return (vector signed char)vec_perm(result, result, splatmap);
-}
-
-#define PERM_A0 0x00,0x01,0x02,0x03
-#define PERM_A1 0x04,0x05,0x06,0x07
-#define PERM_A2 0x08,0x09,0x0A,0x0B
-#define PERM_A3 0x0C,0x0D,0x0E,0x0F
-#define PERM_B0 0x10,0x11,0x12,0x13
-#define PERM_B1 0x14,0x15,0x16,0x17
-#define PERM_B2 0x18,0x19,0x1A,0x1B
-#define PERM_B3 0x1C,0x1D,0x1E,0x1F
-
-// Equivalent to _mm_unpacklo_epi32
-static inline vector signed int vec_unpacklo(vector signed int a, vector signed int b)
-{
-   return vec_perm(a, b, (vector unsigned char)(PERM_A0,PERM_A1,PERM_B0,PERM_B1));
-}
-
-// Equivalent to _mm_srli_si128(a, 8) (without the zeroing in high part).
-static inline vector signed int vec_hiqq(vector signed int a)
-{
-   vector signed int b = vec_splat_s32(0);
-   return vec_perm(a, b, (vector unsigned char)(PERM_A2,PERM_A3,PERM_B2,PERM_B3));
-}
-
-// vec_sra is max +15. We have to do in two times ...
-#define EXTRACT_SAMPLE_SIMD_0(srce, var) var = vec_sra(vec_sra(vec_ld(0, (vector signed int*)(srce)), vec_splat_u32(15)), vec_splat_u32(BITSHIFT+16-15-0));
-#define EXTRACT_SAMPLE_SIMD_8(srce, var) var = vec_sra(vec_sra(vec_ld(0, (vector signed int*)(srce)), vec_splat_u32(15)), vec_splat_u32(BITSHIFT+16-15-8));
-#define EXTRACT_SAMPLE_SIMD_16(srce, var) var = vec_sra(vec_ld(0, (vector signed int*)(srce)), vec_splat_u32(BITSHIFT+16-16));
-#define PUT_SAMPLE_SIMD_W(dste, v1, v2)  vec_st(vec_packs(v1, v2), 0, dste); 
-#define PUT_SAMPLE_SIMD_B(dste, v1, v2, v3, v4)  vec_st(vec_add(vec_packs((vector signed short)vec_packs(v1, v2), (vector signed short)vec_packs(v3, v4)), vec_set1_8(128)), 0, dste); 
-#define PUT_SAMPLE_SIMD_F(dste, v1, v2)  vec_st(vec_mul(vec_ctf(v1, 0), v2), 0, dste);
-#define LOAD_PS1_SIMD(ptr) vec_load_ps1(ptr)
-
-#elif defined HAVE_SSE2
-
-/* SSE2 helper function */
-
-#include <emmintrin.h>
-
-static __inline __m128i mm_hiqq(const __m128i a)
-{
-   return _mm_srli_si128(a, 8); // get the 64bit upper part. new 64bit upper is undefined (zeroed is fine).
-}
-
-/* 128-bit mixing macros */
-#define EXTRACT_SAMPLE_SIMD(srce, var, size) var = _mm_srai_epi32(_mm_load_si128((__m128i*)(srce)), BITSHIFT+16-size); 
-#define EXTRACT_SAMPLE_SIMD_0(srce, var) EXTRACT_SAMPLE_SIMD(srce, var, 0)
-#define EXTRACT_SAMPLE_SIMD_8(srce, var) EXTRACT_SAMPLE_SIMD(srce, var, 8)
-#define EXTRACT_SAMPLE_SIMD_16(srce, var) EXTRACT_SAMPLE_SIMD(srce, var, 16)
-#define PUT_SAMPLE_SIMD_W(dste, v1, v2)  _mm_store_si128((__m128i*)(dste), _mm_packs_epi32(v1, v2)); 
-#define PUT_SAMPLE_SIMD_B(dste, v1, v2, v3, v4)  _mm_store_si128((__m128i*)(dste), _mm_add_epi8(_mm_packs_epi16(_mm_packs_epi32(v1, v2), _mm_packs_epi32(v3, v4)), _mm_set1_epi8(128))); 
-#define PUT_SAMPLE_SIMD_F(dste, v1, v2)  _mm_store_ps((float*)(dste), _mm_mul_ps(_mm_cvtepi32_ps(v1), v2));
-#define LOAD_PS1_SIMD(ptr) _mm_load_ps1(ptr)
-#define simd_m128i __m128i
-#define simd_m128 __m128
-
-#endif
-
 
 #endif
 
