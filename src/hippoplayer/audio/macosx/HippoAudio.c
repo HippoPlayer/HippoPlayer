@@ -65,7 +65,7 @@ static uint32_t s_currentBuffer = 0;
 void HippoAudio_preparePlayback(HippoPlaybackPlugin* plugin) 
 {
 	uint32_t pluginFrameSize = plugin->frameSize(plugin->privateData);
-	uint32_t frameMaxSize = 64 * 1024;
+	uint32_t frameMaxSize = 1024 * 1024;
 
 	// TODO: Remove malloc here and use custom allocator
 
