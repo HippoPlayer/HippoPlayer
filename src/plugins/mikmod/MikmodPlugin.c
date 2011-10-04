@@ -143,7 +143,7 @@ static int mikmodReadData(void* userData, HippoPlaybackBuffer* dest)
 
     int size = VC_WriteBytes((SBYTE*)dest->data, dest->frameSize);
 
-    printf("%d : %d\n", replayer->module->sngpos, replayer->module->patpos);
+    // printf("%d : %d\n", replayer->module->sngpos, replayer->module->patpos);
 
 	return 0;
 }
