@@ -62,6 +62,26 @@ SharedLibrary {
 	},
 }
 
+-- SidPlugin
+
+SharedLibrary {
+	Name = "SidPlugin",
+	Env = {
+		CPPPATH = { "plugins/sid/libsidplay2/include/sidplay",
+					"sid/libsidplay2/include/sidplay/builders"},
+		LIBPATH = { "plugins/sid/lib" },
+	},
+
+	Sources = { 
+		"plugins/sid/Sidplugin.cpp", 
+	},
+
+
+	Libs = { 
+		{ "sidplay2", "resid-builder", "stdc++"; Config = "macosx-*-*" }, 
+	},
+}
+
 -- Main player
 
 Program {
@@ -102,4 +122,5 @@ Default "player"
 Default "HivelyPlugin"
 Default "FlacPlugin"
 Default "MikmodPlugin"
+Default "SidPlugin"
 

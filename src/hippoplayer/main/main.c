@@ -39,6 +39,7 @@ static void initPlugins()
 		"../../src/tundra-output/macosx-gcc-debug-default/libHivelyPlugin.dylib",
 		"../../src/tundra-output/macosx-gcc-debug-default/libFlacPlugin.dylib",
 		"../../src/tundra-output/macosx-gcc-debug-default/libMikmodPlugin.dylib",
+		"../../src/tundra-output/macosx-gcc-debug-default/libSidPlugin.dylib",
 		0,
 	};
 
