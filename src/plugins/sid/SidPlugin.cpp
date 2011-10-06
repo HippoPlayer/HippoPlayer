@@ -227,8 +227,6 @@ static int sidReadData(void* userData, HippoPlaybackBuffer* dest)
 	struct SidReplayerData* replayerData = (struct SidReplayerData*)userData;	
 	replayerData->player->play(buffer, dest->frameSize >> 1); // mono
 
-	printf("filling buffer\n");
-
 	// output is in stero so just copy the data in place
 	// TODO: Proper handling of stereo/mono as player can be configed for stereo
 
@@ -280,5 +278,4 @@ extern "C" HippoPlaybackPlugin* getPlugin()
 {
 	return &g_sidPlugin;
 }
-
 
