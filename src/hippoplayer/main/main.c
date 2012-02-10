@@ -21,40 +21,21 @@
 
 static void initPlugins()
 {
-#if defined(HIPPO_MACOSX)
-	//const char* libExtension = "dylib";
-#elif defined(HIPPO_WIN32)
-	const char* libExtension = "dll";
-#else
-#error "Unsupported platform
-#endif
-
 	LinearAllocator* allocator = LinearAllocator_getScratchPad();
 	LinearAllocatorRewindPoint rewind = LinearAllocator_getRewindPoint(allocator);
 
-	// temp
+	// TODO: Scan for plugins
 
 	static const char* plugins[] = 
 	{
-		"../../src/tundra-output/macosx-gcc-debug-default/libHivelyPlugin.dylib",
-		"../../src/tundra-output/macosx-gcc-debug-default/libFlacPlugin.dylib",
-		"../../src/tundra-output/macosx-gcc-debug-default/libMikmodPlugin.dylib",
-		"../../src/tundra-output/macosx-gcc-debug-default/libSidPlugin.dylib",
+		"../../src/tundra-output/macosx-clang-debug-default/libHivelyPlugin.dylib",
+		"../../src/tundra-output/macosx-clang-debug-default/libFlacPlugin.dylib",
+		"../../src/tundra-output/macosx-clang-debug-default/libMikmodPlugin.dylib",
+		"../../src/tundra-output/macosx-clang-debug-default/libSidPlugin.dylib",
 		0,
 	};
 
-	// Find all the plugins (temporary in the current directory of the executable)
-	//const char** pluginFiles = HippoIo_scanDirectory(allocator, "../../src/tundra-output/macosx-gcc-debug-default", libExtension, false);
 	HippoPlugins_add(plugins);
-	
-	/*
-	while (*pluginFiles)
-	{
-		printf("found plugin %s\n", *pluginFiles);
-		pluginFiles++;
-	}
-	*/
-
 	LinearAllocator_rewind(allocator, rewind);
 }
 
@@ -62,8 +43,9 @@ static void initPlugins()
 
 int HippoMain_create()
 {
-	struct lua_State* luaState; 
 	HippoWindowRect rect;
+
+ 	struct lua_State* luaState; 
 	struct HippoWindow* window;
 	uint32_t scratchSize = 2 * 1024 * 1024;  // 2 meg of scratchmemory
 
@@ -83,13 +65,6 @@ int HippoMain_create()
 		printf("Failed to load skins/classic/ui.lua\n");
 		return 0;
 	}
-
-	//HippoPlugins_playFile("/Users/daniel/code/HippoPlayer/bin/player/songs/modules/musiklinjen.mod");
-
-	/*
-	plugin->create(plugin->userData);
-	plugin->open(plugin->userData, "songs/ahx/geir_tjelta_-_a_new_beginning.ahx");
-	*/
 
 	HippoAudio_openDefaultOutput();
 
