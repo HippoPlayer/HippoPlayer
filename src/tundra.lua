@@ -2,7 +2,7 @@
 Build {
 	Units = "units.lua",
 
-	SyntaxExtensions = { "tundra.syntax.glob" },
+	SyntaxExtensions = { "tundra.syntax.glob", "tundra.syntax.osx-bundle" },
 
 	Configs = {
 		{

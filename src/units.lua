@@ -89,7 +89,7 @@ Program {
 		},
 
 		CCOPTS = {
-			{ "-Werror", "-pedantic-errors", "-Wall"; Config = "macosx-gcc-debug" },
+			{ "-Werror", "-pedantic-errors", "-Wall"; Config = "macosx-clang-*" },
 		},
 	},
 
@@ -104,13 +104,10 @@ Program {
 			Dir = "hippoplayer",
 			Extensions = { ".c", ".m" },
 			Filters = {
-				{ Pattern = "windows"; Config = "win32-*-*" },
 				{ Pattern = "macosx"; Config = "macosx-*-*" },
 			},
 		},
 	},
-
-	-- Depends = { "FlacPlugin" },
 }
 
 Default "player"
@@ -118,4 +115,18 @@ Default "HivelyPlugin"
 Default "FlacPlugin"
 Default "MikmodPlugin"
 Default "SidPlugin"
+
+local hippoBundle = OsxBundle {
+	Depends = { "player" },
+	Target = "$(OBJECTDIR)/HippoPlayer.app",
+	InfoPList = "hippodata/Info.plist",
+	Executable = "$(OBJECTDIR)/player",
+	Resources = {
+		CompileNib { Source = "hippodata/appnib.xib", Target = "appnib.nib" },
+		"hippodata/icon.icns",
+	},
+}
+
+Default(hippoBundle)
+
 
