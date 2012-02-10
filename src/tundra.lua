@@ -1,3 +1,4 @@
+
 Build {
 	Units = "units.lua",
 
@@ -5,27 +6,16 @@ Build {
 
 	Configs = {
 		{
-			Name = "macosx-gcc",
+			Name = "macosx-clang",
 			DefaultOnHost = "macosx",
 			Tools = { "clang-osx" },
 			Env = {
 				CPPDEFS = { "HIPPO_MACOSX" },
-				CPPOPTS = {
-					{ "-g", "-O0"; Config = "macosx-gcc-debug" },
-				},
 				CCOPTS = {
-					{ "-g", "-O0"; Config = "macosx-gcc-debug" },
-				},
-			},
-		},
-		{
-			Name = "win32-msvc",
-			DefaultOnHost = "windows",
-			Tools = { "msvc-vs2008" },
-			Env = {
-				CPPDEFS = { "HIPPO_WIN32" },
-				CCOPTS = {
-					{ "/MD", "/Od", "/Zi"; Config = "*-msvc-debug" },
+                    { "-g", "-O0" ; Config = { "*-gcc-debug", "*-clang-debug" } }					
+        		},
+				CXXOPTS = {
+					{ "-g", "-O0"; Config = "macosx-clang-debug" },
 				},
 			},
 		},

@@ -53,11 +53,6 @@ SharedLibrary {
 
 	Sources = { 
 
-		--Glob {
-		--	Dir = "plugins/flac/libflac/src/libFLAC",
-		--	Extensions = { ".c" },
-		--},
-
 		"plugins/flac/FlacPlugin.c"
 	},
 }
