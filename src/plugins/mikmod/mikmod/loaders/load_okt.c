@@ -203,7 +203,7 @@ static BOOL OKT_doSAMP(int len)
 		s.len = _mm_read_M_ULONG(modreader);
 		s.loopbeg = _mm_read_M_UWORD(modreader) * 2;
 		s.looplen = _mm_read_M_UWORD(modreader) * 2;
-		_mm_read_UBYTE(modreader);
+		(void)_mm_read_UBYTE(modreader);
 		s.volume = _mm_read_UBYTE(modreader);
 		_mm_read_M_UWORD(modreader);
 

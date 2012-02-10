@@ -91,7 +91,7 @@ static UNIHEADER mh;
 
 #define UNI_SMPINCR 64
 static UNISMP05 *wh=NULL,*s=NULL;
-
+ 
 /*========== Loader code */
 
 static char* readstring(void)
@@ -356,6 +356,8 @@ static BOOL loadinstr6(void)
 	return 1;
 }
 
+void* MikMod_realloc(void *data, size_t size);
+
 static BOOL loadinstr5(void)
 {
 	INSTRUMENT *i;
@@ -514,7 +516,7 @@ BOOL UNI_Load(BOOL curious)
 
 	if(universion>=6) {
 		if (universion==6)
-			_mm_read_UBYTE(modreader);
+			(void)_mm_read_UBYTE(modreader);
 		else
 			universion=_mm_read_M_UWORD(modreader);
 

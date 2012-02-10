@@ -1181,7 +1181,7 @@ void VC2_WriteSamples(SBYTE* buf,ULONG todo)
 			}
 
 			if (vc_callback) {
-				vc_callback((char*)vc_tickbuf, portion);
+				vc_callback((unsigned char*)vc_tickbuf, portion);
 			}
 
 			if(vc_mode & DMODE_FLOAT)

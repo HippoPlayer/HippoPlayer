@@ -73,6 +73,8 @@ FILTER filtersettings[UF_MAXFILTER]; /* computed filter settings */
 int*   noteindex=NULL;      /* remap value for linear period modules */
 static int noteindexcount=0;
 
+void* MikMod_realloc(void *data, size_t size);
+
 int *AllocLinear(void)
 {
 	if(of.numsmp>noteindexcount) {

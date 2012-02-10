@@ -286,7 +286,7 @@ static BOOL ASY_Load(BOOL curious)
 	mh->num_orders = _mm_read_UBYTE(modreader);
 	
 	// skip unknown byte
-	_mm_read_UBYTE(modreader);
+	(void)_mm_read_UBYTE(modreader);
 	_mm_read_UBYTES(mh->positions, 256, modreader);
 	
 	/* read samples headers*/
@@ -300,7 +300,7 @@ static BOOL ASY_Load(BOOL curious)
 		
 		s->finetune = _mm_read_UBYTE(modreader);
 		s->volume = _mm_read_UBYTE(modreader);
-		_mm_read_UBYTE(modreader); // skip unknown byte
+		(void)_mm_read_UBYTE(modreader); // skip unknown byte
 		s->length = _mm_read_I_ULONG(modreader);
 		s->reppos = _mm_read_I_ULONG(modreader);
 		s->replen = _mm_read_I_ULONG(modreader);

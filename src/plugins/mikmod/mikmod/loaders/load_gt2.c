@@ -217,7 +217,8 @@ GT_CHUNK *loadChunk(void)
 		_mm_read_M_ULONGS(&new_chunk->gt2.chunk_size, 1, modreader);
 		new_chunk->gt2.module_name[32] = 0;
 		_mm_read_UBYTES(&new_chunk->gt2.module_name, 32, modreader);
-		new_chunk->gt2.module_name[160] = 0;
+		//TODO: Verify how this line really should work.
+		//new_chunk->gt2.module_name[160] = 0;
 		_mm_read_UBYTES(&new_chunk->gt2.comments_author, 160, modreader);
 		_mm_read_UBYTES(&new_chunk->gt2.date_day, 1, modreader);
 		_mm_read_UBYTES(&new_chunk->gt2.date_month, 1, modreader);

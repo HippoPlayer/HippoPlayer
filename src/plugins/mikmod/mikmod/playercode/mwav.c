@@ -168,6 +168,9 @@ SAMPLE* Sample_LoadGeneric_internal_wav(MREADER* reader)
 	return si;
 }
 
+MREADER* _mm_new_mem_reader(const void *buffer, int len);
+void _mm_delete_mem_reader(MREADER* reader);
+
 SAMPLE* Sample_LoadRawGeneric_internal(MREADER* reader, ULONG rate, ULONG channel, ULONG flags)
 {
 	SAMPLE *si;
@@ -268,6 +271,8 @@ MIKMODAPI SAMPLE* Sample_LoadRawGeneric(MREADER* reader, ULONG rate, ULONG chann
 	return result;
 }
 
+MREADER *_mm_new_mem_reader(const void *buffer, int len);
+
 MIKMODAPI extern SAMPLE *Sample_LoadRawMem(const char *buf, int len, ULONG rate, ULONG channel, ULONG flags)
 {
 	SAMPLE *result=NULL;
@@ -319,6 +324,8 @@ MIKMODAPI SAMPLE* Sample_LoadGeneric(MREADER* reader)
 
 	return result;
 }
+
+MREADER *_mm_new_mem_reader(const void *buffer, int len);
 
 MIKMODAPI extern SAMPLE *Sample_LoadMem(const char *buf, int len)
 {

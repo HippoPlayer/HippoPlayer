@@ -441,6 +441,8 @@ static void FixEnvelope(ENVPT *cur, int pts)
 		}
 }
 
+void* MikMod_realloc(void* data, size_t size);
+
 static BOOL LoadInstruments(void)
 {
 	int t,u;
@@ -493,7 +495,8 @@ static BOOL LoadInstruments(void)
 
 				/* read the remainder of the header
 				   (2 bytes for 1.03, 22 for 1.04) */
-				for(u=headend-_mm_ftell(modreader);u;u--) _mm_read_UBYTE(modreader);
+				for(u=headend-_mm_ftell(modreader);u;u--) 
+					(void)_mm_read_UBYTE(modreader);
 
 				/* we can't trust the envelope point count here, as some
 				   modules have incorrect values (K_OSPACE.XM reports 32 volume
@@ -620,7 +623,8 @@ static BOOL LoadInstruments(void)
 					of.numsmp+=ih.numsmp;
 			} else {
 				/* read the remainder of the header */
-				for(u=headend-_mm_ftell(modreader);u;u--) _mm_read_UBYTE(modreader);
+				for(u=headend-_mm_ftell(modreader);u;u--) 
+					(void)_mm_read_UBYTE(modreader);
 
 				if(_mm_eof(modreader)) {
 					MikMod_free(nextwav);MikMod_free(wh);

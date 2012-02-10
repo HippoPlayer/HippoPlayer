@@ -387,6 +387,9 @@ MIKMODAPI CHAR* Player_LoadTitleFP(FILE *fp)
 	return result;
 }
 
+MREADER *_mm_new_mem_reader(const void *buffer, int len);
+void _mm_delete_mem_reader(MREADER* reader);
+
 MIKMODAPI CHAR* Player_LoadTitleMem(const char *buffer,int len)
 {
 	CHAR *result=NULL;
@@ -563,6 +566,8 @@ MIKMODAPI MODULE* Player_LoadGeneric(MREADER *reader,int maxchan,BOOL curious)
 
 	return result;
 }
+
+MREADER *_mm_new_mem_reader(const void *buffer, int len);
 
 MIKMODAPI MODULE* Player_LoadMem(const char *buffer,int len,int maxchan,BOOL curious)
 {

@@ -152,7 +152,7 @@ static int CheckPatternType(int numpat)
 
 	for(t=0;t<numpat*(64U*4);t++) {
 		/* Load the pattern into the temp buffer and scan it */
-		_mm_read_UBYTE(modreader);_mm_read_UBYTE(modreader);
+		(void)_mm_read_UBYTE(modreader);(void)_mm_read_UBYTE(modreader);
 		eff = _mm_read_UBYTE(modreader);
 		dat = _mm_read_UBYTE(modreader);
 

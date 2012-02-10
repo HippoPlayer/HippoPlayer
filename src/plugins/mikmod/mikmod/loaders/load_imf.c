@@ -377,6 +377,8 @@ static UBYTE* IMF_ConvertTrack(IMFNOTE* tr,UWORD rows)
 	return UniDup();
 }
 
+void* MikMod_realloc(void *data, size_t size);
+
 BOOL IMF_Load(BOOL curious)
 {
 #define IMF_SMPINCR 64
@@ -515,9 +517,9 @@ BOOL IMF_Load(BOOL curious)
 		ih. name##beg=_mm_read_UBYTE(modreader);		\
 		ih. name##end=_mm_read_UBYTE(modreader);		\
 		ih. name##flg=_mm_read_UBYTE(modreader);		\
-		_mm_read_UBYTE(modreader);						\
-		_mm_read_UBYTE(modreader);						\
-		_mm_read_UBYTE(modreader)
+		(void)_mm_read_UBYTE(modreader);						\
+		(void)_mm_read_UBYTE(modreader);						\
+		(void)_mm_read_UBYTE(modreader)
 #else
 #define IMF_FinishLoadingEnvelope(name)				\
 		ih. name/**/pts=_mm_read_UBYTE(modreader);	\
@@ -525,9 +527,9 @@ BOOL IMF_Load(BOOL curious)
 		ih. name/**/beg=_mm_read_UBYTE(modreader);	\
 		ih. name/**/end=_mm_read_UBYTE(modreader);	\
 		ih. name/**/flg=_mm_read_UBYTE(modreader);	\
-		_mm_read_UBYTE(modreader);					\
-		_mm_read_UBYTE(modreader);					\
-		_mm_read_UBYTE(modreader)
+		(void)_mm_read_UBYTE(modreader);					\
+		(void)_mm_read_UBYTE(modreader);					\
+		(void)_mm_read_UBYTE(modreader)
 #endif
 
 		IMF_FinishLoadingEnvelope(vol);
@@ -626,7 +628,7 @@ BOOL IMF_Load(BOOL curious)
 			}
 
 			_mm_read_string(s->samplename,13,modreader);
-			_mm_read_UBYTE(modreader);_mm_read_UBYTE(modreader);_mm_read_UBYTE(modreader);
+			(void)_mm_read_UBYTE(modreader);(void)_mm_read_UBYTE(modreader);(void)_mm_read_UBYTE(modreader);
 			s->length    =_mm_read_I_ULONG(modreader);
 			s->loopstart =_mm_read_I_ULONG(modreader);
 			s->loopend   =_mm_read_I_ULONG(modreader);
