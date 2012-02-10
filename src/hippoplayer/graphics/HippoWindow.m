@@ -1,5 +1,5 @@
 
-#include "../HippoWindow.h"
+#include "HippoWindow.h"
 #include "core/memory/LinearAllocator.h"
 #include "HippoOSXWindow.h"
 #include <Cocoa/Cocoa.h>

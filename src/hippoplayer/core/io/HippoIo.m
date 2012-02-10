@@ -1,4 +1,4 @@
-#include "../HippoIo.h"
+#include "HippoIo.h"
 #include "core/memory/LinearAllocator.h"
 #import <Cocoa/Cocoa.h>
 

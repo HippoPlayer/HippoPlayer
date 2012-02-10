@@ -1,5 +1,5 @@
 
-#include "../HippoAudio.h"
+#include "HippoAudio.h"
 #include "core/debug/Assert.h" 
 #include "plugin_api/HippoPlugin.h" 
 #include <CoreAudio/CoreAudio.h>
