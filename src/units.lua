@@ -77,6 +77,31 @@ SharedLibrary {
 	},
 }
 
+-- FutureComposer
+
+SharedLibrary {
+	Name = "FutureComposerPlugin",
+	Env = {
+		CPPPATH = { "plugins/futurecomposer/src" },
+		CPPDEFS = {
+			{ "HAVE_CONFIG_H"; Config = "macosx-*-*" }
+		},
+	},
+
+	Sources = { 
+		Glob {
+			Dir = "plugins/futurecomposer/src",
+			Extensions = { ".cpp" },
+		},
+
+		-- "plugins/futurecomposer/FutureComposerPlugin.c", 
+	},
+
+	Libs = { 
+		{ "stdc++"; Config = "macosx-*-*" }, 
+	},
+}
+
 -- Main player
 
 Program {
@@ -115,6 +140,7 @@ Default "HivelyPlugin"
 Default "FlacPlugin"
 Default "MikmodPlugin"
 Default "SidPlugin"
+Default "FutureComposerPlugin"
 
 local hippoBundle = OsxBundle {
 	Depends = { "player" },
