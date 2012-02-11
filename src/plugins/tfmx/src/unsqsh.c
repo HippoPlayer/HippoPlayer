@@ -12,16 +12,16 @@
 
 #include <unsqsh.h>
 
-static int bfextu(guint8 *p,int bo,int bc);
-static int bfexts(guint8 *p,int bo,int bc);
+static int bfextu(uint8_t *p,int bo,int bc);
+static int bfexts(uint8_t *p,int bo,int bc);
 
 /* Recognize and return uncrunched length of the given buffer
  * Return 0 if not squashed.
  */
 
-guint32 tfmx_sqsh_get_ulen (guint8 *buf, guint32 buflen)
+uint32_t tfmx_sqsh_get_ulen (uint8_t *buf, uint32_t buflen)
 {
-  guint32 dstlen = 0; /* decrunched length of buffer */
+  uint32_t dstlen = 0; /* decrunched length of buffer */
 
   if (buflen < 32)
       return 0;
@@ -67,11 +67,11 @@ guint32 tfmx_sqsh_get_ulen (guint8 *buf, guint32 buflen)
 /*
  * src must point after XPK header (16 bytes), else the Hell on you !
  */
-void tfmx_sqsh_unpack(guint8 *src, guint8 *dst, gint32 dstlen) {
+void tfmx_sqsh_unpack(uint8_t *src, uint8_t *dst, int32_t dstlen) {
   int d0,d1,d2,d3,d4,d5,d6,a2,a5;
   int rat,u,cp,cup1,cup2;
-  guint8 *a4,*a6,*c;
-  guint8 a3[] = { 2,3,4,5,6,7,8,0,3,2,4,5,6,7,8,0,4,3,5,2,6,7,8,0,5,4,
+  uint8_t *a4,*a6,*c;
+  uint8_t a3[] = { 2,3,4,5,6,7,8,0,3,2,4,5,6,7,8,0,4,3,5,2,6,7,8,0,5,4,
         6,2,3,7,8,0,6,5,7,2,3,4,8,0,7,6,8,2,3,4,5,0,8,7,6,2,3,4,5,0 };
    
   c = src + 20;
@@ -230,7 +230,7 @@ l7ex:	*dst++ = *a4++;
 }
 
 
-int bfextu(guint8 *p,int bo,int bc) {
+int bfextu(uint8_t *p,int bo,int bc) {
   int r;
   
   p += bo / 8;
@@ -246,7 +246,7 @@ int bfextu(guint8 *p,int bo,int bc) {
   return r;
 }
 
-int bfexts(guint8 *p,int bo,int bc) {
+int bfexts(uint8_t *p,int bo,int bc) {
   int r;
   
   p += bo / 8;

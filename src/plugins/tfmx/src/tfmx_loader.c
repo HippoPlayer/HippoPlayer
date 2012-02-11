@@ -4,7 +4,7 @@
  * jhp 29Feb96
  */
 
-#include <glib.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -15,7 +15,6 @@
 #include "tfmx_iface.h"
 #include "unsqsh.h"
 #include "tfmx_audio.h"
-#include "xmms_tfmx.h"
 
 extern struct Hdb hdb[8];
 extern struct Pdblk pdb;
@@ -46,15 +45,22 @@ int loops=1;
 /* FYI, he stopped coding (used asm m68k back then), and is now a doctor ! */
 /* values are stored in big endian in the file */
 struct CybHeader {
-    guint32 TFhd_head;    /* dc.l "TFHD" for recognition */
-    guint32 TFhd_offset;  /* dc.l	TFhd_sizeof */
-    guint8  TFhd_type;    /* module type :0/1/2/3 (bit 7=FORCED) */
-    guint8  TFhd_version; /* currently 0 */
-    guint32 _TFhd_mdatsize;  /* compiler may align them, use offsets */
-    guint32 _TFhd_smplsize;
-    guint16 _TFhd_sizeof;
+    uint32_t TFhd_head;    /* dc.l "TFHD" for recognition */
+    uint32_t TFhd_offset;  /* dc.l	TFhd_sizeof */
+    uint8_t  TFhd_type;    /* module type :0/1/2/3 (bit 7=FORCED) */
+    uint8_t  TFhd_version; /* currently 0 */
+    uint32_t _TFhd_mdatsize;  /* compiler may align them, use offsets */
+    uint32_t _TFhd_smplsize;
+    uint16_t _TFhd_sizeof;
 };
 
+static inline uint32_t GINT32_FROM_BE(uint32_t v)
+{
+    return ((v >> 24) & 0x000000ff) |
+           ((v >> 8)  & 0x0000ff00) |
+           ((v << 8)  & 0x00ff0000) |
+           ((v << 16) & 0xff000000);
+}
 
 static int tfmx_loader(char *mfn,char *sfn);
 
@@ -64,11 +70,9 @@ static int tfmx_loader(char *mfn,char *sfn);
 static int 
 tfmx_cyb_file_load (char *fn)
 {
-    char *tmp_mdat = NULL;
-    char *tmp_smpl = NULL;
     FILE *cybf = NULL;
     char *radix = NULL;
-    guint8 *cybmem = NULL;
+    uint8_t *cybmem = NULL;
     long fileSize;
     FILE *mdatf = NULL;
     FILE *smplf = NULL;
@@ -77,7 +81,7 @@ tfmx_cyb_file_load (char *fn)
     int ulen;
     int mdatsize;
     int smplsize;
-    guint32 offset;
+    uint32_t offset;
 
     /* get radix from filename */
     if (!(radix = strrchr(fn,'/')))
@@ -99,7 +103,7 @@ tfmx_cyb_file_load (char *fn)
     rewind(cybf);
 
     /* alloc mem */
-    cybmem = (char *)g_malloc(fileSize);
+    cybmem = (uint8_t *)malloc(fileSize);
     if (!cybmem)
 	goto cleanup;
 
@@ -112,20 +116,20 @@ tfmx_cyb_file_load (char *fn)
     ulen = tfmx_sqsh_get_ulen(cybmem, fileSize);
     if (ulen)
     {
-	guint8 *dest;
+	uint8_t *dest;
 
-	dest = (guint8 *)g_malloc(ulen+100);
+	dest = (uint8_t *)malloc(ulen+100);
 	if (!dest)
 	    goto cleanup;
 
 	tfmx_sqsh_unpack(cybmem+16, dest, ulen);
 
-	g_free(cybmem);
+	free(cybmem);
 	cybmem = dest;
     }
 
-    if (strncmp(cybmem, "TFHD", 4))
-	goto cleanup;
+    if (strncmp((char*)cybmem, "TFHD", 4))
+	    goto cleanup;
 
     cybh = (struct CybHeader *)cybmem;
 
@@ -144,8 +148,11 @@ tfmx_cyb_file_load (char *fn)
     smplsize |= cybmem[17];
 
     /* create temp file names from radix */
-    tmp_mdat = g_strdup_printf("/tmp/__mdat_%s__", radix);
-    tmp_smpl = g_strdup_printf("/tmp/__smpl_%s__", radix);
+    char tmp_mdat[512];
+    char tmp_smpl[512];
+
+    sprintf(tmp_mdat, "/tmp/__mdat_%s__", radix);
+    sprintf(tmp_smpl, "/tmp/__smpl_%s__", radix);
 
     /* open and write temp files */
     mdatf = fopen(tmp_mdat, "wb");
@@ -170,17 +177,13 @@ tfmx_cyb_file_load (char *fn)
   cleanup:
     /* if value for tmpfile => remove it */
     if (mdatf)
-	remove(tmp_mdat);
+	    remove(tmp_mdat);
     if (smplf)
-	remove(tmp_smpl);
-    if (tmp_mdat)
-	g_free(tmp_mdat);
-    if (tmp_smpl)
-	g_free(tmp_smpl);
+	    remove(tmp_smpl);
     if (cybmem)
-	g_free(cybmem);
+	    free(cybmem);
     if (cybf)
-	fclose(cybf);
+	    fclose(cybf);
     return retval;
 }
 
@@ -271,20 +274,20 @@ static int tfmx_loader (char *mfn,char *sfn)
     if (!mdat_header.trackstart)
 	mdat_header.trackstart = 0x180;
     else
-	mdat_header.trackstart = (g_ntohl(mdat_header.trackstart) - 0x200L) >> 2;
+	mdat_header.trackstart = (ntohl(mdat_header.trackstart) - 0x200L) >> 2;
     if (!mdat_header.pattstart)
 	mdat_header.pattstart = 0x80;
-    else mdat_header.pattstart = (g_ntohl(mdat_header.pattstart) - 0x200L) >> 2;
+    else mdat_header.pattstart = (ntohl(mdat_header.pattstart) - 0x200L) >> 2;
     if (!mdat_header.macrostart) mdat_header.macrostart=0x100;
-    else mdat_header.macrostart=(g_ntohl(mdat_header.macrostart)-0x200L)>>2;
+    else mdat_header.macrostart=(ntohl(mdat_header.macrostart)-0x200L)>>2;
     if (x<136) {
 	return(2);
     }
 
     for (x=0;x<32;x++) {
-	mdat_header.start[x]=g_ntohs(mdat_header.start[x]);
-	mdat_header.end[x]=g_ntohs(mdat_header.end[x]);
-	mdat_header.tempo[x]=g_ntohs(mdat_header.tempo[x]);
+	mdat_header.start[x]=ntohs(mdat_header.start[x]);
+	mdat_header.end[x]=ntohs(mdat_header.end[x]);
+	mdat_header.tempo[x]=ntohs(mdat_header.tempo[x]);
     }
 
     /* Calc the # of subsongs */
@@ -303,10 +306,10 @@ static int tfmx_loader (char *mfn,char *sfn)
    patterns, and then the tracksteps (because we have to know when the
    patterns begin to know when the tracksteps end...) */
     z = mdat_header.macrostart;
-    macros = &(mdat_editbuf[z]);
+    macros = (int*)&(mdat_editbuf[z]);
 
     for (x = 0; x < 128; x++) {
-	y=(g_ntohl(mdat_editbuf[z])-0x200);
+	y=(ntohl(mdat_editbuf[z])-0x200);
 	if ((y&3) || ((y>>2) > mlen)) /* probably not strictly right */
 	    break;
 	mdat_editbuf[z++]=y >> 2;
@@ -314,9 +317,9 @@ static int tfmx_loader (char *mfn,char *sfn)
     num_mac = x;
 
     z=mdat_header.pattstart;
-    patterns = &mdat_editbuf[z];
+    patterns = (int*)&mdat_editbuf[z];
     for (x = 0; x < 128; x++) {
-	y=(g_ntohl(mdat_editbuf[z])-0x200);
+	y=(ntohl(mdat_editbuf[z])-0x200);
 	if ((y&3) || ((y>>2) > mlen))
 	    break;
 	mdat_editbuf[z++] = y>>2;
@@ -328,7 +331,7 @@ static int tfmx_loader (char *mfn,char *sfn)
     num_ts = (patterns[0] - mdat_header.trackstart) >> 2;
     y=0;
     while (sh<lg) {
-	x=g_ntohs(*sh);
+	x=ntohs(*sh);
 	*sh++=x;
     }	
 
@@ -371,9 +374,11 @@ static int tfmx_loader (char *mfn,char *sfn)
 	fclose(smplFile);
     }
 
+    /*
     if (plugin_cfg.blend)
 	output_chans = 2;
     plugin_cfg.blend &= 1;
+    */
 
     tfmx_calc_sizes();
     TFMXRewind();
@@ -409,7 +414,7 @@ void tfmx_fill_module_info(char *t)
 	    && !(x > 0 && mdat_header.end[x] == 0L))
 	{
 	    t += sprintf(t,"Song %2d: start %3x end %3x tempo %d\n", x,
-			 g_ntohs(mdat_header.start[x]), g_ntohs(mdat_header.end[x]),
+			 ntohs(mdat_header.start[x]), ntohs(mdat_header.end[x]),
 			 mdat_header.tempo[x]);
 	}
     }

@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "tfmx_iface.h"
 #include "tfmx.h"
@@ -44,6 +45,6 @@ void TFMXError(char *err)
 #ifdef _WIN32	
 	MessageBox(NULL,err,"TFMXPlay error",MB_OK);
 #else
-	perror(err);
+    printf("TFMXError %s\n", err);
 #endif
 }

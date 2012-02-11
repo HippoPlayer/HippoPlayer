@@ -6,7 +6,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <glib.h>
+#include <stdint.h>
 
 #include <unistd.h>
 
@@ -17,7 +17,15 @@
 #include <errno.h>
 #include "tfmx_player.h"
 #include "tfmx_audio.h"
-#include "xmms_tfmx.h"
+
+typedef struct PluginCfg
+{
+    uint32_t filt;
+    uint32_t blend;
+	uint32_t over;
+} PluginCfg;
+
+static PluginCfg plugin_cfg = { 2, 1, 1 };
 
 char active_voice[8]={1,1,1,1,1,1,1,1};
 

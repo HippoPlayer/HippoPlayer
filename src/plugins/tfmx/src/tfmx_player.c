@@ -6,7 +6,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <glib.h>
+#include <stdint.h>
 #include "tfmx_player.h"
 #include "tfmx.h"
 
