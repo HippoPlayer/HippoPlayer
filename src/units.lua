@@ -116,7 +116,7 @@ SharedLibrary {
 			Extensions = { ".c" },
 		},
 
-		-- "plugins/tfmx/tfmx.c", 
+		"plugins/tfmx/TfmxPlugin.c", 
 	},
 }
 

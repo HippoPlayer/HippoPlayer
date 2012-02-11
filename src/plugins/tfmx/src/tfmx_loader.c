@@ -403,9 +403,9 @@ void tfmx_fill_module_info(char *t)
     for (x = 0;x < 6; x++)
 	t += sprintf(t, ">%40.40s\n", mdat_header.text[x]);
 
-    t += sprintf(t, "\n%d tracksteps at 0x%04lx\n", num_ts, (mdat_header.trackstart<<2)+0x200);
-    t += sprintf(t, "%d patterns at 0x%04lx\n", num_pat, (mdat_header.pattstart<<2)+0x200);
-    t += sprintf(t, "%d macros at 0x%04lx\n", num_mac, (mdat_header.macrostart<<2)+0x200);
+    t += sprintf(t, "\n%d tracksteps at 0x%04d\n", num_ts, (mdat_header.trackstart<<2)+0x200);
+    t += sprintf(t, "%d patterns at 0x%04dx\n", num_pat, (mdat_header.pattstart<<2)+0x200);
+    t += sprintf(t, "%d macros at 0x%04dx\n", num_mac, (mdat_header.macrostart<<2)+0x200);
 
     t += sprintf(t, "\nSubsongs:\n\n");
     for (x = 0; x < 31; x++)

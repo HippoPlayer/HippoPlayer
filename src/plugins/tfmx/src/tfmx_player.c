@@ -143,7 +143,7 @@ player_RunMacro(struct Cdb *c)
     /*int b;*/
     c->MacroWait=0;
   loop:
-    x.l = g_ntohl(mdat_editbuf[c->MacroPtr+(c->MacroStep++)]);
+    x.l = ntohl(mdat_editbuf[c->MacroPtr+(c->MacroStep++)]);
     a = x.b.b0;
     x.b.b0 = 0;
     DEBUG(3) {
@@ -170,7 +170,7 @@ player_RunMacro(struct Cdb *c)
 	    if (!x.b.b1) {
 		c->hw->mode=0;
 		if(c->NewStyleMacro) {	/* Patch: S. Ohlsson */
-		    c->hw->SampleStart=&smplbuf[c->SaveAddr];
+		    c->hw->SampleStart=(S8*)&smplbuf[c->SaveAddr];
 		    c->hw->SampleLength=1;
 		    c->hw->sbeg=c->hw->SampleStart;
 		    c->hw->slen=1;
@@ -187,8 +187,10 @@ player_RunMacro(struct Cdb *c)
 	    c->EfxRun=x.b.b1;
 	    c->hw->mode=1;
 	    if (!c->NewStyleMacro) {  
-		c->hw->SampleStart=&smplbuf[c->SaveAddr];
-		c->hw->SampleLength=(c->SaveLen)?c->SaveLen<<1:131072;
+		c->hw->SampleStart=(S8*)&smplbuf[c->SaveAddr];
+		//c->hw->_SampleLength=(c->SaveLen)?c->SaveLen<<1:131072;
+		//TODO: Investigate
+		c->hw->SampleLength=(c->SaveLen)?c->SaveLen<<1:0;
 		c->hw->sbeg=c->hw->SampleStart;
 		c->hw->slen=c->hw->SampleLength;
 		c->hw->pos=0;
@@ -443,8 +445,9 @@ player_DoEffects(struct Cdb *c)
 	}
     }
 
-    if(c->CurAddr < 0)
-	c->AddBegin=c->AddBeginTime=c->AddBeginReset=c->CurAddr = 0;
+    //TODO: Invistigate
+    //if(c->CurAddr < 0)
+	//c->AddBegin=c->AddBeginTime=c->AddBeginReset=c->CurAddr = 0;
 
 /*
   if (c->SIDSize) {
@@ -545,9 +548,11 @@ player_DoMacro(int cc)
 	player_DoEffects(c);
 	/* has to be here because of if(efxrun=1) */
 	c->hw->delta = c->CurPeriod ? (3579545 * 512) / (c->CurPeriod * outRate / 32) : 0;
-	c->hw->SampleStart = &smplbuf[c->SaveAddr];
+	c->hw->SampleStart = (S8*)&smplbuf[c->SaveAddr];
 
-	c->hw->SampleLength = c->SaveLen ? c->SaveLen * 2 : 131072;
+    // TODO: Invistigate
+	// c->hw->SampleLength = c->SaveLen ? c->SaveLen * 2 : 131072;
+	c->hw->SampleLength = c->SaveLen ? c->SaveLen * 2 : 0;
 	if ((c->hw->mode & 3) == 1)
 	{
 		c->hw->sbeg=c->hw->SampleStart;
@@ -723,7 +728,7 @@ player_DoTrack(struct Pdb *p, int pp)
 
     while(1) {
       loop:
-	x.l=g_ntohl(mdat_editbuf[p->PAddr+p->PStep++]);
+	x.l=ntohl(mdat_editbuf[p->PAddr+p->PStep++]);
 	t=x.b.b0;
 		
 	/*printf("%x: %02x:%02x:%02x:%02x (%04x)\n",pp,t,x.b.b1,x.b.b2,x.b.b3,jiffies);*/
@@ -844,7 +849,7 @@ player_AllOff() {
 	    c->SfxFlag=c->SfxCode=c->SaveAddr=0;
 	hdb[x].vol=0;
 	c->Loop=c->NewStyleMacro=c->SfxLockTime=-1;
-	c->hw->sbeg=c->hw->SampleStart=smplbuf;
+	c->hw->sbeg=c->hw->SampleStart=(S8*)smplbuf;
 	c->hw->SampleLength=c->hw->slen=c->SaveLen=2;
 	c->hw->loop=&player_LoopOff;
     }
@@ -926,6 +931,7 @@ char player_TFMXVoices()
 	return 4;
 }
 
+void TfmxResetBuffers();
 
 void TFMXRewind()
 {
@@ -937,8 +943,8 @@ void TFMXRewind()
 	hdb[0].delta = 0x1c01;
 	hdb[0].slen = 0x3200;
 	hdb[0].SampleLength = 0x15be;
-	hdb[0].sbeg = &smplbuf[0x4];
-	hdb[0].SampleStart = &smplbuf[0x4+0x1C42];
+	hdb[0].sbeg = (S8*)&smplbuf[0x4];
+	hdb[0].SampleStart = (S8*)&smplbuf[0x4+0x1C42];
 	hdb[0].vol = 0x40;
 	hdb[0].mode = 3;
 	hdb[0].loop = &player_LoopOff;
@@ -952,6 +958,8 @@ void TFMXStop()
 {
     /* player_TfmxInit(); */
 }
+
+void TfmxTakedown();
 
 void TFMXQuit()
 {

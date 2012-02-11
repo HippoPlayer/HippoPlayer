@@ -9,6 +9,7 @@
 #include <stdint.h>
 
 #include <unistd.h>
+#include <string.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -227,10 +228,10 @@ mix_add(struct Hdb *hw, int n, S32 *b)
     U32 delta = hw->delta;
     U32 l = hw->slen << 14;
 
-    if (hw->SampleStart < smplbuf || hw->sbeg < smplbuf)
-	return;
-    if (hw->SampleStart >= smplbuf_end || hw->sbeg >= smplbuf_end)
-	return;
+    if (hw->SampleStart < (S8*)smplbuf || hw->sbeg < (S8*)smplbuf)
+	    return;
+    if (hw->SampleStart >= (S8*)smplbuf_end || hw->sbeg >= (S8*)smplbuf_end)
+	    return;
 
     if (vol > 0x40)
 	vol = 0x40;
@@ -272,7 +273,7 @@ mix_add(struct Hdb *hw, int n, S32 *b)
 	    hw->slen = 0;
 	    pos = 0;
 	    delta = 0;
-	    smpl = smplbuf;
+	    smpl = (S8*)smplbuf;
 	    break;
 	}
     }
@@ -366,7 +367,7 @@ mix_add_ov(struct Hdb *hw, int n, S32 *b)
 	    hw->slen = 0;
 	    pos = 0;
 	    delta = 0;
-	    smpl = smplbuf;
+	    smpl = (S8*)smplbuf;
 	    break;
 	}
     }
@@ -378,8 +379,18 @@ mix_add_ov(struct Hdb *hw, int n, S32 *b)
     if (hw->mode & 4)
 	(hw->mode = 0);
 }
-	
 
+static inline S32 clamp(S32 v, S32 low, S32 high)
+{
+    if (v < low)
+        return low;
+
+    if (v > high)
+        return high;
+
+    return v;
+}
+	
 /*
  * mix all used channels, depending of the user enabled voices
  */
@@ -402,7 +413,7 @@ static void mixit(int nb, int bd)
 	ptr = &tbuf[HALFBUFSIZE + bd];
 	for (i = 0; i < nb; i++)
 	{
-	    *ptr = CLAMP(*ptr, -16383, 16383);
+	    *ptr = clamp(*ptr, -16383, 16383);
 	    ptr++;
 	}
     }

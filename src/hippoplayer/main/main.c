@@ -33,6 +33,7 @@ static void initPlugins()
 		"../../src/tundra-output/macosx-clang-debug-default/libMikmodPlugin.dylib",
 		"../../src/tundra-output/macosx-clang-debug-default/libSidPlugin.dylib",
 		"../../src/tundra-output/macosx-clang-debug-default/libFutureComposerPlugin.dylib",
+		"../../src/tundra-output/macosx-clang-debug-default/libTfmxPlugin.dylib",
 		0,
 	};
 
