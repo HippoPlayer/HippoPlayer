@@ -94,7 +94,7 @@ SharedLibrary {
 			Extensions = { ".cpp" },
 		},
 
-		-- "plugins/futurecomposer/FutureComposerPlugin.c", 
+		"plugins/futurecomposer/FutureComposerPlugin.c", 
 	},
 
 	Libs = { 
