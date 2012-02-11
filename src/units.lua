@@ -102,6 +102,24 @@ SharedLibrary {
 	},
 }
 
+-- Tfmx 
+
+SharedLibrary {
+	Name = "TfmxPlugin",
+	Env = {
+		CPPPATH = { "plugins/tfmx/src" },
+	},
+
+	Sources = { 
+		Glob {
+			Dir = "plugins/tfmx/src",
+			Extensions = { ".c" },
+		},
+
+		-- "plugins/tfmx/tfmx.c", 
+	},
+}
+
 -- Main player
 
 Program {
@@ -141,6 +159,7 @@ Default "FlacPlugin"
 Default "MikmodPlugin"
 Default "SidPlugin"
 Default "FutureComposerPlugin"
+Default "TfmxPlugin"
 
 local hippoBundle = OsxBundle {
 	Depends = { "player" },
