@@ -4,10 +4,18 @@ extern crate rodio;
 use rodio::{Source, Endpoint, Sink};
 use minifb::{Key, WindowOptions, Window};
 
+use std::time::Duration;
+use std::sync::mpsc::{channel, Receiver, Sender};
+
 const WIDTH: usize = 640;
 const HEIGHT: usize = 360;
 
-use std::time::Duration;
+
+#[derive(Clone)]
+pub enum DecodeEvent {
+    Position(usize),
+    Data(Vec<u8>),
+}
 
 /// An infinite source that produces a sine.
 ///
@@ -16,15 +24,17 @@ use std::time::Duration;
 pub struct HippoPlayback {
     freq: f32,
     num_sample: usize,
+    sender: Sender<DecodeEvent>,
 }
 
 impl HippoPlayback {
     /// The frequency of the sine.
     #[inline]
-    pub fn new(freq: u32) -> HippoPlayback {
+    pub fn new(freq: u32, sender: Sender<DecodeEvent>) -> HippoPlayback {
         HippoPlayback {
             freq: freq as f32,
             num_sample: 0,
+            sender: sender,
         }
     }
 }
@@ -35,6 +45,8 @@ impl Iterator for HippoPlayback {
     #[inline]
     fn next(&mut self) -> Option<f32> {
         self.num_sample = self.num_sample.wrapping_add(1);
+
+        self.sender.send(DecodeEvent::Position(self.num_sample)).unwrap();
 
         //println!("next sample!");
 
@@ -69,6 +81,7 @@ struct HippoPlayer {
     window: minifb::Window,
     audio_endpoint: rodio::Endpoint,
     audio_sink: rodio::Sink,
+    audio_recv: Receiver<DecodeEvent>,
     buffer: Vec<u32>,
 }
 
@@ -83,17 +96,20 @@ impl HippoPlayer {
             panic!("{}", e);
         });
 
+        let (tx, rx) = channel();
+
         let endpoint = rodio::get_default_endpoint().unwrap();
         let sink = Sink::new(&endpoint);
 
         // Add a dummy source of the sake of the example.
-        let source = HippoPlayback::new(440);
+        let source = HippoPlayback::new(440, tx.clone());
         sink.append(source);
 
         HippoPlayer {
             window: window,
             audio_endpoint: endpoint,
             audio_sink: sink,
+            audio_recv: rx,
             buffer,
         }
     }
@@ -102,6 +118,17 @@ impl HippoPlayer {
         while self.window.is_open() && !self.window.is_key_down(Key::Escape) {
             for i in self.buffer.iter_mut() {
                 *i = 0; // write something more funny here!
+            }
+
+            match self.audio_recv.try_recv() {
+                Ok(event) => {
+                    match event {
+                        DecodeEvent::Position(pos) => println!("pos {}", pos),
+                        _ => (),
+                    }
+                }
+
+                _ => (),
             }
 
             println!("window update!");
