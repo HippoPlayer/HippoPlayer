@@ -1,4 +1,4 @@
-tags
-src/tundra-output
-src/.tundra*
 *.swp
+.tundra2*
+t2-output
+
