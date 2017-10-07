@@ -5,3 +5,4 @@ authors = ["Daniel Collin <daniel@collin.com>"]
 
 [dependencies]
 minifb = "0.10.3"
+cpal = "0.4.5"
