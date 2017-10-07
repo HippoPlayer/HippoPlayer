@@ -1,0 +1,6 @@
+[package]
+name = "hippo_player"
+version = "0.1.0"
+authors = ["Daniel Collin <daniel@collin.com>"]
+
+[dependencies]
