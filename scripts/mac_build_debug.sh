@@ -1,2 +1,2 @@
 #!/bin/bash
-bin/macosx/tundra/tundra2 macosx-clang-debug
+bin/macos/tundra2 macosx-clang-debug
