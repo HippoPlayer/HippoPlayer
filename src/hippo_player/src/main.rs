@@ -1,5 +1,10 @@
 extern crate minifb;
 extern crate rodio;
+extern crate dynamic_reload;
+
+mod plugin_handler;
+
+use plugin_handler::Plugins;
 
 use rodio::{Source, Endpoint, Sink};
 use minifb::{Key, WindowOptions, Window};
@@ -77,16 +82,17 @@ impl Source for HippoPlayback {
     }
 }
 
-struct HippoPlayer {
+struct HippoPlayer<'a> {
     window: minifb::Window,
     audio_endpoint: rodio::Endpoint,
     audio_sink: rodio::Sink,
     audio_recv: Receiver<DecodeEvent>,
+    plugins: Plugins<'a>,
     buffer: Vec<u32>,
 }
 
-impl HippoPlayer {
-    pub fn new() -> HippoPlayer {
+impl <'a> HippoPlayer<'a> {
+    pub fn new() -> HippoPlayer<'a> {
         let buffer: Vec<u32> = vec![0; WIDTH * HEIGHT];
 
         let window = Window::new("HippoPlayer - ESC to exit",
@@ -110,6 +116,7 @@ impl HippoPlayer {
             audio_endpoint: endpoint,
             audio_sink: sink,
             audio_recv: rx,
+            plugins: Plugins::new(),
             buffer,
         }
     }
@@ -141,6 +148,8 @@ impl HippoPlayer {
 
 fn main() {
     let mut app = HippoPlayer::new();
+
+    app.plugins.add_decoder_plugin("HivelyPlugin");
 
     app.update();
 }
