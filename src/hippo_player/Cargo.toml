@@ -6,4 +6,4 @@ authors = ["Daniel Collin <daniel@collin.com>"]
 [dependencies]
 minifb = "0.10.3"
 rodio = "0.5.2"
-dynamic_reload = "0.2.1"
+dynamic_reload = "0.3.0"

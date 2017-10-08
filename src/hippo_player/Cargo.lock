@@ -2,7 +2,7 @@
 name = "hippo_player"
 version = "0.1.0"
 dependencies = [
- "dynamic_reload 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "dynamic_reload 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "minifb 0.10.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "rodio 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -101,7 +101,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "dynamic_reload"
-version = "0.2.1"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "libc 0.2.32 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -592,7 +592,7 @@ dependencies = [
 "checksum coreaudio-sys 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "31231897622a4cd14cb211af6f26d6fcf0c78078fa60c586ce9db8f0b581cd44"
 "checksum cpal 0.4.5 (registry+https://github.com/rust-lang/crates.io-index)" = "cfb31f23f94925ea251ea8f39c30bfebae88e059ef886ba927cf7af6c5487c2f"
 "checksum dtoa 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)" = "09c3753c3db574d215cba4ea76018483895d7bff25a31b49ba45db21c48e50ab"
-"checksum dynamic_reload 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "a188e06f1f940b7a19c39b77ad95a36950505f9c05446045ea0d399492353fb9"
+"checksum dynamic_reload 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "b827ff4f9ece0804d447bebdeb21d3f9c845d8214eb9e3cd10732a0280b93ead"
 "checksum filetime 0.1.14 (registry+https://github.com/rust-lang/crates.io-index)" = "aa75ec8f7927063335a9583e7fa87b0110bb888cf766dc01b54c0ff70d760c8e"
 "checksum fsevent 0.2.16 (registry+https://github.com/rust-lang/crates.io-index)" = "dfe593ebcfc76884138b25426999890b10da8e6a46d01b499d7c54c604672c38"
 "checksum fsevent-sys 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)" = "1a772d36c338d07a032d5375a36f15f9a7043bf0cb8ce7cee658e037c6032874"

@@ -2,6 +2,8 @@
 #ifndef HIPPOAPI_H
 #define HIPPOAPI_H
 
+#include <stdint.h>
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct LinearAllocator;
@@ -25,7 +27,7 @@ typedef struct HippoPlaybackBuffer
 
 typedef struct HippoPlaybackPlugin
 {
-	int version;
+	uint64_t version;
 	const char* (*info)(void* userData);
 	const char* (*trackInfo)(void* userData);
 	const char** (*supportedExtensions)(void* userData);
@@ -33,7 +35,7 @@ typedef struct HippoPlaybackPlugin
 	int (*destroy)(void* userData);
 	int (*open)(void* userData, const char* buffer);
 	int (*close)(void* userData);
-	int (*readData)(void* userData, HippoPlaybackBuffer* dest);
+	int (*readData)(void* userData, void* dest);
 	int (*seek)(void* userData, int ms);
 	int (*frameSize)(void* userData);
 
@@ -50,7 +52,7 @@ typedef struct HippoDecrunchPlugin
 
 	int (*create)(void* userData);
 	int (*destroy)(void* userData);
-	const char** (*getFilelist)(void* userData); 
+	const char** (*getFilelist)(void* userData);
 	void* unpack(void* userData, Allocator* allocator, void* identifier);
 
 } HippoDecrunchPlugin;

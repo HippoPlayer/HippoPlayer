@@ -96,9 +96,9 @@ static int hivelyClose(void* userData)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int hivelyReadData(void* userData, HippoPlaybackBuffer* dest)
+static int hivelyReadData(void* userData, void* dest)
 {
-	int8_t* newDest = (int8_t*)dest->data;
+	int8_t* newDest = (int8_t*)dest;
 
 	// TODO: Support more than one tune
 	struct HivelyReplayerData* replayerData = (struct HivelyReplayerData*)userData;
@@ -118,7 +118,7 @@ static int hivelySeek(void* userData, int ms)
 
 static int hivelyFrameSize(void* userData)
 {
-	return 44100 * sizeof(uint16_t) * 2 / 50;
+	return (44100 * sizeof(uint16_t) * 2) / 50;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
