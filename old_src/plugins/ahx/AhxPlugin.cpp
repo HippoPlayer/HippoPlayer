@@ -60,7 +60,7 @@ static const char* AhxSupportedExtensions(void* userData)
 static int AhxCreate(void* userData)
 {
 	g_mixingBuffer = (int*)malloc(1000 * 1024 * 1024);
-	g_mixTemp = (short*)g_mixingBuffer; 
+	g_mixTemp = (short*)g_mixingBuffer;
 	memset(g_mixingBuffer, 0, 100 * 1024 * 1024);
 	AHXPlayer* player = (AHXPlayer*)userData;
 	player->Init(0);
@@ -147,11 +147,11 @@ static int AhxReadData(void* userData, void* dest, int size)
 	AHXPlayer* player = (AHXPlayer*)userData;
 	float* newDest = (float*)dest;
 
-	for(int i = 0; i < NrBlocks; i++) 
+	for(int i = 0; i < NrBlocks; i++)
 	{
 		int NrSamples = Frequency / Hz / player->Song.SpeedMultiplier;
 		//int* mb = g_mixingBuffer;
-		
+
 		//memset(MixingBuffer, 0, MixLen*Frequency/Hz*sizeof(int));
 		for(int f = 0; f < MixLen*player->Song.SpeedMultiplier /* MixLen = # frames */; f++) {
 			player->PlayIRQ();
@@ -162,7 +162,7 @@ static int AhxReadData(void* userData, void* dest, int size)
 	static float temp = 0.0f;
 	temp += 0.001f;
 
-	for(int s = 0, t; s < size/4; s++, t += 2) 
+	for(int s = 0, t; s < size/4; s++, t += 2)
 	{
 		int thissample = g_mixTemp[1 + t] << 6; // 16 bit
 		//thissample = LOW_CLIP16 ? LOW_CLIP16 : thissample > HI_CLIP16 ? HI_CLIP16 : thissample;
@@ -170,9 +170,9 @@ static int AhxReadData(void* userData, void* dest, int size)
 		//printf("%f\n", newDest[s]);
 	}
 
-	//printf("[%d] %p %p\n",g_mixTemp[0], g_mixTemp, g_mixingBuffer); 
+	//printf("[%d] %p %p\n",g_mixTemp[0], g_mixTemp, g_mixingBuffer);
 
-	//memcpy(dest, g_mixTemp, size); 
+	//memcpy(dest, g_mixTemp, size);
 	g_mixTemp += size * 2;
 
 	usleep(Frames*(1000/Hz));
@@ -189,7 +189,7 @@ static int AhxSeek(void* userData, int ms)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static HippoPlaybackPlugin g_ahxPlugin = 
+static HippoPlaybackPlugin g_ahxPlugin =
 {
 	1,
 	AhxInfo,
@@ -217,7 +217,7 @@ static void initPlugin()
 
 extern "C"
 {
-	HippoPlaybackPlugin* AhxPlugin_getPlugin()
+	HippoPlaybackPlugin* getPlugin()
 	{
 		return &g_ahxPlugin;
 	}

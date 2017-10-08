@@ -15,6 +15,14 @@ local function get_rs_src(dir)
 	}
 end
 
+SharedLibrary {
+	Name = "HivelyPlugin",
+	Sources = {
+		"old_src/plugins/hively/HivelyPlugin.c",
+		"old_src/plugins/hively/replayer/hvl_replay.c"
+	},
+}
+
 -----------------------------------------------------------------------------------------------------------------------
 --[[
 RustCrate {
@@ -43,4 +51,6 @@ RustSharedLibrary {
 --Default "dummy_backend_plugin"
 
 -- vim: ts=4:sw=4:sts=4
+
+Default "HivelyPlugin"
 

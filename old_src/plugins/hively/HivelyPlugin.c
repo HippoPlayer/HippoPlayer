@@ -15,7 +15,7 @@ struct HivelyReplayerData
 	struct hvl_tune* tune;
 };
 
-static struct HivelyReplayerData g_replayerData;
+//static struct HivelyReplayerData g_replayerData;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -81,7 +81,7 @@ static int hivelyOpen(void* userData, const char* buffer)
 	fread(tempData, size, 1, file);
 	fclose(file);
 
-	struct HivelyReplayerData* replayerData = (struct HivelyReplayerData*)userData;	
+	struct HivelyReplayerData* replayerData = (struct HivelyReplayerData*)userData;
 	replayerData->tune = hvl_load_ahx(tempData, size, 0, 44100);
 
 	return 0;
@@ -101,8 +101,8 @@ static int hivelyReadData(void* userData, HippoPlaybackBuffer* dest)
 	int8_t* newDest = (int8_t*)dest->data;
 
 	// TODO: Support more than one tune
-	struct HivelyReplayerData* replayerData = (struct HivelyReplayerData*)userData;	
-	int decodeSize = hvl_DecodeFrame(replayerData->tune, newDest, &newDest[2], 4);
+	struct HivelyReplayerData* replayerData = (struct HivelyReplayerData*)userData;
+	/*int decodeSize =*/ hvl_DecodeFrame(replayerData->tune, newDest, &newDest[2], 4);
 
 	return 0;
 }
@@ -123,7 +123,7 @@ static int hivelyFrameSize(void* userData)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static HippoPlaybackPlugin g_hivelyPlugin = 
+static HippoPlaybackPlugin g_hivelyPlugin =
 {
 	1,
 	hivelyInfo,

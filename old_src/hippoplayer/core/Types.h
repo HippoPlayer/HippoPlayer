@@ -1,7 +1,12 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef HIPPOTYPES_H 
-#define HIPPOTYPES_H  
+#ifndef HIPPOTYPES_H
+#define HIPPOTYPES_H
+
+// HACK
+//
+
+#define HIPPO_MACOSX
 
 #include <stddef.h>
 
@@ -43,19 +48,19 @@ typedef unsigned char bool;
 #pragma warning(disable: 4100 4127 4201)
 #endif
 
-#define HIPPO_LIKELY(exp) exp 
-#define HIPPO_UNLIKELY(exp) exp 
+#define HIPPO_LIKELY(exp) exp
+#define HIPPO_UNLIKELY(exp) exp
 #define HIPPO_INLINE __forceinline
 #define HIPPO_RESTRICT __restrict
 #define HIPPO_ALIGN(x) __declspec(align(x))
 #define HIPPO_UNCACHEDAC_PTR(x)	x
 #define HIPPO_UNCACHED_PTR(x) x
-#define HIPPO_CACHED_PTR(x) x 
+#define HIPPO_CACHED_PTR(x) x
 #define HIPPO_ALIGNOF(t) __alignof(t)
 #define HIPPO_BREAK __debugbreak()
 
 #if defined(_WIN64)
-#define HIPPO_X64 
+#define HIPPO_X64
 #endif
 
 #elif defined(HIPPO_UNIX) || defined(HIPPO_MACOSX)
@@ -71,14 +76,14 @@ typedef __m128 int128_t;
 #error No SSE support detected
 #endif
 
-#define HIPPO_LIKELY(exp) __builtin_expect(exp, 1) 
-#define HIPPO_UNLIKELY(exp) __builtin_expect(exp, 0) 
+#define HIPPO_LIKELY(exp) __builtin_expect(exp, 1)
+#define HIPPO_UNLIKELY(exp) __builtin_expect(exp, 0)
 #define HIPPO_INLINE inline
 #define HIPPO_RESTRICT __restrict
 #define HIPPO_ALIGN(x) __attribute__((aligned(x)))
 #define HIPPO_UNCACHEDAC_PTR(x)	x
 #define HIPPO_UNCACHED_PTR(x) x
-#define HIPPO_CACHED_PTR(x) x 
+#define HIPPO_CACHED_PTR(x) x
 #define HIPPO_ALIGNOF(t) __alignof__(t)
 #define HIPPO_BREAK ((*(volatile uint32_t *)(0)) = 0x666)
 
