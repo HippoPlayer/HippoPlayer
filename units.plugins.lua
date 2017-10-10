@@ -39,18 +39,24 @@ SharedLibrary {
 
 SharedLibrary {
 	Name = "OpenMPT",
-	SourceDir = "src/plugins/openmpt",
-	Includes = "src/plugins/openmpt/libopenmpt",
+	Defines = { "LIBOPENMPT_BUILD" },
+	Includes = {
+		"src/plugins/openmpt/libopenmpt",
+		"src/plugins/openmpt/libopenmpt/common"
+	},
 
 	Sources = {
-		get_c_cpp_src("libopenmpt/soundlib"),
-		get_c_cpp_src("libopenmpt/common"),
-		"libopenmpt/libopenmpt/libopenmpt_c.cpp",
-		"libopenmpt/libopenmpt/libopenmpt_cxx.cpp",
-		"libopenmpt/libopenmpt/libopenmpt_impl.cpp",
-		"libopenmpt/libopenmpt/libopenmpt_ext_impl.cpp",
-		"OpenMPT.cpp",
+		get_c_cpp_src("src/plugins/openmpt/libopenmpt/soundlib"),
+		get_c_cpp_src("src/plugins/openmpt/libopenmpt/common"),
+		get_c_cpp_src("src/plugins/openmpt/libopenmpt/sounddsp"),
+		"src/plugins/openmpt/libopenmpt/libopenmpt/libopenmpt_c.cpp",
+		"src/plugins/openmpt/libopenmpt/libopenmpt/libopenmpt_cxx.cpp",
+		"src/plugins/openmpt/libopenmpt/libopenmpt/libopenmpt_impl.cpp",
+		"src/plugins/openmpt/libopenmpt/libopenmpt/libopenmpt_ext_impl.cpp",
+		"src/plugins/openmpt/OpenMPT.cpp",
 	},
+
+	Libs = { "stdc++" },
 }
 
 -----------------------------------------------------------------------------------------------------------------------
