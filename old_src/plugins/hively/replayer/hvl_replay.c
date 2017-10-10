@@ -16,6 +16,10 @@
 
 #include "hvl_replay.h"
 
+#ifdef _WIN32
+#pragma warning(disable: 4244)
+#endif
+
 int32_t stereopan_left[]  = { 128,  96,  64,  32,   0 };
 int32_t stereopan_right[] = { 128, 160, 193, 225, 255 };
 
@@ -110,7 +114,7 @@ void hvl_GenSawtooth( int8_t *buf, uint32_t len )
 
 void hvl_GenTriangle( int8_t *buf, uint32_t len )
 {
-  uint32_t i;
+  int32_t i;
   int32_t  d2, d5, d1, d4;
   int32_t  val;
   int8_t   *buf2;
@@ -547,7 +551,7 @@ struct hvl_tune *hvl_load_ahx( uint8_t *buf, uint32_t buflen, uint32_t defstereo
     ple += bptr[21];
     
     bptr += 22;
-    for( j=0; j<ht->ht_Instruments[i].ins_PList.pls_Length; j++ )
+    for( j=0; j<(uint32_t)ht->ht_Instruments[i].ins_PList.pls_Length; j++ )
     {
       k = (bptr[0]>>5)&7;
       if( k == 6 ) k = 12;
@@ -1690,7 +1694,7 @@ void hvl_process_frame( struct hvl_tune *ht, struct hvl_voice *voice )
     Delta = 32 >> voice->vc_WaveLength;
     ht->ht_WaveformTab[2] = voice->vc_SquareTempBuffer;
     
-    for( i=0; i<(1<<voice->vc_WaveLength)*4; i++ )
+    for( i=0; i<(uint32_t)(1<<voice->vc_WaveLength)*4; i++ )
     {
       voice->vc_SquareTempBuffer[i] = *SquarePtr;
       SquarePtr += Delta;

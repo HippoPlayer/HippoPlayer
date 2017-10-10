@@ -82,7 +82,7 @@ static int hivelyOpen(void* userData, const char* buffer)
 	fclose(file);
 
 	struct HivelyReplayerData* replayerData = (struct HivelyReplayerData*)userData;
-	replayerData->tune = hvl_load_ahx(tempData, size, 0, 44100);
+	replayerData->tune = hvl_load_ahx(tempData, (uint32_t)size, 0, 44100);
 
 	return 0;
 }
@@ -140,7 +140,7 @@ static HippoPlaybackPlugin g_hivelyPlugin =
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-HippoPlaybackPlugin* getPlugin()
+HIPPO_EXPORT HippoPlaybackPlugin* getPlugin()
 {
 	return &g_hivelyPlugin;
 }

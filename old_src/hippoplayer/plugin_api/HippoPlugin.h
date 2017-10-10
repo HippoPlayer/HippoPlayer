@@ -60,6 +60,13 @@ typedef struct HippoDecrunchPlugin
 
 //HippoPlaybackPlugin* getPlugin();
 
+
+#ifdef _WIN32
+#define HIPPO_EXPORT __declspec(dllexport)
+#else
+#define HIPPO_EXPORT
+#endif
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef _cplusplus
