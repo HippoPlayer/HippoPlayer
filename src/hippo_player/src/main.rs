@@ -101,7 +101,7 @@ impl Source for HippoPlayback {
 
     #[inline]
     fn samples_rate(&self) -> u32 {
-        44100
+        48000
     }
 
     #[inline]

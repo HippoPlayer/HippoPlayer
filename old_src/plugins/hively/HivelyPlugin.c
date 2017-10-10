@@ -82,7 +82,7 @@ static int hivelyOpen(void* userData, const char* buffer)
 	fclose(file);
 
 	struct HivelyReplayerData* replayerData = (struct HivelyReplayerData*)userData;
-	replayerData->tune = hvl_load_ahx(tempData, (uint32_t)size, 0, 44100);
+	replayerData->tune = hvl_load_ahx(tempData, (uint32_t)size, 0, 48000);
 
 	return 0;
 }
@@ -118,7 +118,7 @@ static int hivelySeek(void* userData, int ms)
 
 static int hivelyFrameSize(void* userData)
 {
-	return (44100 * sizeof(uint16_t) * 2) / 50;
+	return (48000 * sizeof(uint16_t) * 2) / 50;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
