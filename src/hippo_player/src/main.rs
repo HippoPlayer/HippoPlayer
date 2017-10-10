@@ -41,8 +41,9 @@ impl HippoPlayback {
     pub fn new(plugin: &DecoderPlugin, sender: Sender<DecodeEvent>) -> HippoPlayback {
         let user_data = ((plugin.plugin_funcs).create)() as u64;
         let ptr_user_data = user_data as *mut c_void;
-        let frame_size = (((plugin.plugin_funcs).frame_size)(ptr_user_data) / 2) as usize;
-        let _open_state = ((plugin.plugin_funcs).open)(ptr_user_data, b"bin/player/songs/ahx/geir_tjelta_-_a_new_beginning.ahx\0".as_ptr());
+        let frame_size = (((plugin.plugin_funcs).frame_size)(ptr_user_data) * 2) as usize;
+        //let _open_state = ((plugin.plugin_funcs).open)(ptr_user_data, b"bin/player/songs/ahx/geir_tjelta_-_a_new_beginning.ahx\0".as_ptr());
+        let _open_state = ((plugin.plugin_funcs).open)(ptr_user_data, b"bin/player/songs/mod/global_trash_3_v2.mod\0".as_ptr());
 
         HippoPlayback {
             plugin_user_data: user_data,
@@ -177,7 +178,8 @@ impl <'a> HippoPlayer<'a> {
 fn main() {
     let mut app = HippoPlayer::new();
 
-    app.plugins.add_decoder_plugin("HivelyPlugin");
+    //app.plugins.add_decoder_plugin("HivelyPlugin");
+    app.plugins.add_decoder_plugin("OpenMPT");
 
     // Hacky set up for playing some music
 
