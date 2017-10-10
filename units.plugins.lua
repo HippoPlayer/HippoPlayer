@@ -15,11 +15,41 @@ local function get_rs_src(dir)
 	}
 end
 
+-----------------------------------------------------------------------------------------------------------------------
+
+local function get_c_cpp_src(dir)
+	return Glob {
+		Dir = dir,
+		Extensions = { ".cpp", ".c" },
+		Recursive = true,
+	}
+end
+
+-----------------------------------------------------------------------------------------------------------------------
+
 SharedLibrary {
 	Name = "HivelyPlugin",
 	Sources = {
 		"old_src/plugins/hively/HivelyPlugin.c",
 		"old_src/plugins/hively/replayer/hvl_replay.c"
+	},
+}
+
+-----------------------------------------------------------------------------------------------------------------------
+
+SharedLibrary {
+	Name = "OpenMPT",
+	SourceDir = "src/plugins/openmpt",
+	Includes = "src/plugins/openmpt/libopenmpt",
+
+	Sources = {
+		get_c_cpp_src("libopenmpt/soundlib"),
+		get_c_cpp_src("libopenmpt/common"),
+		"libopenmpt/libopenmpt/libopenmpt_c.cpp",
+		"libopenmpt/libopenmpt/libopenmpt_cxx.cpp",
+		"libopenmpt/libopenmpt/libopenmpt_impl.cpp",
+		"libopenmpt/libopenmpt/libopenmpt_ext_impl.cpp",
+		"OpenMPT.cpp",
 	},
 }
 
@@ -53,4 +83,5 @@ RustSharedLibrary {
 -- vim: ts=4:sw=4:sts=4
 
 Default "HivelyPlugin"
+Default "OpenMPT"
 
