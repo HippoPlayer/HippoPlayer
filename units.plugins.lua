@@ -30,8 +30,8 @@ end
 SharedLibrary {
 	Name = "HivelyPlugin",
 	Sources = {
-		"old_src/plugins/hively/HivelyPlugin.c",
-		"old_src/plugins/hively/replayer/hvl_replay.c"
+		"src/plugins/hively/HivelyPlugin.c",
+		"src/plugins/hively/replayer/hvl_replay.c"
 	},
 }
 
@@ -70,13 +70,13 @@ SharedLibrary {
 		},
 	},
 
-	Sources = { 
+	Sources = {
 		get_c_cpp_src("src/plugins/futurecomposer/src"),
-		"src/plugins/futurecomposer/FutureComposerPlugin.c", 
+		"src/plugins/futurecomposer/FutureComposerPlugin.c",
 	},
 
-	Libs = { 
-		{ "stdc++"; Config = "macosx-*-*" }, 
+	Libs = {
+		{ "stdc++"; Config = "macosx-*-*" },
 	},
 }
 
@@ -85,7 +85,7 @@ SharedLibrary {
 SharedLibrary {
 	Name = "TfmxPlugin",
 
-	Sources = { 
+	Sources = {
 		get_c_cpp_src("src/plugins/tfmx/src"),
 	},
 }

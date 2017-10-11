@@ -1,5 +1,5 @@
 
-#include "../../hippoplayer/plugin_api/HippoPlugin.h"
+#include "../../plugin_api/HippoPlugin.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

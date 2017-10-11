@@ -1,4 +1,4 @@
-/* 
+/*
  * tfmx_audio.c
  * Paula emulator.
  * jhp 20Mar96
@@ -83,7 +83,7 @@ tfmx_get_next_buffer()
 
 /* Simple little three-position weighted-sum LPF. */
 
-static void 
+static void
 filter(S32 *buf, int nsamples)
 {
     static int wl = 0;
@@ -127,7 +127,7 @@ filter(S32 *buf, int nsamples)
 
 /* This one looks like a good candidate for high optimization... */
 
-static void 
+static void
 stereoblend(S32 *buf, int nsamples)
 {
     if (plugin_cfg.blend)
@@ -145,7 +145,7 @@ stereoblend(S32 *buf, int nsamples)
     }
 }
 
-static void 
+static void
 conv_u8 (S32 *buf, int nsamples)
 {
     int i;
@@ -157,38 +157,38 @@ conv_u8 (S32 *buf, int nsamples)
 
     filter (buf, nsamples);
     stereoblend (buf,nsamples);
-	
+
     if (output_chans == 2)
     {
-	for (i = 0; i < nsamples; i++)
-	{
-	    *a++ = ((buf[HALFBUFSIZE]) / 256) ^ 0x80;
-	    *a++ = ((*buf++) / 256) ^ 0x80;
-	}
+		for (i = 0; i < nsamples; i++)
+		{
+			*a++ = ((buf[HALFBUFSIZE]) / 256) ^ 0x80;
+			*a++ = ((*buf++) / 256) ^ 0x80;
+		}
     }
     else
     {
-	for (i = 0; i < nsamples; i++)  {
-		S32 t = *buf++;
-	    *a++ = ((buf[HALFBUFSIZE] + t) / 512) ^ 0x80;
+		for (i = 0; i < nsamples; i++)  {
+			S32 t = *buf++;
+			*a++ = ((buf[HALFBUFSIZE] + t) / 512) ^ 0x80;
+		}
     }
 
     bytes2 += nsamples;
-    for(i = 0; i < nsamples ; i++)
-    {
-	c[HALFBUFSIZE] = 0;
-	*c++ = 0;
+    for(i = 0; i < nsamples ; i++) {
+		c[HALFBUFSIZE] = 0;
+		*c++ = 0;
     }
 }
 
-static void 
+static void
 conv_s16(S32 *buf, int nsamples)
 {
     int i;
     S32 *c = buf;
     S16 *a = (S16 *)&global_buf_union.b8[bhead];
     //register int l;
-	
+
     bhead = (bhead + (nsamples * bytes_per_sample)) & BOFSIZE;
 
     filter (buf, nsamples);
@@ -220,7 +220,7 @@ conv_s16(S32 *buf, int nsamples)
     }
 }
 
-static void 
+static void
 mix_add(struct Hdb *hw, int n, S32 *b)
 {
     register S8 *smpl = hw->sbeg;
@@ -278,7 +278,7 @@ mix_add(struct Hdb *hw, int n, S32 *b)
 	    break;
 	}
     }
-	
+
     hw->sbeg = smpl;
     hw->pos = pos;
     hw->delta = delta;
@@ -286,9 +286,9 @@ mix_add(struct Hdb *hw, int n, S32 *b)
     if (hw->mode & 4)
 	hw->mode = 0;
 }
-	
 
-static void 
+
+static void
 mix_add_ov(struct Hdb *hw, int n, S32 *b)
 {
     register S8 *smpl = hw->sbeg;
@@ -301,10 +301,8 @@ mix_add_ov(struct Hdb *hw, int n, S32 *b)
     int v1;
     int v2;
 
-    int q;
-
     if (v > 0x40)
-	v = 0x40;
+		v = 0x40;
 
 /* This used to have (p==&smplbuf).  Broke with GrandMonsterSlam */
     if ((smpl == (S8 *)&nul) || ((hw->mode & 1) == 0) || (l < 0x10000))
@@ -343,14 +341,14 @@ mix_add_ov(struct Hdb *hw, int n, S32 *b)
 	*/
 	psreal = pos>>FRACTION_BITS;
 	v1 = smpl[psreal];
-	if (psreal+1 < hw->slen) {	
+	if (psreal+1 < hw->slen) {
 	    v2 = smpl[psreal+1];
 	} else {
 	    v2 = hw->SampleStart[0];
 	    /* fprintf(stderr, "H"); */
 	    /* (*b++) += v*v1; */
 	}
-	(*b++) += v*((v1 + 
+	(*b++) += v*((v1 +
 		      (((signed) ((v2-v1) * (pos & FRACTION_MASK)))
 		       >> FRACTION_BITS)));
 	pos += delta;
@@ -359,7 +357,7 @@ mix_add_ov(struct Hdb *hw, int n, S32 *b)
 	    continue;
 	pos -= l;
 	smpl = hw->SampleStart;
-	
+
 	hw->slen = hw->SampleLength;
 	l = hw->slen << 14;
 
@@ -391,7 +389,7 @@ static inline S32 clamp(S32 v, S32 low, S32 high)
 
     return v;
 }
-	
+
 /*
  * mix all used channels, depending of the user enabled voices
  */
@@ -401,7 +399,7 @@ static void mixit(int nb, int bd)
     S32 *ptr;
 
     if (multimode)
-    { 
+    {
 	if(active_voice[4])
 	    mixing_func(&hdb[4], nb, &tbuf[bd]);
 	if(active_voice[5])
@@ -444,14 +442,14 @@ static void mixem(U32 nb, U32 bd)
 }
 
 
-long 
+long
 tfmx_get_block_size(void)
 {
     return HALFBUFSIZE;
 } /* *4; } */
 /*{ return blocksize*bytes_per_sample; }*/
 
-int 
+int
 tfmx_get_block(void *buffer)
 {
     unsigned char *newBuf;
@@ -491,7 +489,7 @@ tfmx_calc_sizes(void)
     }
 }
 
-void 
+void
 TfmxTakedown(void)
 {
 	if(smplbuf)
@@ -501,7 +499,7 @@ TfmxTakedown(void)
 	}
 }
 
-void 
+void
 TfmxResetBuffers(void)
 {
 	bhead = 0;
@@ -511,7 +509,7 @@ TfmxResetBuffers(void)
 	bytes2 = 0;
 }
 
-int 
+int
 tfmx_try_to_make_block(void)
 {
     static S32 nb = 0; /* num bytes */
@@ -544,7 +542,7 @@ tfmx_try_to_make_block(void)
 	    {
 		convert_func(tbuf, bd);
 		bd = 0;
-		bqueue++; 
+		bqueue++;
 				//printf("make %d\n",bqueue);
 		r++;
 	    }
