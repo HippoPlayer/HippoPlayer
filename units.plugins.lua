@@ -60,6 +60,27 @@ SharedLibrary {
 }
 
 -----------------------------------------------------------------------------------------------------------------------
+
+SharedLibrary {
+	Name = "FutureComposerPlugin",
+	Env = {
+		CPPPATH = { "src/plugins/futurecomposer/src" },
+		CPPDEFS = {
+			{ "HAVE_CONFIG_H"; Config = "macosx-*-*" }
+		},
+	},
+
+	Sources = { 
+		get_c_cpp_src("src/plugins/futurecomposer/src"),
+		"src/plugins/futurecomposer/FutureComposerPlugin.c", 
+	},
+
+	Libs = { 
+		{ "stdc++"; Config = "macosx-*-*" }, 
+	},
+}
+
+-----------------------------------------------------------------------------------------------------------------------
 --[[
 RustCrate {
 	Name = "dummy",
@@ -90,4 +111,5 @@ RustSharedLibrary {
 
 Default "HivelyPlugin"
 Default "OpenMPT"
+Default "FutureComposerPlugin"
 
