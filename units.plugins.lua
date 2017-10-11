@@ -81,6 +81,17 @@ SharedLibrary {
 }
 
 -----------------------------------------------------------------------------------------------------------------------
+
+SharedLibrary {
+	Name = "TfmxPlugin",
+
+	Sources = { 
+		get_c_cpp_src("src/plugins/tfmx/src"),
+	},
+}
+
+
+-----------------------------------------------------------------------------------------------------------------------
 --[[
 RustCrate {
 	Name = "dummy",
@@ -112,4 +123,5 @@ RustSharedLibrary {
 Default "HivelyPlugin"
 Default "OpenMPT"
 Default "FutureComposerPlugin"
+Default "TfmxPlugin"
 
