@@ -9,6 +9,7 @@ use plugin_handler::{Plugins};
 use audio::HippoAudio;
 use minifb::{Key, WindowOptions, Window};
 use std::path::Path;
+use std::env;
 
 //use std::sync::mpsc::{channel, Receiver, Sender};
 //use marker::{Send, Sync};
@@ -75,13 +76,19 @@ impl <'a> HippoPlayer<'a> {
 
 
 fn main() {
+    let args: Vec<String> = env::args().collect();
     let mut app = HippoPlayer::new();
 
     app.plugins.add_decoder_plugin("OpenMPT");
     app.plugins.add_decoder_plugin("HivelyPlugin");
 
-    //app.play_file("bin/player/songs/mod/global_trash_3_v2.mod");
-    app.play_file("bin/player/songs/ahx/geir_tjelta_-_a_new_beginning.ahx");
+    if args.len() > 1 {
+        app.play_file(&args[1]);
+    } else {
+        //app.play_file("bin/player/songs/mod/global_trash_3_v2.mod");
+        app.play_file("bin/player/songs/ahx/geir_tjelta_-_a_new_beginning.ahx");
+    }
+
 
     app.update();
 }

@@ -29,8 +29,13 @@ static const char* openmpt_track_info(void* userData) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static const char* openmpt_supported_extensions() {
+	// If we have already populated this we can just return
+
+	if (s_supported_extensions[0] != 0) {
+		return s_supported_extensions;
+	}
+
 	std::vector<std::string> ext_list = openmpt::get_supported_extensions();
-	memset(s_supported_extensions, 0, MAX_EXT_COUNT); 
 	size_t count = ext_list.size();
 
 	for (size_t i = 0; i < count; ++i) {
@@ -40,8 +45,6 @@ static const char* openmpt_supported_extensions() {
 			strcat(s_supported_extensions, ","); 
 		}
 	}
-
-	printf("%s\n", s_supported_extensions);
 
 	return s_supported_extensions;
 }
