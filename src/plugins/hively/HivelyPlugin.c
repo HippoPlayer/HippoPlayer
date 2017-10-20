@@ -6,63 +6,53 @@
 #include <math.h>
 #include "replayer/hvl_replay.h"
 
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct HivelyReplayerData
-{
+struct HivelyReplayerData {
 	struct hvl_tune* tune;
 };
 
-//static struct HivelyReplayerData g_replayerData;
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const char* hivelyInfo(void* userData)
-{
+static const char* hively_info(void* userData) {
 	return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const char* hivelyTrackInfo(void* userData)
-{
+static const char* hively_track_info(void* userData) {
 	return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const char* hivelySupportedExtensions(void* userData)
-{
+static const char* hively_supported_extensions(void* userData) {
 	return "ahx,hvl";
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void* hivelyCreate()
-{
-	// TODO: supply custom allocator
-
-	void* replayerData = malloc(sizeof(struct HivelyReplayerData));
-	memset(replayerData, 0, sizeof(struct HivelyReplayerData));
+static void* hively_create() {
+	void* data = malloc(sizeof(struct HivelyReplayerData));
+	memset(data, 0, sizeof(struct HivelyReplayerData));
 
 	hvl_InitReplayer();
 
-	return replayerData;
+	return data;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int hivelyDestroy(void* userData)
-{
+static int hively_destroy(void* user_data) {
+	struct HivelyReplayerData* data = (struct HivelyReplayerData*)user_data;
+	free(data);
 	return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int hivelyOpen(void* userData, const char* buffer)
-{
-	static uint8_t tempData[64000];
+static int hively_open(void* userData, const char* buffer) {
+	void* song_data = 0;
 
 	// TODO: Add reader functions etc to be used instead of fopen as file may come from zip, etc
 
@@ -70,26 +60,27 @@ static int hivelyOpen(void* userData, const char* buffer)
 	fseek(file, 0, SEEK_END);
 	size_t size = ftell(file);
 	fseek(file, 0, SEEK_SET);
-	fread(tempData, size, 1, file);
-	fclose(file);
+
+	song_data = malloc(size);
+	fread(song_data, size, 1, file);
 
 	struct HivelyReplayerData* replayerData = (struct HivelyReplayerData*)userData;
-	replayerData->tune = hvl_load_ahx(tempData, size, 0, 44100);
+	replayerData->tune = hvl_load_ahx(song_data, size, 0, 48000);
+
+	free(song_data);
 
 	return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int hivelyClose(void* userData)
-{
+static int hively_close(void* userData) {
 	return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int hivelyReadData(void* userData, void* dest)
-{
+static int hively_read_data(void* userData, void* dest) {
 	int8_t* newDest = (int8_t*)dest;
 
 	// TODO: Support more than one tune
@@ -101,40 +92,37 @@ static int hivelyReadData(void* userData, void* dest)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int hivelySeek(void* userData, int ms)
-{
+static int hively_seek(void* userData, int ms) {
 	return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int hivelyFrameSize(void* userData)
-{
-	return (44100 * sizeof(uint16_t) * 2) / 50;
+static int hively_frame_size(void* userData) {
+	return (48000 * 2) / 50;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static HippoPlaybackPlugin g_hivelyPlugin =
-{
+static HippoPlaybackPlugin g_hively_plugin = {
 	1,
-	hivelyInfo,
-	hivelyTrackInfo,
-	hivelySupportedExtensions,
-	hivelyCreate,
-	hivelyDestroy,
-	hivelyOpen,
-	hivelyClose,
-	hivelyReadData,
-	hivelySeek,
-	hivelyFrameSize,
+	hively_info,
+	hively_track_info,
+	hively_supported_extensions,
+	hively_create,
+	hively_destroy,
+	hively_open,
+	hively_close,
+	hively_read_data,
+	hively_seek,
+	hively_frame_size,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 HippoPlaybackPlugin* getPlugin()
 {
-	return &g_hivelyPlugin;
+	return &g_hively_plugin;
 }
 
 

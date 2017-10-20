@@ -55,12 +55,6 @@ impl Iterator for HippoPlayback {
             ((self.plugin.plugin_funcs).read_data)(self.plugin_user_data as *mut c_void,
                                                    self.out_data.as_slice().as_ptr() as *mut u8);
 
-            /*
-            for i in 0..self.frame_size {
-                self.out_data[i] = (self.temp_data[i] as f32) * 1.0 / 32768.0;
-            }
-            */
-
             self.current_offset = 0;
         }
 
