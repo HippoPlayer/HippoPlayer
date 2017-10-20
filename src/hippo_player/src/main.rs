@@ -8,6 +8,7 @@ mod audio;
 use plugin_handler::{Plugins};
 use audio::HippoAudio;
 use minifb::{Key, WindowOptions, Window};
+use std::path::Path;
 
 //use std::sync::mpsc::{channel, Receiver, Sender};
 //use marker::{Send, Sync};
@@ -52,7 +53,26 @@ impl <'a> HippoPlayer<'a> {
             self.window.update_with_buffer(&self.buffer).unwrap();
         }
     }
+
+    pub fn play_file(&mut self, filename: &str) {
+        let path = Path::new(filename);
+        // TODO: Proper error handling
+        let file_ext = path.extension().unwrap().to_str().unwrap();
+
+        // find a plugin that supports the file
+
+        for plugin in &self.plugins.decoder_plugins {
+            if plugin.is_ext_supported(file_ext) {
+                self.audio.start_with_file(&plugin, filename); 
+                return;
+            }
+        }
+
+        println!("Unable to find plugin to support {}", filename);
+    }
 }
+
+
 
 fn main() {
     let mut app = HippoPlayer::new();
@@ -60,18 +80,8 @@ fn main() {
     app.plugins.add_decoder_plugin("OpenMPT");
     app.plugins.add_decoder_plugin("HivelyPlugin");
 
-    //app.audio.start_with_file(&app.plugins.decoder_plugins[0], "bin/player/songs/mod/global_trash_3_v2.mod");
-    app.audio.start_with_file(&app.plugins.decoder_plugins[1], "bin/player/songs/ahx/geir_tjelta_-_a_new_beginning.ahx");
-
-    // Hacky set up for playing some music
-
-    //let sink = Sink::new(&app.audio_endpoint);
-
-    // Add a dummy source of the sake of the example.
-    //let source = HippoPlayback::new(&app.plugins.decoder_plugins[0], app.audio_send.clone());
-    //sink.append(source);
-
-    //app.audio_sink = Some(sink);
+    //app.play_file("bin/player/songs/mod/global_trash_3_v2.mod");
+    app.play_file("bin/player/songs/ahx/geir_tjelta_-_a_new_beginning.ahx");
 
     app.update();
 }

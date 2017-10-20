@@ -1,6 +1,13 @@
 #include <libopenmpt/libopenmpt.hpp>
 #include "../../plugin_api/HippoPlugin.h"
 
+#include <vector>
+#include <string>
+#include <string.h>
+
+const int MAX_EXT_COUNT = 16 * 1024;
+static char s_supported_extensions[MAX_EXT_COUNT];
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct OpenMptData {
@@ -22,7 +29,21 @@ static const char* openmpt_track_info(void* userData) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static const char* openmpt_supported_extensions() {
-	return "mod,xm";
+	std::vector<std::string> ext_list = openmpt::get_supported_extensions();
+	memset(s_supported_extensions, 0, MAX_EXT_COUNT); 
+	size_t count = ext_list.size();
+
+	for (size_t i = 0; i < count; ++i) {
+		//strcat_s(s_supported_extensions, MAX_EXT_COUNT, ext_list[i].c_str());
+		strcat(s_supported_extensions, ext_list[i].c_str());
+		if (i != count - 1) {
+			strcat(s_supported_extensions, ","); 
+		}
+	}
+
+	printf("%s\n", s_supported_extensions);
+
+	return s_supported_extensions;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -42,10 +63,8 @@ static int openmpt_destroy(void* userData) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int openmpt_open(void* userData, const char* buffer)
-{
+static int openmpt_open(void* user_data, const char* buffer) {
 	// TODO: Add reader functions etc to be used instead of fopen as file may come from zip, etc
-
 	FILE* file = fopen(buffer, "rb");
 	fseek(file, 0, SEEK_END);
 	size_t size = ftell(file);
@@ -54,7 +73,7 @@ static int openmpt_open(void* userData, const char* buffer)
 	fread(data, size, 1, file);
 	fclose(file);
 
-	struct OpenMptData* replayerData = (struct OpenMptData*)userData;
+	struct OpenMptData* replayerData = (struct OpenMptData*)user_data;
     replayerData->mod = new openmpt::module(data, size);
 
 	return 0;

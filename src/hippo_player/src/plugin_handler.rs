@@ -1,13 +1,14 @@
 use dynamic_reload::{DynamicReload, Lib, Symbol, Search, PlatformName};
 use std::os::raw::{c_int, c_void, c_char};
 use std::sync::Arc;
+use std::ffi::CString;
 
 #[derive(Clone, Debug)]
 pub struct CHippoPlaybackPlugin {
     pub version: u64,
     pub info: extern "C" fn(user_data: *mut c_void) -> *const c_char,
     pub track_info: extern "C" fn(user_data: *mut c_void) -> *const c_char,
-    pub supported_extensions: extern "C" fn(user_data: *mut c_void) -> *const c_char,
+    pub supported_extensions: extern "C" fn() -> *mut c_char,
     pub create: extern "C" fn() -> *mut c_void,
     pub destroy: extern "C" fn(user_data: *mut c_void) -> c_int,
     pub open: extern "C" fn(user_data: *mut c_void, buffer: *const i8) -> c_int,
@@ -23,6 +24,24 @@ pub struct DecoderPlugin {
     pub plugin: Arc<Lib>,
     pub plugin_path: String,
     pub plugin_funcs: CHippoPlaybackPlugin,
+}
+
+impl DecoderPlugin {
+    pub fn is_ext_supported(&self, ext: &str) -> bool {
+        let supported_ext; 
+        unsafe {
+            let temp = CString::from_raw(((self.plugin_funcs).supported_extensions)());
+            supported_ext = temp.into_string().unwrap();
+        }
+
+        for e in supported_ext.split(",") {
+            if ext == e {
+                return true;
+            }
+        }
+
+        false
+    }
 }
 
 pub struct Plugins<'a> {
@@ -61,5 +80,6 @@ impl <'a> Plugins<'a> {
             }
         }
     }
+
 }
 
