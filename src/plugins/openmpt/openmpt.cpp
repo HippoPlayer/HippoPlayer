@@ -2,40 +2,31 @@
 
 #include "../../plugin_api/HippoPlugin.h"
 
-int dummy() { return 0; }
-
-struct OpenMptData
-{
+struct OpenMptData {
     openmpt::module* mod = 0;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const char* openMptInfo(void* userData)
-{
+static const char* openMptInfo(void* userData) {
 	return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const char* openMptTrackInfo(void* userData)
-{
+static const char* openMptTrackInfo(void* userData) {
 	return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const char* openMptSupportedExtensions(void* userData)
-{
+static const char* openMptSupportedExtensions(void* userData) {
 	return "mod,xm";
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void* openMptCreate()
-{
-	// TODO: supply custom allocator
-
+static void* openMptCreate() {
 	void* replayerData = malloc(sizeof(struct OpenMptData));
 	memset(replayerData, 0, sizeof(struct OpenMptData));
 
@@ -44,8 +35,7 @@ static void* openMptCreate()
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int openMptDestroy(void* userData)
-{
+static int openMptDestroy(void* userData) {
 	return 0;
 }
 
@@ -71,22 +61,19 @@ static int openMptOpen(void* userData, const char* buffer)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int openMptClose(void* userData)
-{
+static int openMptClose(void* userData) {
 	return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int openMptFrameSize(void* userData)
-{
+static int openMptFrameSize(void* userData) {
 	return 480;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int openMptReadData(void* userData, void* dest)
-{
+static int openMptReadData(void* userData, void* dest) {
 	struct OpenMptData* replayerData = (struct OpenMptData*)userData;
     /*int t =*/ replayerData->mod->read_interleaved_stereo(48000, openMptFrameSize(userData), (int16_t*)dest);
 
@@ -95,15 +82,13 @@ static int openMptReadData(void* userData, void* dest)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int openMptSeek(void* userData, int ms)
-{
+static int openMptSeek(void* userData, int ms) {
 	return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static HippoPlaybackPlugin g_openmptPlugin =
-{
+static HippoPlaybackPlugin g_openmptPlugin = {
 	1,
 	openMptInfo,
 	openMptTrackInfo,
@@ -119,8 +104,7 @@ static HippoPlaybackPlugin g_openmptPlugin =
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-extern "C" HIPPO_EXPORT HippoPlaybackPlugin* getPlugin()
-{
+extern "C" HIPPO_EXPORT HippoPlaybackPlugin* getPlugin() {
 	return &g_openmptPlugin;
 }
 

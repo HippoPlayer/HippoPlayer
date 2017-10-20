@@ -28,9 +28,9 @@ impl <'a> HippoPlayer<'a> {
         let buffer: Vec<u32> = vec![0; WIDTH * HEIGHT];
 
         let window = Window::new("HippoPlayer - ESC to exit",
-                                    WIDTH,
-                                    HEIGHT,
-                                    WindowOptions::default()).unwrap_or_else(|e| {
+                                 WIDTH,
+                                 HEIGHT,
+                                 WindowOptions::default()).unwrap_or_else(|e| {
             panic!("{}", e);
         });
 

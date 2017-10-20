@@ -3,14 +3,14 @@ extern crate rodio;
 use plugin_handler::DecoderPlugin;
 use rodio::{Source, Sink};
 use std::ffi::CString;
-use std::os::raw::{c_void};
+use std::os::raw::c_void;
 use std::time::Duration;
 
-//#[derive(Clone)]
-//pub enum DecodeEvent {
+// #[derive(Clone)]
+// pub enum DecodeEvent {
 //    Position(usize),
 //    Data(Vec<u8>),
-//}
+// }
 
 #[derive(Clone)]
 pub struct HippoPlayback {
@@ -19,8 +19,7 @@ pub struct HippoPlayback {
     temp_data: Vec<i16>,
     out_data: Vec<f32>,
     frame_size: usize,
-    current_offset: usize,
-    //sender: Sender<DecodeEvent>,
+    current_offset: usize, // sender: Sender<DecodeEvent>,
 }
 
 impl HippoPlayback {
@@ -29,10 +28,10 @@ impl HippoPlayback {
         let user_data = ((plugin.plugin_funcs).create)() as u64;
         let ptr_user_data = user_data as *mut c_void;
         let frame_size = (((plugin.plugin_funcs).frame_size)(ptr_user_data) * 2) as usize;
-        //let _open_state = ((plugin.plugin_funcs).open)(ptr_user_data, b"bin/player/songs/ahx/geir_tjelta_-_a_new_beginning.ahx\0".as_ptr());
-        //let _open_state = ((plugin.plugin_funcs).open)(ptr_user_data, b"bin/player/songs/mod/global_trash_3_v2.mod\0".as_ptr());
+        // let _open_state = ((plugin.plugin_funcs).open)(ptr_user_data, b"bin/player/songs/ahx/geir_tjelta_-_a_new_beginning.ahx\0".as_ptr());
+        // let _open_state = ((plugin.plugin_funcs).open)(ptr_user_data, b"bin/player/songs/mod/global_trash_3_v2.mod\0".as_ptr());
         // TODO: Verify that state is ok
-        let _open_state = ((plugin.plugin_funcs).open)(ptr_user_data, c_filename.as_ptr()); 
+        let _open_state = ((plugin.plugin_funcs).open)(ptr_user_data, c_filename.as_ptr());
 
         HippoPlayback {
             plugin_user_data: user_data,
@@ -40,8 +39,7 @@ impl HippoPlayback {
             temp_data: vec![0; frame_size],
             out_data: vec![0.0; frame_size],
             frame_size: frame_size,
-            current_offset: frame_size + 1,
-            // sender: sender,
+            current_offset: frame_size + 1, // sender: sender,
         }
     }
 }
@@ -54,9 +52,10 @@ impl Iterator for HippoPlayback {
         self.current_offset += 1;
 
         if self.current_offset >= self.frame_size {
-            ((self.plugin.plugin_funcs).read_data)(self.plugin_user_data as *mut c_void, self.temp_data.as_slice().as_ptr() as *mut u8);
+            ((self.plugin.plugin_funcs).read_data)(self.plugin_user_data as *mut c_void,
+                                                   self.temp_data.as_slice().as_ptr() as *mut u8);
 
-            for i in 0 .. self.frame_size {
+            for i in 0..self.frame_size {
                 self.out_data[i] = (self.temp_data[i] as f32) * 1.0 / 32768.0;
             }
 
@@ -91,8 +90,7 @@ impl Source for HippoPlayback {
 
 pub struct HippoAudio {
     audio_sink: rodio::Sink,
-    playbacks: Vec<HippoPlayback>,
-    //audio_endpoint: rodio::Endpoint,
+    playbacks: Vec<HippoPlayback>, // audio_endpoint: rodio::Endpoint,
 }
 
 impl HippoAudio {
@@ -102,7 +100,7 @@ impl HippoAudio {
 
         HippoAudio {
             audio_sink: sink,
-            //audio_endpoint: endpoint,
+            // audio_endpoint: endpoint,
             playbacks: Vec::new(),
         }
     }
@@ -114,4 +112,3 @@ impl HippoAudio {
         self.audio_sink.append(playback);
     }
 }
-
