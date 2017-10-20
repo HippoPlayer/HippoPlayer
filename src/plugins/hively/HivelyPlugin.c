@@ -6,6 +6,9 @@
 #include <math.h>
 #include "replayer/hvl_replay.h"
 
+const int FREQ = 48000;
+const int FRAME_SIZE = ((FREQ * 2) / 50);
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct HivelyReplayerData {
@@ -26,7 +29,7 @@ static const char* hively_track_info(void* userData) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const char* hively_supported_extensions(void* userData) {
+static const char* hively_supported_extensions() {
 	return "ahx,hvl";
 }
 
@@ -65,7 +68,7 @@ static int hively_open(void* userData, const char* buffer) {
 	fread(song_data, size, 1, file);
 
 	struct HivelyReplayerData* replayerData = (struct HivelyReplayerData*)userData;
-	replayerData->tune = hvl_load_ahx(song_data, size, 0, 48000);
+	replayerData->tune = hvl_load_ahx(song_data, size, 0, FREQ);
 
 	free(song_data);
 
@@ -81,13 +84,23 @@ static int hively_close(void* userData) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int hively_read_data(void* userData, void* dest) {
-	int8_t* newDest = (int8_t*)dest;
+	int16_t temp_data[FRAME_SIZE * 4];
+	int8_t* ptr = (int8_t*)temp_data;
+
+	float* newDest = (float*)dest;
 
 	// TODO: Support more than one tune
 	struct HivelyReplayerData* replayerData = (struct HivelyReplayerData*)userData;
-	/*int decodeSize =*/ hvl_DecodeFrame(replayerData->tune, newDest, &newDest[2], 4);
 
-	return 0;
+	int frames_decoded = hvl_DecodeFrame(replayerData->tune, ptr, ptr + 2, 4) / 2;
+
+	const float scale = 1.0f / 32768.0f;
+
+	for (int i = 0; i < frames_decoded; ++i) {
+		newDest[i] = ((float)temp_data[i]) * scale;
+	}
+
+	return frames_decoded;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -99,7 +112,7 @@ static int hively_seek(void* userData, int ms) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int hively_frame_size(void* userData) {
-	return (48000 * 2) / 50;
+	return FRAME_SIZE;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -120,8 +133,7 @@ static HippoPlaybackPlugin g_hively_plugin = {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-HippoPlaybackPlugin* getPlugin()
-{
+HippoPlaybackPlugin* getPlugin() {
 	return &g_hively_plugin;
 }
 

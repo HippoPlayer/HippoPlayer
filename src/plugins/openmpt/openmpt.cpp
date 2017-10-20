@@ -20,7 +20,7 @@ static const char* openMptTrackInfo(void* userData) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const char* openMptSupportedExtensions(void* userData) {
+static const char* openMptSupportedExtensions() {
 	return "mod,xm";
 }
 

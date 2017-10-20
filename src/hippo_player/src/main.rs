@@ -57,9 +57,11 @@ impl <'a> HippoPlayer<'a> {
 fn main() {
     let mut app = HippoPlayer::new();
 
-    //app.plugins.add_decoder_plugin("HivelyPlugin");
     app.plugins.add_decoder_plugin("OpenMPT");
-    app.audio.start_with_file(&app.plugins.decoder_plugins[0], "bin/player/songs/mod/global_trash_3_v2.mod");
+    app.plugins.add_decoder_plugin("HivelyPlugin");
+
+    //app.audio.start_with_file(&app.plugins.decoder_plugins[0], "bin/player/songs/mod/global_trash_3_v2.mod");
+    app.audio.start_with_file(&app.plugins.decoder_plugins[1], "bin/player/songs/ahx/geir_tjelta_-_a_new_beginning.ahx");
 
     // Hacky set up for playing some music
 
