@@ -62,6 +62,21 @@ SharedLibrary {
 -----------------------------------------------------------------------------------------------------------------------
 
 SharedLibrary {
+	Name = "SidPlugin",
+	Includes = {
+		"src/plugins/sid/libsidplayfp/src",
+	},
+
+	Sources = {
+		get_c_cpp_src("src/plugins/sid"),
+	},
+
+	Libs = { "stdc++" },
+}
+
+-----------------------------------------------------------------------------------------------------------------------
+
+SharedLibrary {
 	Name = "FutureComposerPlugin",
 	Env = {
 		CPPPATH = { "src/plugins/futurecomposer/src" },
@@ -124,4 +139,5 @@ Default "HivelyPlugin"
 Default "OpenMPT"
 Default "FutureComposerPlugin"
 Default "TfmxPlugin"
+Default "SidPlugin"
 
