@@ -16,7 +16,7 @@ use std::time::Duration;
 pub struct HippoPlayback {
     plugin_user_data: u64,
     plugin: DecoderPlugin,
-    temp_data: Vec<i16>,
+    // temp_data: Vec<i16>,
     out_data: Vec<f32>,
     frame_size: usize,
     current_offset: usize, // sender: Sender<DecodeEvent>,
@@ -27,7 +27,7 @@ impl HippoPlayback {
         let c_filename = CString::new(filename).unwrap();
         let user_data = ((plugin.plugin_funcs).create)() as u64;
         let ptr_user_data = user_data as *mut c_void;
-        let frame_size = (((plugin.plugin_funcs).frame_size)(ptr_user_data) * 2) as usize;
+        let frame_size = (((plugin.plugin_funcs).frame_size)(ptr_user_data)) as usize;
         // let _open_state = ((plugin.plugin_funcs).open)(ptr_user_data, b"bin/player/songs/ahx/geir_tjelta_-_a_new_beginning.ahx\0".as_ptr());
         // let _open_state = ((plugin.plugin_funcs).open)(ptr_user_data, b"bin/player/songs/mod/global_trash_3_v2.mod\0".as_ptr());
         // TODO: Verify that state is ok
@@ -36,7 +36,7 @@ impl HippoPlayback {
         HippoPlayback {
             plugin_user_data: user_data,
             plugin: plugin.clone(),
-            temp_data: vec![0; frame_size],
+            // temp_data: vec![0; frame_size],
             out_data: vec![0.0; frame_size],
             frame_size: frame_size,
             current_offset: frame_size + 1, // sender: sender,
@@ -53,11 +53,13 @@ impl Iterator for HippoPlayback {
 
         if self.current_offset >= self.frame_size {
             ((self.plugin.plugin_funcs).read_data)(self.plugin_user_data as *mut c_void,
-                                                   self.temp_data.as_slice().as_ptr() as *mut u8);
+                                                   self.out_data.as_slice().as_ptr() as *mut u8);
 
+            /*
             for i in 0..self.frame_size {
                 self.out_data[i] = (self.temp_data[i] as f32) * 1.0 / 32768.0;
             }
+            */
 
             self.current_offset = 0;
         }

@@ -68,14 +68,17 @@ static int openMptClose(void* userData) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int openMptFrameSize(void* userData) {
-	return 480;
+	// 480 frames for 2 channels
+	return 480 * 2;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int openMptReadData(void* userData, void* dest) {
 	struct OpenMptData* replayerData = (struct OpenMptData*)userData;
-    /*int t =*/ replayerData->mod->read_interleaved_stereo(48000, openMptFrameSize(userData), (int16_t*)dest);
+	// count is number of frames per channel and div by 2 as we have 2 channels
+	const int count = openMptFrameSize(userData) / 2;
+    replayerData->mod->read_interleaved_stereo(48000, count, (float*)dest);
 
 	return 0;
 }
