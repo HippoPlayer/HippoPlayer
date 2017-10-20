@@ -10,7 +10,7 @@ pub struct CHippoPlaybackPlugin {
     pub supported_extensions: extern "C" fn(user_data: *mut c_void) -> *const *const c_char,
     pub create: extern "C" fn() -> *mut c_void,
     pub destroy: extern "C" fn(user_data: *mut c_void) -> c_int,
-    pub open: extern "C" fn(user_data: *mut c_void, buffer: *const u8) -> c_int,
+    pub open: extern "C" fn(user_data: *mut c_void, buffer: *const i8) -> c_int,
     pub close: extern "C" fn(user_data: *mut c_void) -> c_int,
     pub read_data: extern "C" fn(user_data: *mut c_void, dest: *mut u8) -> c_int,
     pub seek: extern "C" fn(user_data: *mut c_void, ms: c_int) -> c_int,
