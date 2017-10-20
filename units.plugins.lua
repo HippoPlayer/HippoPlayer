@@ -63,8 +63,11 @@ SharedLibrary {
 
 SharedLibrary {
 	Name = "SidPlugin",
+	Defines = { "HAVE_CXX11" },
+
 	Includes = {
 		"src/plugins/sid/libsidplayfp/src",
+		"src/plugins/sid/libsidplayfp/src/builders/residfp-builder/residfp",
 	},
 
 	Sources = {
