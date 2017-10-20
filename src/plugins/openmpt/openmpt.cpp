@@ -1,6 +1,7 @@
 #include <libopenmpt/libopenmpt.hpp>
-
 #include "../../plugin_api/HippoPlugin.h"
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct OpenMptData {
     openmpt::module* mod = 0;
@@ -8,25 +9,25 @@ struct OpenMptData {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const char* openMptInfo(void* userData) {
+static const char* openmpt_info(void* userData) {
 	return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const char* openMptTrackInfo(void* userData) {
+static const char* openmpt_track_info(void* userData) {
 	return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const char* openMptSupportedExtensions() {
+static const char* openmpt_supported_extensions() {
 	return "mod,xm";
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void* openMptCreate() {
+static void* openmpt_create() {
 	void* replayerData = malloc(sizeof(struct OpenMptData));
 	memset(replayerData, 0, sizeof(struct OpenMptData));
 
@@ -35,13 +36,13 @@ static void* openMptCreate() {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int openMptDestroy(void* userData) {
+static int openmpt_destroy(void* userData) {
 	return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int openMptOpen(void* userData, const char* buffer)
+static int openmpt_open(void* userData, const char* buffer)
 {
 	// TODO: Add reader functions etc to be used instead of fopen as file may come from zip, etc
 
@@ -61,32 +62,29 @@ static int openMptOpen(void* userData, const char* buffer)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int openMptClose(void* userData) {
+static int openmpt_close(void* userData) {
 	return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int openMptFrameSize(void* userData) {
-	// 480 frames for 2 channels
+static int openmpt_frame_size(void* user_data) {
 	return 480 * 2;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int openMptReadData(void* userData, void* dest) {
-	struct OpenMptData* replayerData = (struct OpenMptData*)userData;
+static int openmpt_read_data(void* user_data, void* dest) {
+	struct OpenMptData* replayerData = (struct OpenMptData*)user_data;
 
 	// count is number of frames per channel and div by 2 as we have 2 channels
-	const int count = openMptFrameSize(userData) / 2;
-    replayerData->mod->read_interleaved_stereo(48000, count, (float*)dest);
-
-	return 0;
+	const int count = openmpt_frame_size(user_data) / 2;
+    return replayerData->mod->read_interleaved_stereo(48000, count, (float*)dest) * 2;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int openMptSeek(void* userData, int ms) {
+static int openmpt_seek(void* user_data, int ms) {
 	return 0;
 }
 
@@ -94,16 +92,16 @@ static int openMptSeek(void* userData, int ms) {
 
 static HippoPlaybackPlugin g_openmptPlugin = {
 	1,
-	openMptInfo,
-	openMptTrackInfo,
-	openMptSupportedExtensions,
-	openMptCreate,
-	openMptDestroy,
-	openMptOpen,
-	openMptClose,
-	openMptReadData,
-	openMptSeek,
-	openMptFrameSize,
+	openmpt_info,
+	openmpt_track_info,
+	openmpt_supported_extensions,
+	openmpt_create,
+	openmpt_destroy,
+	openmpt_open,
+	openmpt_close,
+	openmpt_read_data,
+	openmpt_seek,
+	openmpt_frame_size,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
