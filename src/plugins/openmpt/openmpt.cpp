@@ -25,16 +25,9 @@ static const char* openMptTrackInfo(void* userData)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const char** openMptSupportedExtensions(void* userData)
+static const char* openMptSupportedExtensions(void* userData)
 {
-	static const char* supportedFomats[] =
-	{
-		"ahx",
-		"hvl",
-		0,
-	};
-
-	return supportedFomats;
+	return "mod,xm";
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -95,7 +88,7 @@ static int openMptFrameSize(void* userData)
 static int openMptReadData(void* userData, void* dest)
 {
 	struct OpenMptData* replayerData = (struct OpenMptData*)userData;
-    int t = replayerData->mod->read_interleaved_stereo(48000, openMptFrameSize(userData), (int16_t*)dest);
+    /*int t =*/ replayerData->mod->read_interleaved_stereo(48000, openMptFrameSize(userData), (int16_t*)dest);
 
 	return 0;
 }

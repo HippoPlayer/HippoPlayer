@@ -30,7 +30,7 @@ typedef struct HippoPlaybackPlugin
 	uint64_t version;
 	const char* (*info)(void* userData);
 	const char* (*trackInfo)(void* userData);
-	const char** (*supportedExtensions)(void* userData);
+	const char* (*supportedExtensions)(void* userData);
 	void* (*create)();
 	int (*destroy)(void* userData);
 	int (*open)(void* userData, const char* buffer);

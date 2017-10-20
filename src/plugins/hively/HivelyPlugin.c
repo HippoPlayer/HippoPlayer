@@ -1,4 +1,3 @@
-
 #include "../../plugin_api/HippoPlugin.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -33,16 +32,9 @@ static const char* hivelyTrackInfo(void* userData)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const char** hivelySupportedExtensions(void* userData)
+static const char* hivelySupportedExtensions(void* userData)
 {
-	static const char* supportedFomats[] =
-	{
-		"ahx",
-		"hvl",
-		0,
-	};
-
-	return supportedFomats;
+	return "ahx,hvl";
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
