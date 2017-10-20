@@ -76,6 +76,7 @@ static int openMptFrameSize(void* userData) {
 
 static int openMptReadData(void* userData, void* dest) {
 	struct OpenMptData* replayerData = (struct OpenMptData*)userData;
+
 	// count is number of frames per channel and div by 2 as we have 2 channels
 	const int count = openMptFrameSize(userData) / 2;
     replayerData->mod->read_interleaved_stereo(48000, count, (float*)dest);
