@@ -81,6 +81,7 @@ fn main() {
 
     app.plugins.add_decoder_plugin("OpenMPT");
     app.plugins.add_decoder_plugin("HivelyPlugin");
+    app.plugins.add_decoder_plugin("SidPlugin");
 
     if args.len() > 1 {
         app.play_file(&args[1]);

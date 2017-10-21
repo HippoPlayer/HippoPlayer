@@ -2,16 +2,21 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-//#include <unistd.h>
 #include <math.h>
-//#include "replayer/hvl_replay.h"
+#include <sidplayfp/sidplayfp.h>
+#include <sidplayfp/SidTune.h>
+#include <sidplayfp/SidInfo.h>
+#include <builders/residfp-builder/residfp.h>
 
 const int FREQ = 48000;
-const int FRAME_SIZE = ((FREQ * 2) / 50);
+const int FRAME_SIZE = (FREQ * 2) / 100;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct sidReplayerData {
+struct SidReplayerData {
+    sidplayfp engine;
+	ReSIDfpBuilder* rs = nullptr;
+	SidTune* tune = nullptr;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -35,8 +40,23 @@ static const char* sid_supported_extensions() {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void* sid_create() {
-	void* data = malloc(sizeof(struct sidReplayerData));
-	memset(data, 0, sizeof(struct sidReplayerData));
+	SidReplayerData* data = new SidReplayerData();
+
+    data->engine.setRoms(nullptr, nullptr, nullptr);
+
+	data->rs = new ReSIDfpBuilder("HippoPlayer");
+    // Get the number of SIDs supported by the engine
+    unsigned int max_sids = data->engine.info().maxsids();
+
+	// Create SID emulators
+    data->rs->create(max_sids);
+    
+    // Check if builder is ok
+    if (!data->rs->getStatus())
+    {
+        printf("SidPlugin error %s\n", data->rs->error());
+        return 0;
+    }
 
 	return data;
 }
@@ -44,31 +64,55 @@ static void* sid_create() {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int sid_destroy(void* user_data) {
-	struct sidReplayerData* data = (struct sidReplayerData*)user_data;
-	free(data);
+	struct SidReplayerData* t = (struct SidReplayerData*)user_data;
+	t->engine.stop();
+	//delete t;
 	return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int sid_open(void* userData, const char* buffer) {
-	/*
-	// TODO: Add reader functions etc to be used instead of fopen as file may come from zip, etc
+static int sid_open(void* user_data, const char* buffer) {
+	SidReplayerData* data = (SidReplayerData*)user_data;
+	
+	SidTune* tune = new SidTune(buffer);
 
-	FILE* file = fopen(buffer, "rb");
-	fseek(file, 0, SEEK_END);
-	size_t size = ftell(file);
-	fseek(file, 0, SEEK_SET);
+    // CHeck if the tune is valid
+    if (!tune->getStatus())
+    {
+        printf("SidPlugin: tune status %s\n", tune->statusString());
+        return -1;
+    }
 
-	song_data = malloc(size);
-	fread(song_data, size, 1, file);
+    data->tune = tune;
 
-	struct sidReplayerData* replayerData = (struct sidReplayerData*)userData;
-	replayerData->tune = hvl_load_ahx(song_data, size, 0, FREQ);
-	free(song_data);
-	*/
+    // Select default song
+    tune->selectSong(0);
 
-	return 0;
+    // Configure the engine
+    SidConfig cfg;
+    cfg.frequency = FREQ;
+    cfg.samplingMethod = SidConfig::INTERPOLATE;
+    cfg.fastSampling = false;
+    cfg.playback = SidConfig::MONO;
+    cfg.sidEmulation = data->rs;
+
+    if (!data->engine.config(cfg))
+    {
+        printf("Engine error %s\n", data->engine.error());
+        return 0;
+    }
+
+    // Load tune into engine
+    if (!data->engine.load(data->tune))
+    {
+        printf("Engine error %s\n", data->engine.error());
+        return 0;
+    }
+
+    printf("sid_open ok\n");
+
+	return 1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -79,17 +123,33 @@ static int sid_close(void* userData) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int sid_read_data(void* userData, void* dest) {
-	/*
+static int sid_read_data(void* user_data, void* dest) {
+	SidReplayerData* data = (SidReplayerData*)user_data;
+	float* output = (float*)dest;
+
+	int16_t temp_data[FRAME_SIZE * 2];
+
+	data->engine.play(temp_data, FRAME_SIZE / 2);
 
 	const float scale = 1.0f / 32768.0f;
 
-	for (int i = 0; i < frames_decoded; ++i) {
-		newDest[i] = ((float)temp_data[i]) * scale;
+	/*
+	static float s_count = 0.0f;
+	s_count += 0.02;
+
+	for (int i = 0; i < FRAME_SIZE; ++i) {
+		//newDest[i] = ((float)temp_data[i]) * scale;
+		output[i] = sin(s_count); 
 	}
 	*/
 
-	return 0;
+	for (int i = 0; i < FRAME_SIZE / 2; ++i) {
+		const float v = ((float)temp_data[i]) * scale;
+		*output++ = v;
+		*output++ = v;
+	}
+
+	return FRAME_SIZE;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -122,7 +182,7 @@ static HippoPlaybackPlugin g_sid_plugin = {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-HippoPlaybackPlugin* getPlugin() {
+extern "C" HippoPlaybackPlugin* getPlugin() {
 	return &g_sid_plugin;
 }
 
