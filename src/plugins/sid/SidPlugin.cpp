@@ -95,7 +95,9 @@ static int sid_open(void* user_data, const char* buffer) {
     cfg.samplingMethod = SidConfig::INTERPOLATE;
     cfg.fastSampling = false;
     cfg.playback = SidConfig::MONO;
+    cfg.playback = SidConfig::MONO;
     cfg.sidEmulation = data->rs;
+    cfg.defaultSidModel = SidConfig::MOS8580;
 
     if (!data->engine.config(cfg))
     {
@@ -132,16 +134,6 @@ static int sid_read_data(void* user_data, void* dest) {
 	data->engine.play(temp_data, FRAME_SIZE / 2);
 
 	const float scale = 1.0f / 32768.0f;
-
-	/*
-	static float s_count = 0.0f;
-	s_count += 0.02;
-
-	for (int i = 0; i < FRAME_SIZE; ++i) {
-		//newDest[i] = ((float)temp_data[i]) * scale;
-		output[i] = sin(s_count); 
-	}
-	*/
 
 	for (int i = 0; i < FRAME_SIZE / 2; ++i) {
 		const float v = ((float)temp_data[i]) * scale;
