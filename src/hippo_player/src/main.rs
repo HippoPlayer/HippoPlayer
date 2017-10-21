@@ -1,4 +1,5 @@
-extern crate minifb;
+#[macro_use]
+extern crate wrui;
 extern crate rodio;
 extern crate dynamic_reload;
 
@@ -7,7 +8,7 @@ mod audio;
 
 use plugin_handler::{Plugins};
 use audio::HippoAudio;
-use minifb::{Key, WindowOptions, Window};
+use wrui::{Wrui, Window, Pos, Color};
 use std::path::Path;
 use std::env;
 
@@ -15,44 +16,34 @@ use std::env;
 //use marker::{Send, Sync};
 //use std::fs::OpenOptions;
 
-const WIDTH: usize = 640;
-const HEIGHT: usize = 360;
-
 struct HippoPlayer<'a> {
-    window: minifb::Window,
+    window: Window,
     audio: HippoAudio,
     plugins: Plugins<'a>,
-    buffer: Vec<u32>,
+    wrui: &'a Wrui,
 }
 
 impl <'a> HippoPlayer<'a> {
-    pub fn new() -> HippoPlayer<'a> {
-        let buffer: Vec<u32> = vec![0; WIDTH * HEIGHT];
-
-        let window = Window::new("HippoPlayer - ESC to exit",
-                                 WIDTH,
-                                 HEIGHT,
-                                 WindowOptions::default()).unwrap_or_else(|e| {
-            panic!("{}", e);
-        });
-
+    pub fn new(wrui: &Wrui) -> HippoPlayer {
         HippoPlayer {
-            window: window,
+            window: wrui.create_window(),
             audio: HippoAudio::new(),
             plugins: Plugins::new(),
-            buffer,
+            wrui: wrui,
         }
     }
 
-    pub fn update(&mut self) {
-        while self.window.is_open() && !self.window.is_key_down(Key::Escape) {
-            for i in self.buffer.iter_mut() {
-                *i = 0; // write something more funny here!
-            }
+    pub fn setup(&mut self) {
+        window_set_paint_event!(self.window, self, HippoPlayer, HippoPlayer::paint_event);
+    }
 
-            // We unwrap here as we want this code to exit if it fails. Real applications may want to handle this in a different way
-            self.window.update_with_buffer(&self.buffer).unwrap();
-        }
+    pub fn paint_event(&mut self) {
+        let painter = self.wrui.get_painter();
+        painter.draw_text(Pos::new(10.0, 10.0), Color::new(1.0, 1.0, 0.0, 1.0), "test text!");
+    }
+
+    pub fn run(&self) {
+        self.wrui.run();
     }
 
     pub fn play_file(&mut self, filename: &str) {
@@ -76,8 +67,11 @@ impl <'a> HippoPlayer<'a> {
 
 
 fn main() {
+    // very temporary for now while testing
+    let wrui = Wrui::new("../../wrui/t2-output/macosx-clang-debug-default/libwrui_dimgui.dylib").unwrap();
+
     let args: Vec<String> = env::args().collect();
-    let mut app = HippoPlayer::new();
+    let mut app = HippoPlayer::new(&wrui);
 
     app.plugins.add_decoder_plugin("OpenMPT");
     app.plugins.add_decoder_plugin("HivelyPlugin");
@@ -90,6 +84,7 @@ fn main() {
         app.play_file("bin/player/songs/ahx/geir_tjelta_-_a_new_beginning.ahx");
     }
 
-
-    app.update();
+    app.setup();
+    app.run();
 }
+
