@@ -1,7 +1,7 @@
 use dynamic_reload::{DynamicReload, Lib, Symbol, Search, PlatformName};
 use std::os::raw::{c_int, c_void, c_char};
 use std::sync::Arc;
-use std::ffi::CString;
+use std::ffi::CStr;
 
 #[derive(Clone, Debug)]
 pub struct CHippoPlaybackPlugin {
@@ -30,8 +30,9 @@ impl DecoderPlugin {
     pub fn is_ext_supported(&self, ext: &str) -> bool {
         let supported_ext; 
         unsafe {
-            let temp = CString::from_raw(((self.plugin_funcs).supported_extensions)());
-            supported_ext = temp.into_string().unwrap();
+            let c_string = ((self.plugin_funcs).supported_extensions)();
+            let temp = CStr::from_ptr(c_string);
+            supported_ext = temp.to_str().unwrap().to_owned();
         }
 
         for e in supported_ext.split(",") {
@@ -49,11 +50,21 @@ pub struct Plugins<'a> {
     pub plugin_handler: DynamicReload<'a>,
 }
 
+#[cfg(target_os="windows")]
+fn get_plugin_path() -> &'static str {
+    "t2-output/win64-msvc-debug-default"
+}
+
+#[cfg(target_os="macos")]
+fn get_plugin_path() -> &'static str {
+    "t2-output/macosx-clang-debug-default"
+}
+
 impl <'a> Plugins<'a> {
     pub fn new() -> Plugins<'a> {
         Plugins {
             decoder_plugins: Vec::new(),
-            plugin_handler: DynamicReload::new(Some(vec!["t2-output/macosx-clang-debug-default"]), Some("t2-output"), Search::Default),
+            plugin_handler: DynamicReload::new(Some(vec![get_plugin_path()]), Some("t2-output"), Search::Default),
         }
     }
 
