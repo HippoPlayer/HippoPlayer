@@ -6,8 +6,8 @@
 #include <math.h>
 #include "replayer/hvl_replay.h"
 
-const int FREQ = 48000;
-const int FRAME_SIZE = ((FREQ * 2) / 50);
+#define FREQ 48000
+#define FRAME_SIZE ((FREQ * 2) / 50)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -133,7 +133,7 @@ static HippoPlaybackPlugin g_hively_plugin = {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-HippoPlaybackPlugin* getPlugin() {
+HIPPO_EXPORT HippoPlaybackPlugin* getPlugin() {
 	return &g_hively_plugin;
 }
 
