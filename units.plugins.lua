@@ -56,7 +56,10 @@ SharedLibrary {
 		"src/plugins/openmpt/OpenMPT.cpp",
 	},
 
-	Libs = { "stdc++" },
+	Libs = { 
+		{ "stdc++"; Config = "macosx-*-*" },
+		{ "Rpcrt4.lib"; Config = "win64-*-*" },
+	},
 }
 
 -----------------------------------------------------------------------------------------------------------------------
@@ -74,7 +77,7 @@ SharedLibrary {
 		get_c_cpp_src("src/plugins/sid"),
 	},
 
-	Libs = { "stdc++" },
+	Libs = { "stdc++"; Config = "macosx-*-*" },
 }
 
 -----------------------------------------------------------------------------------------------------------------------
@@ -140,7 +143,7 @@ RustSharedLibrary {
 
 Default "HivelyPlugin"
 Default "OpenMPT"
-Default "FutureComposerPlugin"
-Default "TfmxPlugin"
+-- Default "FutureComposerPlugin"
+-- Default "TfmxPlugin"
 Default "SidPlugin"
 
