@@ -32,11 +32,13 @@
 
 static const uint8_t sidplayer1[] =
 {
+	0,
 //#  include "sidplayer1.bin"
 };
 
 static const uint8_t sidplayer2[] =
 {
+	0,
 //#  include "sidplayer2.bin"
 };
 

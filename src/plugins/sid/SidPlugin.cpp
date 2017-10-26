@@ -174,7 +174,7 @@ static HippoPlaybackPlugin g_sid_plugin = {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-extern "C" HippoPlaybackPlugin* getPlugin() {
+extern "C" HIPPO_EXPORT HippoPlaybackPlugin* getPlugin() {
 	return &g_sid_plugin;
 }
 
