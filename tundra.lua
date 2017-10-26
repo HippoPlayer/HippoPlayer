@@ -71,7 +71,7 @@ local gcc_env = {
 -----------------------------------------------------------------------------------------------------------------------
 
 local win64_opts = {
-    "/EHsc", "/FS", "/MT", "/W3", "/I.", "/WX", "/DUNICODE", "/D_UNICODE", "/DWIN32", "/D_CRT_SECURE_NO_WARNINGS",
+    "/EHsc", "/FS", "/MT", "/W3", "/I.", "/DUNICODE", "/D_UNICODE", "/DWIN32", "/D_CRT_SECURE_NO_WARNINGS",
     "\"/DOBJECT_DIR=$(OBJECTDIR:#)\"",
     { "/Od"; Config = "*-*-debug" },
     { "/O2"; Config = "*-*-release" },
