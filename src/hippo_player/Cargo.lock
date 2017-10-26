@@ -5,7 +5,7 @@ dependencies = [
  "dynamic_reload 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "minifb 0.10.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "rodio 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "wrui 0.1.0",
+ "wrui 0.1.0 (git+https://github.com/emoon/wrui_rust?branch=new_api)",
 ]
 
 [[package]]
@@ -573,6 +573,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "wrui"
 version = "0.1.0"
+source = "git+https://github.com/emoon/wrui_rust?branch=new_api#ab69e959ee7180be7f4a201c99061e4cdb79c665"
 dependencies = [
  "libloading 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -665,5 +666,6 @@ dependencies = [
 "checksum walkdir 0.1.8 (registry+https://github.com/rust-lang/crates.io-index)" = "c66c0b9792f0a765345452775f3adbd28dde9d33f30d13e5dcc5ae17cf6f3780"
 "checksum winapi 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)" = "167dc9d6949a9b857f3451275e911c3f44255842c1f7a76f33c55103a909087a"
 "checksum winapi-build 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "2d315eee3b34aca4797b2da6b13ed88266e6d612562a0c46390af8299fc699bc"
+"checksum wrui 0.1.0 (git+https://github.com/emoon/wrui_rust?branch=new_api)" = "<none>"
 "checksum ws2_32-sys 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "d59cefebd0c892fa2dd6de581e937301d8552cb44489cdff035c6187cb63fa5e"
 "checksum x11-dl 2.14.0 (registry+https://github.com/rust-lang/crates.io-index)" = "326c500cdc166fd7c70dd8c8a829cd5c0ce7be5a5d98c25817de2b9bdc67faf8"

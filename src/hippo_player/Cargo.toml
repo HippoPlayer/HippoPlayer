@@ -4,7 +4,8 @@ version = "0.1.0"
 authors = ["Daniel Collin <daniel@collin.com>"]
 
 [dependencies]
-wrui = { path = "../../../../wrui_rust" }
+wrui = { git = "https://github.com/emoon/wrui_rust", branch = "new_api" }
+# wrui = { path = "../../../../wrui_rust" }
 minifb = "0.10.3"
 rodio = "0.5.2"
 dynamic_reload = "0.3.0"

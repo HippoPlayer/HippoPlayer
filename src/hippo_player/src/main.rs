@@ -1,5 +1,3 @@
-#[macro_use]
-extern crate wrui;
 extern crate rodio;
 extern crate dynamic_reload;
 
@@ -8,42 +6,26 @@ mod audio;
 
 use plugin_handler::{Plugins};
 use audio::HippoAudio;
-use wrui::{Wrui, Window, Pos, Color};
 use std::path::Path;
 use std::env;
+use std::time::Duration;
+use std::thread;
 
 //use std::sync::mpsc::{channel, Receiver, Sender};
 //use marker::{Send, Sync};
 //use std::fs::OpenOptions;
 
 struct HippoPlayer<'a> {
-    window: Window,
     audio: HippoAudio,
     plugins: Plugins<'a>,
-    wrui: &'a Wrui,
 }
 
 impl <'a> HippoPlayer<'a> {
-    pub fn new(wrui: &Wrui) -> HippoPlayer {
+    pub fn new() -> HippoPlayer<'a> {
         HippoPlayer {
-            window: wrui.create_window(),
             audio: HippoAudio::new(),
             plugins: Plugins::new(),
-            wrui: wrui,
         }
-    }
-
-    pub fn setup(&mut self) {
-        window_set_paint_event!(self.window, self, HippoPlayer, HippoPlayer::paint_event);
-    }
-
-    pub fn paint_event(&mut self) {
-        let painter = self.wrui.get_painter();
-        painter.draw_text(Pos::new(10.0, 10.0), Color::new(1.0, 1.0, 0.0, 1.0), "test text!");
-    }
-
-    pub fn run(&self) {
-        self.wrui.run();
     }
 
     pub fn play_file(&mut self, filename: &str) {
@@ -67,11 +49,8 @@ impl <'a> HippoPlayer<'a> {
 
 
 fn main() {
-    // very temporary for now while testing
-    let wrui = Wrui::new("../../wrui/t2-output/macosx-clang-debug-default/libwrui_dimgui.dylib").unwrap();
-
     let args: Vec<String> = env::args().collect();
-    let mut app = HippoPlayer::new(&wrui);
+    let mut app = HippoPlayer::new();
 
     app.plugins.add_decoder_plugin("OpenMPT");
     app.plugins.add_decoder_plugin("HivelyPlugin");
@@ -84,7 +63,10 @@ fn main() {
         app.play_file("bin/player/songs/ahx/geir_tjelta_-_a_new_beginning.ahx");
     }
 
-    app.setup();
-    app.run();
+    println!("Playing.. waiting for ctrl-c");
+
+    loop {
+        thread::sleep(Duration::from_millis(10));
+    }
 }
 
