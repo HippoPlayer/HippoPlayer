@@ -206,7 +206,7 @@ struct hvl_tune
 int hvl_DecodeFrame( struct hvl_tune *ht, int8_t *buf1, int8_t *buf2, int32_t bufmod );
 void hvl_InitReplayer( void );
 int hvl_InitSubsong( struct hvl_tune *ht, uint32_t nr );
-struct hvl_tune *hvl_LoadTune( char *name, uint32_t freq, uint32_t defstereo );
-struct hvl_tune *hvl_load_ahx( uint8_t *buf, uint32_t buflen, uint32_t defstereo, uint32_t freq );
+struct hvl_tune* hvl_load_tune(const char* name, uint32_t freq, uint32_t defstereo );
+struct hvl_tune* hvl_load_ahx( uint8_t *buf, uint32_t buflen, uint32_t defstereo, uint32_t freq );
 void hvl_FreeTune( struct hvl_tune *ht );
 

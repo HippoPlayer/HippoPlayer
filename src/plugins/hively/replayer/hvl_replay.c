@@ -579,72 +579,13 @@ struct hvl_tune *hvl_load_ahx( uint8_t *buf, uint32_t buflen, uint32_t defstereo
   return ht;
 }
 
-
-/*
-struct hvl_tune *hvl_LoadTune( char *name, uint32_t freq, uint32_t defstereo )
+struct hvl_tune *hvl_LoadTuneMemory( uint8_t *buf, int buflen, uint32_t freq, uint32_t defstereo )
 {
-  struct hvl_tune *ht;
-  uint8_t  *buf, *bptr;
-  char   *nptr;
-  uint32_t  buflen, i, j, posn, insn, ssn, chnn, hs, trkl, trkn;
-  BPTR    lock, fh;
-  struct  FileInfoBlock *fib;
-  struct  hvl_plsentry *ple;
-
-  fib = IDOS->AllocDosObjectTags( DOS_FIB, TAG_DONE );
-  if( !fib )
-  {
-    printf( "Out of memory\n" );
-    return NULL;
-  }
-
-  lock = IDOS->Lock( name, ACCESS_READ );
-  if( !lock )
-  {
-    IDOS->FreeDosObject( DOS_FIB, fib );
-    printf( "Unable to find '%s'\n", name );
-    return NULL;
-  }
-
-  IDOS->Examine( lock, fib );
-  if( !FIB_IS_FILE( fib ) )
-  {
-    IDOS->UnLock( lock );
-    IDOS->FreeDosObject( DOS_FIB, fib );
-    printf( "Bad file!\n" );
-    return NULL;
-  }
-
-  buflen = fib->fib_Size;
-  buf = IExec->AllocVec( buflen, MEMF_ANY );
-  if( !buf )
-  {
-    IDOS->UnLock( lock );
-    IDOS->FreeDosObject( DOS_FIB, fib );
-    printf( "Out of memory!\n" );
-    return NULL;
-  }
-
-  fh = IDOS->OpenFromLock( lock );
-  if( !fh )
-  {
-    IExec->FreeVec( buf );
-    IDOS->UnLock( lock );
-    IDOS->FreeDosObject( DOS_FIB, fib );
-    printf( "Can't open file\n" );
-    return NULL;
-  }
-
-  if( IDOS->Read( fh, buf, buflen ) != buflen )
-  {
-    IExec->FreeVec( buf );
-    IDOS->Close( fh );
-    IDOS->FreeDosObject( DOS_FIB, fib );
-    printf( "Unable to read from file!\n" );
-    return NULL;
-  }
-  IDOS->Close( fh );
-  IDOS->FreeDosObject( DOS_FIB, fib );
+	  struct hvl_tune *ht;
+	  uint8_t  *bptr;
+	  char   *nptr;
+	  uint32_t  i, j, posn, insn, ssn, chnn, hs, trkl, trkn;
+	  struct  hvl_plsentry *ple;
 
   if( ( buf[0] == 'T' ) &&
       ( buf[1] == 'H' ) &&
@@ -655,9 +596,9 @@ struct hvl_tune *hvl_LoadTune( char *name, uint32_t freq, uint32_t defstereo )
   if( ( buf[0] != 'H' ) ||
       ( buf[1] != 'V' ) ||
       ( buf[2] != 'L' ) ||
-      ( buf[3] > 1 ) )  // 1.5
+      ( buf[3] > 1 ) )
   {
-    IExec->FreeVec( buf );
+    //free( buf );
     printf( "Invalid file.\n" );
     return NULL;
   }
@@ -701,10 +642,10 @@ struct hvl_tune *hvl_LoadTune( char *name, uint32_t freq, uint32_t defstereo )
     bptr += 22 + bptr[21]*5;
   }
 
-  ht = malloc(hs);
+  ht = malloc( hs );
   if( !ht )
   {
-    free(buf);
+    //free( buf );
     printf( "Out of memory!\n" );
     return NULL;
   }
@@ -747,7 +688,7 @@ struct hvl_tune *hvl_LoadTune( char *name, uint32_t freq, uint32_t defstereo )
                           ht->ht_TrackLength,
                           ht->ht_InstrumentNr );
     free( ht );
-    free( buf );
+    //free( buf );
     printf( "Invalid file.\n" );
     return NULL;
   }
@@ -770,7 +711,7 @@ struct hvl_tune *hvl_LoadTune( char *name, uint32_t freq, uint32_t defstereo )
     for( j=0; j<ht->ht_Channels; j++ )
     {
       ht->ht_Positions[i].pos_Track[j]     = *bptr++;
-      ht->ht_Positions[i].pos_Transpose[j] = *(int8_t *)bptr++;
+      ht->ht_Positions[i].pos_Transpose[j] = *(uint8_t *)bptr++;
     }
   }
 
@@ -870,10 +811,9 @@ struct hvl_tune *hvl_LoadTune( char *name, uint32_t freq, uint32_t defstereo )
   }
 
   hvl_InitSubsong( ht, 0 );
-  IExec->FreeVec( buf );
+
   return ht;
 }
-*/
 
 void hvl_FreeTune( struct hvl_tune *ht )
 {
@@ -946,6 +886,48 @@ void hvl_process_stepfx_1( struct hvl_tune *ht, struct hvl_voice *voice, int32_t
       break;
   }
 }
+
+struct hvl_tune* hvl_load_tune( const char *name, uint32_t freq, uint32_t defstereo )
+{
+  uint8_t  *buf;
+  uint32_t  buflen;
+  FILE *fh;
+  struct hvl_tune *ht;
+
+  fh = fopen( name, "rb" );
+  if( !fh )
+  {
+    printf( "Can't open file\n" );
+    return NULL;
+  }
+
+  fseek( fh, 0, SEEK_END );
+  buflen = ftell( fh );
+  fseek( fh, 0, SEEK_SET );
+
+  buf = malloc( buflen );
+  if( !buf )
+  {
+    fclose( fh );
+    printf( "Out of memory!\n" );
+    return NULL;
+  }
+
+  if( fread( buf, 1, buflen, fh ) != buflen )
+  {
+    fclose( fh );
+    free( buf );
+    printf( "Unable to read from file!\n" );
+    return NULL;
+  }
+  fclose( fh );
+
+  ht = hvl_LoadTuneMemory(buf, buflen, freq, defstereo);
+  free( buf );
+  return ht;
+
+}
+
 
 void hvl_process_stepfx_2( struct hvl_tune *ht, struct hvl_voice *voice, int32_t FX, int32_t FXParam, int32_t *Note )
 {

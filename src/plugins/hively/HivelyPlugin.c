@@ -55,22 +55,10 @@ static int hively_destroy(void* user_data) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int hively_open(void* userData, const char* buffer) {
-	void* song_data = 0;
-
 	// TODO: Add reader functions etc to be used instead of fopen as file may come from zip, etc
 
-	FILE* file = fopen(buffer, "rb");
-	fseek(file, 0, SEEK_END);
-	size_t size = ftell(file);
-	fseek(file, 0, SEEK_SET);
-
-	song_data = malloc(size);
-	fread(song_data, size, 1, file);
-
 	struct HivelyReplayerData* replayerData = (struct HivelyReplayerData*)userData;
-	replayerData->tune = hvl_load_ahx(song_data, size, 0, FREQ);
-
-	free(song_data);
+	replayerData->tune = hvl_load_tune(buffer, FREQ, 0);
 
 	return 0;
 }
