@@ -1,4 +1,5 @@
 extern crate libloading;
+
 mod ffi;
 
 pub use ffi::WURect as Rect;
@@ -7,6 +8,8 @@ pub use ffi::WUColor as Color;
 
 use libloading::{Library, Symbol};
 use std::rc::Rc;
+
+//
 
 impl Color {
     pub fn new(r: f32, g: f32, b: f32, a: f32) -> Color {

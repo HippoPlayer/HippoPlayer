@@ -7,6 +7,30 @@ require "tundra.util"
 local native = require('tundra.native')
 
 -----------------------------------------------------------------------------------------------------------------------
+--[[
+DefRule {
+    Name = "GenWruiFFIBindings",
+    Pass = "CodeGeneration",
+
+    ConfigInvariant = true,
+
+    Command = "bindgen $(<) -o $(@)",
+
+    Blueprint = {
+        Input = { Type = "string", Required = true },
+        Output = { Type = "string", Required = true },
+    },
+
+    Setup = function (env, data)
+        return {
+            InputFiles = { data.Input },
+            OutputFiles = { "$(OBJECTROOT)$(SEP)_generated$(SEP)" .. data.Output },
+        }
+    end,
+}
+--]]
+
+-----------------------------------------------------------------------------------------------------------------------
 
 local function get_rs_src(dir)
     return Glob {
@@ -21,15 +45,19 @@ end
 RustCrate {
     Name = "wrui_rust",
     CargoConfig = "src/wrui_rust/Cargo.toml",
-    Sources = get_rs_src("src/wrui_rust"),
+    Sources = {
+        "src/wrui/include/wrui.h",
+        get_rs_src("src/wrui_rust"),
+    },
 }
+
 
 -----------------------------------------------------------------------------------------------------------------------
 
 RustProgram {
     Name = "hippo_player",
     CargoConfig = "src/hippo_player/Cargo.toml",
-    Sources = get_rs_src("src/hippor_player/src"),
+    Sources = get_rs_src("src/hippo_player/src"),
     Depends = { "wrui_rust" },
 }
 
