@@ -13,6 +13,7 @@ local mac_opts = {
 
 local macosx = {
     Env = {
+		QT5 = native.getenv("QT5", ""),
         RUST_CARGO_OPTS = {
             { "test"; Config = "*-*-*-test" },
         },
@@ -52,6 +53,7 @@ local gcc_opts = {
 
 local gcc_env = {
     Env = {
+		QT5 = native.getenv("QT5", ""),
         RUST_CARGO_OPTS = {
             { "test"; Config = "*-*-*-test" },
         },
@@ -79,6 +81,7 @@ local win64_opts = {
 
 local win64 = {
     Env = {
+		QT5 = native.getenv("QT5", ""),
         RUST_CARGO_OPTS = {
             { "test"; Config = "*-*-*-test" },
         },
@@ -101,10 +104,11 @@ local win64 = {
 Build {
     Passes = {
         BuildTools = { Name="Build Tools", BuildOrder = 1 },
-        GenerateSources = { Name="Generate sources", BuildOrder = 2 },
+        CodeGeneration = { Name="CodeGeneration", BuildOrder = 2 },
     },
 
     Units = {
+        "src/wrui/units.wrui.lua",
         "units.hippoplayer.lua",
         "units.plugins.lua",
     },

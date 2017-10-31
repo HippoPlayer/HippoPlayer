@@ -8,16 +8,29 @@ local native = require('tundra.native')
 
 -----------------------------------------------------------------------------------------------------------------------
 
+local function get_rs_src(dir)
+    return Glob {
+        Dir = dir,
+        Extensions = { ".rs" },
+        Recursive = true,
+}
+end
+
+-----------------------------------------------------------------------------------------------------------------------
+
+RustCrate {
+    Name = "wrui_rust",
+    CargoConfig = "src/wrui_rust/Cargo.toml",
+    Sources = get_rs_src("src/wrui_rust"),
+}
+
+-----------------------------------------------------------------------------------------------------------------------
+
 RustProgram {
     Name = "hippo_player",
     CargoConfig = "src/hippo_player/Cargo.toml",
-    Sources = {
-        Glob {
-            Dir = "src/hippo_player/src",
-            Extensions = { ".rs" },
-            Recursive = true,
-        },
-    },
+    Sources = get_rs_src("src/hippor_player/src"),
+    Depends = { "wrui_rust" },
 }
 
 -----------------------------------------------------------------------------------------------------------------------
