@@ -54,9 +54,19 @@ SharedLibrary {
 
     Env = {
         CPPPATH = {
+            "$(QT5)/include",
+            "$(QT5)/include/QtCore",
+            "$(QT5)/include/QtGui",
+            "$(QT5)/include/QtWidgets",
+
             { "$(QT5)/lib/QtWidgets.framework/Headers",
               "$(QT5)/lib/QtCore.framework/Headers"; Config = "macosx-*-*" },
         },
+
+        LIBPATH = {
+			{ "$(QT5)\\lib"; Config = "win64-*-*" },
+			{ "$(QT5)/lib"; Config = "linux-*-*" },
+		},
 
         CXXOPTS = {
             { "-F$(QT5)/lib"; Config = "macosx-*-*" },
@@ -66,7 +76,7 @@ SharedLibrary {
             {  "-Wl,-rpath,$(QT5)/lib", "-F$(QT5)/lib", "-lstdc++", Config = "macosx-clang-*" },
             {  "-Wl,-rpath,$(QT5)/lib", "-lstdc++", "-lm", Config = "linux-*-*" },
         },
-
+    
         FRAMEWORKS = { "QtCore", "QtWidgets" },
     },
 
@@ -80,6 +90,13 @@ SharedLibrary {
 
         get_src("src/wrui/src/qt")
     },
+
+    Libs = {
+        { "wsock32.lib", "kernel32.lib", "user32.lib", "gdi32.lib", "Comdlg32.lib",
+        "Advapi32.lib", "Qt5Gui.lib", "Qt5Core.lib", "Qt5Widgets.lib"; Config = "win64-*-*" },
+        { "Qt5Gui", "Qt5Core", "Qt5Widgets"; Config = "linux-*-*" },
+    },
+
 }
 
 Default "wrui_qt"
