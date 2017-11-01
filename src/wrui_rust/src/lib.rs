@@ -32,11 +32,16 @@ impl Rect {
 pub struct Wrui {
     _lib: Rc<libloading::Library>,
     c_api: *const ffi::Wrui,
-    wu_app: *const ffi::WUApplication,
+    wu_app: ffi::WUHandle,
 }
 
 pub struct Window {
-    pub wu_window: *const ffi::WUWindow,
+    pub wu_window: ffi::WUHandle,
+    pub c_api: *const ffi::Wrui,
+}
+
+pub struct MainWindow {
+    pub main_window: ffi::WUHandle,
     pub c_api: *const ffi::Wrui,
 }
 
@@ -89,24 +94,29 @@ impl Wrui {
             Some(Wrui {
                 _lib: lib.clone(),
                 c_api: wrui_get(),
-                wu_app: (*c_api).application_create.unwrap()(),
+                wu_app: (*(*c_api).application_funcs).create.unwrap()(),
             })
-        }
-    }
-
-    pub fn get_painter(&self) -> Painter {
-        Painter {
-            painter: unsafe { (*self.c_api).painter_get.unwrap()() },
         }
     }
 
     pub fn create_window(&self) -> Window {
         let wu_window = unsafe {
-            (*self.c_api).window_create.unwrap()(std::ptr::null_mut())
+            (*(*self.c_api).window_funcs).create.unwrap()(0)
         };
 
         Window {
             wu_window: wu_window,
+            c_api: self.c_api,
+        }
+    }
+
+    pub fn create_main_window(&self) -> MainWindow {
+        let wu_window = unsafe {
+            (*(*self.c_api).main_window_funcs).create.unwrap()()
+        };
+
+        MainWindow {
+            main_window: wu_window,
             c_api: self.c_api,
         }
     }
