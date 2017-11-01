@@ -1,4 +1,5 @@
 extern crate rodio;
+extern crate wrui;
 extern crate dynamic_reload;
 
 mod plugin_handler;
@@ -10,14 +11,12 @@ use std::path::Path;
 use std::env;
 use std::time::Duration;
 use std::thread;
-
-//use std::sync::mpsc::{channel, Receiver, Sender};
-//use marker::{Send, Sync};
-//use std::fs::OpenOptions;
+use wrui::{Wrui};
 
 struct HippoPlayer<'a> {
     audio: HippoAudio,
     plugins: Plugins<'a>,
+    ui: Wrui, 
 }
 
 impl <'a> HippoPlayer<'a> {
@@ -25,6 +24,7 @@ impl <'a> HippoPlayer<'a> {
         HippoPlayer {
             audio: HippoAudio::new(),
             plugins: Plugins::new(),
+            ui: Wrui::new("t2-output/macosx-clang-debug-default/wrui_qt").unwrap(),
         }
     }
 
@@ -63,10 +63,16 @@ fn main() {
         app.play_file("bin/player/songs/ahx/geir_tjelta_-_a_new_beginning.ahx");
     }
 
+    let _main_win = app.ui.create_main_window();
+
+    /*
     println!("Playing.. waiting for ctrl-c");
 
     loop {
         thread::sleep(Duration::from_millis(10));
     }
+    */
+
+    app.ui.run();
 }
 
