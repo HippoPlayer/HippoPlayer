@@ -110,7 +110,6 @@ impl Wrui {
         }
     }
 
-    //
     pub fn create_main_window(&self) -> MainWindow {
         let wu_window = unsafe {
             (*(*self.c_api).main_window_funcs).create.unwrap()()

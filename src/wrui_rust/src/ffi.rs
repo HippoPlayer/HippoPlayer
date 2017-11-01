@@ -525,7 +525,3 @@ fn bindgen_test_layout_Wrui() {
         )
     );
 }
-extern "C" {
-    #[link_name = "\u{1}_wrui_get"]
-    pub fn wrui_get() -> *mut Wrui;
-}
