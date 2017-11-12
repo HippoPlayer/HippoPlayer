@@ -4,6 +4,19 @@
 #include <QApplication>
 #include <QPushButton>
 #include <QMainWindow>
+#include <QPainter>
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+inline QColor from(WUColor color) {
+    return QColor(int(color.r * 255.0f), int(color.g * 255.0f), int(color.b * 255.0f), int(color.a * 255.0f));
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+inline QRect from(WURect rect) {
+    return QRect(rect.x, rect.y, rect.width, rect.height);
+}
 
 #if 0
 
@@ -83,27 +96,68 @@ static WUWidgetFuncs s_widget_funcs = {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+struct WUQPainter {
+    WUPainter wu_painter;
+    QPainter* q_painter;
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void painter_draw_text(const struct WUPainter* painter,
+                              WUPos pos, WUColor color,
+                              const char* text, int len, const WUFont* font) {
+    WUQPainter* wu_painter = (WUQPainter*)painter;
+    QPainter* p = wu_painter->q_painter;
+
+    p->setPen(from(color));
+    p->drawText((int)pos.x, (int)pos.y, QString::fromLatin1(text, len));
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void painter_draw_rect(const struct WUPainter* painter, WURect rect, WUColor color) {
+    WUQPainter* wu_painter = (WUQPainter*)painter;
+    QPainter* p = wu_painter->q_painter;
+
+    p->fillRect(from(rect), from(color));
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static WUPainter s_paint_funcs = {
+    nullptr,
+    painter_draw_text,
+    painter_draw_rect,
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 class WUQWidget : public QWidget {
 public:
     WUQWidget(QWidget* parent) : QWidget(parent) {}
 
     virtual void paintEvent(QPaintEvent* event) {
+        QPainter q_painter(this);
         if (m_paint_event) {
-            m_paint_event(0, 0);
+            WUQPainter painter;
+            painter.wu_painter = s_paint_funcs;
+            painter.q_painter = &q_painter;
+            m_paint_event((WUPainter*)&painter, m_paint_user_data);
         }
         else {
             QWidget::paintEvent(event);
         }
     }
 
-    WUPaintEvent m_paint_event;
-    void* m_paint_user_data;
+    WUPaintEvent m_paint_event = nullptr;
+    void* m_paint_user_data = nullptr;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static WUHandle window_create(WUHandle parent) {
     auto* w = new WUQWidget((QWidget*)parent);
+    w->show();
     return (WUHandle)w;
 }
 

@@ -60,6 +60,7 @@ SharedLibrary {
             "$(QT5)/include/QtWidgets",
 
             { "$(QT5)/lib/QtWidgets.framework/Headers",
+              "$(QT5)/lib/QtGui.framework/Headers",
               "$(QT5)/lib/QtCore.framework/Headers"; Config = "macosx-*-*" },
         },
 
@@ -76,8 +77,8 @@ SharedLibrary {
             {  "-Wl,-rpath,$(QT5)/lib", "-F$(QT5)/lib", "-lstdc++", Config = "macosx-clang-*" },
             {  "-Wl,-rpath,$(QT5)/lib", "-lstdc++", "-lm", Config = "linux-*-*" },
         },
-    
-        FRAMEWORKS = { "QtCore", "QtWidgets" },
+
+        FRAMEWORKS = { "QtCore", "QtWidgets", "QtGui" },
     },
 
     Sources = {
