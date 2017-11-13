@@ -1,12 +1,12 @@
 #pragma once
 
-#include <stdint.h>
+//#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef uint64_t WUHandle;
+typedef unsigned long long WUHandle;
 struct Wrui;
 struct WUPainter;
 
@@ -33,6 +33,7 @@ typedef struct WUColor {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef void (*WUPaintEvent)(const struct WUPainter* painter, void* user_data);
+typedef void (*WUIndexEvent)(const int index, void* user_data);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -54,7 +55,6 @@ typedef struct WUPainter {
 
 typedef struct WUWindowFuncs {
     WUHandle (*create)(WUHandle parent);
-
     // Window overrides
 	void (*set_paint_event)(WUHandle window, void* user_data, WUPaintEvent event);
 
@@ -64,6 +64,10 @@ typedef struct WUWindowFuncs {
 
 typedef struct WUWidgetFuncs {
     WUHandle (*button_create)(WUHandle parent);
+    WUHandle (*listview_create)(WUHandle parent);
+
+    // List box functions
+    void (*view_insert_item)(WUHandle handle, const char* text, int len);
 
     // Shared WUWidgetFuncs
     void (*set_size)(WUHandle handle, int x, int y);
@@ -84,8 +88,14 @@ typedef struct WUApplicationFuncs {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+typedef struct WUConnectFuncs {
+    void (*view_activated)(WUHandle handle, void* user_data, WUIndexEvent event);
+} WUConnectFuncs;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 typedef struct Wrui {
-	uint64_t api_version;
+	unsigned long long api_version;
 
     // Application functios
 	const WUApplicationFuncs* application_funcs;
@@ -98,6 +108,9 @@ typedef struct Wrui {
 
 	// Widget Functinos
 	const WUWidgetFuncs* widget_funcs;
+
+	// Connect Functinos
+	const WUConnectFuncs* connect_funcs;
 
 } Wrui;
 

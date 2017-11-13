@@ -91,6 +91,8 @@ static void widget_set_size(WUHandle handle, int width, int height) {
 
 static WUWidgetFuncs s_widget_funcs = {
     widget_button_create,
+    nullptr,
+    nullptr,
 	widget_set_size,
 };
 
