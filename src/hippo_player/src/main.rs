@@ -17,12 +17,27 @@ struct HippoPlayer<'a> {
     ui: Wrui,
 }
 
+#[cfg(target_os="windows")]
+fn get_wrui_path() -> &'static str {
+    "t2-output/win64-msvc-debug-default/wrui_qt.dll"
+}
+
+//#[cfg(all(target_os="windows", not(debug_assertions)))]
+//fn get_wrui_path() -> &'static str {
+//   "t2-output/win64-msvc-release-default/wrui_qt.dll"
+//}
+
+#[cfg(target_os="macos")]
+fn get_wrui_path() -> &'static str {
+    "t2-output/macosx-clang-debug-default/libwrui_qt.dylib"
+}
+
 impl <'a> HippoPlayer<'a> {
     pub fn new() -> HippoPlayer<'a> {
         HippoPlayer {
             audio: HippoAudio::new(),
             plugins: Plugins::new(),
-            ui: Wrui::new("t2-output/macosx-clang-debug-default/libwrui_qt.dylib").unwrap(),
+            ui: Wrui::new(get_wrui_path()).unwrap(),
         }
     }
 
