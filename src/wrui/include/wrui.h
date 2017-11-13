@@ -114,7 +114,7 @@ typedef struct Wrui {
 
 // Should be the only exported symbol
 
-extern Wrui* wrui_get(void);
+extern WRUI_EXPORT Wrui* wrui_get(void);
 
 #ifdef __cplusplus
 }
