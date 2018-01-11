@@ -104,11 +104,10 @@ local win64 = {
 Build {
     Passes = {
         BuildTools = { Name="Build Tools", BuildOrder = 1 },
-        CodeGeneration = { Name="CodeGeneration", BuildOrder = 2 },
+        GenerateSources = { Name="Generate sources", BuildOrder = 2 },
     },
 
     Units = {
-        "src/wrui/units.wrui.lua",
         "units.hippoplayer.lua",
         "units.plugins.lua",
     },

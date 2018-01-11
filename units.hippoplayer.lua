@@ -1,4 +1,5 @@
 require "tundra.syntax.glob"
+require "tundra.syntax.qt"
 require "tundra.syntax.rust-cargo"
 require "tundra.syntax.osx-bundle"
 require "tundra.path"
@@ -7,28 +8,77 @@ require "tundra.util"
 local native = require('tundra.native')
 
 -----------------------------------------------------------------------------------------------------------------------
---[[
-DefRule {
-    Name = "GenWruiFFIBindings",
-    Pass = "CodeGeneration",
 
-    ConfigInvariant = true,
+local function gen_moc(src)
+    return Moc {
+        Pass = "GenerateSources",
+        Source = src
+    }
+end
 
-    Command = "bindgen $(<) -o $(@)",
+-----------------------------------------------------------------------------------------------------------------------
 
-    Blueprint = {
-        Input = { Type = "string", Required = true },
-        Output = { Type = "string", Required = true },
+SharedLibrary {
+    Name = "wrui_qt",
+    Sources = {
+        Glob {
+            Dir = "src/external/wrui_qt",
+            Extensions = { ".cpp", ".h" },
+            Recursive = true,
+        },
+
+        gen_moc("src/external/wrui_qt/qt_api_gen.h"),
+        gen_moc("src/external/wrui_qt/ToolWindowManager/ToolWindowManager.h"),
+        gen_moc("src/external/wrui_qt/ToolWindowManager/ToolWindowManagerArea.h"),
+        gen_moc("src/external/wrui_qt/ToolWindowManager/ToolWindowManagerSplitter.h"),
+        gen_moc("src/external/wrui_qt/ToolWindowManager/ToolWindowManagerTabBar.h"),
+        gen_moc("src/external/wrui_qt/ToolWindowManager/ToolWindowManagerWrapper.h"),
     },
 
-    Setup = function (env, data)
-        return {
-            InputFiles = { data.Input },
-            OutputFiles = { "$(OBJECTROOT)$(SEP)_generated$(SEP)" .. data.Output },
-        }
-    end,
+    Env = {
+       CXXOPTS = {
+            { "-isystem $(QT5)/lib/QtWidgets.framework/Headers",
+              "-isystem $(QT5)/lib/QtCore.framework/Headers",
+              "-isystem $(QT5)/lib/QtGui.framework/Headers",
+              "-F$(QT5)/lib"; Config = "macosx-*-*" },
+
+            { "-isystem $(QT5)/include/QtWidgets",
+              "-isystem $(QT5)/include/QtCore",
+              "-isystem $(QT5)/include/QtGui",
+              "-isystem $(QT5)/include"; Config = "linux-*-*" },
+        },
+
+        CPPDEFS = {
+            "QT_NO_CAST_FROM_ASCII",
+            "QT_NO_CAST_TO_ASCII",
+        },
+
+        CPPPATH = {
+            "$(QT5)/include",
+            "$(QT5)/include/QtCore",
+            "$(QT5)/include/QtGui",
+            "$(QT5)/include/QtWidgets",
+        },
+
+        LIBPATH = {
+			{ "$(QT5)\\lib"; Config = "win64-*-*" },
+			{ "$(QT5)/lib"; Config = "linux-*-*" },
+		},
+
+        SHLIBOPTS = {
+            {  "-Wl,-rpath,$(QT5)/lib", "-F$(QT5)/lib", "-lstdc++", Config = "macosx-clang-*" },
+            {  "-Wl,-rpath,$(QT5)/lib", "-lstdc++", "-lm", Config = "linux-*-*" },
+        },
+    },
+
+	Libs = {
+		{ "wsock32.lib", "kernel32.lib", "user32.lib", "gdi32.lib", "Comdlg32.lib",
+		  "Advapi32.lib", "Qt5Gui.lib", "Qt5Core.lib", "Qt5Widgets.lib"; Config = "win64-*-*" },
+		{ "Qt5Gui", "Qt5Core", "Qt5Widgets"; Config = "linux-*-*" },
+	},
+
+    Frameworks = { "Cocoa", "QtWidgets", "QtGui", "QtCore" },
 }
---]]
 
 -----------------------------------------------------------------------------------------------------------------------
 
@@ -44,13 +94,11 @@ end
 
 RustCrate {
     Name = "wrui_rust",
-    CargoConfig = "src/wrui_rust/Cargo.toml",
+    CargoConfig = "src/external/wrui_rust/Cargo.toml",
     Sources = {
-        "src/wrui/include/wrui.h",
-        get_rs_src("src/wrui_rust"),
+        get_rs_src("src/external/wrui_rust"),
     },
 }
-
 
 -----------------------------------------------------------------------------------------------------------------------
 
@@ -58,7 +106,7 @@ RustProgram {
     Name = "hippo_player",
     CargoConfig = "src/hippo_player/Cargo.toml",
     Sources = get_rs_src("src/hippo_player/src"),
-    Depends = { "wrui_rust" },
+    Depends = { "wrui_rust", "wrui_qt" },
 }
 
 -----------------------------------------------------------------------------------------------------------------------
