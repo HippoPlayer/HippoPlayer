@@ -122,6 +122,8 @@ pub struct PUListWidgetFuncs {
                                         callback: extern "C" fn(self_c: *const c_void, row: i32)),
     pub set_item_clicked_event: extern "C" fn(object: *const PUBase, user_data: *const c_void,
                                         callback: extern "C" fn(self_c: *const c_void, item: *const PUBase)),
+    pub set_item_double_clicked_event: extern "C" fn(object: *const PUBase, user_data: *const c_void,
+                                        callback: extern "C" fn(self_c: *const c_void, item: *const PUBase)),
     pub set_drag_enter_event: extern "C" fn(object: *const PUBase, user_data: *const c_void,
                                         callback: extern "C" fn(self_c: *const c_void, event: *const PUBase)),
     pub set_drop_event: extern "C" fn(object: *const PUBase, user_data: *const c_void,

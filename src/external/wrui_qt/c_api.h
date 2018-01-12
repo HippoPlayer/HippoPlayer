@@ -131,6 +131,7 @@ struct PUListWidgetFuncs {
     void (*add_widget_item)(struct PUBase* self_c, struct PUBase* item);
     void (*set_current_row_changed_event)(void* object, void* user_data, void (*event)(void* self_c, int row));
     void (*set_item_clicked_event)(void* object, void* user_data, void (*event)(void* self_c, struct PUBase* item));
+    void (*set_item_double_clicked_event)(void* object, void* user_data, void (*event)(void* self_c, struct PUBase* item));
     void (*set_drag_enter_event)(void* object, void* user_data, void (*event)(void* self_c, struct PUBase* event));
     void (*set_drop_event)(void* object, void* user_data, void (*event)(void* self_c, struct PUBase* event));
 };

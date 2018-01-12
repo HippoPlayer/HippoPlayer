@@ -1,7 +1,10 @@
 #pragma once
-#include <QObject>
 
+#include "c_api.h"
+#include <QObject>
 #include <QListWidgetItem>
+
+extern struct PUListWidgetItemFuncs s_list_widget_item_funcs;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -36,7 +39,8 @@ public:
     }
 
     Q_SLOT void method(QListWidgetItem* item) {
-        m_func(m_data, item);
+        auto temp_arg_1 = PUListWidgetItem { &s_list_widget_item_funcs, (struct PUBase*)item };
+        m_func(m_data, (struct PUBase*)&temp_arg_1);
     }
 private:
     Signal_self_ListWidgetItem_void m_func;
