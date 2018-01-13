@@ -8,6 +8,7 @@
 #include <QListWidget>
 #include <QSlider>
 #include <QMainWindow>
+#include <QFramelessWindow>
 #include <QAction>
 #include <QUrl>
 #include <QMimeData>
@@ -37,6 +38,7 @@ extern struct PUListWidgetItemFuncs s_list_widget_item_funcs;
 extern struct PUListWidgetFuncs s_list_widget_funcs;
 extern struct PUSliderFuncs s_slider_funcs;
 extern struct PUMainWindowFuncs s_main_window_funcs;
+extern struct PUFramelessWindowFuncs s_frameless_window_funcs;
 extern struct PUActionFuncs s_action_funcs;
 extern struct PUUrlFuncs s_url_funcs;
 extern struct PUMimeDataFuncs s_mime_data_funcs;
@@ -161,6 +163,15 @@ class WRMainWindow : public QMainWindow {
 public:
     WRMainWindow(QWidget* widget) : QMainWindow(widget) {}
     virtual ~WRMainWindow() {}
+
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+class WRFramelessWindow : public QFramelessWindow {
+public:
+    WRFramelessWindow(QWidget* widget) : QFramelessWindow(widget) {}
+    virtual ~WRFramelessWindow() {}
 
 };
 
@@ -493,6 +504,43 @@ static struct PUMenuBar main_window_menu_bar(struct PUBase* self_c) {
 static void main_window_set_central_widget(struct PUBase* self_c, struct PUBase* widget) { 
     WRMainWindow* qt_data = (WRMainWindow*)self_c;
     qt_data->setCentralWidget((QWidget*)widget);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void frameless_window_show(struct PUBase* self_c) { 
+    WRFramelessWindow* qt_data = (WRFramelessWindow*)self_c;
+    qt_data->show();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void frameless_window_resize(struct PUBase* self_c, int width, int height) { 
+    WRFramelessWindow* qt_data = (WRFramelessWindow*)self_c;
+    qt_data->resize(width, height);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void frameless_window_set_layout(struct PUBase* self_c, struct PUBase* layout) { 
+    WRFramelessWindow* qt_data = (WRFramelessWindow*)self_c;
+    qt_data->setLayout((QLayout*)layout);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void frameless_window_set_window_title(struct PUBase* self_c, const char* title) { 
+    WRFramelessWindow* qt_data = (WRFramelessWindow*)self_c;
+    qt_data->setWindowTitle(QString::fromLatin1(title));
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void frameless_window_set_content(struct PUBase* self_c, struct PUBase* widget) { 
+    WRFramelessWindow* qt_data = (WRFramelessWindow*)self_c;
+    qt_data->setContent((QWidget*)widget);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -861,6 +909,18 @@ static void destroy_main_window(struct PUBase* priv_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static struct PUFramelessWindow create_frameless_window(struct PUBase* priv_data) {
+    return create_widget_func<struct PUFramelessWindow, struct PUFramelessWindowFuncs, WRFramelessWindow>(&s_frameless_window_funcs, priv_data);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void destroy_frameless_window(struct PUBase* priv_data) {
+    destroy_generic<WRFramelessWindow>(priv_data);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static struct PUAction create_action(struct PUBase* priv_data) {
     return create_generic_func<struct PUAction, struct PUActionFuncs, QAction>(&s_action_funcs, priv_data);
 }
@@ -921,6 +981,7 @@ static void destroy_h_box_layout(struct PUBase* priv_data) {
 
 
 #include <QStyleFactory>
+#include <DarkStyle.h>
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -928,10 +989,12 @@ static struct PUApplication create_application(struct PUBase* priv_data) {
     static int argc = 0;
     QApplication* qt_obj = new QApplication(argc, 0);
 
-	/*
-    QCoreApplication::setOrganizationName(QStringLiteral("TBL"));
-    QCoreApplication::setOrganizationDomain(QStringLiteral("tbl.org"));
+    //QGuiApplication::setOrganizationName(QStringLiteral("TBL"));
+    //QCoreApplication::setOrganizationDomain(QStringLiteral("tbl.org"));
 
+    qt_obj->setStyle(new DarkStyle);
+
+    /*
     qt_obj->setStyle(QStyleFactory::create(QStringLiteral("Fusion")));
 
     QPalette darkPalette;
@@ -951,7 +1014,7 @@ static struct PUApplication create_application(struct PUBase* priv_data) {
     darkPalette.setColor(QPalette::HighlightedText, Qt::black);
 
     qt_obj->setPalette(darkPalette);
-*/
+    */
 
     struct PUApplication ctl;
     ctl.funcs = &s_application_funcs;
@@ -1074,6 +1137,17 @@ struct PUMainWindowFuncs s_main_window_funcs = {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+struct PUFramelessWindowFuncs s_frameless_window_funcs = {
+    destroy_frameless_window,
+    frameless_window_show,
+    frameless_window_resize,
+    frameless_window_set_layout,
+    frameless_window_set_window_title,
+    frameless_window_set_content,
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 struct PUActionFuncs s_action_funcs = {
     destroy_action,
     action_is_enabled,
@@ -1177,6 +1251,7 @@ static struct PU s_pu = {
     create_list_widget,
     create_slider,
     create_main_window,
+    create_frameless_window,
     create_action,
     create_menu,
     create_menu_bar,

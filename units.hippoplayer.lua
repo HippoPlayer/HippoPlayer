@@ -18,6 +18,24 @@ end
 
 -----------------------------------------------------------------------------------------------------------------------
 
+local function gen_uic(src)
+    return Uic {
+        Pass = "GenerateSources",
+        Source = src
+    }
+end
+
+-----------------------------------------------------------------------------------------------------------------------
+
+local function gen_rcc(src)
+    return Rcc {
+        Pass = "GenerateSources",
+        Source = src
+    }
+end
+
+-----------------------------------------------------------------------------------------------------------------------
+
 SharedLibrary {
     Name = "wrui_qt",
     Sources = {
@@ -33,6 +51,13 @@ SharedLibrary {
         gen_moc("src/external/wrui_qt/ToolWindowManager/ToolWindowManagerSplitter.h"),
         gen_moc("src/external/wrui_qt/ToolWindowManager/ToolWindowManagerTabBar.h"),
         gen_moc("src/external/wrui_qt/ToolWindowManager/ToolWindowManagerWrapper.h"),
+
+        gen_moc("src/external/wrui_qt/FramlessWindow/framelesswindow/framelesswindow.h"),
+        gen_moc("src/external/wrui_qt/FramlessWindow/framelesswindow/windowdragger.h"),
+        gen_moc("src/external/wrui_qt/FramlessWindow/DarkStyle.h"),
+
+        gen_uic("src/external/wrui_qt/FramlessWindow/framelesswindow/framelesswindow.ui"),
+        gen_rcc("src/external/wrui_qt/FramlessWindow/darkstyle.qrc"),
     },
 
     Env = {
@@ -54,10 +79,17 @@ SharedLibrary {
         },
 
         CPPPATH = {
+            "src/external/wrui_qt/ToolWindowManager/",
+            "src/external/wrui_qt/ToolWindowManager/",
+			"src/external/wrui_qt/FramlessWindow/framelesswindow",
+			"src/external/wrui_qt/FramlessWindow",
+
             "$(QT5)/include",
             "$(QT5)/include/QtCore",
             "$(QT5)/include/QtGui",
             "$(QT5)/include/QtWidgets",
+
+            "$(OBJECTROOT)", "$(OBJECTDIR)",
         },
 
         LIBPATH = {

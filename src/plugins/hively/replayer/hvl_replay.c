@@ -897,7 +897,7 @@ struct hvl_tune* hvl_load_tune( const char *name, uint32_t freq, uint32_t defste
   fh = fopen( name, "rb" );
   if( !fh )
   {
-    printf( "Can't open file\n" );
+    printf( "Can't open file: %s\n", name );
     return NULL;
   }
 

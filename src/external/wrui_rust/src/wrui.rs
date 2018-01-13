@@ -49,6 +49,11 @@ pub struct MainWindow {
 }
 
 #[derive(Clone)]
+pub struct FramelessWindow {
+    pub obj: Option<PUFramelessWindow>,
+}
+
+#[derive(Clone)]
 pub struct Action {
     pub obj: Option<PUAction>,
 }
@@ -286,6 +291,15 @@ impl Painter {
             ((*obj.funcs).draw_line)(obj.privd, x1, y1, x2, y2);
         
         }
+    }
+}
+
+impl Drop for Painter {
+    fn drop(&mut self) {
+       unsafe {
+          let obj = self.obj.unwrap();
+          ((*obj.funcs).destroy)(obj.privd as *const PUBase)
+       }
     }
 }
 
@@ -600,6 +614,15 @@ impl MainWindow {
     }
 }
 
+impl Drop for MainWindow {
+    fn drop(&mut self) {
+       unsafe {
+          let obj = self.obj.unwrap();
+          ((*obj.funcs).destroy)(obj.privd as *const PUBase)
+       }
+    }
+}
+
 impl PaintDevice for MainWindow {
     fn get_paint_device_obj(&self) -> *const PUBase {
        let obj = self.obj.unwrap();
@@ -608,6 +631,81 @@ impl PaintDevice for MainWindow {
 }
 
 impl WidgetType for MainWindow {
+    fn get_widget_type_obj(&self) -> *const PUBase {
+       let obj = self.obj.unwrap();
+       obj.privd as *const PUBase
+    }
+}
+
+impl FramelessWindow {
+    pub fn destroy(&mut self) {
+       unsafe {
+          let obj = self.obj.unwrap();
+          ((*obj.funcs).destroy)(obj.privd);
+          self.obj = None;
+       }
+    }
+
+    pub fn show (&self) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).show)(obj.privd);
+        
+        }
+    }
+
+    pub fn resize (&self, width: i32, height: i32) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).resize)(obj.privd, width, height);
+        
+        }
+    }
+
+    pub fn set_layout (&self, layout: &LayoutType) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).set_layout)(obj.privd, layout.get_layout_type_obj() as *const PUBase);
+        
+        }
+    }
+
+    pub fn set_window_title (&self, title: &str) {
+        let str_in_title_1 = CString::new(title).unwrap();
+
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).set_window_title)(obj.privd, str_in_title_1.as_ptr());
+        
+        }
+    }
+
+    pub fn set_content (&self, widget: &WidgetType) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).set_content)(obj.privd, widget.get_widget_type_obj() as *const PUBase);
+        
+        }
+    }
+}
+
+impl PaintDevice for FramelessWindow {
+    fn get_paint_device_obj(&self) -> *const PUBase {
+       let obj = self.obj.unwrap();
+       obj.privd as *const PUBase
+    }
+}
+
+impl WidgetType for FramelessWindow {
     fn get_widget_type_obj(&self) -> *const PUBase {
        let obj = self.obj.unwrap();
        obj.privd as *const PUBase
@@ -934,6 +1032,15 @@ impl Application {
             ((*obj.funcs).exec)(obj.privd);
         
         }
+    }
+}
+
+impl Drop for Application {
+    fn drop(&mut self) {
+       unsafe {
+          let obj = self.obj.unwrap();
+          ((*obj.funcs).destroy)(obj.privd as *const PUBase)
+       }
     }
 }
 
@@ -1333,6 +1440,10 @@ impl Ui {
 
     pub fn create_main_window(&self) -> MainWindow {
         MainWindow { obj: Some(unsafe { ((*self.pu).create_main_window)((*self.pu).privd) }) }
+    }
+
+    pub fn create_frameless_window(&self) -> FramelessWindow {
+        FramelessWindow { obj: Some(unsafe { ((*self.pu).create_frameless_window)((*self.pu).privd) }) }
     }
 
     pub fn create_action(&self) -> Action {

@@ -1,0 +1,9 @@
+#pragma once
+
+#include "framelesswindow.h"
+
+class QFramelessWindow : public FramelessWindow {
+public:
+  QFramelessWindow(QWidget *parent = 0) : FramelessWindow(parent) {}
+};
+

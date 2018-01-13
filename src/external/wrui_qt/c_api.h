@@ -31,6 +31,8 @@ struct PUSlider;
 struct PUSliderFuncs;
 struct PUMainWindow;
 struct PUMainWindowFuncs;
+struct PUFramelessWindow;
+struct PUFramelessWindowFuncs;
 struct PUAction;
 struct PUActionFuncs;
 struct PUUrl;
@@ -166,6 +168,20 @@ struct PUMainWindowFuncs {
 
 struct PUMainWindow {
     struct PUMainWindowFuncs* funcs;
+    struct PUBase* priv_data;
+};
+
+struct PUFramelessWindowFuncs {
+    void (*destroy)(struct PUBase* self_c);
+    void (*show)(struct PUBase* self_c);
+    void (*resize)(struct PUBase* self_c, int width, int height);
+    void (*set_layout)(struct PUBase* self_c, struct PUBase* layout);
+    void (*set_window_title)(struct PUBase* self_c, const char* title);
+    void (*set_content)(struct PUBase* self_c, struct PUBase* widget);
+};
+
+struct PUFramelessWindow {
+    struct PUFramelessWindowFuncs* funcs;
     struct PUBase* priv_data;
 };
 
@@ -310,6 +326,7 @@ typedef struct PU {
     struct PUListWidget (*create_list_widget)(PUBase* self);
     struct PUSlider (*create_slider)(PUBase* self);
     struct PUMainWindow (*create_main_window)(PUBase* self);
+    struct PUFramelessWindow (*create_frameless_window)(PUBase* self);
     struct PUAction (*create_action)(PUBase* self);
     struct PUMenu (*create_menu)(PUBase* self);
     struct PUMenuBar (*create_menu_bar)(PUBase* self);

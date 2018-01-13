@@ -71,9 +71,7 @@ impl <'a> HippoPlayer<'a> {
     }
 
     pub fn run(&mut self) {
-        //let mut app = self.ui.create_application();
-
-        let mut main_window = self.ui.create_main_window();
+        let main_window = self.ui.create_main_window();
         main_window.resize(500, 500);
         main_window.show();
 
@@ -88,19 +86,15 @@ impl <'a> HippoPlayer<'a> {
 
         set_drag_enter_event!(self.playlist, self, HippoPlayer, HippoPlayer::drag_enter);
         set_drop_event!(self.playlist, self, HippoPlayer, HippoPlayer::drop_files);
-        set_item_clicked_event!(self.playlist, self, HippoPlayer, HippoPlayer::select_song);
+        set_item_double_clicked_event!(self.playlist, self, HippoPlayer, HippoPlayer::select_song);
 
+        //let window = self.ui.create_widget();
         self.main_widget.set_layout(&layout);
 
         main_window.set_central_widget(&self.main_widget);
         main_window.show();
 
         self.app.exec();
-
-        main_window.destroy();
-        self.app.destroy();
-
-        //app.destroy();
     }
 
     pub fn play_file(&mut self, filename: &str) {
