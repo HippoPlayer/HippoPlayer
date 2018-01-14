@@ -9,6 +9,8 @@ use wrui::wrui::*;
 pub struct PlayerView {
     wrui: Ui,
     player_display: Widget,
+    display_font: Font,
+    title: String,
     //song_handler: Rc<RefCell<SongHandler>>,
     pub widget: Widget,
 }
@@ -21,22 +23,39 @@ impl PlayerView {
             wrui,
             //song_handler
             player_display: wrui.create_widget(),
+            display_font: wrui.create_font(),
             widget: wrui.create_widget(),
+            title: String::new(),
         }
     }
 
-    pub fn draw_display(&mut self, _event: &PaintEvent) {
+    pub fn draw_display(&mut self, event: &PaintEvent) {
         let painter = self.wrui.create_painter();
 
+        let test_color = Color { r: 30, g: 30, b: 30, a: 255 };
+
         painter.begin(&self.player_display);
-        painter.draw_line(0, 0, 120, 120);
+        painter.set_font(&self.display_font);
+        painter.fill_rect_color(event.rect(), test_color);
+        painter.draw_text(10, 40, &self.title);
+
+        //painter.draw_line(0, 0, 120, 120);
         painter.end();
+    }
+
+    pub fn set_title(&mut self, title: &str) {
+        self.title = title.to_owned();
+        self.player_display.update();
     }
 
     ///
     /// Creates the Ui
     ///
     pub fn setup(&mut self) {
+
+        self.display_font.set_family("Arial");
+        self.display_font.set_point_size(20);
+
         //let display = self.wrui.create_widget();
         let buttons = self.wrui.create_widget();
         let prev_button = self.wrui.create_push_button();
@@ -50,7 +69,7 @@ impl PlayerView {
         next_button.set_text("Next");
 
         self.player_display.set_fixed_height(100);
-        self.player_display.set_fixed_width(200);
+        self.player_display.set_fixed_width(500);
 
         set_paint_event!(self.player_display, self, PlayerView, PlayerView::draw_display);
 

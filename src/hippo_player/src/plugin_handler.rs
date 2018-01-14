@@ -16,6 +16,7 @@ pub struct CHippoPlaybackPlugin {
     pub read_data: extern "C" fn(user_data: *mut c_void, dest: *mut u8) -> c_int,
     pub seek: extern "C" fn(user_data: *mut c_void, ms: c_int) -> c_int,
     pub frame_size: extern "C" fn(user_data: *mut c_void) -> c_int,
+    pub length: extern "C" fn(user_data: *mut c_void) -> c_int,
     pub private_data: u64,
 }
 
@@ -28,7 +29,7 @@ pub struct DecoderPlugin {
 
 impl DecoderPlugin {
     pub fn is_ext_supported(&self, ext: &str) -> bool {
-        let supported_ext; 
+        let supported_ext;
         unsafe {
             let c_string = ((self.plugin_funcs).supported_extensions)();
             let temp = CStr::from_ptr(c_string);

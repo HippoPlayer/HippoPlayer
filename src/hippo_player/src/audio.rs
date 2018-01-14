@@ -5,6 +5,7 @@ use rodio::{Source, Sink};
 use std::ffi::CString;
 use std::os::raw::c_void;
 use std::time::Duration;
+use std::ffi::CStr;
 
 // #[derive(Clone)]
 // pub enum DecodeEvent {
@@ -22,8 +23,14 @@ pub struct HippoPlayback {
     current_offset: usize, // sender: Sender<DecodeEvent>,
 }
 
+#[derive(Default)]
+pub struct MusicInfo {
+    pub title: String,
+    pub duration: i32,
+}
+
 impl HippoPlayback {
-    pub fn start_with_file(plugin: &DecoderPlugin, filename: &str) -> HippoPlayback {
+    pub fn start_with_file(plugin: &DecoderPlugin, filename: &str) -> Option<HippoPlayback> {
         let c_filename = CString::new(filename).unwrap();
         let user_data = ((plugin.plugin_funcs).create)() as u64;
         let ptr_user_data = user_data as *mut c_void;
@@ -31,14 +38,13 @@ impl HippoPlayback {
         // TODO: Verify that state is ok
         let _open_state = ((plugin.plugin_funcs).open)(ptr_user_data, c_filename.as_ptr());
 
-        HippoPlayback {
+        Some(HippoPlayback {
             plugin_user_data: user_data,
             plugin: plugin.clone(),
-            // temp_data: vec![0; frame_size],
             out_data: vec![0.0; frame_size],
             frame_size: frame_size,
             current_offset: frame_size + 1, // sender: sender,
-        }
+        })
     }
 }
 
@@ -104,10 +110,27 @@ impl HippoAudio {
         self.audio_sink.stop();
     }
 
-    pub fn start_with_file(&mut self, plugin: &DecoderPlugin, filename: &str) {
+    pub fn start_with_file(&mut self, plugin: &DecoderPlugin, filename: &str) -> MusicInfo {
         // TODO: Do error checking
         let playback = HippoPlayback::start_with_file(plugin, filename);
-        self.playbacks.push(playback.clone());
-        self.audio_sink.append(playback);
+
+        if let Some(pb) = playback {
+            // TODO: Wrap this
+            unsafe {
+                let c_title = ((plugin.plugin_funcs).track_info)(pb.plugin_user_data as *mut c_void);
+                let length = ((plugin.plugin_funcs).length)(pb.plugin_user_data as *mut c_void);
+                let info = MusicInfo {
+                    title: CStr::from_ptr(c_title).to_string_lossy().into_owned(),
+                    duration: length,
+                };
+
+                self.playbacks.push(pb.clone());
+                self.audio_sink.append(pb);
+
+                info
+            }
+        } else {
+            MusicInfo::default()
+        }
     }
 }

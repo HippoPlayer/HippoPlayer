@@ -11,7 +11,7 @@ mod audio;
 mod playerview;
 
 use plugin_handler::{Plugins};
-use audio::HippoAudio;
+use audio::{HippoAudio, MusicInfo};
 use std::path::Path;
 use std::env;
 
@@ -53,7 +53,8 @@ impl <'a> HippoPlayer<'a> {
     }
 
     fn select_song(&mut self, item: &ListWidgetItem) {
-        self.play_file(&item.text());
+        let info = self.play_file(&item.text());
+        self.player_view.set_title(&info.title);
     }
 
     fn drag_enter(&mut self, event: &DragEnterEvent) {
@@ -106,12 +107,14 @@ impl <'a> HippoPlayer<'a> {
         player_window.set_window_title("HippoPlayer 0.1");
         player_window.show();
 
+        player_window.resize(500, 800);
+
         //main_window.show();
 
         self.app.exec();
     }
 
-    pub fn play_file(&mut self, filename: &str) {
+    pub fn play_file(&mut self, filename: &str) -> MusicInfo {
         let path = Path::new(filename);
         // TODO: Proper error handling
         let file_ext = path.extension().unwrap().to_str().unwrap();
@@ -123,12 +126,14 @@ impl <'a> HippoPlayer<'a> {
                 // This is a bit hacky right now but will do the trick
                 self.audio.stop();
                 self.audio = HippoAudio::new();
-                self.audio.start_with_file(&plugin, filename);
-                return;
+                let info = self.audio.start_with_file(&plugin, filename);
+                return info;
             }
         }
 
         println!("Unable to find plugin to support {}", filename);
+
+        MusicInfo::default()
     }
 }
 

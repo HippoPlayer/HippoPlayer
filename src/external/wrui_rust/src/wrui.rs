@@ -13,6 +13,8 @@ use std::ffi::CString;
 
 pub use ffi_gen::PURect as Rect;
 
+pub use ffi_gen::PUColor as Color;
+
 #[derive(Clone)]
 pub struct Widget {
     pub obj: Option<PUWidget>,
@@ -66,6 +68,11 @@ pub struct Url {
 #[derive(Clone)]
 pub struct MimeData {
     pub obj: Option<PUMimeData>,
+}
+
+#[derive(Clone)]
+pub struct Font {
+    pub obj: Option<PUFont>,
 }
 
 #[derive(Clone)]
@@ -183,6 +190,16 @@ impl Widget {
         
         }
     }
+
+    pub fn update (&self) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).update)(obj.privd);
+        
+        }
+    }
 }
 
 impl PaintDevice for Widget {
@@ -258,6 +275,16 @@ impl PushButton {
         }
     }
 
+    pub fn update (&self) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).update)(obj.privd);
+        
+        }
+    }
+
     pub fn set_text (&self, text: &str) {
         let str_in_text_1 = CString::new(text).unwrap();
 
@@ -323,12 +350,43 @@ impl Painter {
         }
     }
 
+    pub fn set_font (&self, font: &Font) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).set_font)(obj.privd, font.obj.unwrap().privd);
+        
+        }
+    }
+
+    pub fn draw_text (&self, x: i32, y: i32, text: &str) {
+        let str_in_text_3 = CString::new(text).unwrap();
+
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).draw_text)(obj.privd, x, y, str_in_text_3.as_ptr());
+        
+        }
+    }
+
     pub fn draw_line (&self, x1: i32, y1: i32, x2: i32, y2: i32) {
         
         unsafe {
             let obj = self.obj.unwrap();
         
             ((*obj.funcs).draw_line)(obj.privd, x1, y1, x2, y2);
+        
+        }
+    }
+
+    pub fn fill_rect_color (&self, rect: Rect, color: Color) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).fill_rect_color)(obj.privd, rect, color);
         
         }
     }
@@ -432,6 +490,16 @@ impl ListWidget {
             let obj = self.obj.unwrap();
         
             ((*obj.funcs).set_layout)(obj.privd, layout.get_layout_type_obj() as *const PUBase);
+        
+        }
+    }
+
+    pub fn update (&self) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).update)(obj.privd);
         
         }
     }
@@ -601,6 +669,16 @@ impl Slider {
         
         }
     }
+
+    pub fn update (&self) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).update)(obj.privd);
+        
+        }
+    }
 }
 
 impl PaintDevice for Slider {
@@ -672,6 +750,16 @@ impl MainWindow {
             let obj = self.obj.unwrap();
         
             ((*obj.funcs).set_layout)(obj.privd, layout.get_layout_type_obj() as *const PUBase);
+        
+        }
+    }
+
+    pub fn update (&self) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).update)(obj.privd);
         
         }
     }
@@ -792,6 +880,16 @@ impl FramelessWindow {
             let obj = self.obj.unwrap();
         
             ((*obj.funcs).set_layout)(obj.privd, layout.get_layout_type_obj() as *const PUBase);
+        
+        }
+    }
+
+    pub fn update (&self) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).update)(obj.privd);
         
         }
     }
@@ -974,6 +1072,37 @@ impl MimeData {
     }
 }
 
+impl Font {
+    pub fn destroy(&mut self) {
+       unsafe {
+          let obj = self.obj.unwrap();
+          ((*obj.funcs).destroy)(obj.privd);
+          self.obj = None;
+       }
+    }
+
+    pub fn set_family (&self, family: &str) {
+        let str_in_family_1 = CString::new(family).unwrap();
+
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).set_family)(obj.privd, str_in_family_1.as_ptr());
+        
+        }
+    }
+
+    pub fn set_point_size (&self, size: i32) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).set_point_size)(obj.privd, size);
+        
+        }
+    }
+}
+
 impl Menu {
     pub fn destroy(&mut self) {
        unsafe {
@@ -1029,6 +1158,16 @@ impl Menu {
             let obj = self.obj.unwrap();
         
             ((*obj.funcs).set_layout)(obj.privd, layout.get_layout_type_obj() as *const PUBase);
+        
+        }
+    }
+
+    pub fn update (&self) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).update)(obj.privd);
         
         }
     }
@@ -1135,6 +1274,16 @@ impl MenuBar {
             let obj = self.obj.unwrap();
         
             ((*obj.funcs).set_layout)(obj.privd, layout.get_layout_type_obj() as *const PUBase);
+        
+        }
+    }
+
+    pub fn update (&self) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).update)(obj.privd);
         
         }
     }
@@ -1608,6 +1757,10 @@ impl Ui {
 
     pub fn create_action(&self) -> Action {
         Action { obj: Some(unsafe { ((*self.pu).create_action)((*self.pu).privd) }) }
+    }
+
+    pub fn create_font(&self) -> Font {
+        Font { obj: Some(unsafe { ((*self.pu).create_font)((*self.pu).privd) }) }
     }
 
     pub fn create_menu(&self) -> Menu {

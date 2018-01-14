@@ -12,6 +12,8 @@ static char s_supported_extensions[MAX_EXT_COUNT];
 
 struct OpenMptData {
     openmpt::module* mod = 0;
+    std::string song_title;
+    float length;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -23,7 +25,8 @@ static const char* openmpt_info(void* userData) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static const char* openmpt_track_info(void* userData) {
-	return 0;
+    OpenMptData* data = (OpenMptData*)userData;
+	return data->song_title.c_str();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -42,7 +45,7 @@ static const char* openmpt_supported_extensions() {
 		//strcat_s(s_supported_extensions, MAX_EXT_COUNT, ext_list[i].c_str());
 		strcat(s_supported_extensions, ext_list[i].c_str());
 		if (i != count - 1) {
-			strcat(s_supported_extensions, ","); 
+			strcat(s_supported_extensions, ",");
 		}
 	}
 
@@ -52,10 +55,8 @@ static const char* openmpt_supported_extensions() {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void* openmpt_create() {
-	void* replayerData = malloc(sizeof(struct OpenMptData));
-	memset(replayerData, 0, sizeof(struct OpenMptData));
-
-	return replayerData;
+    OpenMptData* user_data = new OpenMptData;
+	return (void*)user_data;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -78,6 +79,8 @@ static int openmpt_open(void* user_data, const char* buffer) {
 
 	struct OpenMptData* replayerData = (struct OpenMptData*)user_data;
     replayerData->mod = new openmpt::module(data, size);
+    replayerData->song_title = replayerData->mod->get_metadata("title");
+    replayerData->length = replayerData->mod->get_duration_seconds();
 
 	return 0;
 }
@@ -112,6 +115,15 @@ static int openmpt_seek(void* user_data, int ms) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static int openmpt_length(void* user_data) {
+    OpenMptData* data = (OpenMptData*)user_data;
+	return int(data->length);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static HippoPlaybackPlugin g_openmptPlugin = {
 	1,
 	openmpt_info,
@@ -124,6 +136,7 @@ static HippoPlaybackPlugin g_openmptPlugin = {
 	openmpt_read_data,
 	openmpt_seek,
 	openmpt_frame_size,
+	openmpt_length,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

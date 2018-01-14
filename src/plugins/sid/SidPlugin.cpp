@@ -50,7 +50,7 @@ static void* sid_create() {
 
 	// Create SID emulators
     data->rs->create(max_sids);
-    
+
     // Check if builder is ok
     if (!data->rs->getStatus())
     {
@@ -74,7 +74,7 @@ static int sid_destroy(void* user_data) {
 
 static int sid_open(void* user_data, const char* buffer) {
 	SidReplayerData* data = (SidReplayerData*)user_data;
-	
+
 	SidTune* tune = new SidTune(buffer);
 
     // CHeck if the tune is valid
@@ -158,6 +158,12 @@ static int sid_frame_size(void* userData) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static int sid_length(void* userData) {
+	return -1;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static HippoPlaybackPlugin g_sid_plugin = {
 	1,
 	sid_info,
@@ -170,6 +176,7 @@ static HippoPlaybackPlugin g_sid_plugin = {
 	sid_read_data,
 	sid_seek,
 	sid_frame_size,
+    sid_length,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

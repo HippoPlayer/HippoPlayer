@@ -12,6 +12,7 @@
 #include <QAction>
 #include <QUrl>
 #include <QMimeData>
+#include <QFont>
 #include <QMenu>
 #include <QMenuBar>
 #include <QApplication>
@@ -42,6 +43,7 @@ extern struct PUFramelessWindowFuncs s_frameless_window_funcs;
 extern struct PUActionFuncs s_action_funcs;
 extern struct PUUrlFuncs s_url_funcs;
 extern struct PUMimeDataFuncs s_mime_data_funcs;
+extern struct PUFontFuncs s_font_funcs;
 extern struct PUMenuFuncs s_menu_funcs;
 extern struct PUMenuBarFuncs s_menu_bar_funcs;
 extern struct PUApplicationFuncs s_application_funcs;
@@ -248,6 +250,13 @@ static void widget_set_layout(struct PUBase* self_c, struct PUBase* layout) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void widget_update(struct PUBase* self_c) { 
+    WRWidget* qt_data = (WRWidget*)self_c;
+    qt_data->update();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void push_button_show(struct PUBase* self_c) { 
@@ -281,6 +290,13 @@ static void push_button_resize(struct PUBase* self_c, int width, int height) {
 static void push_button_set_layout(struct PUBase* self_c, struct PUBase* layout) { 
     WRPushButton* qt_data = (WRPushButton*)self_c;
     qt_data->setLayout((QLayout*)layout);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void push_button_update(struct PUBase* self_c) { 
+    WRPushButton* qt_data = (WRPushButton*)self_c;
+    qt_data->update();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -323,10 +339,26 @@ static void painter_end(struct PUBase* self_c) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void painter_set_font(struct PUBase* self_c, struct PUBase* font) { 
+    QPainter* qt_data = (QPainter*)self_c;
+    qt_data->setFont(*(QFont*)font);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void painter_draw_text(struct PUBase* self_c, int x, int y, const char* text) { 
+    QPainter* qt_data = (QPainter*)self_c;
+    qt_data->drawText(x, y, QString::fromLatin1(text));
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static void painter_draw_line(struct PUBase* self_c, int x1, int y1, int x2, int y2) { 
     QPainter* qt_data = (QPainter*)self_c;
     qt_data->drawLine(x1, y1, x2, y2);
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -381,6 +413,13 @@ static void list_widget_resize(struct PUBase* self_c, int width, int height) {
 static void list_widget_set_layout(struct PUBase* self_c, struct PUBase* layout) { 
     WRListWidget* qt_data = (WRListWidget*)self_c;
     qt_data->setLayout((QLayout*)layout);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void list_widget_update(struct PUBase* self_c) { 
+    WRListWidget* qt_data = (WRListWidget*)self_c;
+    qt_data->update();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -505,6 +544,13 @@ static void slider_set_layout(struct PUBase* self_c, struct PUBase* layout) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void slider_update(struct PUBase* self_c) { 
+    WRSlider* qt_data = (WRSlider*)self_c;
+    qt_data->update();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void set_slider_value_changed_event(void* object, void* user_data, void (*event)(void* self_c, int value)) {
@@ -546,6 +592,13 @@ static void main_window_resize(struct PUBase* self_c, int width, int height) {
 static void main_window_set_layout(struct PUBase* self_c, struct PUBase* layout) { 
     WRMainWindow* qt_data = (WRMainWindow*)self_c;
     qt_data->setLayout((QLayout*)layout);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void main_window_update(struct PUBase* self_c) { 
+    WRMainWindow* qt_data = (WRMainWindow*)self_c;
+    qt_data->update();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -609,6 +662,13 @@ static void frameless_window_resize(struct PUBase* self_c, int width, int height
 static void frameless_window_set_layout(struct PUBase* self_c, struct PUBase* layout) { 
     WRFramelessWindow* qt_data = (WRFramelessWindow*)self_c;
     qt_data->setLayout((QLayout*)layout);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void frameless_window_update(struct PUBase* self_c) { 
+    WRFramelessWindow* qt_data = (WRFramelessWindow*)self_c;
+    qt_data->update();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -725,6 +785,20 @@ static struct PUArray mime_data_urls(struct PUBase* self_c) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void font_set_family(struct PUBase* self_c, const char* family) { 
+    QFont* qt_data = (QFont*)self_c;
+    qt_data->setFamily(QString::fromLatin1(family));
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void font_set_point_size(struct PUBase* self_c, int size) { 
+    QFont* qt_data = (QFont*)self_c;
+    qt_data->setPointSize(size);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static void menu_show(struct PUBase* self_c) { 
     WRMenu* qt_data = (WRMenu*)self_c;
     qt_data->show();
@@ -756,6 +830,13 @@ static void menu_resize(struct PUBase* self_c, int width, int height) {
 static void menu_set_layout(struct PUBase* self_c, struct PUBase* layout) { 
     WRMenu* qt_data = (WRMenu*)self_c;
     qt_data->setLayout((QLayout*)layout);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void menu_update(struct PUBase* self_c) { 
+    WRMenu* qt_data = (WRMenu*)self_c;
+    qt_data->update();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -809,6 +890,13 @@ static void menu_bar_resize(struct PUBase* self_c, int width, int height) {
 static void menu_bar_set_layout(struct PUBase* self_c, struct PUBase* layout) { 
     WRMenuBar* qt_data = (WRMenuBar*)self_c;
     qt_data->setLayout((QLayout*)layout);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void menu_bar_update(struct PUBase* self_c) { 
+    WRMenuBar* qt_data = (WRMenuBar*)self_c;
+    qt_data->update();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1045,6 +1133,18 @@ static void destroy_action(struct PUBase* priv_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static struct PUFont create_font(struct PUBase* priv_data) {
+    return create_generic_func<struct PUFont, struct PUFontFuncs, QFont>(&s_font_funcs, priv_data);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void destroy_font(struct PUBase* priv_data) {
+    destroy_generic<QFont>(priv_data);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static struct PUMenu create_menu(struct PUBase* priv_data) {
     return create_widget_func<struct PUMenu, struct PUMenuFuncs, WRMenu>(&s_menu_funcs, priv_data);
 }
@@ -1162,6 +1262,12 @@ static void list_widget_set_accept_drops(struct PUBase* self_c, bool state) {
 	qt_data->setDragDropMode(QAbstractItemView::InternalMove);
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void painter_fill_rect_color(struct PUBase* self_c, struct PURect rect, struct PUColor color) {
+    QPainter* qt_data = (QPainter*)self_c;
+    qt_data->fillRect(QRect(rect.x, rect.y, rect.width, rect.height), QColor(color.r, color.g, color.b, color.a));
+}
 
 
 
@@ -1174,6 +1280,7 @@ struct PUWidgetFuncs s_widget_funcs = {
     widget_set_fixed_width,
     widget_resize,
     widget_set_layout,
+    widget_update,
     set_widget_paint_event,
 };
 
@@ -1186,6 +1293,7 @@ struct PUPushButtonFuncs s_push_button_funcs = {
     push_button_set_fixed_width,
     push_button_resize,
     push_button_set_layout,
+    push_button_update,
     set_push_button_released_event,
     push_button_set_text,
     push_button_set_flat,
@@ -1197,7 +1305,10 @@ struct PUPainterFuncs s_painter_funcs = {
     destroy_painter,
     painter_begin,
     painter_end,
+    painter_set_font,
+    painter_draw_text,
     painter_draw_line,
+    painter_fill_rect_color,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1217,6 +1328,7 @@ struct PUListWidgetFuncs s_list_widget_funcs = {
     list_widget_set_fixed_width,
     list_widget_resize,
     list_widget_set_layout,
+    list_widget_update,
     list_widget_add_item,
     list_widget_item,
     list_widget_selected_items,
@@ -1240,6 +1352,7 @@ struct PUSliderFuncs s_slider_funcs = {
     slider_set_fixed_width,
     slider_resize,
     slider_set_layout,
+    slider_update,
     set_slider_value_changed_event,
 };
 
@@ -1252,6 +1365,7 @@ struct PUMainWindowFuncs s_main_window_funcs = {
     main_window_set_fixed_width,
     main_window_resize,
     main_window_set_layout,
+    main_window_update,
     main_window_is_animated,
     main_window_menu_bar,
     main_window_set_central_widget,
@@ -1266,6 +1380,7 @@ struct PUFramelessWindowFuncs s_frameless_window_funcs = {
     frameless_window_set_fixed_width,
     frameless_window_resize,
     frameless_window_set_layout,
+    frameless_window_update,
     frameless_window_set_window_title,
     frameless_window_set_content,
 };
@@ -1298,6 +1413,14 @@ struct PUMimeDataFuncs s_mime_data_funcs = {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+struct PUFontFuncs s_font_funcs = {
+    destroy_font,
+    font_set_family,
+    font_set_point_size,
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 struct PUMenuFuncs s_menu_funcs = {
     destroy_menu,
     menu_show,
@@ -1305,6 +1428,7 @@ struct PUMenuFuncs s_menu_funcs = {
     menu_set_fixed_width,
     menu_resize,
     menu_set_layout,
+    menu_update,
     menu_add_action_text,
     menu_add_action,
     menu_set_title,
@@ -1319,6 +1443,7 @@ struct PUMenuBarFuncs s_menu_bar_funcs = {
     menu_bar_set_fixed_width,
     menu_bar_resize,
     menu_bar_set_layout,
+    menu_bar_update,
     menu_bar_add_menu,
 };
 
@@ -1381,6 +1506,7 @@ static struct PU s_pu = {
     create_main_window,
     create_frameless_window,
     create_action,
+    create_font,
     create_menu,
     create_menu_bar,
     create_application,

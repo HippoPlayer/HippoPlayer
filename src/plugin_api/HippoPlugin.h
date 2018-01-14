@@ -22,7 +22,8 @@ typedef struct HippoPlaybackPlugin {
 	int (*close)(void* userData);
 	int (*read_data)(void* userData, void* dest);
 	int (*seek)(void* userData, int ms);
-	int (*frame_zize)(void* userData);
+	int (*frame_size)(void* userData);
+	int (*length)(void* userData);
 
 	// Not to be used by plugin, owned by app
 	void* privateData;
