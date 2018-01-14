@@ -106,6 +106,8 @@ impl <'a> HippoPlayer<'a> {
 
         for plugin in &self.plugins.decoder_plugins {
             if plugin.is_ext_supported(file_ext) {
+                self.audio.stop();
+                self.audio = HippoAudio::new();
                 self.audio.start_with_file(&plugin, filename);
                 return;
             }
