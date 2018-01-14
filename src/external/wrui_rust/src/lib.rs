@@ -8,6 +8,8 @@ use std::rc::Rc;
 
 pub use wrui::Ui;
 
+pub use wrui::*;
+
 pub struct SharedLibUi {
     _lib: Rc<libloading::Library>,
     c_api: *const ffi_gen::PU,

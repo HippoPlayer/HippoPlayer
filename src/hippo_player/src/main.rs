@@ -8,6 +8,7 @@ extern crate wrui;
 
 mod plugin_handler;
 mod audio;
+mod playerview;
 
 use plugin_handler::{Plugins};
 use audio::HippoAudio;
@@ -16,12 +17,14 @@ use std::env;
 
 use wrui::{SharedLibUi, Ui};
 use wrui::wrui::*;
+use playerview::PlayerView;
 
 struct HippoPlayer<'a> {
     audio: HippoAudio,
     plugins: Plugins<'a>,
     playlist: ListWidget,
     main_widget: Widget,
+    player_view: PlayerView,
     ui: Ui,
     app: Application,
 }
@@ -44,6 +47,7 @@ impl <'a> HippoPlayer<'a> {
             app: ui.create_application(),
             playlist: ui.create_list_widget(),
             main_widget: ui.create_widget(),
+            player_view: PlayerView::new(ui),
             ui: ui,
         }
     }
@@ -72,8 +76,11 @@ impl <'a> HippoPlayer<'a> {
 
     pub fn run(&mut self) {
         let main_window = self.ui.create_main_window();
-        main_window.resize(500, 500);
-        main_window.show();
+
+        self.player_view.setup();
+
+        //main_window.resize(500, 500);
+        //main_window.show();
 
         // Enable drag'n'drop on playlist
 
@@ -82,6 +89,8 @@ impl <'a> HippoPlayer<'a> {
         self.playlist.set_drop_indicator_shown(true);
 
         let layout = self.ui.create_v_box_layout();
+
+        layout.add_widget(&self.player_view.widget);
         layout.add_widget(&self.playlist);
 
         set_drag_enter_event!(self.playlist, self, HippoPlayer, HippoPlayer::drag_enter);
@@ -90,9 +99,14 @@ impl <'a> HippoPlayer<'a> {
 
         //let window = self.ui.create_widget();
         self.main_widget.set_layout(&layout);
-
         main_window.set_central_widget(&self.main_widget);
-        main_window.show();
+
+        let player_window = self.ui.create_frameless_window();
+        player_window.set_content(&main_window);
+        player_window.set_window_title("HippoPlayer 0.1");
+        player_window.show();
+
+        //main_window.show();
 
         self.app.exec();
     }
@@ -106,6 +120,7 @@ impl <'a> HippoPlayer<'a> {
 
         for plugin in &self.plugins.decoder_plugins {
             if plugin.is_ext_supported(file_ext) {
+                // This is a bit hacky right now but will do the trick
                 self.audio.stop();
                 self.audio = HippoAudio::new();
                 self.audio.start_with_file(&plugin, filename);
