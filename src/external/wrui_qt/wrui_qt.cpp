@@ -12,6 +12,7 @@
 #include <QAction>
 #include <QUrl>
 #include <QMimeData>
+#include <QTimer>
 #include <QFont>
 #include <QMenu>
 #include <QMenuBar>
@@ -43,6 +44,7 @@ extern struct PUFramelessWindowFuncs s_frameless_window_funcs;
 extern struct PUActionFuncs s_action_funcs;
 extern struct PUUrlFuncs s_url_funcs;
 extern struct PUMimeDataFuncs s_mime_data_funcs;
+extern struct PUTimerFuncs s_timer_funcs;
 extern struct PUFontFuncs s_font_funcs;
 extern struct PUMenuFuncs s_menu_funcs;
 extern struct PUMenuBarFuncs s_menu_bar_funcs;
@@ -785,6 +787,21 @@ static struct PUArray mime_data_urls(struct PUBase* self_c) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void set_timer_timeout_event(void* object, void* user_data, void (*event)(void* self_c)) {
+    QSlotWrapperSignal_self_void* wrap = new QSlotWrapperSignal_self_void(user_data, (Signal_self_void)event);
+    QObject* q_obj = (QObject*)object;
+    QObject::connect(q_obj, SIGNAL(timeout()), wrap, SLOT(method()));
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void timer_start(struct PUBase* self_c, int time) { 
+    QTimer* qt_data = (QTimer*)self_c;
+    qt_data->start(time);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static void font_set_family(struct PUBase* self_c, const char* family) { 
     QFont* qt_data = (QFont*)self_c;
     qt_data->setFamily(QString::fromLatin1(family));
@@ -1133,6 +1150,18 @@ static void destroy_action(struct PUBase* priv_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static struct PUTimer create_timer(struct PUBase* priv_data) {
+    return create_generic_func<struct PUTimer, struct PUTimerFuncs, QTimer>(&s_timer_funcs, priv_data);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void destroy_timer(struct PUBase* priv_data) {
+    destroy_generic<QTimer>(priv_data);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static struct PUFont create_font(struct PUBase* priv_data) {
     return create_generic_func<struct PUFont, struct PUFontFuncs, QFont>(&s_font_funcs, priv_data);
 }
@@ -1413,6 +1442,14 @@ struct PUMimeDataFuncs s_mime_data_funcs = {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+struct PUTimerFuncs s_timer_funcs = {
+    destroy_timer,
+    set_timer_timeout_event,
+    timer_start,
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 struct PUFontFuncs s_font_funcs = {
     destroy_font,
     font_set_family,
@@ -1506,6 +1543,7 @@ static struct PU s_pu = {
     create_main_window,
     create_frameless_window,
     create_action,
+    create_timer,
     create_font,
     create_menu,
     create_menu_bar,

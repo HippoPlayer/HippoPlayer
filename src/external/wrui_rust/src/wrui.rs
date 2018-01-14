@@ -71,6 +71,11 @@ pub struct MimeData {
 }
 
 #[derive(Clone)]
+pub struct Timer {
+    pub obj: Option<PUTimer>,
+}
+
+#[derive(Clone)]
 pub struct Font {
     pub obj: Option<PUFont>,
 }
@@ -1072,6 +1077,26 @@ impl MimeData {
     }
 }
 
+impl Timer {
+    pub fn destroy(&mut self) {
+       unsafe {
+          let obj = self.obj.unwrap();
+          ((*obj.funcs).destroy)(obj.privd);
+          self.obj = None;
+       }
+    }
+
+    pub fn start (&self, time: i32) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).start)(obj.privd, time);
+        
+        }
+    }
+}
+
 impl Font {
     pub fn destroy(&mut self) {
        unsafe {
@@ -1598,6 +1623,29 @@ macro_rules! set_released_event {
 
 
 #[macro_export]
+macro_rules! set_timeout_event {
+  ($sender:expr, $data:expr, $call_type:ident, $callback:path) => {
+    {
+      extern "C" fn temp_call(self_c: *const ::std::os::raw::c_void) {
+          unsafe {
+              let app = self_c as *mut $call_type;
+              $callback(&mut *app);
+          }
+      }
+      fn get_data_ptr(val: &$call_type) -> *const c_void {
+         let t: *const c_void = unsafe { ::std::mem::transmute(val) };
+         t
+      }
+
+      unsafe {
+          let obj = $sender.obj.unwrap();
+         ((*obj.funcs).set_timeout_event)(obj.privd, get_data_ptr($data), temp_call);
+      }
+    }
+} }
+
+
+#[macro_export]
 macro_rules! set_triggered_event {
   ($sender:expr, $data:expr, $call_type:ident, $callback:path) => {
     {
@@ -1757,6 +1805,10 @@ impl Ui {
 
     pub fn create_action(&self) -> Action {
         Action { obj: Some(unsafe { ((*self.pu).create_action)((*self.pu).privd) }) }
+    }
+
+    pub fn create_timer(&self) -> Timer {
+        Timer { obj: Some(unsafe { ((*self.pu).create_timer)((*self.pu).privd) }) }
     }
 
     pub fn create_font(&self) -> Font {

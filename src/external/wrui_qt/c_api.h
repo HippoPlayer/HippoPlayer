@@ -40,6 +40,8 @@ struct PUUrl;
 struct PUUrlFuncs;
 struct PUMimeData;
 struct PUMimeDataFuncs;
+struct PUTimer;
+struct PUTimerFuncs;
 struct PUFont;
 struct PUFontFuncs;
 struct PUMenu;
@@ -251,6 +253,17 @@ struct PUMimeData {
     struct PUBase* priv_data;
 };
 
+struct PUTimerFuncs {
+    void (*destroy)(struct PUBase* self_c);
+    void (*set_timeout_event)(void* object, void* user_data, void (*event)(void* self_c));
+    void (*start)(struct PUBase* self_c, int time);
+};
+
+struct PUTimer {
+    struct PUTimerFuncs* funcs;
+    struct PUBase* priv_data;
+};
+
 struct PUFontFuncs {
     void (*destroy)(struct PUBase* self_c);
     void (*set_family)(struct PUBase* self_c, const char* family);
@@ -376,6 +389,7 @@ typedef struct PU {
     struct PUMainWindow (*create_main_window)(PUBase* self);
     struct PUFramelessWindow (*create_frameless_window)(PUBase* self);
     struct PUAction (*create_action)(PUBase* self);
+    struct PUTimer (*create_timer)(PUBase* self);
     struct PUFont (*create_font)(PUBase* self);
     struct PUMenu (*create_menu)(PUBase* self);
     struct PUMenuBar (*create_menu_bar)(PUBase* self);

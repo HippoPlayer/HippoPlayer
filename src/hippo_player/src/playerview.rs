@@ -11,22 +11,26 @@ pub struct PlayerView {
     player_display: Widget,
     display_font: Font,
     title: String,
-    //song_handler: Rc<RefCell<SongHandler>>,
+    current_time: f32,
     pub widget: Widget,
 }
 
 
 impl PlayerView {
-    //fn new(wrui: Ui, song_handler: &Rc<RefCell<SongHandler>>) {
     pub fn new(wrui: Ui) -> PlayerView {
         PlayerView {
             wrui,
-            //song_handler
+            current_time: 0.0,
             player_display: wrui.create_widget(),
             display_font: wrui.create_font(),
             widget: wrui.create_widget(),
             title: String::new(),
         }
+    }
+
+    pub fn set_current_time(&mut self, current_time: f32) {
+        self.current_time = current_time;
+        self.player_display.update();
     }
 
     pub fn draw_display(&mut self, event: &PaintEvent) {
@@ -38,6 +42,10 @@ impl PlayerView {
         painter.set_font(&self.display_font);
         painter.fill_rect_color(event.rect(), test_color);
         painter.draw_text(10, 40, &self.title);
+        painter.draw_text(220, 80, &format!("{}:{:02}",
+            (self.current_time / 60.0) as i32,
+            (self.current_time % 60.0) as i32));
+
 
         //painter.draw_line(0, 0, 120, 120);
         painter.end();

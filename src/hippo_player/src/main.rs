@@ -27,6 +27,7 @@ struct HippoPlayer<'a> {
     player_view: PlayerView,
     ui: Ui,
     app: Application,
+    current_song_time: f32,
 }
 
 #[cfg(target_os="windows")]
@@ -49,17 +50,26 @@ impl <'a> HippoPlayer<'a> {
             main_widget: ui.create_widget(),
             player_view: PlayerView::new(ui),
             ui: ui,
+            current_song_time: 0.0,
         }
     }
 
     fn select_song(&mut self, item: &ListWidgetItem) {
         let info = self.play_file(&item.text());
+        self.current_song_time = info.duration as f32;
+
+        self.player_view.set_current_time(self.current_song_time);
         self.player_view.set_title(&info.title);
     }
 
     fn drag_enter(&mut self, event: &DragEnterEvent) {
         println!("Dropping files!");
         event.accept();
+    }
+
+    fn per_sec_update(&mut self) {
+        self.player_view.set_current_time(self.current_song_time);
+        self.current_song_time -= 1.0;
     }
 
     fn drop_files(&mut self, event: &DropEvent) {
@@ -80,6 +90,8 @@ impl <'a> HippoPlayer<'a> {
 
         self.player_view.setup();
 
+        let timer = self.ui.create_timer();
+
         //main_window.resize(500, 500);
         //main_window.show();
 
@@ -97,6 +109,9 @@ impl <'a> HippoPlayer<'a> {
         set_drag_enter_event!(self.playlist, self, HippoPlayer, HippoPlayer::drag_enter);
         set_drop_event!(self.playlist, self, HippoPlayer, HippoPlayer::drop_files);
         set_item_double_clicked_event!(self.playlist, self, HippoPlayer, HippoPlayer::select_song);
+        set_timeout_event!(timer, self, HippoPlayer, HippoPlayer::per_sec_update);
+
+        timer.start(1000);
 
         //let window = self.ui.create_widget();
         self.main_widget.set_layout(&layout);
