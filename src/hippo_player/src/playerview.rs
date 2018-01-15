@@ -12,6 +12,10 @@ pub struct PlayerView {
     display_font: Font,
     title: String,
     current_time: f32,
+    pub prev_button: PushButton,
+    pub stop_button: PushButton,
+    pub play_button: PushButton,
+    pub next_button: PushButton,
     pub widget: Widget,
 }
 
@@ -23,6 +27,10 @@ impl PlayerView {
             current_time: -10.0,
             player_display: wrui.create_widget(),
             display_font: wrui.create_font(),
+            prev_button: wrui.create_push_button(),
+            stop_button: wrui.create_push_button(),
+            play_button: wrui.create_push_button(),
+            next_button: wrui.create_push_button(),
             widget: wrui.create_widget(),
             title: String::new(),
         }
@@ -69,15 +77,11 @@ impl PlayerView {
 
         //let display = self.wrui.create_widget();
         let buttons = self.wrui.create_widget();
-        let prev_button = self.wrui.create_push_button();
-        let stop_button = self.wrui.create_push_button();
-        let play_button = self.wrui.create_push_button();
-        let next_button = self.wrui.create_push_button();
 
-        prev_button.set_text("Prev");
-        stop_button.set_text("Stop");
-        play_button.set_text("Play");
-        next_button.set_text("Next");
+        self.prev_button.set_text("Prev");
+        self.stop_button.set_text("Stop");
+        self.play_button.set_text("Play");
+        self.next_button.set_text("Next");
 
         self.player_display.set_fixed_height(100);
         self.player_display.set_fixed_width(500);
@@ -87,10 +91,10 @@ impl PlayerView {
         let vbox = self.wrui.create_v_box_layout();
         let hbox = self.wrui.create_h_box_layout();
 
-        hbox.add_widget(&prev_button);
-        hbox.add_widget(&stop_button);
-        hbox.add_widget(&play_button);
-        hbox.add_widget(&next_button);
+        hbox.add_widget(&self.prev_button);
+        hbox.add_widget(&self.stop_button);
+        hbox.add_widget(&self.play_button);
+        hbox.add_widget(&self.next_button);
 
         buttons.set_layout(&hbox);
 

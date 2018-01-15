@@ -83,18 +83,45 @@ impl <'a> HippoPlayer<'a> {
         }
 
         if self.current_song_time < 0.0 && self.current_song_time > -9.0 {
-            let next_song = self.playlist.get_next_song();
+            self.next_song();
+        }
+    }
 
-            if let Some(next) = next_song {
-                self.select_song(&next);
-            } else {
-                self.is_playing = false;
-            }
+    fn stop_song(&mut self) {
+        self.audio.stop();
+        self.is_playing = false;
+    }
+
+    fn prev_song(&mut self) {
+        let next_song = self.playlist.get_prev_song();
+
+        if let Some(next) = next_song {
+            self.select_song(&next);
+        } else {
+            self.is_playing = false;
+        }
+    }
+
+    fn play_song(&mut self) {
+        if let Some(current) = self.playlist.widget.current_item() {
+            self.select_song(&current);
+        }
+    }
+
+    fn next_song(&mut self) {
+        let next_song = self.playlist.get_next_song();
+
+        if let Some(next) = next_song {
+            self.select_song(&next);
+        } else {
+            self.is_playing = false;
         }
     }
 
     fn before_quit(&mut self) {
-        self.playlist.save_playlist("playlist.json");
+        if let Err(err) = self.playlist.save_playlist("playlist.json") {
+            println!("Unable to save playlist {:?}", err);
+        }
     }
 
     pub fn run(&mut self) {
@@ -103,7 +130,9 @@ impl <'a> HippoPlayer<'a> {
         self.player_view.setup();
         self.playlist.setup();
 
-        self.playlist.load_playlist("playlist.json");
+        if let Err(err) = self.playlist.load_playlist("playlist.json") {
+            println!("Unable to load playlist {:?}", err);
+        }
 
         let timer = self.ui.create_timer();
         let layout = self.ui.create_v_box_layout();
@@ -111,7 +140,13 @@ impl <'a> HippoPlayer<'a> {
         layout.add_widget(&self.player_view.widget);
         layout.add_widget(&self.playlist.widget);
 
+        set_pressed_event!(self.player_view.prev_button, self, HippoPlayer, HippoPlayer::prev_song);
+        set_pressed_event!(self.player_view.play_button, self, HippoPlayer, HippoPlayer::play_song);
+        set_pressed_event!(self.player_view.stop_button, self, HippoPlayer, HippoPlayer::stop_song);
+        set_pressed_event!(self.player_view.next_button, self, HippoPlayer, HippoPlayer::next_song);
+
         set_timeout_event!(timer, self, HippoPlayer, HippoPlayer::per_sec_update);
+
         set_item_double_clicked_event!(self.playlist.widget, self, HippoPlayer, HippoPlayer::select_song);
         set_about_to_quit_event!(self.app, self, HippoPlayer, HippoPlayer::before_quit);
 
@@ -166,16 +201,7 @@ fn main() {
 
     app.plugins.add_decoder_plugin("OpenMPT");
     app.plugins.add_decoder_plugin("HivelyPlugin");
-    app.plugins.add_decoder_plugin("SidPlugin");
-
-    /*
-    if args.len() > 1 {
-        app.play_file(&args[1]);
-    } else {
-        //app.play_file("bin/player/songs/mod/global_trash_3_v2.mod");
-        app.play_file("bin/player/songs/ahx/geir_tjelta_-_a_new_beginning.ahx");
-    }
-    */
+    //app.plugins.add_decoder_plugin("SidPlugin");
 
     app.run();
 }

@@ -305,6 +305,14 @@ static void push_button_update(struct PUBase* self_c) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void set_push_button_pressed_event(void* object, void* user_data, void (*event)(void* self_c)) {
+    QSlotWrapperSignal_self_void* wrap = new QSlotWrapperSignal_self_void(user_data, (Signal_self_void)event);
+    QObject* q_obj = (QObject*)object;
+    QObject::connect(q_obj, SIGNAL(pressed()), wrap, SLOT(method()));
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static void set_push_button_released_event(void* object, void* user_data, void (*event)(void* self_c)) {
     QSlotWrapperSignal_self_void* wrap = new QSlotWrapperSignal_self_void(user_data, (Signal_self_void)event);
     QObject* q_obj = (QObject*)object;
@@ -1397,6 +1405,7 @@ struct PUPushButtonFuncs s_push_button_funcs = {
     push_button_resize,
     push_button_set_layout,
     push_button_update,
+    set_push_button_pressed_event,
     set_push_button_released_event,
     push_button_set_text,
     push_button_set_flat,

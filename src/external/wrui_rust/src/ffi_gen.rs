@@ -77,6 +77,8 @@ pub struct PUPushButtonFuncs {
     pub resize: extern "C" fn(self_c: *const PUBase, width: i32, height: i32),
     pub set_layout: extern "C" fn(self_c: *const PUBase, layout: *const PUBase),
     pub update: extern "C" fn(self_c: *const PUBase),
+    pub set_pressed_event: extern "C" fn(object: *const PUBase, user_data: *const c_void,
+                                        callback: extern "C" fn(self_c: *const c_void)),
     pub set_released_event: extern "C" fn(object: *const PUBase, user_data: *const c_void,
                                         callback: extern "C" fn(self_c: *const c_void)),
     pub set_text: extern "C" fn(self_c: *const PUBase, text: *const ::std::os::raw::c_char),

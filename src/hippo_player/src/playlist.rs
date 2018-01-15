@@ -174,4 +174,19 @@ impl PlaylistView {
         self.widget.set_current_row(current_item);
         self.widget.current_item()
     }
+
+    ///
+    /// Get the previous song to play
+    ///
+    pub fn get_prev_song(&mut self) -> Option<ListWidgetItem> {
+        let total_count = self.widget.count();
+        let mut current_item = self.widget.current_row() - 1;
+
+        if current_item < -1 {
+            current_item = total_count - 1;
+        }
+
+        self.widget.set_current_row(current_item);
+        self.widget.current_item()
+    }
 }

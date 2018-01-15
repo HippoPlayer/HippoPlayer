@@ -104,6 +104,7 @@ struct PUPushButtonFuncs {
     void (*resize)(struct PUBase* self_c, int width, int height);
     void (*set_layout)(struct PUBase* self_c, struct PUBase* layout);
     void (*update)(struct PUBase* self_c);
+    void (*set_pressed_event)(void* object, void* user_data, void (*event)(void* self_c));
     void (*set_released_event)(void* object, void* user_data, void (*event)(void* self_c));
     void (*set_text)(struct PUBase* self_c, const char* text);
     void (*set_flat)(struct PUBase* self_c, bool flat);
