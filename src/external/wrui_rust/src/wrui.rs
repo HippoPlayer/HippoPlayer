@@ -1454,6 +1454,30 @@ impl Application {
         
         }
     }
+
+    pub fn get_files (&self) -> Vec<Url> {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            let ret_val = ((*obj.funcs).get_files)(obj.privd);
+          
+            if ret_val.count == 0 {
+                Vec::new()
+            } else {
+                let mut data = Vec::with_capacity(ret_val.count as usize);
+                let slice = slice::from_raw_parts(ret_val.elements as *const PUUrl, ret_val.count as usize);
+
+                for item in slice {
+                    data.push(Url { obj: Some(*item) });
+                }
+
+                data
+            }
+          
+        
+        }
+    }
 }
 
 impl Drop for Application {

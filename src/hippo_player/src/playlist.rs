@@ -110,27 +110,29 @@ impl PlaylistView {
         }
     }
 
+    pub fn add_file(&mut self, local_file: &str) {
+        if let Some(filename) = get_filename_only(&local_file) {
+            let item = self.wrui.create_list_widget_item();
+
+            // Check if we already have this file added then we can use the title again
+
+            if let Some(entry) = self.playlist_data.get(local_file) {
+                item.set_text(&entry.title);
+            } else {
+                item.set_text(filename);
+            }
+
+            item.set_string_data(&local_file);
+
+            self.widget.add_item(&item);
+        } else {
+            println!("Skipped adding {} as no proper filename was found", local_file);
+        }
+    }
+
     fn drop_files(&mut self, event: &DropEvent) {
         for url in event.mime_data().urls().iter().filter(|u| u.is_local_file()) {
-            let local_file = url.to_local_file();
-
-            if let Some(filename) = get_filename_only(&local_file) {
-                let item = self.wrui.create_list_widget_item();
-
-                // Check if we already have this file added then we can use the title again
-
-                if let Some(entry) = self.playlist_data.get(&local_file) {
-                    item.set_text(&entry.title);
-                } else {
-                    item.set_text(filename);
-                }
-
-                item.set_string_data(&local_file);
-
-                self.widget.add_item(&item);
-            } else {
-                println!("Skipped adding {} as no proper filename was found", local_file);
-            }
+            self.add_file(&url.to_local_file());
         }
 
         event.accept_proposed_action();

@@ -348,6 +348,7 @@ pub struct PUApplicationFuncs {
     pub exec: extern "C" fn(self_c: *const PUBase),
     pub set_about_to_quit_event: extern "C" fn(object: *const PUBase, user_data: *const c_void,
                                         callback: extern "C" fn(self_c: *const c_void)),
+    pub get_files: extern "C" fn(self_c: *const PUBase) -> PUArray,
 }
 
 #[repr(C)]

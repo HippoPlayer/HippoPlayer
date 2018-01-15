@@ -997,10 +997,12 @@ static void set_application_about_to_quit_event(void* object, void* user_data, v
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static struct PURect paint_event_rect(struct PUBase* self_c) { 
     QPaintEvent* qt_data = (QPaintEvent*)self_c;
     const auto& t = qt_data->rect();
-    return PURect { .x = t.x(), .y = t.y(), .width = t.width(), .height = t.height() };
+    return PURect { t.x(), t.y(), t.width(), t.height() };
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1279,6 +1281,7 @@ static void destroy_h_box_layout(struct PUBase* priv_data) {
 
 #include <QStyleFactory>
 #include <DarkStyle.h>
+#include <QFileDialog>
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1379,6 +1382,27 @@ static const char* list_widget_item_get_string_data(struct PUBase* self_c) {
 static void list_widget_add_text_item(struct PUBase* self_c, const char* text) {
     WRListWidget* qt_data = (WRListWidget*)self_c;
     qt_data->addItem(QString::fromLatin1(text));
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static struct PUArray application_get_files(struct PUBase* self_c) {
+    QApplication* qt_data = (QApplication*)self_c;
+    (void)qt_data;
+    auto ret_value = QFileDialog::getOpenFileUrls();
+    int count = ret_value.size();
+    PUArray array = { 0 };
+    if (count > 0) {
+        PUUrl* elements = new PUUrl[count];
+        for (int i = 0; i < count; ++i) {
+            elements[i].funcs = &s_url_funcs;
+            QUrl* temp = new QUrl(ret_value.at(i));
+            elements[i].priv_data = (struct PUBase*)temp;
+       }
+       array.elements = (void*)elements;
+       array.count = int(count);
+   }
+   return array;
 }
 
 
@@ -1581,6 +1605,7 @@ struct PUApplicationFuncs s_application_funcs = {
     application_set_style,
     application_exec,
     set_application_about_to_quit_event,
+    application_get_files,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

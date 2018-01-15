@@ -322,6 +322,7 @@ struct PUApplicationFuncs {
     void (*set_style)(struct PUBase* self_c, const char* style);
     void (*exec)(struct PUBase* self_c);
     void (*set_about_to_quit_event)(void* object, void* user_data, void (*event)(void* self_c));
+    struct PUArray (*get_files)(struct PUBase* self_c);
 };
 
 struct PUApplication {

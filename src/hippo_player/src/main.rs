@@ -124,6 +124,12 @@ impl <'a> HippoPlayer<'a> {
         }
     }
 
+    fn add_files(&mut self) {
+        for url in self.app.get_files().iter().filter(|u| u.is_local_file()) {
+            self.playlist.add_file(&url.to_local_file());
+        }
+    }
+
     pub fn run(&mut self) {
         let main_window = self.ui.create_main_window();
 
@@ -140,12 +146,23 @@ impl <'a> HippoPlayer<'a> {
         layout.add_widget(&self.player_view.widget);
         layout.add_widget(&self.playlist.widget);
 
+        let add_files = self.ui.create_action();
+        add_files.set_text("Add Files");
+
+        let file_menu = self.ui.create_menu();
+        file_menu.set_title("File");
+        file_menu.add_action(&add_files);
+
+        let menu_bar = main_window.menu_bar();
+        menu_bar.add_menu(&file_menu);
+
         set_pressed_event!(self.player_view.prev_button, self, HippoPlayer, HippoPlayer::prev_song);
         set_pressed_event!(self.player_view.play_button, self, HippoPlayer, HippoPlayer::play_song);
         set_pressed_event!(self.player_view.stop_button, self, HippoPlayer, HippoPlayer::stop_song);
         set_pressed_event!(self.player_view.next_button, self, HippoPlayer, HippoPlayer::next_song);
 
         set_timeout_event!(timer, self, HippoPlayer, HippoPlayer::per_sec_update);
+        set_triggered_event!(add_files, self, HippoPlayer, HippoPlayer::add_files);
 
         set_item_double_clicked_event!(self.playlist.widget, self, HippoPlayer, HippoPlayer::select_song);
         set_about_to_quit_event!(self.app, self, HippoPlayer, HippoPlayer::before_quit);
