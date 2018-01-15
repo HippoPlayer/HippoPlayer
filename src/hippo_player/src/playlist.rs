@@ -163,7 +163,15 @@ impl PlaylistView {
     ///
     /// Get the next song to play
     ///
-    pub fn get_next_song(&mut self) -> Option<String> {
-        None
+    pub fn get_next_song(&mut self) -> Option<ListWidgetItem> {
+        let total_count = self.widget.count();
+        let mut current_item = self.widget.current_row() + 1;
+
+        if current_item >= total_count {
+            current_item = 0;
+        }
+
+        self.widget.set_current_row(current_item);
+        self.widget.current_item()
     }
 }

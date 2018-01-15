@@ -20,7 +20,7 @@ impl PlayerView {
     pub fn new(wrui: Ui) -> PlayerView {
         PlayerView {
             wrui,
-            current_time: 0.0,
+            current_time: -10.0,
             player_display: wrui.create_widget(),
             display_font: wrui.create_font(),
             widget: wrui.create_widget(),
@@ -42,10 +42,13 @@ impl PlayerView {
         painter.set_font(&self.display_font);
         painter.fill_rect_color(event.rect(), test_color);
         painter.draw_text(10, 40, &self.title);
-        painter.draw_text(220, 80, &format!("{}:{:02}",
-            (self.current_time / 60.0) as i32,
-            (self.current_time % 60.0) as i32));
-
+        if self.current_time >= 0.0 {
+            painter.draw_text(220, 80, &format!("{}:{:02}",
+                (self.current_time / 60.0) as i32,
+                (self.current_time % 60.0) as i32));
+        } else {
+            painter.draw_text(220, 80, "--:--");
+        }
 
         //painter.draw_line(0, 0, 120, 120);
         painter.end();

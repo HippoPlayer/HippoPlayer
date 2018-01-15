@@ -36,6 +36,7 @@ struct HippoPlayer<'a> {
     ui: Ui,
     app: Application,
     current_song_time: f32,
+    is_playing: bool,
 }
 
 #[cfg(target_os="windows")]
@@ -58,13 +59,15 @@ impl <'a> HippoPlayer<'a> {
             player_view: PlayerView::new(ui),
             playlist: PlaylistView::new(ui),
             ui: ui,
-            current_song_time: 0.0,
+            current_song_time: -10.0,
+            is_playing: false,
         }
     }
 
     fn select_song(&mut self, item: &ListWidgetItem) {
         let info = self.play_file(&item.get_string_data());
         self.current_song_time = info.duration as f32;
+        self.is_playing = true;
 
         self.player_view.set_current_time(self.current_song_time);
         self.player_view.set_title(&info.title);
@@ -74,7 +77,20 @@ impl <'a> HippoPlayer<'a> {
 
     fn per_sec_update(&mut self) {
         self.player_view.set_current_time(self.current_song_time);
-        self.current_song_time -= 1.0;
+
+        if self.is_playing {
+            self.current_song_time -= 1.0;
+        }
+
+        if self.current_song_time < 0.0 && self.current_song_time > -9.0 {
+            let next_song = self.playlist.get_next_song();
+
+            if let Some(next) = next_song {
+                self.select_song(&next);
+            } else {
+                self.is_playing = false;
+            }
+        }
     }
 
     fn before_quit(&mut self) {
