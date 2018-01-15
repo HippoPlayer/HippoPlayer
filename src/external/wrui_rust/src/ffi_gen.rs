@@ -113,6 +113,8 @@ pub struct PUListWidgetItemFuncs {
     pub destroy: extern "C" fn(self_c: *const PUBase),
     pub set_text: extern "C" fn(self_c: *const PUBase, text: *const ::std::os::raw::c_char),
     pub text: extern "C" fn(self_c: *const PUBase) -> *const ::std::os::raw::c_char,
+    pub set_string_data: extern "C" fn(self_c: *const PUBase, text: *const ::std::os::raw::c_char),
+    pub get_string_data: extern "C" fn(self_c: *const PUBase) -> *const ::std::os::raw::c_char,
 }
 
 #[repr(C)]
@@ -131,9 +133,14 @@ pub struct PUListWidgetFuncs {
     pub resize: extern "C" fn(self_c: *const PUBase, width: i32, height: i32),
     pub set_layout: extern "C" fn(self_c: *const PUBase, layout: *const PUBase),
     pub update: extern "C" fn(self_c: *const PUBase),
-    pub add_item: extern "C" fn(self_c: *const PUBase, text: *const ::std::os::raw::c_char),
-    pub item: extern "C" fn(self_c: *const PUBase, index: i32) ->  PUListWidgetItem,
+    pub add_item: extern "C" fn(self_c: *const PUBase, item: *const PUBase),
+    pub add_text_item: extern "C" fn(self_c: *const PUBase, text: *const ::std::os::raw::c_char),
+    pub current_item: extern "C" fn(self_c: *const PUBase) ->  PUListWidgetItem,
+    pub current_row: extern "C" fn(self_c: *const PUBase) -> i32,
     pub selected_items: extern "C" fn(self_c: *const PUBase) -> PUArray,
+    pub item: extern "C" fn(self_c: *const PUBase, index: i32) ->  PUListWidgetItem,
+    pub set_current_row: extern "C" fn(self_c: *const PUBase, index: i32),
+    pub count: extern "C" fn(self_c: *const PUBase) -> i32,
     pub set_drag_enabled: extern "C" fn(self_c: *const PUBase, state: bool),
     pub set_drop_indicator_shown: extern "C" fn(self_c: *const PUBase, state: bool),
     pub set_accept_drops: extern "C" fn(self_c: *const PUBase, state: bool),
@@ -337,6 +344,8 @@ pub struct PUApplicationFuncs {
     pub destroy: extern "C" fn(self_c: *const PUBase),
     pub set_style: extern "C" fn(self_c: *const PUBase, style: *const ::std::os::raw::c_char),
     pub exec: extern "C" fn(self_c: *const PUBase),
+    pub set_about_to_quit_event: extern "C" fn(object: *const PUBase, user_data: *const c_void,
+                                        callback: extern "C" fn(self_c: *const c_void)),
 }
 
 #[repr(C)]

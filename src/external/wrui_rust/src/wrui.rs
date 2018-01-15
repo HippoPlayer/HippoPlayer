@@ -438,6 +438,30 @@ impl ListWidgetItem {
         
         }
     }
+
+    pub fn set_string_data (&self, text: &str) {
+        let str_in_text_1 = CString::new(text).unwrap();
+
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).set_string_data)(obj.privd, str_in_text_1.as_ptr());
+        
+        }
+    }
+
+    pub fn get_string_data (&self) -> String {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            let ret_val = ((*obj.funcs).get_string_data)(obj.privd);
+          
+           CStr::from_ptr(ret_val).to_string_lossy().into_owned()
+          
+        
+        }
+    }
 }
 
 impl ListWidget {
@@ -509,29 +533,52 @@ impl ListWidget {
         }
     }
 
-    pub fn add_item (&self, text: &str) {
+    pub fn add_item (&self, item: &ListWidgetItem) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).add_item)(obj.privd, item.obj.unwrap().privd);
+        
+        }
+    }
+
+    pub fn add_text_item (&self, text: &str) {
         let str_in_text_1 = CString::new(text).unwrap();
 
         unsafe {
             let obj = self.obj.unwrap();
         
-            ((*obj.funcs).add_item)(obj.privd, str_in_text_1.as_ptr());
+            ((*obj.funcs).add_text_item)(obj.privd, str_in_text_1.as_ptr());
         
         }
     }
 
-    pub fn item (&self, index: i32) -> Option<ListWidgetItem> {
+    pub fn current_item (&self) -> Option<ListWidgetItem> {
         
         unsafe {
             let obj = self.obj.unwrap();
         
-            let ret_val = ((*obj.funcs).item)(obj.privd, index);
+            let ret_val = ((*obj.funcs).current_item)(obj.privd);
           
             if ret_val.privd.is_null() {
                 None
             } else {
                 Some(ListWidgetItem { obj: Some(ret_val) })
             }
+          
+        
+        }
+    }
+
+    pub fn current_row (&self) -> i32 {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            let ret_val = ((*obj.funcs).current_row)(obj.privd);
+          
+            ret_val
           
         
         }
@@ -556,6 +603,46 @@ impl ListWidget {
 
                 data
             }
+          
+        
+        }
+    }
+
+    pub fn item (&self, index: i32) -> Option<ListWidgetItem> {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            let ret_val = ((*obj.funcs).item)(obj.privd, index);
+          
+            if ret_val.privd.is_null() {
+                None
+            } else {
+                Some(ListWidgetItem { obj: Some(ret_val) })
+            }
+          
+        
+        }
+    }
+
+    pub fn set_current_row (&self, index: i32) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).set_current_row)(obj.privd, index);
+        
+        }
+    }
+
+    pub fn count (&self) -> i32 {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            let ret_val = ((*obj.funcs).count)(obj.privd);
+          
+            ret_val
           
         
         }
@@ -1528,6 +1615,29 @@ impl LayoutType for HBoxLayout {
        obj.privd as *const PUBase
     }
 }
+
+
+#[macro_export]
+macro_rules! set_about_to_quit_event {
+  ($sender:expr, $data:expr, $call_type:ident, $callback:path) => {
+    {
+      extern "C" fn temp_call(self_c: *const ::std::os::raw::c_void) {
+          unsafe {
+              let app = self_c as *mut $call_type;
+              $callback(&mut *app);
+          }
+      }
+      fn get_data_ptr(val: &$call_type) -> *const c_void {
+         let t: *const c_void = unsafe { ::std::mem::transmute(val) };
+         t
+      }
+
+      unsafe {
+          let obj = $sender.obj.unwrap();
+         ((*obj.funcs).set_about_to_quit_event)(obj.privd, get_data_ptr($data), temp_call);
+      }
+    }
+} }
 
 
 #[macro_export]

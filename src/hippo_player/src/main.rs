@@ -1,14 +1,21 @@
 extern crate rodio;
-extern crate dynamic_reload;
 
-use std::os::raw::c_void;
+#[macro_use]
+extern crate serde_derive;
+extern crate serde;
+extern crate serde_json;
 
 #[macro_use]
 extern crate wrui;
 
+extern crate dynamic_reload;
+
+use std::os::raw::c_void;
+
 mod plugin_handler;
 mod audio;
 mod playerview;
+mod playlist;
 
 use plugin_handler::{Plugins};
 use audio::{HippoAudio, MusicInfo};
@@ -18,13 +25,14 @@ use std::env;
 use wrui::{SharedLibUi, Ui};
 use wrui::wrui::*;
 use playerview::PlayerView;
+use playlist::PlaylistView;
 
 struct HippoPlayer<'a> {
     audio: HippoAudio,
     plugins: Plugins<'a>,
-    playlist: ListWidget,
     main_widget: Widget,
     player_view: PlayerView,
+    playlist: PlaylistView,
     ui: Ui,
     app: Application,
     current_song_time: f32,
@@ -46,25 +54,22 @@ impl <'a> HippoPlayer<'a> {
             audio: HippoAudio::new(),
             plugins: Plugins::new(),
             app: ui.create_application(),
-            playlist: ui.create_list_widget(),
             main_widget: ui.create_widget(),
             player_view: PlayerView::new(ui),
+            playlist: PlaylistView::new(ui),
             ui: ui,
             current_song_time: 0.0,
         }
     }
 
     fn select_song(&mut self, item: &ListWidgetItem) {
-        let info = self.play_file(&item.text());
+        let info = self.play_file(&item.get_string_data());
         self.current_song_time = info.duration as f32;
 
         self.player_view.set_current_time(self.current_song_time);
         self.player_view.set_title(&info.title);
-    }
 
-    fn drag_enter(&mut self, event: &DragEnterEvent) {
-        println!("Dropping files!");
-        event.accept();
+        self.playlist.select_song(item, &info);
     }
 
     fn per_sec_update(&mut self) {
@@ -72,59 +77,40 @@ impl <'a> HippoPlayer<'a> {
         self.current_song_time -= 1.0;
     }
 
-    fn drop_files(&mut self, event: &DropEvent) {
-        for url in event.mime_data().urls() {
-            if url.is_local_file() {
-                self.playlist.add_item(&url.to_local_file());
-                //println!("Has local file {}", url.to_local_file());
-            } else {
-                println!("File is not local");
-            }
-        }
-
-        event.accept_proposed_action();
+    fn before_quit(&mut self) {
+        self.playlist.save_playlist("playlist.json");
     }
 
     pub fn run(&mut self) {
         let main_window = self.ui.create_main_window();
 
         self.player_view.setup();
+        self.playlist.setup();
+
+        self.playlist.load_playlist("playlist.json");
 
         let timer = self.ui.create_timer();
-
-        //main_window.resize(500, 500);
-        //main_window.show();
-
-        // Enable drag'n'drop on playlist
-
-        self.playlist.set_drag_enabled(true);
-        self.playlist.set_accept_drops(true);
-        self.playlist.set_drop_indicator_shown(true);
-
         let layout = self.ui.create_v_box_layout();
 
         layout.add_widget(&self.player_view.widget);
-        layout.add_widget(&self.playlist);
+        layout.add_widget(&self.playlist.widget);
 
-        set_drag_enter_event!(self.playlist, self, HippoPlayer, HippoPlayer::drag_enter);
-        set_drop_event!(self.playlist, self, HippoPlayer, HippoPlayer::drop_files);
-        set_item_double_clicked_event!(self.playlist, self, HippoPlayer, HippoPlayer::select_song);
         set_timeout_event!(timer, self, HippoPlayer, HippoPlayer::per_sec_update);
+        set_item_double_clicked_event!(self.playlist.widget, self, HippoPlayer, HippoPlayer::select_song);
+        set_about_to_quit_event!(self.app, self, HippoPlayer, HippoPlayer::before_quit);
 
         timer.start(1000);
 
-        //let window = self.ui.create_widget();
         self.main_widget.set_layout(&layout);
-        main_window.set_central_widget(&self.main_widget);
 
         let player_window = self.ui.create_frameless_window();
+        main_window.set_central_widget(&self.main_widget);
+
         player_window.set_content(&main_window);
         player_window.set_window_title("HippoPlayer 0.1");
-        player_window.show();
 
         player_window.resize(500, 800);
-
-        //main_window.show();
+        player_window.show();
 
         self.app.exec();
     }

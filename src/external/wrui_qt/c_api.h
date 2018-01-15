@@ -133,6 +133,8 @@ struct PUListWidgetItemFuncs {
     void (*destroy)(struct PUBase* self_c);
     void (*set_text)(struct PUBase* self_c, const char* text);
     const char* (*text)(struct PUBase* self_c);
+    void (*set_string_data)(struct PUBase* self_c, const char* text);
+    const char* (*get_string_data)(struct PUBase* self_c);
 };
 
 struct PUListWidgetItem {
@@ -148,9 +150,14 @@ struct PUListWidgetFuncs {
     void (*resize)(struct PUBase* self_c, int width, int height);
     void (*set_layout)(struct PUBase* self_c, struct PUBase* layout);
     void (*update)(struct PUBase* self_c);
-    void (*add_item)(struct PUBase* self_c, const char* text);
-    struct PUListWidgetItem (*item)(struct PUBase* self_c, int index);
+    void (*add_item)(struct PUBase* self_c, struct PUBase* item);
+    void (*add_text_item)(struct PUBase* self_c, const char* text);
+    struct PUListWidgetItem (*current_item)(struct PUBase* self_c);
+    int (*current_row)(struct PUBase* self_c);
     struct PUArray (*selected_items)(struct PUBase* self_c);
+    struct PUListWidgetItem (*item)(struct PUBase* self_c, int index);
+    void (*set_current_row)(struct PUBase* self_c, int index);
+    int (*count)(struct PUBase* self_c);
     void (*set_drag_enabled)(struct PUBase* self_c, bool state);
     void (*set_drop_indicator_shown)(struct PUBase* self_c, bool state);
     void (*set_accept_drops)(struct PUBase* self_c, bool state);
@@ -313,6 +320,7 @@ struct PUApplicationFuncs {
     void (*destroy)(struct PUBase* self_c);
     void (*set_style)(struct PUBase* self_c, const char* style);
     void (*exec)(struct PUBase* self_c);
+    void (*set_about_to_quit_event)(void* object, void* user_data, void (*event)(void* self_c));
 };
 
 struct PUApplication {

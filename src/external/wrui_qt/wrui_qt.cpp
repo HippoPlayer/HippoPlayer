@@ -384,6 +384,10 @@ static const char* list_widget_item_text(struct PUBase* self_c) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static void list_widget_show(struct PUBase* self_c) { 
     WRListWidget* qt_data = (WRListWidget*)self_c;
     qt_data->show();
@@ -428,20 +432,30 @@ static void list_widget_update(struct PUBase* self_c) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void list_widget_add_item(struct PUBase* self_c, const char* text) { 
+static void list_widget_add_item(struct PUBase* self_c, struct PUBase* item) { 
     WRListWidget* qt_data = (WRListWidget*)self_c;
-    qt_data->addItem(QString::fromLatin1(text));
+    qt_data->addItem((QListWidgetItem*)item);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static struct PUListWidgetItem list_widget_item(struct PUBase* self_c, int index) { 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static struct PUListWidgetItem list_widget_current_item(struct PUBase* self_c) { 
     WRListWidget* qt_data = (WRListWidget*)self_c;
-    auto ret_value = qt_data->item(index);
+    auto ret_value = qt_data->currentItem();
     PUListWidgetItem ctl;
     ctl.funcs = &s_list_widget_item_funcs;
     ctl.priv_data = (struct PUBase*)ret_value;
     return ctl;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static int list_widget_current_row(struct PUBase* self_c) { 
+    WRListWidget* qt_data = (WRListWidget*)self_c;
+    auto ret_value = qt_data->currentRow();
+    return ret_value;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -461,6 +475,32 @@ static struct PUArray list_widget_selected_items(struct PUBase* self_c) {
        array.count = int(count);
    }
    return array;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static struct PUListWidgetItem list_widget_item(struct PUBase* self_c, int index) { 
+    WRListWidget* qt_data = (WRListWidget*)self_c;
+    auto ret_value = qt_data->item(index);
+    PUListWidgetItem ctl;
+    ctl.funcs = &s_list_widget_item_funcs;
+    ctl.priv_data = (struct PUBase*)ret_value;
+    return ctl;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void list_widget_set_current_row(struct PUBase* self_c, int index) { 
+    WRListWidget* qt_data = (WRListWidget*)self_c;
+    qt_data->setCurrentRow(index);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static int list_widget_count(struct PUBase* self_c) { 
+    WRListWidget* qt_data = (WRListWidget*)self_c;
+    auto ret_value = qt_data->count();
+    return ret_value;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -941,6 +981,14 @@ static void application_exec(struct PUBase* self_c) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void set_application_about_to_quit_event(void* object, void* user_data, void (*event)(void* self_c)) {
+    QSlotWrapperSignal_self_void* wrap = new QSlotWrapperSignal_self_void(user_data, (Signal_self_void)event);
+    QObject* q_obj = (QObject*)object;
+    QObject::connect(q_obj, SIGNAL(aboutToQuit()), wrap, SLOT(method()));
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static struct PURect paint_event_rect(struct PUBase* self_c) { 
     QPaintEvent* qt_data = (QPaintEvent*)self_c;
     const auto& t = qt_data->rect();
@@ -1299,6 +1347,32 @@ static void painter_fill_rect_color(struct PUBase* self_c, struct PURect rect, s
 }
 
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void list_widget_item_set_string_data(struct PUBase* self_c, const char* text) {
+    QListWidgetItem* qt_data = (QListWidgetItem*)self_c;
+    qt_data->setData(Qt::UserRole, QString::fromLatin1(text));
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static const char* list_widget_item_get_string_data(struct PUBase* self_c) {
+    QListWidgetItem* qt_data = (QListWidgetItem*)self_c;
+    auto ret_value = qt_data->data(Qt::UserRole).toString();
+    QByteArray ba = ret_value.toUtf8();
+    const char* c_str = ba.data();
+    assert((ba.size() + 1) < sizeof(s_temp_string_buffer));
+    memcpy(s_temp_string_buffer, c_str, ba.size() + 1);
+    return s_temp_string_buffer;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void list_widget_add_text_item(struct PUBase* self_c, const char* text) {
+    WRListWidget* qt_data = (WRListWidget*)self_c;
+    qt_data->addItem(QString::fromLatin1(text));
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1346,6 +1420,8 @@ struct PUListWidgetItemFuncs s_list_widget_item_funcs = {
     destroy_list_widget_item,
     list_widget_item_set_text,
     list_widget_item_text,
+    list_widget_item_set_string_data,
+    list_widget_item_get_string_data,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1359,8 +1435,13 @@ struct PUListWidgetFuncs s_list_widget_funcs = {
     list_widget_set_layout,
     list_widget_update,
     list_widget_add_item,
-    list_widget_item,
+    list_widget_add_text_item,
+    list_widget_current_item,
+    list_widget_current_row,
     list_widget_selected_items,
+    list_widget_item,
+    list_widget_set_current_row,
+    list_widget_count,
     list_widget_set_drag_enabled,
     list_widget_set_drop_indicator_shown,
     list_widget_set_accept_drops,
@@ -1490,6 +1571,7 @@ struct PUApplicationFuncs s_application_funcs = {
     destroy_application,
     application_set_style,
     application_exec,
+    set_application_about_to_quit_event,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
