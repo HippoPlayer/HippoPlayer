@@ -105,7 +105,7 @@ INLINE int fputLE32(UINT32 Value, FILE* hFile)
 #else
 	int RetVal;
 	int ResVal;
-	
+
 	RetVal = fputc((Value & 0x000000FF) >>  0, hFile);
 	RetVal = fputc((Value & 0x0000FF00) >>  8, hFile);
 	RetVal = fputc((Value & 0x00FF0000) >> 16, hFile);
@@ -122,7 +122,7 @@ INLINE int fputLE16(UINT16 Value, FILE* hFile)
 #else
 	int RetVal;
 	int ResVal;
-	
+
 	RetVal = fputc((Value & 0x00FF) >> 0, hFile);
 	RetVal = fputc((Value & 0xFF00) >> 8, hFile);
 	ResVal = (RetVal != EOF) ? 0x02 : 0x00;
@@ -134,7 +134,7 @@ UINT8 SaveFile(UINT32 FileLen, const void* TempData)
 {
 	//char ResultStr[0x100];
 	UINT32 DataLen;
-	
+
 	if (TempData == NULL)
 	{
 		switch(FileLen)
@@ -142,7 +142,7 @@ UINT8 SaveFile(UINT32 FileLen, const void* TempData)
 		case 0x00000000:
 			if (hFile != NULL)
 				return 0xD0;	// file already open
-			
+
 			SndLogLen = 0;
 			hFile = fopen(SoundLogFile,"wb");
 			if (hFile == NULL)
@@ -150,12 +150,12 @@ UINT8 SaveFile(UINT32 FileLen, const void* TempData)
 			fseek(hFile, 0x00000000, SEEK_SET);
 			fputLE32(0x46464952, hFile);	// 'RIFF'
 			fputLE32(0x00000000, hFile);	// RIFF chunk length (dummy)
-			
+
 			fputLE32(0x45564157, hFile);	// 'WAVE'
 			fputLE32(0x20746D66, hFile);	// 'fmt '
 			DataLen = 0x00000010;
 			fputLE32(DataLen, hFile);		// format chunk legth
-			
+
 #ifdef VGM_LITTLE_ENDIAN
 			fwrite(&WaveFmt, DataLen, 1, hFile);
 #else
@@ -167,16 +167,16 @@ UINT8 SaveFile(UINT32 FileLen, const void* TempData)
 			fputLE16(WaveFmt.wBitsPerSample,	hFile);	// 0x0E
 			//fputLE16(WaveFmt.cbSize, hFile);			// 0x10 (DataLen is 0x10, so leave this out)
 #endif
-			
+
 			fputLE32(0x61746164, hFile);	// 'data'
 			fputLE32(0x00000000, hFile);	// data chunk length (dummy)
 			break;
 		case 0xFFFFFFFF:
 			if (hFile == NULL)
 				return 0x80;	// no file opened
-			
+
 			DataLen = SndLogLen * SAMPLESIZE;
-			
+
 			fseek(hFile, 0x0028, SEEK_SET);
 			fputLE32(DataLen, hFile);			// data chunk length
 			fseek(hFile, 0x0004, SEEK_SET);
@@ -190,7 +190,7 @@ UINT8 SaveFile(UINT32 FileLen, const void* TempData)
 	{
 		if (hFile == NULL)
 			return 0x80;	// no file opened
-		
+
 		//fseek(hFile, 0x00000000, SEEK_END);
 		//TempVal[0x0] = ftell(hFile);
 		//TempVal[0x1] = fwrite(TempData, 1, FileLen, hFile);
@@ -200,7 +200,7 @@ UINT8 SaveFile(UINT32 FileLen, const void* TempData)
 		{
 			UINT32 CurSmpl;
 			const UINT16* SmplData;
-			
+
 			SmplData = (UINT16*)TempData;
 			DataLen = SAMPLESIZE * FileLen / 0x02;
 			for (CurSmpl = 0x00; CurSmpl < DataLen; CurSmpl ++)
@@ -211,14 +211,14 @@ UINT8 SaveFile(UINT32 FileLen, const void* TempData)
 		//		TempVal[0], TempVal[1], FileLen, TempData);
 		//AfxMessageBox(ResultStr);
 	}
-	
+
 	return 0x00;
 }
 
 UINT8 SoundLogging(UINT8 Mode)
 {
 	UINT8 RetVal;
-	
+
 	RetVal = (UINT8)SoundLog;
 	switch(Mode)
 	{
@@ -236,7 +236,7 @@ UINT8 SoundLogging(UINT8 Mode)
 		RetVal = 0xA0;
 		break;
 	}
-	
+
 	return RetVal;
 }
 
@@ -257,10 +257,10 @@ UINT8 StartStream(UINT8 DeviceID)
 	UINT32 ArgVal;
 #endif
 #endif	// ! USE_LIBAO
-	
+
 	if (WaveOutOpen)
 		return 0xD0;	// Thread is already active
-	
+
 	// Init Audio
 	WaveFmt.wFormatTag = WAVE_FORMAT_PCM;
 	WaveFmt.nChannels = 2;
@@ -271,7 +271,7 @@ UINT8 StartStream(UINT8 DeviceID)
 	WaveFmt.cbSize = 0;
 	if (DeviceID == 0xFF)
 		return 0x00;
-	
+
 #if defined(WIN32) || defined(USE_LIBAO)
 	BUFFERSIZE = SampleRate / 100 * SAMPLESIZE;
 	if (BUFFERSIZE > BUFSIZE_MAX)
@@ -282,12 +282,12 @@ UINT8 StartStream(UINT8 DeviceID)
 	SMPL_P_BUFFER = BUFFERSIZE / SAMPLESIZE;
 	if (AUDIOBUFFERU > AUDIOBUFFERS)
 		AUDIOBUFFERU = AUDIOBUFFERS;
-	
+
 	PauseThread = true;
 	ThreadPauseConfrm = false;
 	CloseThread = false;
 	StreamPause = false;
-	
+
 #ifndef USE_LIBAO
 #ifdef WIN32
 	ThreadPauseEnable = true;
@@ -296,7 +296,7 @@ UINT8 StartStream(UINT8 DeviceID)
 	if(WaveOutThreadHandle == NULL)
 		return 0xC8;		// CreateThread failed
 	CloseHandle(WaveOutThreadHandle);
-	
+
 	RetVal = waveOutOpen(&hWaveOut, ((UINT)DeviceID - 1), &WaveFmt, 0x00, 0x00, CALLBACK_NULL);
 	if(RetVal != MMSYSERR_NOERROR)
 #else
@@ -310,14 +310,14 @@ UINT8 StartStream(UINT8 DeviceID)
 #endif
 #else	// ifdef USE_LIBAO
 	ao_initialize();
-	
+
 	ThreadPauseEnable = false;
 	ao_fmt.bits = WaveFmt.wBitsPerSample;
 	ao_fmt.rate = WaveFmt.nSamplesPerSec;
 	ao_fmt.channels = WaveFmt.nChannels;
 	ao_fmt.byte_format = AO_FMT_NATIVE;
 	ao_fmt.matrix = NULL;
-	
+
 	dev_ao = ao_open_live(ao_default_driver_id(), &ao_fmt, NULL);
 	if (dev_ao == NULL)
 #endif
@@ -326,7 +326,7 @@ UINT8 StartStream(UINT8 DeviceID)
 		return 0xC0;		// waveOutOpen failed
 	}
 	WaveOutOpen = true;
-	
+
 	//sprintf(TestStr, "Buffer 0,0:\t%p\nBuffer 0,1:\t%p\nBuffer 1,0:\t%p\nBuffer 1,1:\t%p\n",
 	//		&BufferOut[0][0], &BufferOut[0][1], &BufferOut[1][0], &BufferOut[1][1]);
 	//AfxMessageBox(TestStr);
@@ -347,17 +347,18 @@ UINT8 StartStream(UINT8 DeviceID)
 	}
 #elif defined(__NetBSD__)
 	AUDIO_INITINFO(&AudioInfo);
-	
+
 	AudioInfo.mode = AUMODE_PLAY;
 	AudioInfo.play.sample_rate = WaveFmt.nSamplesPerSec;
 	AudioInfo.play.channels = WaveFmt.nChannels;
 	AudioInfo.play.precision = WaveFmt.wBitsPerSample;
 	AudioInfo.play.encoding = AUDIO_ENCODING_SLINEAR;
-	
+
 	RetVal = ioctl(hWaveOut, AUDIO_SETINFO, &AudioInfo);
 	if (RetVal)
 		printf("Error setting audio information!\n");
 #else
+/*
 	ArgVal = (AUDIOBUFFERU << 16) | BUFSIZELD;
 	RetVal = ioctl(hWaveOut, SNDCTL_DSP_SETFRAGMENT, &ArgVal);
 	if (RetVal)
@@ -374,14 +375,16 @@ UINT8 StartStream(UINT8 DeviceID)
 	RetVal = ioctl(hWaveOut, SNDCTL_DSP_SPEED, &ArgVal);
 	if (RetVal)
 		printf("Error setting Sample Rate!\n");
+*/
+	printf("unimplemented!\n");
 #endif
 #endif	// USE_LIBAO
-	
+
 	if (SoundLog)
 		SaveFile(0x00000000, NULL);
-	
+
 	PauseThread = false;
-	
+
 	return 0x00;
 }
 
@@ -391,10 +394,10 @@ UINT8 StopStream(void)
 #ifdef WIN32
 	UINT16 Cnt;
 #endif
-	
+
 	if (! WaveOutOpen)
 		return 0xD8;	// Thread is not active
-	
+
 	CloseThread = true;
 #ifdef WIN32
 	for (Cnt = 0; Cnt < 100; Cnt ++)
@@ -407,13 +410,13 @@ UINT8 StopStream(void)
 	if (hFile != NULL)
 		SaveFile(0xFFFFFFFF, NULL);
 	WaveOutOpen = false;
-	
+
 #ifndef USE_LIBAO
 #ifdef WIN32
 	RetVal = waveOutReset(hWaveOut);
 	for (Cnt = 0x00; Cnt < AUDIOBUFFERU; Cnt ++)
 		RetVal = waveOutUnprepareHeader(hWaveOut, &WaveHdrOut[Cnt], sizeof(WAVEHDR));
-	
+
 	RetVal = waveOutClose(hWaveOut);
 	if(RetVal != MMSYSERR_NOERROR)
 		return 0xC4;		// waveOutClose failed  -- but why ???
@@ -422,20 +425,20 @@ UINT8 StopStream(void)
 #endif
 #else	// ifdef USE_LIBAO
 	ao_close(dev_ao);
-	
+
 	ao_shutdown();
 #endif
-	
+
 	return 0x00;
 }
 
 void PauseStream(bool PauseOn)
 {
 	UINT32 RetVal;
-	
+
 	if (! WaveOutOpen)
 		return;	// Thread is not active
-	
+
 #ifdef WIN32
 	switch(PauseOn)
 	{
@@ -450,7 +453,7 @@ void PauseStream(bool PauseOn)
 #else
 	PauseThread = PauseOn;
 #endif
-	
+
 	return;
 }
 
@@ -469,7 +472,7 @@ static DWORD WINAPI WaveOutThread(void* Arg)
 	UINT32 WrtSmpls;
 	//char TestStr[0x80];
 	bool DidBuffer;	// a buffer was processed
-	
+
 	hWaveOutThread = GetCurrentThread();
 #ifdef NDEBUG
 	RetVal = SetThreadPriority(hWaveOutThread, THREAD_PRIORITY_TIME_CRITICAL);
@@ -480,7 +483,7 @@ static DWORD WINAPI WaveOutThread(void* Arg)
 		RetVal = SetThreadPriority(hWaveOutThread, THREAD_PRIORITY_HIGHEST);
 	}
 #endif
-	
+
 	BlocksSent = 0x00;
 	BlocksPlayed = 0x00;
 	while(! CloseThread)
@@ -492,7 +495,7 @@ static DWORD WINAPI WaveOutThread(void* Arg)
 		}
 		if (CloseThread)
 			break;
-		
+
 		BufCheck();
 		DidBuffer = false;
 		for (CurBuf = 0x00; CurBuf < AUDIOBUFFERU; CurBuf ++)
@@ -500,19 +503,19 @@ static DWORD WINAPI WaveOutThread(void* Arg)
 			if (WaveHdrOut[CurBuf].dwFlags & WHDR_DONE)
 			{
 				TempBuf = (WAVE_16BS*)WaveHdrOut[CurBuf].lpData;
-				
+
 				if (WaveHdrOut[CurBuf].dwUser & 0x01)
 					BlocksPlayed ++;
 				else
 					WaveHdrOut[CurBuf].dwUser |= 0x01;
-				
+
 				WrtSmpls = FillBuffer(TempBuf, SMPL_P_BUFFER);
-				
+
 				WaveHdrOut[CurBuf].dwBufferLength = WrtSmpls * SAMPLESIZE;
 				waveOutWrite(hWaveOut, &WaveHdrOut[CurBuf], sizeof(WAVEHDR));
 				if (SoundLog && hFile != NULL)
 					SaveFile(WrtSmpls, TempBuf);
-				
+
 				DidBuffer = true;
 				BlocksSent ++;
 				BufCheck();
@@ -524,7 +527,7 @@ static DWORD WINAPI WaveOutThread(void* Arg)
 		}
 		Sleep(1);
 	}
-	
+
 	hWaveOutThread = NULL;
 	return 0x00000000;
 }
@@ -532,7 +535,7 @@ static DWORD WINAPI WaveOutThread(void* Arg)
 static void BufCheck(void)
 {
 	UINT16 CurBuf;
-	
+
 	for (CurBuf = 0x00; CurBuf < AUDIOBUFFERU; CurBuf ++)
 	{
 		if (WaveHdrOut[CurBuf].dwFlags & WHDR_DONE)
@@ -544,7 +547,7 @@ static void BufCheck(void)
 			}
 		}
 	}
-	
+
 	return;
 }
 
@@ -556,15 +559,15 @@ void WaveOutLinuxCallBack(void)
 	UINT16 CurBuf;
 	WAVE_16BS* TempBuf;
 	UINT32 WrtSmpls;
-	
+
 	if (! WaveOutOpen)
 		return;	// Device not opened
-	
+
 	CurBuf = BlocksSent % AUDIOBUFFERU;
 	TempBuf = (WAVE_16BS*)BufferOut[CurBuf];
-	
+
 	WrtSmpls = FillBuffer(TempBuf, SMPL_P_BUFFER);
-	
+
 #ifndef USE_LIBAO
 	RetVal = write(hWaveOut, TempBuf, WrtSmpls * SAMPLESIZE);
 #else
@@ -574,7 +577,7 @@ void WaveOutLinuxCallBack(void)
 		SaveFile(WrtSmpls, TempBuf);
 	BlocksSent ++;
 	BlocksPlayed ++;
-	
+
 	return;
 }
 

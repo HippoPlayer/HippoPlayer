@@ -144,14 +144,14 @@ bool OpenOtherFile(const char* FileName)
 	UINT16 FileVer;
 	const char* TempStr;
 	DRO_VER_HEADER_1 DRO_V1;
-	
+
 	FileSize = GetGZFileLength(FileName);
-	
+
 	FileMode = 0x00;
 	hFile = gzopen(FileName, "rb");
 	if (hFile == NULL)
 		return false;
-	
+
 	gzseek(hFile, 0x00, SEEK_SET);
 	gzgetLE32(hFile, &fccHeader);
 	switch(fccHeader)
@@ -175,7 +175,7 @@ bool OpenOtherFile(const char* FileName)
 	}
 	if (FileMode == 0xFF)
 		goto OpenErr;
-	
+
 	VGMTag.strTrackNameE = L"";
 	VGMTag.strTrackNameJ = L"";
 	VGMTag.strGameNameE = L"";
@@ -187,7 +187,7 @@ bool OpenOtherFile(const char* FileName)
 	VGMTag.strReleaseDate = L"";
 	VGMTag.strCreator = L"";
 	VGMTag.strNotes = L"";
-	
+
 	switch(FileMode)
 	{
 	case 0x00:	// VGM File
@@ -199,9 +199,9 @@ bool OpenOtherFile(const char* FileName)
 		VGMTag.strSystemNameE = L"PC / MS-DOS";
 		break;
 	}
-	
+
 	VGMDataLen = FileSize;
-	
+
 	switch(FileMode)
 	{
 	case 0x00:	// VGM File
@@ -214,7 +214,7 @@ bool OpenOtherFile(const char* FileName)
 			goto OpenErr;
 		gzseek(hFile, 0x00, SEEK_SET);
 		gzread(hFile, VGMData, VGMDataLen);
-		
+
 #ifdef VGM_LITTLE_ENDIAN
 		memcpy(&CMFHead, &VGMData[0x00], sizeof(CMF_HEADER));
 #else
@@ -231,14 +231,14 @@ bool OpenOtherFile(const char* FileName)
 		CMFHead.shtInstrumentCount = ReadLE16(&VGMData[0x24]);
 		CMFHead.shtTempo = ReadLE16(&VGMData[0x26]);
 #endif
-		
+
 		if (CMFHead.shtVersion == 0x0100)
 		{
 			CMFHead.shtInstrumentCount &= 0x00FF;
 			CMFHead.shtTempo = (UINT16)(60.0 *
 								CMFHead.shtTickspQuarter / CMFHead.shtTickspSecond + 0.5);
 		}
-		
+
 		if (CMFHead.shtOffsetTitle)
 		{
 			TempStr = (char*)&VGMData[CMFHead.shtOffsetTitle];
@@ -263,12 +263,12 @@ bool OpenOtherFile(const char* FileName)
 			VGMTag.strNotes = (wchar_t*)malloc(TempLng * sizeof(wchar_t));
 			mbstowcs(VGMTag.strNotes, TempStr, TempLng);
 		}
-		
+
 		CMFInsCount = CMFHead.shtInstrumentCount;
 		TempLng = CMFInsCount * sizeof(CMF_INSTRUMENT);
 		CMFIns = (CMF_INSTRUMENT*)malloc(TempLng);
 		memcpy(CMFIns, &VGMData[CMFHead.shtOffsetInsData], TempLng);
-		
+
 		memset(&VGMHead, 0x00, sizeof(VGM_HEADER));
 		VGMHead.lngEOFOffset = VGMDataLen;
 		VGMHead.lngVersion = CMFHead.shtVersion;
@@ -276,7 +276,7 @@ bool OpenOtherFile(const char* FileName)
 		VGMSampleRate = CMFHead.shtTickspSecond;
 		VGMHead.lngTotalSamples = 0;
 		VGMHead.lngHzYM3812 = 3579545 | 0x40000000;
-		
+
 		break;
 	case 0x02:	// DosBox RAW OPL
 		// Read Data
@@ -285,11 +285,11 @@ bool OpenOtherFile(const char* FileName)
 			goto OpenErr;
 		gzseek(hFile, 0x00, SEEK_SET);
 		VGMDataLen = gzread(hFile, VGMData, VGMDataLen);
-		
+
 		VGMTag.strGameNameE[0x00] = 'D';
 		VGMTag.strGameNameE[0x01] = 'R';
 		VGMTag.strGameNameE[0x02] = 'O';
-		
+
 		memset(&VGMHead, 0x00, sizeof(VGM_HEADER));
 		CurPos = 0x00;
 #ifdef VGM_LITTLE_ENDIAN
@@ -300,7 +300,7 @@ bool OpenOtherFile(const char* FileName)
 		DROHead.iVersionMinor = ReadLE16(	&VGMData[CurPos + 0x0A]);
 #endif
 		CurPos += sizeof(DRO_HEADER);
-		
+
 		memcpy(&TempLng, &VGMData[0x08], sizeof(UINT32));
 		if (TempLng & 0xFF00FF00)
 		{
@@ -325,7 +325,7 @@ bool OpenOtherFile(const char* FileName)
 		VGMHead.lngVersion = (DROHead.iVersionMajor << 8) |
 							((DROHead.iVersionMinor & 0xFF) << 0);
 		VGMSampleRate = 1000;
-		
+
 		if (DROHead.iVersionMajor > 2)
 			DROHead.iVersionMajor = 2;
 		switch(DROHead.iVersionMajor)
@@ -347,7 +347,7 @@ bool OpenOtherFile(const char* FileName)
 				CurPos += 0x0C;
 				break;
 			}
-			
+
 			DROInf.iLengthPairs = DRO_V1.iLengthBytes >> 1;
 			DROInf.iLengthMS = DRO_V1.iLengthMS;
 			switch(DRO_V1.iHardwareType)
@@ -367,7 +367,7 @@ bool OpenOtherFile(const char* FileName)
 			DROInf.iShortDelayCode = 0x00;
 			DROInf.iLongDelayCode = 0x01;
 			DROInf.iCodemapLength = 0x00;
-			
+
 			break;
 		case 2:	// Version 2 (DosBox Version 0.73)
 			// sizeof(DRO_VER_HEADER_2) returns 0x10, but the exact size is 0x0E
@@ -381,10 +381,10 @@ bool OpenOtherFile(const char* FileName)
 			DROInf.iLongDelayCode =				 VGMData[CurPos + 0x0C];
 			DROInf.iCodemapLength =				 VGMData[CurPos + 0x0D];
 			CurPos += 0x0E;
-			
+
 			break;
 		}
-		
+
 		if (DROInf.iCodemapLength)
 		{
 			DROCodemap = (UINT8*)malloc(DROInf.iCodemapLength * sizeof(UINT8));
@@ -395,7 +395,7 @@ bool OpenOtherFile(const char* FileName)
 		{
 			DROCodemap = NULL;
 		}
-		
+
 		VGMHead.lngDataOffset = CurPos;
 		VGMHead.lngTotalSamples = DROInf.iLengthMS;
 		switch(DROInf.iHardwareType)
@@ -413,10 +413,10 @@ bool OpenOtherFile(const char* FileName)
 			VGMHead.lngHzYM3812 = 3579545 | 0x40000000;
 			break;
 		}
-		
+
 		break;
 	}
-	
+
 	gzclose(hFile);
 	return true;
 
@@ -454,7 +454,7 @@ INLINE int gzgetLE32(gzFile hFile, UINT32* RetValue)
 #else
 	int RetVal;
 	UINT8 Data[0x04];
-	
+
 	RetVal = gzread(hFile, Data, 0x04);
 	*RetValue =	(Data[0x03] << 24) | (Data[0x02] << 16) |
 				(Data[0x01] <<  8) | (Data[0x00] <<  0);
@@ -466,14 +466,14 @@ static UINT32 GetMIDIDelay(UINT32* DelayLen)
 {
 	UINT32 CurPos;
 	UINT32 DelayVal;
-	
+
 	CurPos = VGMPos;
 	DelayVal = 0x00;
 	do
 	{
 		DelayVal = (DelayVal << 7) | (VGMData[CurPos] & 0x7F);
 	} while(VGMData[CurPos ++] & 0x80);
-	
+
 	if (DelayLen != NULL)
 		*DelayLen = CurPos - VGMPos;
 	return DelayVal;
@@ -485,7 +485,7 @@ static UINT16 MIDINote2FNum(UINT8 Note, INT8 Pitch)
 	double FreqVal;
 	INT8 BlockVal;
 	UINT16 KeyVal;
-	
+
 	FreqVal = 440.0 * pow(2, (Note - 69 + Pitch / 256.0) / 12.0);
 	BlockVal = (Note / 12) - 1;
 	if (BlockVal < 0x00)
@@ -493,7 +493,7 @@ static UINT16 MIDINote2FNum(UINT8 Note, INT8 Pitch)
 	else if (BlockVal > 0x07)
 		BlockVal = 0x07;
 	KeyVal = (UINT16)(FreqVal * pow(2, 20 - BlockVal) / CHIP_RATE + 0.5);
-	
+
 	return (BlockVal << 10) | KeyVal;	// << (8+2)
 }
 
@@ -509,14 +509,14 @@ static void SendMIDIVolume(UINT8 ChipID, UINT8 Channel, UINT8 Command,
 	UINT8 OpMask;
 	INT8 OpVol;
 	INT8 NoteVol;
-	
+
 	RhythmOn = (Channel >> 7) & 0x01;
 	Channel &= 0x7F;
-	
+
 	// Refresh Total Level (Volume)
 	TempIns = CMFIns + ChnIns;
 	OpBase = (Channel / 0x03) * 0x08 + (Channel % 0x03);
-	
+
 	if (! RhythmOn)
 	{
 		TempLng = 0x01;
@@ -549,7 +549,7 @@ static void SendMIDIVolume(UINT8 ChipID, UINT8 Channel, UINT8 Command,
 		TempLng = OpMask;
 		OpMask *= 0x03;
 	}
-	
+
 	// Verified with PLAY.EXE
 	OpVol = (Volume + 0x04) >> 3;
 	OpVol = 0x10 - (OpVol << 1);
@@ -558,10 +558,10 @@ static void SendMIDIVolume(UINT8 ChipID, UINT8 Channel, UINT8 Command,
 	NoteVol = (TempIns->ScaleLevel[TempLng] & 0x3F) + OpVol;
 	if (NoteVol < 0x00)
 		NoteVol = 0x00;
-	
+
 	TempByt = NoteVol | (TempIns->ScaleLevel[TempLng] & 0xC0);
 	chip_reg_write(0x09, ChipID, 0x00, 0x40 | (OpBase + OpMask), TempByt);
-	
+
 	return;
 }
 
@@ -585,12 +585,12 @@ void InterpretOther(UINT32 SampleCount)
 	bool RhythmOn;
 	bool NoteOn;
 	UINT8 OpMask;
-	
+
 	if (VGMEnd)
 		return;
 	if (PausePlay && ! ForceVGMExec)
 		return;
-	
+
 	switch(FileMode)
 	{
 	case 0x01:	// CMF File Mode
@@ -599,7 +599,7 @@ void InterpretOther(UINT32 SampleCount)
 			memset(ChnIns, 0xFF, 0x10);
 			memset(ChnNote, 0xFF, 0x20);
 			memset(ChnPitch, 0x00, 0x10);
-			
+
 			TempLng = VGMPos;
 			SmplPlayed = VGMSmplPos;
 			VGMPos = VGMHead.lngDataOffset;
@@ -608,14 +608,14 @@ void InterpretOther(UINT32 SampleCount)
 			{
 				VGMSmplPos += GetMIDIDelay(&DataLen);
 				VGMPos += DataLen;
-				
+
 				Command = VGMData[VGMPos];
 				if (Command & 0x80)
 					VGMPos ++;
 				else
 					Command = LastCmd;
 				Channel = Command & 0x0F;
-				
+
 				switch(Command & 0xF0)
 				{
 				case 0xF0:	// End Of File
@@ -650,11 +650,11 @@ void InterpretOther(UINT32 SampleCount)
 				if (Command < 0xF0)
 					LastCmd = Command;
 			}
-			
+
 			VGMPos = TempLng;
 			VGMSmplPos = SmplPlayed;
 		}
-		
+
 		SmplPlayed = SamplePlayback2VGM(VGMSmplPlayed + SampleCount);
 		while(true)
 		{
@@ -663,14 +663,14 @@ void InterpretOther(UINT32 SampleCount)
 				break;
 			VGMSmplPos += TempLng;
 			VGMPos += DataLen;
-			
+
 			Command = VGMData[VGMPos];
 			if (Command & 0x80)
 				VGMPos ++;
 			else
 				Command = LastCmd;
 			Channel = Command & 0x0F;
-			
+
 			if (DrumReg[0x00] & 0x20)
 			{
 				if (Channel < 0x0B)
@@ -696,7 +696,7 @@ void InterpretOther(UINT32 SampleCount)
 				Channel = Channel % 0x09;
 			}
 			CurChip = 0x00;
-			
+
 			RhythmOn = (Channel >= 0x06) && (DrumReg[CurChip] & 0x20);
 			switch(Command & 0xF0)
 			{
@@ -714,7 +714,7 @@ void InterpretOther(UINT32 SampleCount)
 							VGMSmplPlayed -= SampleVGM2Playback(VGMHead.lngLoopSamples);
 							SmplPlayed = SamplePlayback2VGM(VGMSmplPlayed + SampleCount);
 							VGMCurLoop ++;
-							
+
 							if (CMFMaxLoop && VGMCurLoop >= CMFMaxLoop)
 								FadePlay = true;
 							if (FadePlay && ! FadeTime)
@@ -739,10 +739,10 @@ void InterpretOther(UINT32 SampleCount)
 					NoteOn = false;
 				else
 					NoteOn = VGMData[VGMPos + 0x01] ? true : false;
-				
+
 				if (! RhythmOn)	// Set "Key On"
 					TempSht |= (UINT8)NoteOn << 13;	// << (8+5)
-				
+
 				if (NoteOn)
 				{
 					for (CurChip = 0x00; CurChip < 0x02; CurChip ++)
@@ -772,7 +772,7 @@ void InterpretOther(UINT32 SampleCount)
 				}
 				if (CurChip >= 0x02)
 					CurChip = 0xFF;
-				
+
 				if (CurChip != 0xFF)
 				{
 					if (NoteOn)
@@ -786,7 +786,7 @@ void InterpretOther(UINT32 SampleCount)
 						chip_reg_write(0x09, CurChip, 0x00, 0xA0 | Channel, TempSht & 0xFF);
 						chip_reg_write(0x09, CurChip, 0x00, 0xB0 | Channel, TempSht >> 8);
 					}
-					
+
 					if (RhythmOn)
 					{
 						TempByt = 0x0F - (Command & 0x0F);
@@ -837,7 +837,7 @@ void InterpretOther(UINT32 SampleCount)
 						{
 							TempSht = MIDINote2FNum(TempByt, ChnPitch[Channel]);
 							TempSht |= 0x01 << 13;	// << (8+5)
-							
+
 							chip_reg_write(0x09, CurChip, 0x00, 0xA0 | Channel, TempSht & 0xFF);
 							chip_reg_write(0x09, CurChip, 0x00, 0xB0 | Channel, TempSht >> 8);
 						}
@@ -853,10 +853,10 @@ void InterpretOther(UINT32 SampleCount)
 					//break;
 					TempByt %= CMFInsCount;
 				}
-				
+
 				TempIns = CMFIns + TempByt;
 				ChnIns[Command & 0x0F] = TempByt;
-				
+
 				OpBase = (Channel / 0x03) * 0x08 + (Channel % 0x03);
 				if (! RhythmOn)
 				{
@@ -888,7 +888,7 @@ void InterpretOther(UINT32 SampleCount)
 						break;
 					}
 				}
-				
+
 				for (CurChip = 0x00; CurChip < 0x02; CurChip ++)
 				{
 					TempByt = 0x00;
@@ -922,10 +922,10 @@ void InterpretOther(UINT32 SampleCount)
 										0xE0 | (OpBase + 0x03), TempIns->WaveSelect[TempByt]);
 						TempByt ++;
 					}
-					
+
 					chip_reg_write(0x09, CurChip, 0x00, 0xC0 | Channel, TempIns->FeedbConnect);
 				}
-				
+
 				VGMPos += 0x01;
 				break;
 			case 0xA0:
@@ -938,7 +938,7 @@ void InterpretOther(UINT32 SampleCount)
 			}
 			if (Command < 0xF0)
 				LastCmd = Command;
-			
+
 			if (VGMEnd)
 				break;
 		}
@@ -988,12 +988,12 @@ void InterpretOther(UINT32 SampleCount)
 			NoteOn = true && (DROHead.iVersionMajor < 2);
 			OpBase = 0x00;
 		}
-		
+
 		SmplPlayed = SamplePlayback2VGM(VGMSmplPlayed + SampleCount);
 		while(VGMSmplPos <= SmplPlayed)
 		{
 			Command = VGMData[VGMPos + 0x00];
-			
+
 			if (Command == DROInf.iShortDelayCode)
 				Command = 0x00;
 			else if (Command == DROInf.iLongDelayCode)
@@ -1012,7 +1012,7 @@ void InterpretOther(UINT32 SampleCount)
 					break;
 				}
 			}
-			
+
 			// DRO v0/v1 only: "Delay-Command" fix
 			if (NoteOn)	// "Delay"-Command during init-phase?
 			{
@@ -1078,8 +1078,8 @@ DRO_CommandSwitch:
 					Command &= 0x7F;
 					if (Command < DROInf.iCodemapLength)
 						Command = DROCodemap[Command];
-					else
-						Command = Command;
+					//else
+					//	Command = Command;
 					switch(DROInf.iHardwareType)
 					{
 					case 0x00:
@@ -1119,7 +1119,7 @@ DRO_CommandSwitch:
 				VGMPos += 0x02;
 				break;
 			}
-			
+
 			if (VGMPos >= VGMDataLen)
 			{
 				if (VGMHead.lngTotalSamples != (UINT32)VGMSmplPos)
@@ -1136,7 +1136,7 @@ DRO_CommandSwitch:
 		}
 		break;
 	}
-	
+
 	return;
 }
 
