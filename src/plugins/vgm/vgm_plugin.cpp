@@ -5,13 +5,18 @@
 //#include <unistd.h>
 #include <math.h>
 
+
+
+#include <codecvt>
+#include <locale>
+
+extern "C"
+{
+
 #include "VGMPlay/chips/mamedef.h"
 #include "stdbool.h"
 #include "VGMPlay/VGMPlay.h"
 #include "VGMPlay/VGMPlay_Intf.h"
-
-#define FREQ 48000
-#define FRAME_SIZE ((FREQ * 2) / 50)
 
 extern VGM_HEADER VGMHead;
 extern UINT32 SampleRate;
@@ -19,10 +24,18 @@ extern bool EndPlay;
 
 extern UINT32 VGMMaxLoop;
 extern UINT32 FadeTime;
+extern GD3_TAG VGMTag;
+
+}
+
+#define FREQ 48000
+#define FRAME_SIZE ((FREQ * 2) / 50)
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct VgmReplayerData {
+	char title[4096];
 	int has_data;
 };
 
@@ -36,7 +49,7 @@ static const char* vgm_info(void* userData) {
 
 static const char* vgm_track_info(void* userData) {
 	struct VgmReplayerData* user_data = (struct VgmReplayerData*)userData;
-	return "";
+	return user_data->title;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -80,6 +93,12 @@ static int vgm_open(void* userData, const char* buffer) {
 	}
 
 	PlayVGM();
+
+	if (VGMTag.strTrackNameE) {
+	    std::wstring_convert<std::codecvt_utf8<wchar_t>> utf8_conv;
+	    std::string utf8_name = utf8_conv.to_bytes(VGMTag.strTrackNameE);
+        strcpy(replayerData->title, utf8_name.data());
+	}
 
 	replayerData->has_data = 1;
 
@@ -154,7 +173,7 @@ static HippoPlaybackPlugin g_vgm_plugin = {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-HIPPO_EXPORT HippoPlaybackPlugin* getPlugin() {
+extern "C" HIPPO_EXPORT HippoPlaybackPlugin* getPlugin() {
 	return &g_vgm_plugin;
 }
 

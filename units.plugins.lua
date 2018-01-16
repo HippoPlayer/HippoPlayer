@@ -202,7 +202,7 @@ SharedLibrary {
 		"VGMPlay/Stream.c",
 		"VGMPlay/ChipMapper.c",
 		"VGMPlay/vgm2wav.c",
-		"vgm_plugin.c",
+		"vgm_plugin.cpp",
 	},
 
     Depends = { "zlib" },
