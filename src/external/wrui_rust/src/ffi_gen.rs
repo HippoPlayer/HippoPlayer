@@ -453,6 +453,7 @@ pub struct PU {
     pub create_application: extern "C" fn(priv_data: *const PUBase) -> PUApplication,
     pub create_v_box_layout: extern "C" fn(priv_data: *const PUBase) -> PUVBoxLayout,
     pub create_h_box_layout: extern "C" fn(priv_data: *const PUBase) -> PUHBoxLayout,
+    pub open_files_dialog: extern "C" fn(self_c: *const PUBase) -> PUArray,
     pub privd: *const PUBase,
 }
 

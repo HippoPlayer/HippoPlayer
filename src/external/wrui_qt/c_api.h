@@ -390,22 +390,23 @@ struct PUHBoxLayout {
 };
 
 typedef struct PU { 
-    struct PUWidget (*create_widget)(PUBase* self);
-    struct PUPushButton (*create_push_button)(PUBase* self);
-    struct PUPainter (*create_painter)(PUBase* self);
-    struct PUListWidgetItem (*create_list_widget_item)(PUBase* self);
-    struct PUListWidget (*create_list_widget)(PUBase* self);
-    struct PUSlider (*create_slider)(PUBase* self);
-    struct PUMainWindow (*create_main_window)(PUBase* self);
-    struct PUFramelessWindow (*create_frameless_window)(PUBase* self);
-    struct PUAction (*create_action)(PUBase* self);
-    struct PUTimer (*create_timer)(PUBase* self);
-    struct PUFont (*create_font)(PUBase* self);
-    struct PUMenu (*create_menu)(PUBase* self);
-    struct PUMenuBar (*create_menu_bar)(PUBase* self);
-    struct PUApplication (*create_application)(PUBase* self);
-    struct PUVBoxLayout (*create_v_box_layout)(PUBase* self);
-    struct PUHBoxLayout (*create_h_box_layout)(PUBase* self);
+    struct PUWidget (*create_widget)(struct PUBase* self);
+    struct PUPushButton (*create_push_button)(struct PUBase* self);
+    struct PUPainter (*create_painter)(struct PUBase* self);
+    struct PUListWidgetItem (*create_list_widget_item)(struct PUBase* self);
+    struct PUListWidget (*create_list_widget)(struct PUBase* self);
+    struct PUSlider (*create_slider)(struct PUBase* self);
+    struct PUMainWindow (*create_main_window)(struct PUBase* self);
+    struct PUFramelessWindow (*create_frameless_window)(struct PUBase* self);
+    struct PUAction (*create_action)(struct PUBase* self);
+    struct PUTimer (*create_timer)(struct PUBase* self);
+    struct PUFont (*create_font)(struct PUBase* self);
+    struct PUMenu (*create_menu)(struct PUBase* self);
+    struct PUMenuBar (*create_menu_bar)(struct PUBase* self);
+    struct PUApplication (*create_application)(struct PUBase* self);
+    struct PUVBoxLayout (*create_v_box_layout)(struct PUBase* self);
+    struct PUHBoxLayout (*create_h_box_layout)(struct PUBase* self);
+    struct PUArray (*open_files_dialog)(struct PUBase* self_c);
     struct PUBase* priv_data;
 } PU;
 
