@@ -37,6 +37,7 @@ extern GD3_TAG VGMTag;
 struct VgmReplayerData {
 	char title[4096];
 	int has_data;
+	int length;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -100,6 +101,7 @@ static int vgm_open(void* userData, const char* buffer) {
         strcpy(replayerData->title, utf8_name.data());
 	}
 
+    replayerData->length = VGMHead.lngTotalSamples / (44100 / 2);
 	replayerData->has_data = 1;
 
 	return 0;
@@ -145,7 +147,8 @@ static int vgm_seek(void* userData, int ms) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int vgm_length(void* userData) {
-	return -10;
+	struct VgmReplayerData* replayerData = (struct VgmReplayerData*)userData;
+	return replayerData->length;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
