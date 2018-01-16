@@ -218,6 +218,7 @@ fn main() {
 
     app.plugins.add_decoder_plugin("OpenMPT");
     app.plugins.add_decoder_plugin("HivelyPlugin");
+    app.plugins.add_decoder_plugin("vgm");
     //app.plugins.add_decoder_plugin("SidPlugin");
 
     app.run();

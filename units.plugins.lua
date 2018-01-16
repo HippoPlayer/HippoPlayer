@@ -96,7 +96,8 @@ SharedLibrary {
 
 -----------------------------------------------------------------------------------------------------------------------
 
-Program {
+-- Program {
+SharedLibrary {
 	Name = "vgm",
 
 	SourceDir = "src/plugins/vgm",
@@ -201,6 +202,7 @@ Program {
 		"VGMPlay/Stream.c",
 		"VGMPlay/ChipMapper.c",
 		"VGMPlay/vgm2wav.c",
+		"vgm_plugin.c",
 	},
 
     Depends = { "zlib" },
