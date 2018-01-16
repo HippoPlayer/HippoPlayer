@@ -102,10 +102,17 @@ impl PlaylistView {
     }
 
     pub fn select_song(&mut self, item: &ListWidgetItem, music_info: &MusicInfo) {
-        item.set_text(&music_info.title);
+        if music_info.title != "" {
+            item.set_text(&music_info.title);
+        }
 
         if let Some(lookup) = self.playlist_data.get_mut(&item.get_string_data()) {
-            lookup.title = music_info.title.clone();
+            if music_info.title == "" {
+                lookup.title = music_info.title.clone();
+            } else {
+                lookup.title = item.text();
+            }
+
             lookup.duration = music_info.duration as f32;
         }
     }
