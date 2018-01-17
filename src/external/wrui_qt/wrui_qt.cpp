@@ -323,7 +323,7 @@ static void set_push_button_released_event(void* object, void* user_data, void (
 
 static void push_button_set_text(struct PUBase* self_c, const char* text) { 
     WRPushButton* qt_data = (WRPushButton*)self_c;
-    qt_data->setText(QString::fromLatin1(text));
+    qt_data->setText(QString::fromUtf8(text));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -358,7 +358,7 @@ static void painter_set_font(struct PUBase* self_c, struct PUBase* font) {
 
 static void painter_draw_text(struct PUBase* self_c, int x, int y, const char* text) { 
     QPainter* qt_data = (QPainter*)self_c;
-    qt_data->drawText(x, y, QString::fromLatin1(text));
+    qt_data->drawText(x, y, QString::fromUtf8(text));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -374,7 +374,7 @@ static void painter_draw_line(struct PUBase* self_c, int x1, int y1, int x2, int
 
 static void list_widget_item_set_text(struct PUBase* self_c, const char* text) { 
     QListWidgetItem* qt_data = (QListWidgetItem*)self_c;
-    qt_data->setText(QString::fromLatin1(text));
+    qt_data->setText(QString::fromUtf8(text));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -727,7 +727,7 @@ static void frameless_window_update(struct PUBase* self_c) {
 
 static void frameless_window_set_window_title(struct PUBase* self_c, const char* title) { 
     WRFramelessWindow* qt_data = (WRFramelessWindow*)self_c;
-    qt_data->setWindowTitle(QString::fromLatin1(title));
+    qt_data->setWindowTitle(QString::fromUtf8(title));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -749,7 +749,7 @@ static bool action_is_enabled(struct PUBase* self_c) {
 
 static void action_set_text(struct PUBase* self_c, const char* text) { 
     QAction* qt_data = (QAction*)self_c;
-    qt_data->setText(QString::fromLatin1(text));
+    qt_data->setText(QString::fromUtf8(text));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -852,7 +852,7 @@ static void timer_start(struct PUBase* self_c, int time) {
 
 static void font_set_family(struct PUBase* self_c, const char* family) { 
     QFont* qt_data = (QFont*)self_c;
-    qt_data->setFamily(QString::fromLatin1(family));
+    qt_data->setFamily(QString::fromUtf8(family));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -919,7 +919,7 @@ static void menu_add_action(struct PUBase* self_c, struct PUBase* action) {
 
 static void menu_set_title(struct PUBase* self_c, const char* title) { 
     WRMenu* qt_data = (WRMenu*)self_c;
-    qt_data->setTitle(QString::fromLatin1(title));
+    qt_data->setTitle(QString::fromUtf8(title));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -977,7 +977,7 @@ static void menu_bar_add_menu(struct PUBase* self_c, struct PUBase* menu) {
 
 static void application_set_style(struct PUBase* self_c, const char* style) { 
     QApplication* qt_data = (QApplication*)self_c;
-    qt_data->setStyle(QString::fromLatin1(style));
+    qt_data->setStyle(QString::fromUtf8(style));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
