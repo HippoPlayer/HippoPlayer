@@ -16,7 +16,7 @@ The aim I have with HippoPlayer is "a modern music player for your oldsk00l need
 
 The project has now been started up again and it's now useable but still very limited. The screenshot include here is a just for **testing**. This is **not** the final design of the UI (but it's nicer to have something useable instead of cmdline only :) A redesign of the UI is in the works.
 
-<screenshot here>
+![Screenshot](/bin/hippo_screenshot.png)
 
 There are many plans for HippoPlayer moving forward:
 
