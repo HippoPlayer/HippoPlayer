@@ -30,10 +30,14 @@ end
 StaticLibrary {
 	Name = "zlib",
 
+	Defines = {
+		{ "WINDOWS"; Config = "win64-*-*" },
+	},
+
 	Env = {
 		CCOPTS = {
 			{ "-Wno-implicit-function-declaration", "-Wno-shift-negative-value"; Config = "mac*-*-*" },
-			{ "/wd4996", "/wd4131"; Config = "win32-*" },
+			{ "/wd4996", "/wd4131"; Config = "win64-*-*" },
 		}
 	},
 
@@ -203,6 +207,10 @@ SharedLibrary {
 		"VGMPlay/ChipMapper.c",
 		"VGMPlay/vgm2wav.c",
 		"vgm_plugin.cpp",
+	},
+
+	Libs = {
+		{ "Winmm.lib"; Config = "win64-*-*" },
 	},
 
     Depends = { "zlib" },
