@@ -110,13 +110,13 @@ impl HippoAudio {
         self.audio_sink.stop();
     }
 
-    pub fn pause(&mut self) {
-        self.audio_sink.pause();
-    }
+    //pub fn pause(&mut self) {
+    //    self.audio_sink.pause();
+    //}
 
-    pub fn play(&mut self) {
-        self.audio_sink.play();
-    }
+    //pub fn play(&mut self) {
+    //   self.audio_sink.play();
+    //}
 
     pub fn start_with_file(&mut self, plugin: &DecoderPlugin, filename: &str) -> MusicInfo {
         // TODO: Do error checking
