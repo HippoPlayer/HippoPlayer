@@ -227,5 +227,9 @@ fn main() {
     //app.plugins.add_decoder_plugin("SidPlugin");
 
     app.run();
+
+    // we exit directly here because of Qt and the way its static destructors works
+    // causes lots of issues because we have the Qt code in a separate dll
+    std::process::exit(0);
 }
 
