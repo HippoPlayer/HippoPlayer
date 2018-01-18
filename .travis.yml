@@ -15,6 +15,9 @@ matrix:
       apt:
         sources:
           - ubuntu-toolchain-r-test
+        packages:
+          - g++-6
+    env: COMPILER=g++-6
     script:
         - sudo add-apt-repository ppa:beineri/opt-qt571-trusty --yes
         - sudo apt-get update
