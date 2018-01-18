@@ -3,6 +3,7 @@ __common: &common
   rust: stable
   cache: cargo
 
+sudo: required
 os:
   - linux
 
