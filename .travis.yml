@@ -6,6 +6,7 @@ __common: &common
 sudo: required
 os:
   - linux
+  - osx
 
 matrix:
   include:
@@ -20,4 +21,5 @@ matrix:
           - g++-6
     env: COMPILER=g++-6
     script:
-        scripts/travis_ci_linux_build.sh
+        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; scripts/travis_ci_linux_build.sh ; fi
+        if [[ "$TRAVIS_OS_NAME" == "osx" ]]; scripts/travis_ci_mac.sh ; fi
