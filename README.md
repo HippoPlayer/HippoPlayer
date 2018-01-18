@@ -47,7 +47,33 @@ Run `scripts\win64_build_debug.cmd` and run the resulting executable in `t2-outp
 
 ### Linux
 
-Linux instructions coming soon.
+The following packages needs to be installed : qt57base mesa-common-dev libasound2-dev alsa-utils alsa-oss
+Using apt-get the do
+
+```
+sudo apt-get install qt57base mesa-common-dev libasound2-dev alsa-utils alsa-oss
+```
+
+Then these steps to install Tundra:
+
+```
+git clone --recursive https://github.com/deplinenoise/tundra.git
+cd tundra
+make
+sudo make install
+```
+
+Now enter the HippoPlayer directory and do
+
+```
+tundra2 -v linux-gcc-debug
+```
+
+Then run HippoPlayer with
+
+```
+t2-ouput/linux-gcc-debug-default/hippo_player
+```
 
 ## Acknowledgement
 
