@@ -78,10 +78,25 @@ impl PlayerView {
         //let display = self.wrui.create_widget();
         let buttons = self.wrui.create_widget();
 
-        self.prev_button.set_text("Prev");
-        self.stop_button.set_text("Stop");
-        self.play_button.set_text("Play");
-        self.next_button.set_text("Next");
+        let prev_icon = self.wrui.create_icon();
+        let stop_icon = self.wrui.create_icon();
+        let play_icon = self.wrui.create_icon();
+        let next_icon = self.wrui.create_icon();
+
+        prev_icon.add_file("bin/player/buttons/hip_button_previous.svg");
+        stop_icon.add_file("bin/player/buttons/hip_button_stop.svg");
+        play_icon.add_file("bin/player/buttons/hip_button_play.svg");
+        next_icon.add_file("bin/player/buttons/hip_button_next.svg");
+
+        //self.prev_button.set_text("Prev");
+        //self.stop_button.set_text("Stop");
+        //self.play_button.set_text("Play");
+        //self.next_button.set_text("Next");
+
+        self.prev_button.set_icon(&prev_icon);
+        self.stop_button.set_icon(&stop_icon);
+        self.play_button.set_icon(&play_icon);
+        self.next_button.set_icon(&next_icon);
 
         self.player_display.set_fixed_height(100);
         self.player_display.set_fixed_width(500);

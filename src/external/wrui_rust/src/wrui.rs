@@ -76,6 +76,11 @@ pub struct Timer {
 }
 
 #[derive(Clone)]
+pub struct Icon {
+    pub obj: Option<PUIcon>,
+}
+
+#[derive(Clone)]
 pub struct Font {
     pub obj: Option<PUFont>,
 }
@@ -286,6 +291,16 @@ impl PushButton {
             let obj = self.obj.unwrap();
         
             ((*obj.funcs).update)(obj.privd);
+        
+        }
+    }
+
+    pub fn set_icon (&self, icon: &Icon) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).set_icon)(obj.privd, icon.obj.unwrap().privd);
         
         }
     }
@@ -1184,6 +1199,27 @@ impl Timer {
     }
 }
 
+impl Icon {
+    pub fn destroy(&mut self) {
+       unsafe {
+          let obj = self.obj.unwrap();
+          ((*obj.funcs).destroy)(obj.privd);
+          self.obj = None;
+       }
+    }
+
+    pub fn add_file (&self, filename: &str) {
+        let str_in_filename_1 = CString::new(filename).unwrap();
+
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).add_file)(obj.privd, str_in_filename_1.as_ptr());
+        
+        }
+    }
+}
+
 impl Font {
     pub fn destroy(&mut self) {
        unsafe {
@@ -1966,6 +2002,10 @@ impl Ui {
 
     pub fn create_timer(&self) -> Timer {
         Timer { obj: Some(unsafe { ((*self.pu).create_timer)((*self.pu).privd) }) }
+    }
+
+    pub fn create_icon(&self) -> Icon {
+        Icon { obj: Some(unsafe { ((*self.pu).create_icon)((*self.pu).privd) }) }
     }
 
     pub fn create_font(&self) -> Font {

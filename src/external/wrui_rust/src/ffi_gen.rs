@@ -81,6 +81,7 @@ pub struct PUPushButtonFuncs {
                                         callback: extern "C" fn(self_c: *const c_void)),
     pub set_released_event: extern "C" fn(object: *const PUBase, user_data: *const c_void,
                                         callback: extern "C" fn(self_c: *const c_void)),
+    pub set_icon: extern "C" fn(self_c: *const PUBase, icon: *const PUBase),
     pub set_text: extern "C" fn(self_c: *const PUBase, text: *const ::std::os::raw::c_char),
     pub set_flat: extern "C" fn(self_c: *const PUBase, flat: bool),
 }
@@ -288,6 +289,19 @@ pub struct PUTimer {
 }
 
 #[repr(C)]
+pub struct PUIconFuncs {
+    pub destroy: extern "C" fn(self_c: *const PUBase),
+    pub add_file: extern "C" fn(self_c: *const PUBase, filename: *const ::std::os::raw::c_char),
+}
+
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct PUIcon {
+    pub funcs: *const PUIconFuncs,
+    pub privd: *const PUBase,
+}
+
+#[repr(C)]
 pub struct PUFontFuncs {
     pub destroy: extern "C" fn(self_c: *const PUBase),
     pub set_family: extern "C" fn(self_c: *const PUBase, family: *const ::std::os::raw::c_char),
@@ -447,6 +461,7 @@ pub struct PU {
     pub create_frameless_window: extern "C" fn(priv_data: *const PUBase) -> PUFramelessWindow,
     pub create_action: extern "C" fn(priv_data: *const PUBase) -> PUAction,
     pub create_timer: extern "C" fn(priv_data: *const PUBase) -> PUTimer,
+    pub create_icon: extern "C" fn(priv_data: *const PUBase) -> PUIcon,
     pub create_font: extern "C" fn(priv_data: *const PUBase) -> PUFont,
     pub create_menu: extern "C" fn(priv_data: *const PUBase) -> PUMenu,
     pub create_menu_bar: extern "C" fn(priv_data: *const PUBase) -> PUMenuBar,

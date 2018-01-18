@@ -42,6 +42,8 @@ struct PUMimeData;
 struct PUMimeDataFuncs;
 struct PUTimer;
 struct PUTimerFuncs;
+struct PUIcon;
+struct PUIconFuncs;
 struct PUFont;
 struct PUFontFuncs;
 struct PUMenu;
@@ -106,6 +108,7 @@ struct PUPushButtonFuncs {
     void (*update)(struct PUBase* self_c);
     void (*set_pressed_event)(void* object, void* user_data, void (*event)(void* self_c));
     void (*set_released_event)(void* object, void* user_data, void (*event)(void* self_c));
+    void (*set_icon)(struct PUBase* self_c, struct PUBase* icon);
     void (*set_text)(struct PUBase* self_c, const char* text);
     void (*set_flat)(struct PUBase* self_c, bool flat);
 };
@@ -272,6 +275,16 @@ struct PUTimer {
     struct PUBase* priv_data;
 };
 
+struct PUIconFuncs {
+    void (*destroy)(struct PUBase* self_c);
+    void (*add_file)(struct PUBase* self_c, const char* filename);
+};
+
+struct PUIcon {
+    struct PUIconFuncs* funcs;
+    struct PUBase* priv_data;
+};
+
 struct PUFontFuncs {
     void (*destroy)(struct PUBase* self_c);
     void (*set_family)(struct PUBase* self_c, const char* family);
@@ -400,6 +413,7 @@ typedef struct PU {
     struct PUFramelessWindow (*create_frameless_window)(struct PUBase* self);
     struct PUAction (*create_action)(struct PUBase* self);
     struct PUTimer (*create_timer)(struct PUBase* self);
+    struct PUIcon (*create_icon)(struct PUBase* self);
     struct PUFont (*create_font)(struct PUBase* self);
     struct PUMenu (*create_menu)(struct PUBase* self);
     struct PUMenuBar (*create_menu_bar)(struct PUBase* self);
