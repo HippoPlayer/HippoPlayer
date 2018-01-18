@@ -20,5 +20,5 @@ matrix:
     env: COMPILER=g++-6
 
 script:
-    if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then scripts/travis_ci_linux_build.sh ; fi
-    if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then scripts/travis_ci_mac.sh ; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then scripts/travis_ci_linux_build.sh ; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then scripts/travis_ci_mac.sh ; fi
