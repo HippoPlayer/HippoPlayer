@@ -1,7 +1,6 @@
-__common: &common
-  language: rust
-  rust: stable
-  cache: cargo
+language: rust
+rust: stable
+cache: cargo
 
 sudo: required
 os:
@@ -10,8 +9,7 @@ os:
 
 matrix:
   include:
-  - <<: *common
-    os: linux
+  - os: linux
     dist: trusty
     addons:
       apt:
@@ -20,6 +18,7 @@ matrix:
         packages:
           - g++-6
     env: COMPILER=g++-6
-    script:
-        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; scripts/travis_ci_linux_build.sh ; fi
-        if [[ "$TRAVIS_OS_NAME" == "osx" ]]; scripts/travis_ci_mac.sh ; fi
+
+script:
+    if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then scripts/travis_ci_linux_build.sh ; fi
+    if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then scripts/travis_ci_mac.sh ; fi
