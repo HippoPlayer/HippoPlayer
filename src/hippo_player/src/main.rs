@@ -49,6 +49,11 @@ fn get_wrui_path() -> &'static str {
     "t2-output/macosx-clang-debug-default/libwrui_qt.dylib"
 }
 
+#[cfg(target_os="linux")]
+fn get_wrui_path() -> &'static str {
+    "t2-output/macosx-clang-debug-default/libwrui_qt.so"
+}
+
 impl <'a> HippoPlayer<'a> {
     pub fn new(ui: Ui) -> HippoPlayer<'a> {
         HippoPlayer {

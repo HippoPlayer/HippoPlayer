@@ -61,6 +61,11 @@ fn get_plugin_path() -> &'static str {
     "t2-output/macosx-clang-debug-default"
 }
 
+#[cfg(target_os="linux")]
+fn get_plugin_path() -> &'static str {
+    "t2-output/linux-gcc-debug-default"
+}
+
 impl <'a> Plugins<'a> {
     pub fn new() -> Plugins<'a> {
         Plugins {

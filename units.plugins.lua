@@ -89,7 +89,7 @@ SharedLibrary {
 		"src/plugins/openmpt/libopenmpt/libopenmpt/libopenmpt_cxx.cpp",
 		"src/plugins/openmpt/libopenmpt/libopenmpt/libopenmpt_impl.cpp",
 		"src/plugins/openmpt/libopenmpt/libopenmpt/libopenmpt_ext_impl.cpp",
-		"src/plugins/openmpt/OpenMPT.cpp",
+		"src/plugins/openmpt/openmpt.cpp",
 	},
 
 	Libs = {
