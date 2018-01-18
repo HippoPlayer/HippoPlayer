@@ -20,7 +20,7 @@ The project has now been started up again and it's now useable but still very li
 
 There are many plans for HippoPlayer moving forward:
 
-* Very rich support for many formats.
+* Very rich support for many formats. The current format list is availible here https://github.com/emoon/HippoPlayer/issues/13
 * Big focus on visualizing data including (but not limited to): tracker view, hw state for emulated hardware, samples, oscilloscope, piano view and more.
 * A modern UI that is easy to use but still full of features.
 * Deep integration with existing websites that provides content that HippoPlayer can use and/or show as part of playing music such as: Demozoo,SceneSat and Scenemusic. This list will certainly grow with customized integration for many of these.
