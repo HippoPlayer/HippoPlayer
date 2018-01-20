@@ -51,26 +51,11 @@ pub struct Plugins<'a> {
     pub plugin_handler: DynamicReload<'a>,
 }
 
-#[cfg(target_os="windows")]
-fn get_plugin_path() -> &'static str {
-    "t2-output/win64-msvc-debug-default"
-}
-
-#[cfg(target_os="macos")]
-fn get_plugin_path() -> &'static str {
-    "t2-output/macosx-clang-debug-default"
-}
-
-#[cfg(target_os="linux")]
-fn get_plugin_path() -> &'static str {
-    "t2-output/linux-gcc-debug-default"
-}
-
 impl <'a> Plugins<'a> {
     pub fn new() -> Plugins<'a> {
         Plugins {
             decoder_plugins: Vec::new(),
-            plugin_handler: DynamicReload::new(Some(vec![get_plugin_path()]), Some("t2-output"), Search::Default),
+            plugin_handler: DynamicReload::new(Some(vec!["plugins", ::wrui::get_wrui_path()]), None, Search::Default),
         }
     }
 

@@ -27,12 +27,12 @@ fn get_wrui_name() -> &'static str {
 }
 
 #[cfg(all(target_os="macos", not(debug_assertions)))]
-fn get_wrui_path() -> &'static str {
+pub fn get_wrui_path() -> &'static str {
     "t2-output/macosx-clang-release-default"
 }
 
 #[cfg(all(target_os="macos", debug_assertions))]
-fn get_wrui_path() -> &'static str {
+pub fn get_wrui_path() -> &'static str {
     "t2-output/macosx-clang-debug-default"
 }
 
@@ -46,12 +46,12 @@ fn get_wrui_name() -> &'static str {
 }
 
 #[cfg(all(target_os="linux", not(debug_assertions)))]
-fn get_wrui_path() -> &'static str {
+pub fn get_wrui_path() -> &'static str {
     "t2-output/linux-gcc-release-default"
 }
 
 #[cfg(all(target_os="linux", debug_assertions))]
-fn get_wrui_path() -> &'static str {
+pub fn get_wrui_path() -> &'static str {
     "t2-output/linux-gcc-debug-default"
 }
 
@@ -65,12 +65,12 @@ fn get_wrui_name() -> &'static str {
 }
 
 #[cfg(all(target_os="windows", not(debug_assertions)))]
-fn get_wrui_path() -> &'static str {
+pub fn get_wrui_path() -> &'static str {
     "t2-output/win64-msvc-release-default"
 }
 
 #[cfg(all(target_os="windows", debug_assertions))]
-fn get_wrui_path() -> &'static str {
+pub fn get_wrui_path() -> &'static str {
     "t2-output/win64-msvc-debug-default"
 }
 
