@@ -1,4 +1,5 @@
 use dynamic_reload::{DynamicReload, Lib, Symbol, Search, PlatformName};
+use walkdir::{WalkDir, DirEntry};
 use std::os::raw::{c_int, c_void, c_char};
 use std::sync::Arc;
 use std::ffi::CStr;
@@ -25,6 +26,21 @@ pub struct DecoderPlugin {
     pub plugin: Arc<Lib>,
     pub plugin_path: String,
     pub plugin_funcs: CHippoPlaybackPlugin,
+}
+
+#[cfg(target_os="macos")]
+pub fn get_plugin_ext() -> &'static str {
+    "dylib"
+}
+
+#[cfg(target_os="linux")]
+pub fn get_plugin_ext() -> &'static str {
+    "so"
+}
+
+#[cfg(target_os="windows")]
+pub fn get_plugin_ext() -> &'static str {
+    "dll"
 }
 
 impl DecoderPlugin {
@@ -55,7 +71,7 @@ impl <'a> Plugins<'a> {
     pub fn new() -> Plugins<'a> {
         Plugins {
             decoder_plugins: Vec::new(),
-            plugin_handler: DynamicReload::new(Some(vec!["plugins", ::wrui::get_wrui_path()]), None, Search::Default),
+            plugin_handler: DynamicReload::new(Some(vec![".", ::wrui::get_wrui_path()]), None, Search::Default),
         }
     }
 
@@ -73,8 +89,36 @@ impl <'a> Plugins<'a> {
         });
     }
 
+    fn check_file_type(entry: &DirEntry) -> bool {
+        let path = entry.path();
+
+        if path.ends_with(::wrui::get_wrui_name()) {
+            false
+        } else if let Some(ext) = path.extension() {
+            ext == get_plugin_ext()
+        } else {
+            false
+        }
+    }
+
+    fn internal_add_plugins_from_path(&mut self, path: &str) {
+        for entry in WalkDir::new(path).max_depth(1) {
+            if let Ok(t) = entry {
+                if Self::check_file_type(&t) {
+                    self.add_decoder_plugin(t.path().to_str().unwrap());
+                    //println!("{}", t.path().display());
+                }
+            }
+        }
+    }
+
+    pub fn add_plugins_from_path(&mut self) {
+        self.internal_add_plugins_from_path("plugins");
+        self.internal_add_plugins_from_path(::wrui::get_wrui_path());
+    }
+
     pub fn add_decoder_plugin(&mut self, name: &str) {
-        match self.plugin_handler.add_library(name, PlatformName::Yes) {
+        match self.plugin_handler.add_library(name, PlatformName::No) {
             Ok(lib) => self.add_dec_plugin(&lib),
             Err(e) => {
                 println!("Unable to load dynamic lib, err {:?}", e);

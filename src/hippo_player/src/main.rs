@@ -1,4 +1,5 @@
 extern crate rodio;
+extern crate walkdir;
 
 #[macro_use]
 extern crate serde_derive;
@@ -206,10 +207,7 @@ fn main() {
 
     let mut app = HippoPlayer::new(ui);
 
-    app.plugins.add_decoder_plugin("OpenMPT");
-    app.plugins.add_decoder_plugin("HivelyPlugin");
-    app.plugins.add_decoder_plugin("vgm");
-    //app.plugins.add_decoder_plugin("SidPlugin");
+    app.plugins.add_plugins_from_path();
 
     app.run();
 

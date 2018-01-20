@@ -22,7 +22,7 @@ pub struct SharedLibUi {
 //
 
 #[cfg(target_os="macos")]
-fn get_wrui_name() -> &'static str {
+pub fn get_wrui_name() -> &'static str {
     "libwrui_qt.dylib"
 }
 
@@ -41,7 +41,7 @@ pub fn get_wrui_path() -> &'static str {
 //
 
 #[cfg(target_os="linux")]
-fn get_wrui_name() -> &'static str {
+pub fn get_wrui_name() -> &'static str {
     "libwrui_qt.so"
 }
 
@@ -60,7 +60,7 @@ pub fn get_wrui_path() -> &'static str {
 //
 
 #[cfg(target_os="windows")]
-fn get_wrui_name() -> &'static str {
+pub fn get_wrui_name() -> &'static str {
     "wrui_qt.dll"
 }
 
