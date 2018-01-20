@@ -1746,7 +1746,7 @@ struct PU* PU_create_instance(void* user_data, QWidget* parent) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef _WIN32
-extern "C" __declspec(export) struct PU* wrui_get() {
+extern "C" __declspec(dllexport) struct PU* wrui_get() {
 #else
 extern "C" struct PU* wrui_get() {
 #endif
