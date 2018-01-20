@@ -39,21 +39,6 @@ struct HippoPlayer<'a> {
     is_playing: bool,
 }
 
-#[cfg(target_os="windows")]
-fn get_wrui_path() -> &'static str {
-    "t2-output/win64-msvc-debug-default/wrui_qt.dll"
-}
-
-#[cfg(target_os="macos")]
-fn get_wrui_path() -> &'static str {
-    "t2-output/macosx-clang-debug-default/libwrui_qt.dylib"
-}
-
-#[cfg(target_os="linux")]
-fn get_wrui_path() -> &'static str {
-    "t2-output/macosx-clang-debug-default/libwrui_qt.so"
-}
-
 impl <'a> HippoPlayer<'a> {
     pub fn new(ui: Ui) -> HippoPlayer<'a> {
         HippoPlayer {
@@ -216,7 +201,7 @@ impl <'a> HippoPlayer<'a> {
 fn main() {
     let _args: Vec<String> = env::args().collect();
 
-    let wrui_instance = SharedLibUi::new(get_wrui_path()).unwrap();
+    let wrui_instance = SharedLibUi::new().unwrap();
     let ui = wrui_instance.get_ui();
 
     let mut app = HippoPlayer::new(ui);
