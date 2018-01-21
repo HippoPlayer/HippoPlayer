@@ -71,7 +71,7 @@ impl <'a> Plugins<'a> {
     pub fn new() -> Plugins<'a> {
         Plugins {
             decoder_plugins: Vec::new(),
-            plugin_handler: DynamicReload::new(Some(vec![".", ::wrui::get_wrui_path()]), None, Search::Default),
+            plugin_handler: DynamicReload::new(Some(vec!["."]), None, Search::Default),
         }
     }
 
@@ -114,7 +114,7 @@ impl <'a> Plugins<'a> {
 
     pub fn add_plugins_from_path(&mut self) {
         self.internal_add_plugins_from_path("plugins");
-        self.internal_add_plugins_from_path(::wrui::get_wrui_path());
+        self.internal_add_plugins_from_path(".");
     }
 
     pub fn add_decoder_plugin(&mut self, name: &str) {

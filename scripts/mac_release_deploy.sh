@@ -6,7 +6,7 @@ echo "Clearing old build"
 
 rm -rf t2-output/HippoPlayer.app
 cp -rf t2-output/macosx-clang-release-default/HippoPlayer.app t2-output/HippoPlayer.app
-cp -vr t2-output/macosx-clang-release-default/libwrui_qt.dylib t2-output/HippoPlayer.app/Contents/MacOS
+cp -vr t2-output/macosx-clang-release-default/*.dylib t2-output/HippoPlayer.app/Contents/MacOS
 
 cd t2-output
 

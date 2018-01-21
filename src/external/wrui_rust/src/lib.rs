@@ -5,7 +5,6 @@ pub mod wrui;
 
 use libloading::{Library, Symbol};
 use std::rc::Rc;
-use std::path::Path;
 
 pub use wrui::Ui;
 
@@ -16,87 +15,41 @@ pub struct SharedLibUi {
     c_api: *const ffi_gen::PU,
 }
 
-// Path configurations for wrui
-//
-// macOS
-//
-
 #[cfg(target_os="macos")]
 pub fn get_wrui_name() -> &'static str {
     "libwrui_qt.dylib"
 }
-
-#[cfg(all(target_os="macos", not(debug_assertions)))]
-pub fn get_wrui_path() -> &'static str {
-    "t2-output/macosx-clang-release-default"
-}
-
-#[cfg(all(target_os="macos", debug_assertions))]
-pub fn get_wrui_path() -> &'static str {
-    "t2-output/macosx-clang-debug-default"
-}
-
-//
-// Linux
-//
 
 #[cfg(target_os="linux")]
 pub fn get_wrui_name() -> &'static str {
     "libwrui_qt.so"
 }
 
-#[cfg(all(target_os="linux", not(debug_assertions)))]
-pub fn get_wrui_path() -> &'static str {
-    "t2-output/linux-gcc-release-default"
-}
-
-#[cfg(all(target_os="linux", debug_assertions))]
-pub fn get_wrui_path() -> &'static str {
-    "t2-output/linux-gcc-debug-default"
-}
-
-//
-// Windows
-//
-
 #[cfg(target_os="windows")]
 pub fn get_wrui_name() -> &'static str {
     "wrui_qt.dll"
 }
 
-#[cfg(all(target_os="windows", not(debug_assertions)))]
-pub fn get_wrui_path() -> &'static str {
-    "t2-output/win64-msvc-release-default"
-}
-
-#[cfg(all(target_os="windows", debug_assertions))]
-pub fn get_wrui_path() -> &'static str {
-    "t2-output/win64-msvc-debug-default"
-}
-
-
-//
-//
-//
-
 impl SharedLibUi {
     pub fn new() -> Option<SharedLibUi> {
-        let lib;
-
         let wrui_filename = get_wrui_name();
+
+        // TODO: We should do better error handling here
+        // This to enforce we load relative to the current exe
+
+        let current_exe = std::env::current_exe().unwrap();
+
+        std::env::set_current_dir(current_exe.parent().unwrap()).unwrap();
+
+        let path = std::env::current_dir().unwrap();
+
+        println!("The current directory is {}", path.display());
 
         // If wrui is found it next to the executable we load that first. This only happens in a
         // release build but the check for an existing file is fast so we have it like this
         // Otherwise we load the file from the tundra output directory
 
-        if Path::new(wrui_filename).is_file() {
-            lib = Rc::new(Library::new(wrui_filename).unwrap());
-            println!("loading {}", wrui_filename);
-        } else {
-            let path = Path::new(get_wrui_path()).join(wrui_filename);
-            println!("loading {:?}", path);
-            lib = Rc::new(Library::new(path).unwrap());
-        }
+        let lib = Rc::new(Library::new(wrui_filename).unwrap());
 
         unsafe {
             let wrui_get: Symbol<unsafe extern "C" fn() -> *const ffi_gen::PU> =
