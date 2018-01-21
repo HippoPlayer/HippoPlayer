@@ -7,7 +7,7 @@
 	<key>CFBundleExecutable</key>
 	<string>hippo_player</string>
 	<key>CFBundleIconFile</key>
-	<string>icon</string>
+	<string>hippo</string>
 	<key>CFBundleIdentifier</key>
 	<string>com.yourcompany.someid</string>
 	<key>CFBundleInfoDictionaryVersion</key>

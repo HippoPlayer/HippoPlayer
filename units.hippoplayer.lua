@@ -151,7 +151,7 @@ local hippoBundle = OsxBundle
     Executable = "$(OBJECTDIR)/hippo_player",
     Resources = {
         CompileNib { Source = "data/mac/appnib.xib", Target = "appnib.nib" },
-        "data/mac/icon.icns",
+        "data/mac/hippo.icns",
     },
 
     Config = { "macosx-clang-debug-default" ; "macosx-clang-release-default" },
