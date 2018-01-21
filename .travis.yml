@@ -16,8 +16,8 @@ addons:
         - g++-6
 
 before_script:
-  echo "Commit id"
-  echo "$TRAVIS_COMMIT"
+  - echo "Commit id"
+  - echo "$TRAVIS_COMMIT"
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
       brew update &&
       brew install qt5 &&
