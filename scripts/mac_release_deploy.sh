@@ -8,6 +8,9 @@ rm -rf t2-output/HippoPlayer.app
 cp -rf t2-output/macosx-clang-release-default/HippoPlayer.app t2-output/HippoPlayer.app
 cp -vr t2-output/macosx-clang-release-default/*.dylib t2-output/HippoPlayer.app/Contents/MacOS
 
+mkdir t2-output/HippoPlayer.app/Contents/MacOS/bin
+cp -vr bin/player t2-output/HippoPlayer.app/Contents/MacOS/bin
+
 cd t2-output
 
 "$QT5/bin/macdeployqt" HippoPlayer.app -executable HippoPlayer.app/Contents/MacOS/libwrui_qt.dylib
@@ -26,6 +29,15 @@ for plugin in HippoPlayer.app/Contents/PlugIns/*/*.dylib; do
 		install_name_tool -change @rpath/$target.framework/Versions/5/$target @executable_path/../Frameworks/$target.framework/Versions/5/$target $plugin;
 	done;
 done;
+
+hdiutil create -srcfolder "HippoPlayer.app" -volname "HippoPlayer" -fs HFS+ -fsargs "-c c=64,a=16,e=16" -format UDRW -size 64000k pack.temp.dmg
+device=$(hdiutil attach -readwrite -noverify -noautoopen "pack.temp.dmg" | egrep '^/dev/' | sed 1q | awk '{print $1}')
+chmod -Rf go-w /Volumes/HippoPlayer
+sync
+sync
+hdiutil detach ${device}
+hdiutil convert "pack.temp.dmg" -format UDZO -imagekey zlib-level=9 -o "HippoPlayer.dmg"
+rm -f pack.temp.dmg
 
 cd ..
 
