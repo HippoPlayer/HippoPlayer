@@ -41,4 +41,4 @@ before_script:
 
 script:
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then tundra2 linux-gcc-debug ; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then scripts/mac_build_release.sh && scripts/mac_release_deploy.sh fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then scripts/mac_build_release.sh && scripts/mac_release_deploy.sh ; fi
