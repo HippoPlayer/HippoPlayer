@@ -40,6 +40,8 @@ struct HippoPlayer<'a> {
     is_playing: bool,
 }
 
+include!(concat!(env!("OUT_DIR"), "/build_id.rs"));
+
 impl <'a> HippoPlayer<'a> {
     pub fn new(ui: Ui) -> HippoPlayer<'a> {
         HippoPlayer {
@@ -166,7 +168,7 @@ impl <'a> HippoPlayer<'a> {
         main_window.set_central_widget(&self.main_widget);
 
         player_window.set_content(&main_window);
-        player_window.set_window_title("HippoPlayer 0.1");
+        player_window.set_window_title(&format!("HippoPlayer 0.0.1 {}", build_id()));
 
         player_window.resize(500, 800);
         player_window.show();
