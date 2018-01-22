@@ -4,6 +4,10 @@
 
 echo "Clearing old build"
 
+if [ -z "$BUILD_FILE_ID" ]; then
+  export BUILD_FILE_ID=$(date +%Y%m%d_%H%M)
+fi
+
 rm -rf t2-output/HippoPlayer.app
 cp -rf t2-output/macosx-clang-release-default/HippoPlayer.app t2-output/HippoPlayer.app
 cp -vr t2-output/macosx-clang-release-default/*.dylib t2-output/HippoPlayer.app/Contents/MacOS
@@ -30,13 +34,15 @@ for plugin in HippoPlayer.app/Contents/PlugIns/*/*.dylib; do
 	done;
 done;
 
+# Package the build to a dmg image
+
 hdiutil create -srcfolder "HippoPlayer.app" -volname "HippoPlayer" -fs HFS+ -fsargs "-c c=64,a=16,e=16" -format UDRW -size 64000k pack.temp.dmg
 device=$(hdiutil attach -readwrite -noverify -noautoopen "pack.temp.dmg" | egrep '^/dev/' | sed 1q | awk '{print $1}')
 chmod -Rf go-w /Volumes/HippoPlayer
 sync
 sync
 hdiutil detach ${device}
-hdiutil convert "pack.temp.dmg" -format UDZO -imagekey zlib-level=9 -o "HippoPlayer.dmg"
+hdiutil convert "pack.temp.dmg" -format UDZO -imagekey zlib-level=9 -o "hippoplayer_mac_${BUILD_FILE_ID}.dmg"
 rm -f pack.temp.dmg
 
 cd ..
