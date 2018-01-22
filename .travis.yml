@@ -42,3 +42,20 @@ before_script:
 script:
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then tundra2 linux-gcc-debug ; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then scripts/mac_build_release.sh && scripts/mac_release_deploy.sh ; fi
+
+deploy:
+  provider: s3
+  access_key_id: AKIAIQVVO323274QSFLA
+  secret_access_key:
+    secure: JQw2afDhoWBPIdDmYrDIWUbUTywi6mTD/eDpuZxzzMcXl61JZl/fI3szOesrtyPAz8w6FE0LFGtBfO3QOdOqio6i1ln2tI5T+nUJJB2+RBNtsE41wFun7xiifQSQOMbMKmSukBgEko1DpO01rCykM+GdqphgYHHvbwFRlOalYpzGNMbn75BPx8c7khkraSO2hpGvXUOBWEbDXZmwtcpGmtpjUFvEoMK9IUH2U1FRfC4jbk
+  region: eu-west-3
+  bucket: hippoplayer
+  upload-dir: master-branch-builds
+  local_dir: t2-output/build
+  acl: public_read
+  on:
+    repo: emoon/HippoPlayer
+    branch: master
+    condition: $TRAVIS_OS_NAME = osx
+
+

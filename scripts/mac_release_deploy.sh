@@ -16,6 +16,8 @@ mkdir t2-output/HippoPlayer.app/Contents/MacOS/bin
 cp -vr bin/player t2-output/HippoPlayer.app/Contents/MacOS/bin
 
 cd t2-output
+rm -rfv build
+mkdir build
 
 "$QT5/bin/macdeployqt" HippoPlayer.app -executable HippoPlayer.app/Contents/MacOS/libwrui_qt.dylib
 
@@ -42,7 +44,7 @@ chmod -Rf go-w /Volumes/HippoPlayer
 sync
 sync
 hdiutil detach ${device}
-hdiutil convert "pack.temp.dmg" -format UDZO -imagekey zlib-level=9 -o "hippoplayer_mac_${BUILD_FILE_ID}.dmg"
+hdiutil convert "pack.temp.dmg" -format UDZO -imagekey zlib-level=9 -o "build/hippoplayer_mac_${BUILD_FILE_ID}.dmg"
 rm -f pack.temp.dmg
 
 cd ..
