@@ -1,2 +1,9 @@
 @echo off
-bin\windows\tundra2 -v win64-msvc-release
+
+IF NOT "%BUILD_DATE_ID%" == "" GOTO DateSet
+
+set BUILD_DATE_ID=%DATE% %TIME%
+
+:DateSet
+
+bin\windows\tundra2 win64-msvc-release
