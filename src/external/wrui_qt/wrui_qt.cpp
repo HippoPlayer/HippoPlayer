@@ -1418,21 +1418,32 @@ static void list_widget_add_text_item(struct PUBase* self_c, const char* text) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static struct PUArray application_get_files(struct PUBase* self_c) {
-    QApplication* qt_data = (QApplication*)self_c;
-    (void)qt_data;
-    auto ret_value = QFileDialog::getOpenFileUrls();
-    int count = ret_value.size();
-    PUArray array = { 0 };
-    if (count > 0) {
-        PUUrl* elements = new PUUrl[count];
-        for (int i = 0; i < count; ++i) {
-            elements[i].funcs = &s_url_funcs;
-            QUrl* temp = new QUrl(ret_value.at(i));
-            elements[i].priv_data = (struct PUBase*)temp;
-       }
-       array.elements = (void*)elements;
-       array.count = int(count);
-   }
+   QApplication* qt_data = (QApplication*)self_c;
+   PUArray array = { 0 };
+   (void)qt_data;
+   QFileDialog dialog(QApplication::activeWindow());
+   dialog.setFileMode(QFileDialog::ExistingFiles);
+   dialog.show();
+
+   if (!dialog.exec())
+		return array;
+    
+   auto ret_value = dialog.selectedFiles();
+
+   int count = ret_value.size();
+
+   if (count > 0) {
+       PUUrl* elements = new PUUrl[count];
+       for (int i = 0; i < count; ++i) {
+           elements[i].funcs = &s_url_funcs;
+           QUrl* temp = new QUrl(QUrl::fromLocalFile(ret_value.at(i)));
+           elements[i].priv_data = (struct PUBase*)temp;
+      }
+
+      array.elements = (void*)elements;
+      array.count = int(count);
+  }
+
    return array;
 }
 
