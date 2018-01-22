@@ -27,3 +27,5 @@ deploy:
   set_public: true
   folder: master-branch-builds
   artifact: t2-output\build\hippoplayer_win_%BUILD_FILE_ID%.7z
+  on:
+    branch: master
