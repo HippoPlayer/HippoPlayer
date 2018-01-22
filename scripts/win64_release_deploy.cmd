@@ -21,6 +21,6 @@ copy %QT5%\plugins\platforms\qwindows.dll HippoPlayer\platforms
 copy win64-msvc-release-default\hippo_player.exe HippoPlayer
 copy win64-msvc-release-default\*.dll HippoPlayer
 
-7z a build\hippoplayer_win_%BUILD_FILE_ID%.7z HippoPlayer
+7z a ..\hippoplayer_win_%BUILD_FILE_ID%.7z HippoPlayer
 
 cd ..
