@@ -76,17 +76,19 @@ impl <'a> Plugins<'a> {
     }
 
     fn add_dec_plugin(&mut self, plugin: &Arc<Lib>) {
-        let fun: Symbol<extern "C" fn() -> *const CHippoPlaybackPlugin> = unsafe {
-            plugin.lib.get(b"getPlugin\0").unwrap()
+        let func: Result<Symbol<extern "C" fn() -> *const CHippoPlaybackPlugin>, ::std::io::Error> = unsafe {
+            plugin.lib.get(b"getPlugin\0")
         };
 
-        println!("Found plugin with callback data {:?}", fun());
+        if let Ok(fun) = func {
+            println!("Found plugin with callback data {:?}", fun());
 
-        self.decoder_plugins.push(DecoderPlugin {
-            plugin: plugin.clone(),
-            plugin_path: "".to_owned(),
-            plugin_funcs: unsafe { (*fun()).clone() },
-        });
+            self.decoder_plugins.push(DecoderPlugin {
+                plugin: plugin.clone(),
+                plugin_path: "".to_owned(),
+                plugin_funcs: unsafe { (*fun()).clone() },
+            });
+        }
     }
 
     fn check_file_type(entry: &DirEntry) -> bool {
