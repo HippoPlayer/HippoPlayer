@@ -24,8 +24,10 @@ artifacts:
 
 deploy:
   provider: S3
-  access_key_id: AKIAIQVVO323274QSFLA
-  secret_access_key: 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
+  access_key_id:
+    secure: R0OGuV5tmE76btdKC9y4XdmHaKy59p3Ea0T1sMAjSPw=
+  secret_access_key: 
+    secure: vbPLnhEyRv81ki5MSXFHmK4I0CpbWsbTrpaoXY/n4cJpBKAhmE2C4NxyGDIel/QJ
   bucket: hippoplayer
   region: eu-west-3
   unzip: false
