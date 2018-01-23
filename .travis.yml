@@ -54,6 +54,7 @@ deploy:
   upload-dir: master-branch-builds
   local_dir: t2-output/build
   acl: public_read
+  skip_cleanup: true
   on:
     repo: emoon/HippoPlayer
     branch: master
