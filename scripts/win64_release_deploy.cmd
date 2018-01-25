@@ -14,6 +14,11 @@ mkdir build
 mkdir HippoPlayer
 mkdir HippoPlayer\platforms
 
+mkdir HippoPlayer\bin
+mkdir HippoPlayer\bin\player
+mkdir HippoPlayer\bin\player\buttons
+copy ..\bin\player\buttons\*.png HippoPlayer\bin\player\buttons
+
 copy %QT5%\bin\Qt5Core.dll HippoPlayer
 copy %QT5%\bin\Qt5Widgets.dll HippoPlayer
 copy %QT5%\bin\Qt5Gui.dll HippoPlayer

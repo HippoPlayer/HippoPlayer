@@ -83,10 +83,10 @@ impl PlayerView {
         let play_icon = self.wrui.create_icon();
         let next_icon = self.wrui.create_icon();
 
-        prev_icon.add_file("bin/player/buttons/hip_button_previous.svg");
-        stop_icon.add_file("bin/player/buttons/hip_button_stop.svg");
-        play_icon.add_file("bin/player/buttons/hip_button_play.svg");
-        next_icon.add_file("bin/player/buttons/hip_button_next.svg");
+        prev_icon.add_file("bin/player/buttons/hip_button_back.png");
+        stop_icon.add_file("bin/player/buttons/hip_button_stop.png");
+        play_icon.add_file("bin/player/buttons/hip_button_play.png");
+        next_icon.add_file("bin/player/buttons/hip_button_next.png");
 
         //self.prev_button.set_text("Prev");
         //self.stop_button.set_text("Stop");
