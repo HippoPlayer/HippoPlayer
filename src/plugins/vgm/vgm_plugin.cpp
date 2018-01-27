@@ -139,6 +139,30 @@ static int vgm_read_data(void* userData, void* dest) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Right now we assume gz files are vgm which of course isn't the case but will do for now until we a
+// better implementation of this
+
+HippoProbeResult vgm_probe_can_play(const uint8_t* data, uint32_t data_size, uint64_t total_size) {
+	if ((data[0] == 'V') &&
+		(data[1] == 'g') &&
+		(data[2] == 'm')) {
+
+		return HippoProbeResult_Supported;
+	}
+
+	// gzip header bytes
+
+	if ((data[0] == 0x1f) &&    // id1
+		(data[1] == 0x8b) &&    // id2
+		(data[2] == 0x08)) {    // deflate method (only one supported
+
+		return HippoProbeResult_Supported;
+	}
+
+	return HippoProbeResult_Unsupported;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int vgm_seek(void* userData, int ms) {
 	return 0;
@@ -161,6 +185,7 @@ static int vgm_frame_size(void* userData) {
 
 static HippoPlaybackPlugin g_vgm_plugin = {
 	1,
+	vgm_probe_can_play,
 	vgm_info,
 	vgm_track_info,
 	vgm_supported_extensions,

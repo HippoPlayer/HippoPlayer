@@ -67,6 +67,33 @@ static int openmpt_destroy(void* userData) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static HippoProbeResult openmpt_probe_can_play(const uint8_t* data, uint32_t data_size, uint64_t total_size) {
+    int res = openmpt::probe_file_header(openmpt::probe_file_header_flags_default, data, data_size, total_size);
+
+    switch (res) {
+        case openmpt::probe_file_header_result_success :
+        {
+            return HippoProbeResult_Supported;
+        }
+        case openmpt::probe_file_header_result_failure :
+        {
+            return HippoProbeResult_Unsupported;
+        }
+
+        case openmpt::probe_file_header_result_wantmoredata :
+        {
+            printf("openmpt: Unable to probe because not enough data\n");
+            break;
+        }
+    }
+
+    printf("openmpt: case %d not handled in switch. Assuming unsupported file\n");
+
+    return HippoProbeResult_Unsupported;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static int openmpt_open(void* user_data, const char* buffer) {
 	// TODO: Add reader functions etc to be used instead of fopen as file may come from zip, etc
 	FILE* file = fopen(buffer, "rb");
@@ -126,6 +153,7 @@ static int openmpt_length(void* user_data) {
 
 static HippoPlaybackPlugin g_openmptPlugin = {
 	1,
+	openmpt_probe_can_play,
 	openmpt_info,
 	openmpt_track_info,
 	openmpt_supported_extensions,
