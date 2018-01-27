@@ -27,6 +27,8 @@ There are many plans for HippoPlayer moving forward:
 * Easy access to music. Possibility to index and auto download music from from various (free) sources of music (such as [modland](ftp.modland.com)) and more.
 * More to come here!
 
+Early builds of HippoPlayer for Mac and Windows can be found [here](http://hippoplayer.s3.eu-west-3.amazonaws.com/list.html?sort=lastmod&sortdir=desc)
+
 # Building the code
 
 [![Build status](https://ci.appveyor.com/api/projects/status/q8b0avg6trjk8xv1?svg=true)](https://ci.appveyor.com/project/emoon/hippoplayer)
