@@ -2,11 +2,11 @@ use dynamic_reload::{DynamicReload, Lib, Symbol, Search, PlatformName};
 use walkdir::{WalkDir, DirEntry};
 use std::os::raw::{c_int, c_void, c_char};
 use std::sync::Arc;
-use std::ffi::CStr;
 
 #[derive(Clone, Debug)]
 pub struct CHippoPlaybackPlugin {
     pub version: u64,
+    pub probe_can_play: extern "C" fn(data: *const u8, data_size: u32, total_size: u64) -> i32,
     pub info: extern "C" fn(user_data: *mut c_void) -> *const c_char,
     pub track_info: extern "C" fn(user_data: *mut c_void) -> *const c_char,
     pub supported_extensions: extern "C" fn() -> *mut c_char,
@@ -44,21 +44,13 @@ pub fn get_plugin_ext() -> &'static str {
 }
 
 impl DecoderPlugin {
-    pub fn is_ext_supported(&self, ext: &str) -> bool {
-        let supported_ext;
-        unsafe {
-            let c_string = ((self.plugin_funcs).supported_extensions)();
-            let temp = CStr::from_ptr(c_string);
-            supported_ext = temp.to_str().unwrap().to_owned();
-        }
+    pub fn probe_can_play(&self, data: &[u8], buffer_len: usize, file_size: u64) -> bool {
+        let res = ((self.plugin_funcs).probe_can_play)(data.as_ptr(), buffer_len as u32, file_size);
 
-        for e in supported_ext.split(",") {
-            if ext == e {
-                return true;
-            }
+        match res {
+            0 => true,
+            _ => false,
         }
-
-        false
     }
 }
 

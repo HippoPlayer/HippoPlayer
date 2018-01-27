@@ -217,6 +217,7 @@ SharedLibrary {
 }
 
 -----------------------------------------------------------------------------------------------------------------------
+--[[
 
 SharedLibrary {
 	Name = "SidPlugin",
@@ -256,7 +257,6 @@ SharedLibrary {
 }
 
 -----------------------------------------------------------------------------------------------------------------------
-
 SharedLibrary {
 	Name = "TfmxPlugin",
 
@@ -264,7 +264,7 @@ SharedLibrary {
 		get_c_cpp_src("src/plugins/tfmx/src"),
 	},
 }
-
+--]]
 
 -----------------------------------------------------------------------------------------------------------------------
 --[[
@@ -300,5 +300,5 @@ Default "openmpt"
 Default "vgm"
 -- Default "FutureComposerPlugin"
 -- Default "TfmxPlugin"
-Default "SidPlugin"
+-- Default "SidPlugin"
 

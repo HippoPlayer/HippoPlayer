@@ -71,6 +71,29 @@ static int hively_close(void* userData) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// TODO: These checks needs to be made much better (sanity check some more sizes in the pattern etc)
+
+enum HippoProbeResult hively_probe_can_play(const uint8_t* data, uint32_t data_size, uint64_t total_size) {
+	if ((data[0] == 'T') &&
+		(data[1] == 'H') &&
+		(data[2] == 'X') &&
+		(data[3] < 3)) {
+
+		return HippoProbeResult_Supported;
+	}
+
+	if ((data[0] == 'H') &&
+		(data[1] == 'V') &&
+		(data[2] == 'L') &&
+		(data[3] > 1)) {
+
+		return HippoProbeResult_Supported;
+	}
+
+    return HippoProbeResult_Unsupported;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int hively_read_data(void* userData, void* dest) {
 	int16_t temp_data[FRAME_SIZE * 4];
@@ -114,6 +137,8 @@ static int hively_frame_size(void* userData) {
 
 static HippoPlaybackPlugin g_hively_plugin = {
 	1,
+
+	hively_probe_can_play,
 	hively_info,
 	hively_track_info,
 	hively_supported_extensions,

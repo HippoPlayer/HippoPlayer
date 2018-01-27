@@ -20,8 +20,10 @@ mod playlist;
 
 use plugin_handler::{Plugins};
 use audio::{HippoAudio, MusicInfo};
-use std::path::Path;
 use std::env;
+use std::fs;
+use std::io::prelude::*;
+use std::fs::File;
 
 use wrui::{SharedLibUi, Ui};
 use wrui::wrui::*;
@@ -177,14 +179,17 @@ impl <'a> HippoPlayer<'a> {
     }
 
     pub fn play_file(&mut self, filename: &str) -> MusicInfo {
-        let path = Path::new(filename);
-        // TODO: Proper error handling
-        let file_ext = path.extension().unwrap().to_str().unwrap();
+        let mut buffer = [0; 4096];
+        // TODO: Fix error handling here
+
+        let metadata = fs::metadata(filename).unwrap();
+        let mut f = File::open(filename).unwrap();
+        let buffer_read_size = f.read(&mut buffer[..]).unwrap();
 
         // find a plugin that supports the file
 
         for plugin in &self.plugins.decoder_plugins {
-            if plugin.is_ext_supported(file_ext) {
+            if plugin.probe_can_play(&buffer, buffer_read_size, metadata.len()) {
                 // This is a bit hacky right now but will do the trick
                 self.audio.stop();
                 self.audio = HippoAudio::new();
