@@ -491,7 +491,7 @@ Const OPENMPT_PROBE_FILE_HEADER_RESULT_ERROR = -255
   \param error Pointer to an integer where an error may get stored. May be NULL.
   \param error_message Pointer to a string pointer where an error message may get stored. May be NULL.
   \remarks It is recommended to provide openmpt_probe_file_header_get_recommended_size() bytes of data for data and size. If the file is smaller, only provide the filesize amount and set size and filesize to the file's size. 
-  \remarks openmpt_could_open_probability2() provides a more elaborate interace that might be require for special use cases. It is recommended to use openmpt_probe_file_header() though, if possible.
+  \remarks openmpt_could_open_probability2() provides a more elaborate interface that might be required for special use cases. It is recommended to use openmpt_probe_file_header() though, if possible.
   \retval OPENMPT_PROBE_FILE_HEADER_RESULT_SUCCESS The file will most likely be supported by libopenmpt.
   \retval OPENMPT_PROBE_FILE_HEADER_RESULT_FAILURE The file is not supported by libopenmpt.
   \retval OPENMPT_PROBE_FILE_HEADER_RESULT_WANTMOREDATA An answer could not be determined with the amount of data provided.
@@ -515,9 +515,9 @@ Declare Function openmpt_probe_file_header(ByVal flags As ULongInt, ByVal Data A
   \param erruser Error function user context. Used to pass any user-defined data associated with this module to the logging function.
   \param error Pointer to an integer where an error may get stored. May be NULL.
   \param error_message Pointer to a string pointer where an error message may get stored. May be NULL.
-  \remarks It is recommended to use openmpt_prove_file_header() and provide the acutal file's size as a parameter if at all possible. libopenmpt can provide more accurate answers if the filesize is known.
+  \remarks It is recommended to use openmpt_probe_file_header() and provide the acutal file's size as a parameter if at all possible. libopenmpt can provide more accurate answers if the filesize is known.
   \remarks It is recommended to provide openmpt_probe_file_header_get_recommended_size() bytes of data for data and size. If the file is smaller, only provide the filesize amount and set size to the file's size. 
-  \remarks openmpt_could_open_probability2() provides a more elaborate interace that might be require for special use cases. It is recommended to use openmpt_probe_file_header() though, if possible.
+  \remarks openmpt_could_open_probability2() provides a more elaborate interface that might be required for special use cases. It is recommended to use openmpt_probe_file_header() though, if possible.
   \retval OPENMPT_PROBE_FILE_HEADER_RESULT_SUCCESS The file will most likely be supported by libopenmpt.
   \retval OPENMPT_PROBE_FILE_HEADER_RESULT_FAILURE The file is not supported by libopenmpt.
   \retval OPENMPT_PROBE_FILE_HEADER_RESULT_WANTMOREDATA An answer could not be determined with the amount of data provided.
@@ -543,7 +543,7 @@ Declare Function openmpt_probe_file_header_without_filesize(ByVal flags As ULong
   \param error_message Pointer to a string pointer where an error message may get stored. May be NULL.
   \remarks The stream is left in an unspecified state when this function returns.
   \remarks It is recommended to provide openmpt_probe_file_header_get_recommended_size() bytes of data for data and size. If the file is smaller, only provide the filesize amount and set size and filesize to the file's size. 
-  \remarks openmpt_could_open_probability2() provides a more elaborate interace that might be require for special use cases. It is recommended to use openmpt_probe_file_header() though, if possible.
+  \remarks openmpt_could_open_probability2() provides a more elaborate interface that might be required for special use cases. It is recommended to use openmpt_probe_file_header() though, if possible.
   \retval OPENMPT_PROBE_FILE_HEADER_RESULT_SUCCESS The file will most likely be supported by libopenmpt.
   \retval OPENMPT_PROBE_FILE_HEADER_RESULT_FAILURE The file is not supported by libopenmpt.
   \retval OPENMPT_PROBE_FILE_HEADER_RESULT_WANTMOREDATA An answer could not be determined with the amount of data provided.
@@ -573,7 +573,7 @@ End Type
   \param stream Input stream to load the module from.
   \param logfunc Logging function where warning and errors are written. The logging function may be called throughout the lifetime of openmpt_module.
   \param user User-defined data associated with this module. This value will be passed to the logging callback function (logfunc)
-  \param ctls A map of initial ctl values, see openmpt_module_get_ctls.
+  \param ctls A map of initial ctl values. See openmpt_module_get_ctls().
   \return A pointer to the constructed openmpt_module, or NULL on failure.
   \remarks The input data can be discarded after an openmpt_module has been constructed successfully.
   \sa openmpt_stream_callbacks
@@ -590,7 +590,7 @@ Declare Function openmpt_module_create(ByVal stream_callbacks As openmpt_stream_
   \param erruser Error function user context.
   \param errorcode Pointer to an integer where an error may get stored. May be NULL.
   \param error_message Pointer to a string pointer where an error message may get stored. May be NULL.
-  \param ctls A map of initial ctl values, see openmpt_module_get_ctls.
+  \param ctls A map of initial ctl values. See openmpt_module_get_ctls().
   \return A pointer to the constructed openmpt_module, or NULL on failure.
   \remarks The input data can be discarded after an openmpt_module has been constructed successfully.
   \sa openmpt_stream_callbacks
@@ -604,7 +604,7 @@ Declare Function openmpt_module_create2(ByVal stream_callbacks As openmpt_stream
   \param filesize Amount of data available.
   \param logfunc Logging function where warning and errors are written. The logging function may be called throughout the lifetime of openmpt_module.
   \param user User-defined data associated with this module. This value will be passed to the logging callback function (logfunc)
-  \param ctls A map of initial ctl values, see openmpt_module_get_ctls.
+  \param ctls A map of initial ctl values. See openmpt_module_get_ctls().
   \return A pointer to the constructed openmpt_module, or NULL on failure.
   \remarks The input data can be discarded after an openmpt_module has been constructed successfully.
 '/
@@ -620,7 +620,7 @@ Declare Function openmpt_module_create_from_memory(ByVal filedata As Const Any P
   \param erruser Error function user context.
   \param errorcode Pointer to an integer where an error may get stored. May be NULL.
   \param error_message Pointer to a string pointer where an error message may get stored. May be NULL.
-  \param ctls A map of initial ctl values, see openmpt_module_get_ctls.
+  \param ctls A map of initial ctl values. See openmpt_module_get_ctls().
   \return A pointer to the constructed openmpt_module, or NULL on failure.
   \remarks The input data can be discarded after an openmpt_module has been constructed successfully.
   \since 0.3.0
@@ -698,6 +698,12 @@ Declare Sub openmpt_module_error_set_last(ByVal module As openmpt_module Ptr, By
 '/
 Declare Sub openmpt_module_error_clear(ByVal module As openmpt_module Ptr)
 
+/'*
+  \defgroup openmpt_module_render_param Render param indices
+ 
+  \brief Parameter index to use with openmpt_module_get_render_param() and openmpt_module_set_render_param()
+  @{
+'/
 /'* \brief Master Gain
 
   The related value represents a relative gain in milliBel.\n
@@ -734,11 +740,12 @@ Const OPENMPT_MODULE_RENDER_INTERPOLATIONFILTER_LENGTH = 3
   Higher values imply slower/softer volume ramps.
 '/
 Const OPENMPT_MODULE_RENDER_VOLUMERAMPING_STRENGTH = 4
+'* @}
 
 /'*
   \defgroup openmpt_module_command_index Pattern cell indices
 
-  \brief Parameter index to use with openmpt_module_get_pattern_row_channel_command, openmpt_module_format_pattern_row_channel_command and openmpt_module_highlight_pattern_row_channel_command
+  \brief Parameter index to use with openmpt_module_get_pattern_row_channel_command(), openmpt_module_format_pattern_row_channel_command() and openmpt_module_highlight_pattern_row_channel_command()
   @{
 '/
 Const OPENMPT_MODULE_COMMAND_NOTE = 0
@@ -830,7 +837,7 @@ Declare Function openmpt_module_set_position_order_row(ByVal module As openmpt_m
 /'* \brief Get render parameter
 
   \param module The module handle to work on.
-  \param param Parameter to query. See openmpt_module_render_param.
+  \param param Parameter to query. See \ref openmpt_module_render_param
   \param value Pointer to the variable that receives the current value of the parameter.
   \return 1 on success, 0 on failure (invalid param or value is NULL).
   \sa OPENMPT_MODULE_RENDER_MASTERGAIN_MILLIBEL
@@ -844,7 +851,7 @@ Declare Function openmpt_module_get_render_param(ByVal module As openmpt_module 
 /'* \brief Set render parameter
 
   \param module The module handle to work on.
-  \param param Parameter to set. See openmpt_module_render_param.
+  \param param Parameter to set. See \ref openmpt_module_render_param
   \param value The value to set param to.
   \return 1 on success, 0 on failure (invalid param).
   \sa OPENMPT_MODULE_RENDER_MASTERGAIN_MILLIBEL
@@ -865,7 +872,7 @@ Declare Function openmpt_module_set_render_param(ByVal module As openmpt_module 
   \return The number of frames actually rendered.
   \retval 0 The end of song has been reached.
   \remarks The output buffers are only written to up to the returned number of elements.
-  \remarks You can freely switch between any of these function if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
+  \remarks You can freely switch between any of the "openmpt_module_read*" variants if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
   \remarks It is recommended to use the floating point API because of the greater dynamic range and no implied clipping.
   \sa \ref libopenmpt_freebasic_outputformat
 '/
@@ -881,7 +888,7 @@ Declare Function openmpt_module_read_mono(ByVal module As openmpt_module Ptr, By
   \return The number of frames actually rendered.
   \retval 0 The end of song has been reached.
   \remarks The output buffers are only written to up to the returned number of elements.
-  \remarks You can freely switch between any of these function if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
+  \remarks You can freely switch between any of the "openmpt_module_read*" variants if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
   \remarks It is recommended to use the floating point API because of the greater dynamic range and no implied clipping.
   \sa \ref libopenmpt_freebasic_outputformat
 '/
@@ -899,7 +906,7 @@ Declare Function openmpt_module_read_stereo(ByVal module As openmpt_module Ptr, 
   \return The number of frames actually rendered.
   \retval 0 The end of song has been reached.
   \remarks The output buffers are only written to up to the returned number of elements.
-  \remarks You can freely switch between any of these function if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
+  \remarks You can freely switch between any of the "openmpt_module_read*" variants if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
   \remarks It is recommended to use the floating point API because of the greater dynamic range and no implied clipping.
   \sa \ref libopenmpt_freebasic_outputformat
 '/
@@ -914,7 +921,7 @@ Declare Function openmpt_module_read_quad(ByVal module As openmpt_module Ptr, By
   \return The number of frames actually rendered.
   \retval 0 The end of song has been reached.
   \remarks The output buffers are only written to up to the returned number of elements.
-  \remarks You can freely switch between any of these function if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
+  \remarks You can freely switch between any of the "openmpt_module_read*" variants if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
   \remarks Floating point samples are in the [-1.0..1.0] nominal range. They are not clipped to that range though and thus might overshoot.
   \sa \ref libopenmpt_freebasic_outputformat
 '/
@@ -930,7 +937,7 @@ Declare Function openmpt_module_read_float_mono(ByVal module As openmpt_module P
   \return The number of frames actually rendered.
   \retval 0 The end of song has been reached.
   \remarks The output buffers are only written to up to the returned number of elements.
-  \remarks You can freely switch between any of these function if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
+  \remarks You can freely switch between any of the "openmpt_module_read*" variants if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
   \remarks Floating point samples are in the [-1.0..1.0] nominal range. They are not clipped to that range though and thus might overshoot.
   \sa \ref libopenmpt_freebasic_outputformat
 '/
@@ -948,7 +955,7 @@ Declare Function openmpt_module_read_float_stereo(ByVal module As openmpt_module
   \return The number of frames actually rendered.
   \retval 0 The end of song has been reached.
   \remarks The output buffers are only written to up to the returned number of elements.
-  \remarks You can freely switch between any of these function if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
+  \remarks You can freely switch between any of the "openmpt_module_read*" variants if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
   \remarks Floating point samples are in the [-1.0..1.0] nominal range. They are not clipped to that range though and thus might overshoot.
   \sa \ref libopenmpt_freebasic_outputformat
 '/
@@ -963,7 +970,7 @@ Declare Function openmpt_module_read_float_quad(ByVal module As openmpt_module P
   \return The number of frames actually rendered.
   \retval 0 The end of song has been reached.
   \remarks The output buffers are only written to up to the returned number of elements.
-  \remarks You can freely switch between any of these function if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
+  \remarks You can freely switch between any of the "openmpt_module_read*" variants if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
   \remarks It is recommended to use the floating point API because of the greater dynamic range and no implied clipping.
   \sa \ref libopenmpt_freebasic_outputformat
 '/
@@ -978,7 +985,7 @@ Declare Function openmpt_module_read_interleaved_stereo(ByVal module As openmpt_
   \return The number of frames actually rendered.
   \retval 0 The end of song has been reached.
   \remarks The output buffers are only written to up to the returned number of elements.
-  \remarks You can freely switch between any of these function if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
+  \remarks You can freely switch between any of the "openmpt_module_read*" variants if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
   \remarks It is recommended to use the floating point API because of the greater dynamic range and no implied clipping.
   \sa \ref libopenmpt_freebasic_outputformat
 '/
@@ -993,7 +1000,7 @@ Declare Function openmpt_module_read_interleaved_quad(ByVal module As openmpt_mo
   \return The number of frames actually rendered.
   \retval 0 The end of song has been reached.
   \remarks The output buffers are only written to up to the returned number of elements.
-  \remarks You can freely switch between any of these function if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
+  \remarks You can freely switch between any of the "openmpt_module_read*" variants if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
   \remarks Floating point samples are in the [-1.0..1.0] nominal range. They are not clipped to that range though and thus might overshoot.
   \sa \ref libopenmpt_freebasic_outputformat
 '/
@@ -1008,7 +1015,7 @@ Declare Function openmpt_module_read_interleaved_float_stereo(ByVal module As op
   \return The number of frames actually rendered.
   \retval 0 The end of song has been reached.
   \remarks The output buffers are only written to up to the returned number of elements.
-  \remarks You can freely switch between any of these function if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
+  \remarks You can freely switch between any of the "openmpt_module_read*" variants if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
   \remarks Floating point samples are in the [-1.0..1.0] nominal range. They are not clipped to that range though and thus might overshoot.
   \sa \ref libopenmpt_freebasic_outputformat
 '/
@@ -1259,7 +1266,7 @@ Declare Function openmpt_module_get_pattern_num_rows(ByVal module As openmpt_mod
   \param pattern The pattern whose data should be retrieved.
   \param row The row from which the data should be retrieved.
   \param channel The channel from which the data should be retrieved.
-  \param command The cell index at which the data should be retrieved. See openmpt_module_command_index
+  \param command The cell index at which the data should be retrieved. See \ref openmpt_module_command_index
   \return The internal, raw pattern data at the given pattern position.
 '/
 Declare Function openmpt_module_get_pattern_row_channel_command_(ByVal module As openmpt_module Ptr, ByVal pattern As Long, ByVal row As Long, ByVal channel As Long, ByVal command_ As Long) As UByte
@@ -1271,7 +1278,7 @@ Declare Function openmpt_module_get_pattern_row_channel_command_(ByVal module As
   \param row The row from which the data should be retrieved.
   \param channel The channel from which the data should be retrieved.
   \param command The cell index at which the data should be retrieved.
-  \return The formatted pattern data at the given pattern position. See openmpt_module_command_index
+  \return The formatted pattern data at the given pattern position. See \ref openmpt_module_command_index
   \sa openmpt_module_highlight_pattern_row_channel_command
   \remarks Use openmpt_module_format_pattern_row_channel_command to automatically handle the lifetime of the returned pointer.
 '/
@@ -1283,7 +1290,7 @@ Declare Function openmpt_module_format_pattern_row_channel_command_ Alias "openm
   \param pattern The pattern whose data should be retrieved.
   \param row The row from which the data should be retrieved.
   \param channel The channel from which the data should be retrieved.
-  \param command The cell index at which the data should be retrieved. See openmpt_module_command_index
+  \param command The cell index at which the data should be retrieved. See \ref openmpt_module_command_index
   \return The highlighting string for the formatted pattern data as retrieved by openmpt_module_get_pattern_row_channel_command at the given pattern position.
   \remarks The returned string will map each character position of the string returned by openmpt_module_get_pattern_row_channel_command to a highlighting instruction.
            Possible highlighting characters are:
@@ -1429,7 +1436,7 @@ End Function
   \param erruser Error function user context. Used to pass any user-defined data associated with this module to the error function.
   \param errorcode Pointer to an integer where an error may get stored. May be NULL.
   \param error_message Pointer to a string pointer where an error message may get stored. May be NULL.
-  \param ctls A map of initial ctl values, see openmpt_module_get_ctls.
+  \param ctls A map of initial ctl values. See openmpt_module_get_ctls().
   \return A pointer to the constructed openmpt_module, or NULL on failure.
   \remarks The file handle can be closed after an openmpt_module has been constructed successfully.
   \sa openmpt_module_create2
@@ -1451,7 +1458,7 @@ End Function
   \param file The FreeBASIC file handle to load from.
   \param logfunc Logging function where warning and errors are written. May be NULL.
   \param loguser Logging function user context. Used to pass any user-defined data associated with this module to the logging function.
-  \param ctls A map of initial ctl values, see openmpt_module_get_ctls.
+  \param ctls A map of initial ctl values. See openmpt_module_get_ctls().
   \return A pointer to the constructed openmpt_module, or NULL on failure.
   \remarks The file handle can be closed after an openmpt_module has been constructed successfully.
   \deprecated Please use openmpt_module_create_from_fbhandle2().
@@ -1474,7 +1481,7 @@ End Function
   \param erruser Error function user context. Used to pass any user-defined data associated with this module to the error function.
   \param errorcode Pointer to an integer where an error may get stored. May be NULL.
   \param error_message Pointer to a string pointer where an error message may get stored. May be NULL.
-  \param ctls A map of initial ctl values, see openmpt_module_get_ctls.
+  \param ctls A map of initial ctl values. See openmpt_module_get_ctls().
   \return A pointer to the constructed openmpt_module, or NULL on failure.
   \sa openmpt_module_create2
 '/
@@ -1501,7 +1508,7 @@ End Function
   \param filename The file to load from.
   \param logfunc Logging function where warning and errors are written. May be NULL.
   \param loguser Logging function user context. Used to pass any user-defined data associated with this module to the logging function.
-  \param ctls A map of initial ctl values, see openmpt_module_get_ctls.
+  \param ctls A map of initial ctl values. See openmpt_module_get_ctls().
   \return A pointer to the constructed openmpt_module, or NULL on failure.
   \deprecated Please use openmpt_module_create_from_filename2().
   \sa openmpt_module_create2

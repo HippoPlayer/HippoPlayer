@@ -10,7 +10,7 @@
 static const char * const license =
 "The OpenMPT code is licensed under the BSD license." "\n"
 "" "\n"
-"Copyright (c) 2004-2017, OpenMPT contributors" "\n"
+"Copyright (c) 2004-2018, OpenMPT contributors" "\n"
 "Copyright (c) 1997-2003, Olivier Lapicque" "\n"
 "All rights reserved." "\n"
 "" "\n"
@@ -441,7 +441,7 @@ static std::string seconds_to_string( double time ) {
 
 static void show_info( std::ostream & log, bool verbose ) {
 	log << "openmpt123" << " v" << OPENMPT123_VERSION_STRING << ", libopenmpt " << openmpt::string::get( "library_version" ) << " (" << "OpenMPT " << openmpt::string::get( "core_version" ) << ")" << std::endl;
-	log << "Copyright (c) 2013-2017 OpenMPT developers <https://lib.openmpt.org/>" << std::endl;
+	log << "Copyright (c) 2013-2018 OpenMPT developers <https://lib.openmpt.org/>" << std::endl;
 	if ( !verbose ) {
 		log << std::endl;
 		return;
@@ -509,7 +509,7 @@ static void show_info( std::ostream & log, bool verbose ) {
 	log << " <https://libsdl.org/>" << std::endl;
 #endif
 #ifdef MPT_WITH_PULSEAUDIO
-	log << " " << "libpulse, libpulse-simple" << " (headers " << pa_get_headers_version()  << ", API " << PA_API_VERSION << ", PROTOCOL " << PA_PROTOCOL_VERSION << ", library " << ( pa_get_library_version() ? pa_get_library_version() : "unkown" ) << ") <https://www.freedesktop.org/wiki/Software/PulseAudio/>" << std::endl;
+	log << " " << "libpulse, libpulse-simple" << " (headers " << pa_get_headers_version()  << ", API " << PA_API_VERSION << ", PROTOCOL " << PA_PROTOCOL_VERSION << ", library " << ( pa_get_library_version() ? pa_get_library_version() : "unknown" ) << ") <https://www.freedesktop.org/wiki/Software/PulseAudio/>" << std::endl;
 #endif
 #ifdef MPT_WITH_PORTAUDIO
 	log << " " << Pa_GetVersionText() << " (" << Pa_GetVersion() << ") <http://portaudio.com/>" << std::endl;
@@ -530,7 +530,7 @@ static void show_info( std::ostream & log, bool verbose ) {
 static void show_man_version( textout & log ) {
 	log << "openmpt123" << " v" << OPENMPT123_VERSION_STRING << std::endl;
 	log << std::endl;
-	log << "Copyright (c) 2013-2017 OpenMPT developers <https://lib.openmpt.org/>" << std::endl;
+	log << "Copyright (c) 2013-2018 OpenMPT developers <https://lib.openmpt.org/>" << std::endl;
 }
 
 static void show_short_version( textout & log ) {
@@ -604,7 +604,7 @@ static void show_help( textout & log, bool with_info = true, bool longhelp = fal
 		log << "     --info                 Display information about each file" << std::endl;
 		log << "     --ui                   Interactively play each file" << std::endl;
 		log << "     --batch                Play each file" << std::endl;
-		log << "     --render               Render each file to PCM data" << std::endl;
+		log << "     --render               Render each file to individual PCM data files" << std::endl;
 		if ( !longhelp ) {
 			log << std::endl;
 			log.writeout();
@@ -654,8 +654,8 @@ static void show_help( textout & log, bool with_info = true, bool longhelp = fal
 		log << "     --buffer n             Set output buffer size to n ms [default: " << commandlineflags().buffer << "]" << std::endl;
 		log << "     --period n             Set output period size to n ms [default: " << commandlineflags().period  << "]" << std::endl;
 		log << "     --stdout               Write raw audio data to stdout [default: " << commandlineflags().use_stdout << "]" << std::endl;
-		log << "     --output-type t        Use output format t when writing to a PCM file [default: " << commandlineflags().output_extension << "]" << std::endl;
-		log << " -o, --output f             Write PCM output to file f instead of streaming to audio device [default: " << commandlineflags().output_filename << "]" << std::endl;
+		log << "     --output-type t        Use output format t when writing to a individual PCM files (only applies to --render mode) [default: " << commandlineflags().output_extension << "]" << std::endl;
+		log << " -o, --output f             Write PCM output to file f instead of streaming to audio device (only applies to --ui and --batch modes) [default: " << commandlineflags().output_filename << "]" << std::endl;
 		log << "     --force                Force overwriting of output file [default: " << commandlineflags().force_overwrite << "]" << std::endl;
 		log << std::endl;
 		log << "     --                     Interpret further arguments as filenames" << std::endl;
@@ -2382,6 +2382,10 @@ static int main( int argc, char * argv [] ) {
 		textout & log = flags.quiet ? *static_cast<textout*>( &dummy_log ) : *static_cast<textout*>( stdout_can_ui ? &std_out : &std_err );
 
 		show_info( log, flags.verbose );
+		
+		if ( !flags.warnings.empty() ) {
+			log << flags.warnings << std::endl;
+		}
 
 		if ( flags.verbose ) {
 			log << flags;

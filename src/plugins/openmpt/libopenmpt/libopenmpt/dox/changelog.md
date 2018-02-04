@@ -5,6 +5,68 @@ Changelog {#changelog}
 For fully detailed change log, please see the source repository directly. This
 is just a high-level summary.
 
+### libopenmpt 0.3.6 (2018-02-03)
+
+ *  [**Sec**] Possible out-of-bounds memory read with malformed STP files.
+    (r9576)
+
+ *  [**Bug**] Small memory leak with malformed STP files.
+
+ *  STM: Accurate emulation of Scream Tracker 2 tempo mode.
+ *  STM: Better support for early format revisions (no such files have been
+    found in the wild, though).
+ *  Fine volume slides are now supported when seeking with seek.sync_samples=1
+    enabled.
+
+### libopenmpt 0.3.5 (2018-01-28)
+
+ *  [**New**] Support MOD files from the Inconexia demo by Iguana.
+ *  [**Bug**] xmp-openmpt: Saved settings were not applied instantly.
+
+ *  XM E60 loop bug was not considered in song length calucation.
+ *  Tighten M15 and MOD file rejection heuristics.
+ *  J2B: Ignore frequency limits from file header. Fixes Medivo.j2b, broken
+    since libopenmpt-0.2.6401-beta17.
+ *  STM: Last character of sample name was missing.
+ *  ParamEq plugin center frequency was not limited correctly.
+ *  libopenmpt_ext C API was not included in the documentation.
+
+### libopenmpt 0.3.4 (2017-12-17)
+
+ *  IT: Fix broken volume envelopes with negative values as found in breakdwn.it
+    by Elysis.
+
+### libopenmpt 0.3.3 (2017-11-19)
+
+ *  [**New**] foo_openmpt: foo_openmpt now also works on Windows XP.
+
+ *  [**Bug**] All VS2015 and VS2017 project files targetting Windows XP did not
+    set compiler option `/Zc:threadSafeInit-` which caused at least the player
+    plugins `in_openmpt` and `xmp-openmpt` to fail to load.
+
+### libopenmpt 0.3.2 (2017-11-04)
+
+ *  [**New**] Autotools `configure` and plain `Makefile` now honor the variable
+    `CXXSTDLIB_PCLIBSPRIVATE` which serves the sole purpose of listing the
+    standard library (or libraries) required for static linking. The contents of
+    this variable will be put in `libopenmpt.pc` `Libs.private` and used for
+    nothing else. See \ref libopenmpt_c_staticlinking .
+
+ *  [**Change**] Windows bin and dev release packages now use zip archives
+    instead of 7z archives as it had originally been intended for the 0.3.0
+    release.
+ *  [**Change**] openmpt123: The following combinations of options are now
+    deprecated because they made no real sense in the first place:
+    `--render --output`, `--ui --output-type`, `--batch --output-type`
+
+ *  [**Bug**] libopenmpt did not build on Android NDK 15c (and possibly
+    other versions between 12b and 15c as well).
+
+ *  IT: In Compatible Gxx mode, allow sample changes next to a tone portamento
+    effect if a previous sample has already stopped playing.
+ *  MOD: Slides and delayed notes are executed on every repetition of a row with
+    row delay (fixes "ode to protracker").
+
 ### libopenmpt 0.3.1 (2017-09-28)
 
  *  [**Bug**] Windows: libopenmpt resource did not compile for release versions.

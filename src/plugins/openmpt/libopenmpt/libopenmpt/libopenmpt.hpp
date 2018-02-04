@@ -288,7 +288,7 @@ enum probe_file_header_result {
   \param size Size of the beginning of the file data.
   \param filesize Full size of the file data on disk.
   \remarks It is recommended to provide openmpt::probe_file_header_get_recommended_size() bytes of data for data and size. If the file is smaller, only provide the filesize amount and set size and filesize to the file's size. 
-  \remarks openmpt::could_open_probability() provides a more elaborate interace that might be require for special use cases. It is recommended to use openmpt::probe_file_header() though, if possible.
+  \remarks openmpt::could_open_probability() provides a more elaborate interface that might be required for special use cases. It is recommended to use openmpt::probe_file_header() though, if possible.
   \retval probe_file_header_result_success The file will most likely be supported by libopenmpt.
   \retval probe_file_header_result_failure The file is not supported by libopenmpt.
   \retval probe_file_header_result_wantmoredata An answer could not be determined with the amount of data provided.
@@ -305,7 +305,7 @@ LIBOPENMPT_CXX_API int probe_file_header( std::uint64_t flags, const std::uint8_
   \param size Size of the beginning of the file data.
   \remarks It is recommended to use the overload of this function that also takes the filesize as parameter if at all possile. libopenmpt can provide more accurate answers if the filesize is known.
   \remarks It is recommended to provide openmpt::probe_file_header_get_recommended_size() bytes of data for data and size. If the file is smaller, only provide the filesize amount and set size to the file's size. 
-  \remarks openmpt::could_open_probability() provides a more elaborate interace that might be require for special use cases. It is recommended to use openmpt::probe_file_header() though, if possible.
+  \remarks openmpt::could_open_probability() provides a more elaborate interface that might be required for special use cases. It is recommended to use openmpt::probe_file_header() though, if possible.
   \retval probe_file_header_result_success The file will most likely be supported by libopenmpt.
   \retval probe_file_header_result_failure The file is not supported by libopenmpt.
   \retval probe_file_header_result_wantmoredata An answer could not be determined with the amount of data provided.
@@ -320,7 +320,7 @@ LIBOPENMPT_CXX_API int probe_file_header( std::uint64_t flags, const std::uint8_
   \param flags Ored mask of openmpt::probe_file_header_flags_modules and openmpt::probe_file_header_flags_containers, or openmpt::probe_file_header_flags_default.
   \param stream Input stream to scan.
   \remarks stream is left in an unspecified state when this function returns.
-  \remarks openmpt::could_open_probability() provides a more elaborate interace that might be require for special use cases. It is recommended to use openmpt::probe_file_header() though, if possible.
+  \remarks openmpt::could_open_probability() provides a more elaborate interface that might be required for special use cases. It is recommended to use openmpt::probe_file_header() though, if possible.
   \retval probe_file_header_result_success The file will most likely be supported by libopenmpt.
   \retval probe_file_header_result_failure The file is not supported by libopenmpt.
   \retval probe_file_header_result_wantmoredata An answer could not be determined with the amount of data provided.
@@ -581,7 +581,7 @@ public:
 	  \return The number of frames actually rendered.
 	  \retval 0 The end of song has been reached.
 	  \remarks The output buffers are only written to up to the returned number of elements.
-	  \remarks You can freely switch between any of these function if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
+	  \remarks You can freely switch between any of the "read*" variants if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
 	  \remarks It is recommended to use the floating point API because of the greater dynamic range and no implied clipping.
 	  \sa \ref libopenmpt_cpp_outputformat
 	*/
@@ -595,7 +595,7 @@ public:
 	  \return The number of frames actually rendered.
 	  \retval 0 The end of song has been reached.
 	  \remarks The output buffers are only written to up to the returned number of elements.
-	  \remarks You can freely switch between any of these function if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
+	  \remarks You can freely switch between any of the "read*" variants if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
 	  \remarks It is recommended to use the floating point API because of the greater dynamic range and no implied clipping.
 	  \sa \ref libopenmpt_cpp_outputformat
 	*/
@@ -611,7 +611,7 @@ public:
 	  \return The number of frames actually rendered.
 	  \retval 0 The end of song has been reached.
 	  \remarks The output buffers are only written to up to the returned number of elements.
-	  \remarks You can freely switch between any of these function if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
+	  \remarks You can freely switch between any of the "read*" variants if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
 	  \remarks It is recommended to use the floating point API because of the greater dynamic range and no implied clipping.
 	  \sa \ref libopenmpt_cpp_outputformat
 	*/
@@ -624,7 +624,7 @@ public:
 	  \return The number of frames actually rendered.
 	  \retval 0 The end of song has been reached.
 	  \remarks The output buffers are only written to up to the returned number of elements.
-	  \remarks You can freely switch between any of these function if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
+	  \remarks You can freely switch between any of the "read*" variants if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
 	  \remarks Floating point samples are in the [-1.0..1.0] nominal range. They are not clipped to that range though and thus might overshoot.
 	  \sa \ref libopenmpt_cpp_outputformat
 	*/
@@ -638,7 +638,7 @@ public:
 	  \return The number of frames actually rendered.
 	  \retval 0 The end of song has been reached.
 	  \remarks The output buffers are only written to up to the returned number of elements.
-	  \remarks You can freely switch between any of these function if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
+	  \remarks You can freely switch between any of the "read*" variants if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
 	  \remarks Floating point samples are in the [-1.0..1.0] nominal range. They are not clipped to that range though and thus might overshoot.
 	  \sa \ref libopenmpt_cpp_outputformat
 	*/
@@ -654,7 +654,7 @@ public:
 	  \return The number of frames actually rendered.
 	  \retval 0 The end of song has been reached.
 	  \remarks The output buffers are only written to up to the returned number of elements.
-	  \remarks You can freely switch between any of these function if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
+	  \remarks You can freely switch between any of the "read*" variants if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
 	  \remarks Floating point samples are in the [-1.0..1.0] nominal range. They are not clipped to that range though and thus might overshoot.
 	  \sa \ref libopenmpt_cpp_outputformat
 	*/
@@ -667,7 +667,7 @@ public:
 	  \return The number of frames actually rendered.
 	  \retval 0 The end of song has been reached.
 	  \remarks The output buffers are only written to up to the returned number of elements.
-	  \remarks You can freely switch between any of these function if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
+	  \remarks You can freely switch between any of the "read*" variants if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
 	  \remarks It is recommended to use the floating point API because of the greater dynamic range and no implied clipping.
 	  \sa \ref libopenmpt_cpp_outputformat
 	*/
@@ -680,7 +680,7 @@ public:
 	  \return The number of frames actually rendered.
 	  \retval 0 The end of song has been reached.
 	  \remarks The output buffers are only written to up to the returned number of elements.
-	  \remarks You can freely switch between any of these function if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
+	  \remarks You can freely switch between any of the "read*" variants if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
 	  \remarks It is recommended to use the floating point API because of the greater dynamic range and no implied clipping.
 	  \sa \ref libopenmpt_cpp_outputformat
 	*/
@@ -693,7 +693,7 @@ public:
 	  \return The number of frames actually rendered.
 	  \retval 0 The end of song has been reached.
 	  \remarks The output buffers are only written to up to the returned number of elements.
-	  \remarks You can freely switch between any of these function if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
+	  \remarks You can freely switch between any of the "read*" variants if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
 	  \remarks Floating point samples are in the [-1.0..1.0] nominal range. They are not clipped to that range though and thus might overshoot.
 	  \sa \ref libopenmpt_cpp_outputformat
 	*/
@@ -706,7 +706,7 @@ public:
 	  \return The number of frames actually rendered.
 	  \retval 0 The end of song has been reached.
 	  \remarks The output buffers are only written to up to the returned number of elements.
-	  \remarks You can freely switch between any of these function if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
+	  \remarks You can freely switch between any of the "read*" variants if you see a need to do so. libopenmpt tries to introduce as little switching annoyances as possible. Normally, you would only use a single one of these functions for rendering a particular module.
 	  \remarks Floating point samples are in the [-1.0..1.0] nominal range. They are not clipped to that range though and thus might overshoot.
 	  \sa \ref libopenmpt_cpp_outputformat
 	*/

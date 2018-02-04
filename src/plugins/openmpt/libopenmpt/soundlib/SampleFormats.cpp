@@ -253,6 +253,12 @@ bool CSoundFile::ReadInstrumentFromSong(INSTRUMENTINDEX targetInstr, const CSoun
 		}
 	}
 
+#ifdef MODPLUG_TRACKER
+	if(!strcmp(pIns->filename, "") && srcSong.GetpModDoc() != nullptr)
+	{
+		mpt::String::Copy(pIns->filename, srcSong.GetpModDoc()->GetPathNameMpt().GetFullFileName().ToLocale());
+	}
+#endif
 	pIns->Convert(srcSong.GetType(), GetType());
 
 	// Copy all referenced samples over
@@ -277,29 +283,37 @@ bool CSoundFile::ReadSampleFromSong(SAMPLEINDEX targetSample, const CSoundFile &
 	DestroySampleThreadsafe(targetSample);
 
 	const ModSample &sourceSmp = srcSong.GetSample(sourceSample);
+	ModSample &targetSmp = GetSample(targetSample);
 
 	if(GetNumSamples() < targetSample) m_nSamples = targetSample;
-	Samples[targetSample] = sourceSmp;
-	Samples[targetSample].Convert(srcSong.GetType(), GetType());
+	targetSmp = sourceSmp;
 	strcpy(m_szNames[targetSample], srcSong.m_szNames[sourceSample]);
 
 	if(sourceSmp.pSample)
 	{
-		Samples[targetSample].pSample = nullptr;	// Don't want to delete the original sample!
-		if(Samples[targetSample].AllocateSample())
+		targetSmp.pSample = nullptr;	// Don't want to delete the original sample!
+		if(targetSmp.AllocateSample())
 		{
 			SmpLength nSize = sourceSmp.GetSampleSizeInBytes();
-			memcpy(Samples[targetSample].pSample, sourceSmp.pSample, nSize);
-			Samples[targetSample].PrecomputeLoops(*this, false);
+			memcpy(targetSmp.pSample, sourceSmp.pSample, nSize);
+			targetSmp.PrecomputeLoops(*this, false);
 		}
 		// Remember on-disk path (for MPTM files), but don't implicitely enable on-disk storage
 		// (we really don't want this for e.g. duplicating samples or splitting stereo samples)
 #ifdef MPT_EXTERNAL_SAMPLES
 		SetSamplePath(targetSample, srcSong.GetSamplePath(sourceSample));
 #endif
-		Samples[targetSample].uFlags.reset(SMP_KEEPONDISK);
+		targetSmp.uFlags.reset(SMP_KEEPONDISK);
 	}
 
+#ifdef MODPLUG_TRACKER
+	if(!strcmp(targetSmp.filename, "") && srcSong.GetpModDoc() != nullptr)
+	{
+		mpt::String::Copy(targetSmp.filename, mpt::ToCharset(GetCharsetInternal(), srcSong.GetpModDoc()->GetTitle()));
+	}
+#endif
+
+	targetSmp.Convert(srcSong.GetType(), GetType());
 	return true;
 }
 
@@ -1132,11 +1146,7 @@ bool CSoundFile::ReadXISample(SAMPLEINDEX nSample, FileReader &file)
 struct SFZControl
 {
 	std::string defaultPath;
-	int8 octaveOffset, noteOffset;
-
-	SFZControl()
-		: octaveOffset(0), noteOffset(0)
-	{ }
+	int8 octaveOffset = 0, noteOffset = 0;
 
 	void Parse(const std::string &key, const std::string &value)
 	{
@@ -1151,10 +1161,8 @@ struct SFZControl
 
 struct SFZEnvelope
 {
-	float startLevel, delay, attack, hold, decay, sustainLevel, release, depth;
-	SFZEnvelope()
-		: startLevel(0), delay(0), attack(0), hold(0), decay(0), sustainLevel(100), release(0), depth(0)
-	{ }
+	float startLevel = 0, delay = 0, attack = 0, hold = 0,
+		decay = 0, sustainLevel = 100, release = 0, depth = 0;
 
 	void Parse(std::string key, const std::string &value)
 	{
@@ -1263,47 +1271,27 @@ struct SFZRegion
 
 	std::string filename;
 	SFZEnvelope ampEnv, pitchEnv, filterEnv;
-	SmpLength loopStart, loopEnd, end, offset;
-	LoopMode loopMode;
-	LoopType loopType;
-	int32 cutoff;			// in Hz
-	int32 filterRandom;		// 0...9600 cents
-	int16 volume;			// -144dB...+6dB
-	int16 pitchBend;		// -9600...9600 cents
-	float pitchLfoFade;		// 0...100 seconds
-	int16 pitchLfoDepth;	// -1200...12000
-	uint8 pitchLfoFreq;		// 0...20 Hz
-	int8 panning;			// -100...+100
-	int8 transpose;
-	int8 finetune;
-	uint8 keyLo, keyHi, keyRoot;
-	uint8 resonance;		// 0...40dB
-	uint8 filterType;
-	uint8 polyphony;
-	bool useSampleKeyRoot : 1;
-	bool invertPhase : 1;
-
-	SFZRegion()
-		: loopStart(0), loopEnd(0), end(MAX_SAMPLE_LENGTH), offset(0)
-		, loopMode(LoopMode::kUnspecified)
-		, loopType(LoopType::kUnspecified)
-		, cutoff(0)
-		, filterRandom(0)
-		, volume(0)
-		, pitchBend(200)
-		, pitchLfoFade(0)
-		, pitchLfoDepth(0)
-		, pitchLfoFreq(0)
-		, panning(-128)
-		, transpose(0)
-		, finetune(0)
-		, keyLo(0), keyHi(127), keyRoot(60)
-		, resonance(0)
-		, filterType(FLTMODE_UNCHANGED)
-		, polyphony(255)
-		, useSampleKeyRoot(false)
-		, invertPhase(false)
-	{ }
+	SmpLength loopStart = 0, loopEnd = 0;
+	SmpLength end = MAX_SAMPLE_LENGTH, offset = 0;
+	double loopCrossfade = 0.0;
+	LoopMode loopMode = LoopMode::kUnspecified;
+	LoopType loopType = LoopType::kUnspecified;
+	int32 cutoff = 0;			// in Hz
+	int32 filterRandom = 0;		// 0...9600 cents
+	int16 volume = 0;			// -144dB...+6dB
+	int16 pitchBend = 200;		// -9600...9600 cents
+	float pitchLfoFade = 0;		// 0...100 seconds
+	int16 pitchLfoDepth = 0;	// -1200...12000
+	uint8 pitchLfoFreq = 0;		// 0...20 Hz
+	int8 panning = -128;		// -100...+100
+	int8 transpose = 0;
+	int8 finetune = 0;
+	uint8 keyLo = 0, keyHi = 127, keyRoot = 60;
+	uint8 resonance = 0;		// 0...40dB
+	uint8 filterType = FLTMODE_UNCHANGED;
+	uint8 polyphony = 255;
+	bool useSampleKeyRoot = false;
+	bool invertPhase = false;
 
 	template<typename T, typename Tc>
 	static void Read(const std::string &valueStr, T &value, Tc valueMin = std::numeric_limits<T>::min(), Tc valueMax = std::numeric_limits<T>::max())
@@ -1405,6 +1393,8 @@ struct SFZRegion
 			Read(value, loopStart, SmpLength(0), MAX_SAMPLE_LENGTH);
 		else if(key == "loop_end" || key == "loopend")
 			Read(value, loopEnd, SmpLength(0), MAX_SAMPLE_LENGTH);
+		else if(key == "loop_crossfade")
+			Read(value, loopCrossfade, 0.0, DBL_MAX);
 		else if(key == "loop_mode" || key == "loopmode")
 		{
 			if(value == "loop_continuous")
@@ -1681,6 +1671,7 @@ bool CSoundFile::ReadSFZInstrument(INSTRUMENTINDEX nInstr, FileReader &file)
 				region.keyRoot = 60;
 		}
 
+		const auto origSampleRate = sample.GetSampleRate(GetType());
 		int8 transp = region.transpose + (60 - region.keyRoot);
 		for(uint8 i = keyLo; i <= keyHi; i++)
 		{
@@ -1783,6 +1774,17 @@ bool CSoundFile::ReadSFZInstrument(INSTRUMENTINDEX nInstr, FileReader &file)
 			sample.uFlags.set(CHN_PINGPONGSUSTAIN, sample.uFlags[CHN_PINGPONGLOOP]);
 			sample.uFlags.reset(CHN_LOOP | CHN_PINGPONGLOOP);
 		}
+
+		// Loop cross-fade
+		SmpLength fadeSamples = Util::Round<SmpLength>(region.loopCrossfade * origSampleRate);
+		LimitMax(fadeSamples, sample.uFlags[CHN_SUSTAINLOOP] ? sample.nSustainStart : sample.nLoopStart);
+		if(fadeSamples > 0)
+		{
+			ctrlSmp::XFadeSample(sample, fadeSamples, 50000, true, sample.uFlags[CHN_SUSTAINLOOP], *this);
+			sample.uFlags.set(SMP_MODIFIED);
+		}
+
+		// Sample offset
 		if(region.offset && region.offset < sample.nLength)
 		{
 			auto offset = region.offset * sample.GetBytesPerSample();
@@ -2245,18 +2247,14 @@ bool CSoundFile::ReadITISample(SAMPLEINDEX nSample, FileReader &file)
 	file.Rewind();
 	ModInstrument dummy;
 	ITInstrToMPT(file, dummy, instrumentHeader.trkvers);
-	SAMPLEINDEX nsamples = instrumentHeader.nos;
 	// Old SchismTracker versions set nos=0
-	for(size_t i = 0; i < CountOf(dummy.Keyboard); i++)
-	{
-		nsamples = std::max(nsamples, dummy.Keyboard[i]);
-	}
+	const SAMPLEINDEX nsamples = std::max(static_cast<SAMPLEINDEX>(instrumentHeader.nos), *std::max_element(std::begin(dummy.Keyboard), std::end(dummy.Keyboard)));
 	if(!nsamples)
 		return false;
 
 	// Preferrably read the middle-C sample
 	auto sample = dummy.Keyboard[NOTE_MIDDLEC - NOTE_MIN];
-	if(sample > 0 && sample <= instrumentHeader.nos)
+	if(sample > 0)
 		sample--;
 	else
 		sample = 0;
@@ -2289,12 +2287,8 @@ bool CSoundFile::ReadITIInstrument(INSTRUMENTINDEX nInstr, FileReader &file)
 	Instruments[nInstr] = pIns;
 	file.Rewind();
 	ITInstrToMPT(file, *pIns, instrumentHeader.trkvers);
-	SAMPLEINDEX nsamples = instrumentHeader.nos;
 	// Old SchismTracker versions set nos=0
-	for(size_t i = 0; i < CountOf(pIns->Keyboard); i++)
-	{
-		nsamples = std::max(nsamples, pIns->Keyboard[i]);
-	}
+	const SAMPLEINDEX nsamples = std::max(static_cast<SAMPLEINDEX>(instrumentHeader.nos), *std::max_element(std::begin(pIns->Keyboard), std::end(pIns->Keyboard)));
 
 	// In order to properly compute the position, in file, of eventual extended settings
 	// such as "attack" we need to keep the "real" size of the last sample as those extra
@@ -2316,11 +2310,12 @@ bool CSoundFile::ReadITIInstrument(INSTRUMENTINDEX nInstr, FileReader &file)
 	}
 	if(GetNumSamples() < smp) m_nSamples = smp;
 
-	for(size_t j = 0; j < CountOf(pIns->Keyboard); j++)
+	// Adjust sample assignment
+	for(auto &sample : pIns->Keyboard)
 	{
-		if(pIns->Keyboard[j] && pIns->Keyboard[j] <= nsamples)
+		if(sample > 0 && sample <= nsamples)
 		{
-			pIns->Keyboard[j] = samplemap[pIns->Keyboard[j] - 1];
+			sample = samplemap[sample - 1];
 		}
 	}
 
@@ -2374,7 +2369,7 @@ bool CSoundFile::SaveITIInstrument(INSTRUMENTINDEX nInstr, const mpt::PathString
 	smpmap.clear();
 
 	uint32 filePos = instSize;
-	fwrite(&iti, 1, instSize, f);
+	mpt::IO::WritePartial(f, iti, instSize);
 
 	filePos += mpt::saturate_cast<uint32>(smptable.size() * sizeof(ITSample));
 
@@ -2389,11 +2384,11 @@ bool CSoundFile::SaveITIInstrument(INSTRUMENTINDEX nInstr, const mpt::PathString
 		mpt::String::Write<mpt::String::nullTerminated>(itss.name, m_szNames[smp]);
 
 		itss.samplepointer = filePos;
-		fwrite(&itss, 1, sizeof(itss), f);
+		mpt::IO::Write(f, itss);
 
 		// Write sample
-		off_t curPos = ftell(f);
-		fseek(f, filePos, SEEK_SET);
+		auto curPos = mpt::IO::TellWrite(f);
+		mpt::IO::SeekAbsolute(f, filePos);
 		if(!isExternal)
 		{
 			filePos += mpt::saturate_cast<uint32>(itss.GetSampleFormat(0x0214).WriteSample(f, Samples[smp]));
@@ -2410,14 +2405,12 @@ bool CSoundFile::SaveITIInstrument(INSTRUMENTINDEX nInstr, const mpt::PathString
 			}
 #endif // MPT_EXTERNAL_SAMPLES
 		}
-		fseek(f, curPos, SEEK_SET);
+		mpt::IO::SeekAbsolute(f, curPos);
 	}
 
-	fseek(f, 0, SEEK_END);
+	mpt::IO::SeekEnd(f);
 	// Write 'MPTX' extension tag
-	char code[4];
-	memcpy(code, "XTPM", 4);
-	fwrite(&code, 1, 4, f);
+	mpt::IO::WriteRaw(f, "XTPM", 4);
 	WriteInstrumentHeaderStructOrField(pIns, f);	// Write full extended header.
 
 	fclose(f);

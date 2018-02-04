@@ -692,10 +692,10 @@ bool CSoundFile::ProcessRow()
 	if (m_PlayState.m_nTickCount)
 	{
 		m_SongFlags.reset(SONG_FIRSTTICK);
-		if(!(GetType() & (MOD_TYPE_XM | MOD_TYPE_MT2 | MOD_TYPE_MOD)) && m_PlayState.m_nTickCount < GetNumTicksOnCurrentRow())
+		if(!(GetType() & (MOD_TYPE_XM | MOD_TYPE_MT2)) && m_PlayState.m_nTickCount < GetNumTicksOnCurrentRow())
 		{
 			// Emulate first tick behaviour if Row Delay is set.
-			// Test cases: PatternDelaysRetrig.it, PatternDelaysRetrig.s3m, PatternDelaysRetrig.xm
+			// Test cases: PatternDelaysRetrig.it, PatternDelaysRetrig.s3m, PatternDelaysRetrig.xm, PatternDelaysRetrig.mod
 			if(!(m_PlayState.m_nTickCount % (m_PlayState.m_nMusicSpeed + m_PlayState.m_nFrameDelay)))
 			{
 				m_SongFlags.set(SONG_FIRSTTICK);
@@ -919,12 +919,7 @@ void CSoundFile::ProcessTremor(CHANNELINDEX nChn, int &vol)
 			{
 				if (tremcount >= n) tremcount = 0;
 				if (tremcount >= ontime) vol = 0;
-
-				// ScreamTracker 2 only updates effects on every 16th tick.
-				if((m_PlayState.m_nTickCount & 0x0F) != 0 || GetType() != MOD_TYPE_STM)
-				{
-					chn.nTremorCount = tremcount + 1;
-				}
+				chn.nTremorCount = tremcount + 1;
 			} else
 			{
 				if(m_SongFlags[SONG_FIRSTTICK])
@@ -1454,8 +1449,6 @@ void CSoundFile::ProcessArpeggio(CHANNELINDEX nChn, int &period, Tuning::NOTEIND
 			else
 			{
 				uint32 tick = m_PlayState.m_nTickCount;
-				if(GetType() == MOD_TYPE_STM)
-					tick >>= 4;
 
 				// TODO other likely formats for MOD case: MED, OKT, etc
 				uint8 note = (GetType() != MOD_TYPE_MOD) ? pChn->nNote : static_cast<uint8>(GetNoteFromPeriod(period, pChn->nFineTune, pChn->nC5Speed));
@@ -1619,12 +1612,6 @@ void CSoundFile::ProcessVibrato(CHANNELINDEX nChn, int &period, Tuning::RATIOTYP
 		// Advance vibrato position - IT updates on every tick, unless "old effects" are enabled (in this case it only updates on non-first ticks like other trackers)
 		if(!m_SongFlags[SONG_FIRSTTICK] || ((GetType() & (MOD_TYPE_IT | MOD_TYPE_MPT)) && !(m_SongFlags[SONG_ITOLDEFFECTS])))
 		{
-			// ScreamTracker 2 only updates effects on every 16th tick.
-			if((m_PlayState.m_nTickCount & 0x0F) != 0 && GetType() == MOD_TYPE_STM)
-			{
-				return;
-			}
-
 			// IT compatibility: IT has its own, more precise tables and pre-increments the vibrato position
 			if(!m_playBehaviour[kITVibratoTremoloPanbrello])
 				chn.nVibratoPos += chn.nVibratoSpeed;
@@ -1885,6 +1872,7 @@ void CSoundFile::ProcessRamping(ModChannel *pChn) const
 	}
 	pChn->rampLeftVol = pChn->leftVol * (1 << VOLUMERAMPPRECISION);
 	pChn->rampRightVol = pChn->rightVol * (1 << VOLUMERAMPPRECISION);
+	pChn->dwFlags.reset(CHN_FASTVOLRAMP);
 }
 
 

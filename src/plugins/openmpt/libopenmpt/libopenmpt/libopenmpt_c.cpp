@@ -109,7 +109,7 @@ static std::string format_exception( const char * const function ) {
 	} catch ( ... ) {
 		err += function;
 		err += ": ";
-		err += "UNKOWN INTERNAL ERROR";
+		err += "UNKNOWN INTERNAL ERROR";
 	}
 	return err;
 }
@@ -244,7 +244,7 @@ static void do_report_exception( const char * const function, openmpt_log_func c
 				openmpt_log_func_default( message.c_str(), NULL );
 			}
 		} catch ( ... ) {
-			fprintf( stderr, "openmpt: %s:%i: UNKNOWN INTERNAL ERROR in error handling: function='%s', logfunc=%p, loguser=%p, errfunc=%p, erruser=%p, impl=%p\n", __FILE__, static_cast<int>( __LINE__ ), function ? function : "", logfunc, loguser, errfunc, erruser, impl );
+			fprintf( stderr, "openmpt: %s:%i: UNKNOWN INTERNAL ERROR in error handling: function='%s', logfunc=%p, loguser=%p, errfunc=%p, erruser=%p, impl=%p\n", __FILE__, static_cast<int>( __LINE__ ), function ? function : "", reinterpret_cast<void*>( logfunc ), loguser, reinterpret_cast<void*>( errfunc ), erruser, static_cast<void*>( impl ) );
 			fflush( stderr );
 		}
 	}
@@ -374,7 +374,7 @@ int openmpt_error_is_transient( int error ) {
 }
 
 const char * openmpt_error_string( int error ) {
-	const char * text = "unkown error";
+	const char * text = "unknown error";
 	switch ( error ) {
 		case OPENMPT_ERROR_OK:                
 			text = "";

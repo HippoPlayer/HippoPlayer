@@ -349,6 +349,7 @@ static void WINAPI openmpt_SetConfig( void * config, DWORD size ) {
 	reset_options();
 	if ( config ) {
 		load_settings_from_xml( self->settings, std::string( (char*)config, (char*)config + size ) );
+		apply_options();
 	}
 }
 
@@ -440,7 +441,7 @@ static void clear_current_timeinfo() {
 static void WINAPI openmpt_About( HWND win ) {
 	std::ostringstream about;
 	about << SHORT_TITLE << " version " << openmpt::string::get( "library_version" ) << " " << "(built " << openmpt::string::get( "build" ) << ")" << std::endl;
-	about << " Copyright (c) 2013-2017 OpenMPT developers (https://openmpt.org/)" << std::endl;
+	about << " Copyright (c) 2013-2018 OpenMPT developers (https://lib.openmpt.org/)" << std::endl;
 	about << " OpenMPT version " << openmpt::string::get( "core_version" ) << std::endl;
 	about << std::endl;
 	about << openmpt::string::get( "contact" ) << std::endl;

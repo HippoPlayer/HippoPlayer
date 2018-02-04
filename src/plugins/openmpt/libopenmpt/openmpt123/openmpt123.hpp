@@ -303,6 +303,7 @@ struct commandlineflags {
 	std::string output_extension;
 	bool force_overwrite;
 	bool paused;
+	std::string warnings;
 	void apply_default_buffer_sizes() {
 		if ( ui_redraw_interval == default_high ) {
 			ui_redraw_interval = 50;
@@ -483,6 +484,16 @@ struct commandlineflags {
 		}
 		if ( samplerate < 0 ) {
 			samplerate = commandlineflags().samplerate;
+		}
+		if ( mode == ModeRender && !output_filename.empty() ) {
+			std::ostringstream warning;
+			warning << "Warning: --output is deprecated in --render mode. Use --output-type instead." << std::endl;
+			warnings += warning.str();
+		}
+		if ( mode != ModeRender && output_extension != "wav" ) {
+			std::ostringstream warning;
+			warning << "Warning: --output-type is deprecated in modes other than --render. Use --output instead." << std::endl;
+			warnings += warning.str();
 		}
 		if ( !output_filename.empty() ) {
 			output_extension = get_extension( output_filename );

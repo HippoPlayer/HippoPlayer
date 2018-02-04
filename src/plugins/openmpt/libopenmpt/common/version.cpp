@@ -144,15 +144,17 @@ static int GetRevision()
 		}
 		return ConvertStrTo<int>(svnversion);
 	#else
+	    /*
 		#if MPT_COMPILER_MSVC
-			//#pragma message("SVN revision unknown. Please check your build system.")
+			#pragma message("SVN revision unknown. Please check your build system.")
 		#elif MPT_COMPILER_GCC || MPT_COMPILER_CLANG || MPT_COMPILER_MSVCCLANGC2
-			//#warning "SVN revision unknown. Please check your build system."
+			#warning "SVN revision unknown. Please check your build system."
 		#else
 			// There is no portable way to display a warning.
 			// Try to provoke a warning with an unused variable.
 			int SVN_revision_unknown__Please_check_your_build_system;
 		#endif
+		*/
 		return 0;
 	#endif
 }
@@ -589,12 +591,12 @@ mpt::ustring GetFullCreditsString()
 		"libopenmpt (based on OpenMPT / ModPlug Tracker)\n"
 #endif
 		"\n"
-		"Copyright \xC2\xA9 2004-2017 Contributors\n"
+		"Copyright \xC2\xA9 2004-2018 Contributors\n"
 		"Copyright \xC2\xA9 1997-2003 Olivier Lapicque\n"
 		"\n"
 		"Contributors:\n"
-		"Johannes Schultz (2008-2017)\n"
-		"J\xC3\xB6rn Heusipp (2012-2017)\n"
+		"Johannes Schultz (2008-2018)\n"
+		"J\xC3\xB6rn Heusipp (2012-2018)\n"
 		"Ahti Lepp\xC3\xA4nen (2005-2011)\n"
 		"Robin Fernandes (2004-2007)\n"
 		"Sergiy Pylypenko (2007)\n"
@@ -761,7 +763,7 @@ mpt::ustring GetLicenseString()
 	return MPT_UTF8(
 		"The OpenMPT code is licensed under the BSD license." "\n"
 		"" "\n"
-		"Copyright (c) 2004-2017, OpenMPT contributors" "\n"
+		"Copyright (c) 2004-2018, OpenMPT contributors" "\n"
 		"Copyright (c) 1997-2003, Olivier Lapicque" "\n"
 		"All rights reserved." "\n"
 		"" "\n"
