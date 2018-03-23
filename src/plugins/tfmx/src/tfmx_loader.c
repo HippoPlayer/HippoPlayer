@@ -21,7 +21,7 @@ extern struct Pdblk pdb;
 extern struct Mdb mdb;
 extern char act[8];
 
-U32 outRate=44100;
+U32 outRate=48000;
 unsigned int mlen = 0;
 U8 *smplbuf = 0;
 U8 *smplbuf_end = 0;
@@ -67,7 +67,7 @@ static int tfmx_loader(char *mfn,char *sfn);
 
 /* loading of a single Cyb' TFMX file */
 /* return 0 on success */
-static int 
+static int
 tfmx_cyb_file_load (char *fn)
 {
     FILE *cybf = NULL;
@@ -138,13 +138,13 @@ tfmx_cyb_file_load (char *fn)
     mdatsize = 0;
     mdatsize  = cybmem[10]; mdatsize <<= 8;
     mdatsize |= cybmem[11]; mdatsize <<= 8;
-    mdatsize |= cybmem[12]; mdatsize <<= 8; 
+    mdatsize |= cybmem[12]; mdatsize <<= 8;
     mdatsize |= cybmem[13];
 
     smplsize = 0;
     smplsize  = cybmem[14]; smplsize <<= 8;
     smplsize |= cybmem[15]; smplsize <<= 8;
-    smplsize |= cybmem[16]; smplsize <<= 8; 
+    smplsize |= cybmem[16]; smplsize <<= 8;
     smplsize |= cybmem[17];
 
     /* create temp file names from radix */
@@ -191,10 +191,10 @@ char LoadTFMXFile(char *fName)
 {
     int suffixPos, status;
     char *mfn = fName, *sfn, *c;
-	
+
     if(!fName) return 1;
     if(!(sfn = strdup(mfn))) return 1;
-	
+
     if (!(c = strrchr(sfn,'/')))
 	c = sfn;
     else
@@ -202,7 +202,7 @@ char LoadTFMXFile(char *fName)
     suffixPos = strlen(c) - 4;	/* Get filename length */
 
     if (strncasecmp(c,"mdat.",5) == 0) {
-	/* Case-preserving conversion of "mdat" to "smpl" */ 
+	/* Case-preserving conversion of "mdat" to "smpl" */
 	(*c++)^='m'^'s'; (*c++)^='d'^'m'; (*c++)^='a'^'p'; (*c++)^='t'^'l';
 	c-=4;
     }
@@ -218,7 +218,7 @@ char LoadTFMXFile(char *fName)
 	TFMXERR("LoadTFMX: Song name prefix / suffix missing ?!");
 	free(sfn); return 1;
     }
-	
+
     if ((status=tfmx_loader(mfn,sfn))==1) {
 	/* TFMXERR("LoadTFMXFile: Loading of module failed"); */
 	free(sfn); return 1;
@@ -243,7 +243,7 @@ static int tfmx_loader (char *mfn,char *sfn)
 	TFMXERR("LoadTFMX: Failed to open song");
 	return(1);
     }
-	
+
     if (!fread(&mdat_header, sizeof(mdat_header), 1, gfd)) {
 	TFMXERR("LoadTFMX: Failed to read TFMX header");
 	fclose(gfd);
@@ -258,7 +258,7 @@ static int tfmx_loader (char *mfn,char *sfn)
 	fclose(gfd);
 	return(2);
     }
-		
+
     if (!(x = fread(&mdat_editbuf, sizeof(U32), MDAT_EDITBUF_LONGS, gfd)))
     {
 	TFMXERR("LoadTFMX: Read error in MDAT file");
@@ -333,7 +333,7 @@ static int tfmx_loader (char *mfn,char *sfn)
     while (sh<lg) {
 	x=ntohs(*sh);
 	*sh++=x;
-    }	
+    }
 
 /* Now at long last we calc the size of and load the sample file. */
     {
@@ -356,7 +356,7 @@ static int tfmx_loader (char *mfn,char *sfn)
 	    free(smplbuf);
 	    smplbuf=0;
 	}
-		
+
 	if (!(smplbuf=(void *)malloc(fileSize))) {
 	    TFMXERR("LoadTFMX: Error allocating samplebuffer"); fclose(smplFile);
 	    return(1);

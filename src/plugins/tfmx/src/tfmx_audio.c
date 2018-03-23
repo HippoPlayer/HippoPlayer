@@ -196,27 +196,27 @@ conv_s16(S32 *buf, int nsamples)
 
     if (output_chans == 2)
     {
-	for (i = 0; i < nsamples; i++)
-	{
-	    *a++ = buf[HALFBUFSIZE];
-	    *a++ = *buf++;
-	}
+		for (i = 0; i < nsamples; i++)
+		{
+			*a++ = buf[HALFBUFSIZE];
+			*a++ = *buf++;
+		}
     }
     else /* mono */
     {
-	for (i = 0; i < nsamples; i++)
-	{
-	    *a++ = (buf[HALFBUFSIZE] + *buf) / 2;
-	    buf++;
-	}
+		for (i = 0; i < nsamples; i++)
+		{
+			*a++ = (buf[HALFBUFSIZE] + *buf) / 2;
+			buf++;
+		}
     }
 
     bytes2 += nsamples;
 
     for(i = 0; i < nsamples; i++)
     {
-	c[HALFBUFSIZE] = 0;
-	*c++ = 0;
+		c[HALFBUFSIZE] = 0;
+		*c++ = 0;
     }
 }
 
@@ -473,6 +473,7 @@ tfmx_calc_sizes(void)
     {
 	convert_func = &conv_s16;
 	bytes_per_sample = 2;
+	printf("using 16 bit\n");
     }
     else
     {

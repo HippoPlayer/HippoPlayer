@@ -1,54 +1,60 @@
-#include "../../hippoplayer/plugin_api/HippoPlugin.h"
+#include "../../plugin_api/HippoPlugin.h"
 #include "src/tfmx.h"
 #include "src/tfmx_iface.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-typedef struct TfmxReplayerData 
+typedef struct TfmxReplayerData
 {
 	void* tune;
 } TfmxReplayerData;
 
-static struct TfmxReplayerData g_replayerData;
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const char* tfmxInfo(void* userData)
-{
+static const char* tfmx_info(void* user_data) {
 	return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const char* tfmxTrackInfo(void* userData)
-{
-	return 0;
+static const char* tfmx_track_info(void* user_data) {
+	return "unknown";
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const char** tfmxSupportedExtensions(void* userData)
-{
-	static const char* supportedFomats[] =
-	{
-		"tfmx",
-		"TFX",
-		0,
-	};
+static const char* tfmx_supported_extensions(void* user_data) {
+	return "tfmx,TFX";
+}
 
-	return supportedFomats;
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// TODO: These checks needs to be made much better (sanity check some more sizes in the pattern etc)
+
+enum HippoProbeResult tfmx_probe_can_play(const uint8_t* data, uint32_t data_size, uint64_t total_size) {
+	if ((data[0] == 'T') &&
+		(data[1] == 'F') &&
+		(data[2] == 'M') &&
+		(data[3] == 'X') &&
+		(data[4] == '-') &&
+		(data[5] == 'S') &&
+		(data[6] == 'O') &&
+		(data[7] == 'N') &&
+		(data[8] == 'G')) {
+
+		return HippoProbeResult_Supported;
+	}
+
+    return HippoProbeResult_Unsupported;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void* tfmxCreate()
-{
+static void* tfmx_create() {
 	TfmxReplayerData* replayer;
-
-	// TODO: supply custom allocator
 
 	replayer = (TfmxReplayerData*)malloc(sizeof(struct TfmxReplayerData));
 	memset(replayer, 0, sizeof(struct TfmxReplayerData));
@@ -58,15 +64,13 @@ static void* tfmxCreate()
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int tfmxDestroy(void* userData)
-{
+static int tfmx_destroy(void* user_data) {
 	return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int tfmxOpen(void* userData, const char* buffer)
-{
+static int tfmx_open(void* user_data, const char* buffer) {
 	if (LoadTFMXFile((char*)buffer) != 0)
 	    return -1;
 
@@ -78,67 +82,76 @@ static int tfmxOpen(void* userData, const char* buffer)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int tfmxClose(void* userData)
-{
+static int tfmx_close(void* user_data) {
 	return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int tfmxReadData(void* userData, HippoPlaybackBuffer* dest)
-{
-    (void)userData;
-    long blocksize = tfmx_get_block_size();
+static int tfmx_read_data(void* user_data, void* dest) {
+	int16_t temp_data[BUFSIZE];
 
-    if (tfmx_try_to_make_block() >= 0)
-    {	
-	    tfmx_get_block(dest->data);
-    }
-	else
-    {
-        memset(dest->data, 0, blocksize);
+    int block_size = (int)tfmx_get_block_size() / 2;
+
+    assert(block_size < BUFSIZE);
+
+    if (tfmx_try_to_make_block() >= 0) {
+	    tfmx_get_block(temp_data);
+    } else {
+        memset(temp_data, 0, block_size);
     }
 
+	const float scale = 1.0f / 32768.0f;
+
+	float* new_dest = (float*)dest;
+
+	for (int i = 0; i < block_size; ++i) {
+		new_dest[i] = ((float)temp_data[i]) * scale;
+	}
+
+	return block_size;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static int tfmx_seek(void* user_data, int ms) {
 	return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int tfmxSeek(void* userData, int ms)
-{
-	return 0;
+static int tfmx_frame_size(void* user_data) {
+    return tfmx_get_block_size() / 2;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int tfmxFrameSize(void* userData)
-{
-    return tfmx_get_block_size();
+static int tfmx_length(void* user_data) {
+	return -10;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static HippoPlaybackPlugin g_tfmxPlugin = 
-{
+static HippoPlaybackPlugin g_tfmx_plugin = {
 	1,
-	tfmxInfo,
-	tfmxTrackInfo,
-	tfmxSupportedExtensions,
-	tfmxCreate,
-	tfmxDestroy,
-	tfmxOpen,
-	tfmxClose,
-	tfmxReadData,
-	tfmxSeek,
-	tfmxFrameSize,
+	tfmx_probe_can_play,
+	tfmx_info,
+	tfmx_track_info,
+	tfmx_supported_extensions,
+	tfmx_create,
+	tfmx_destroy,
+	tfmx_open,
+	tfmx_close,
+	tfmx_read_data,
+	tfmx_seek,
+	tfmx_frame_size,
+	tfmx_length,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-HippoPlaybackPlugin* getPlugin()
-{
-	return &g_tfmxPlugin;
+HIPPO_EXPORT HippoPlaybackPlugin* getPlugin() {
+	return &g_tfmx_plugin;
 }
-
 
 

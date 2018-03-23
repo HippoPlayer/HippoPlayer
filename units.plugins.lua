@@ -217,6 +217,16 @@ SharedLibrary {
 }
 
 -----------------------------------------------------------------------------------------------------------------------
+
+SharedLibrary {
+	Name = "TfmxPlugin",
+
+	Sources = {
+		get_c_cpp_src("src/plugins/tfmx"),
+	},
+}
+
+-----------------------------------------------------------------------------------------------------------------------
 --[[
 
 SharedLibrary {
@@ -256,14 +266,6 @@ SharedLibrary {
 	},
 }
 
------------------------------------------------------------------------------------------------------------------------
-SharedLibrary {
-	Name = "TfmxPlugin",
-
-	Sources = {
-		get_c_cpp_src("src/plugins/tfmx/src"),
-	},
-}
 --]]
 
 -----------------------------------------------------------------------------------------------------------------------
@@ -295,9 +297,11 @@ RustSharedLibrary {
 
 -- vim: ts=4:sw=4:sts=4
 
+Default "TfmxPlugin"
 Default "HivelyPlugin"
 Default "openmpt"
 Default "vgm"
+
 -- Default "FutureComposerPlugin"
 -- Default "TfmxPlugin"
 -- Default "SidPlugin"
