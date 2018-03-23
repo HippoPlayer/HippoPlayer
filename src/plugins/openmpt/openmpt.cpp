@@ -4,15 +4,18 @@
 #include <vector>
 #include <string>
 #include <string.h>
+#include <assert.h>
 
 const int MAX_EXT_COUNT = 16 * 1024;
 static char s_supported_extensions[MAX_EXT_COUNT];
+static HippoIoAPI* g_io_api = nullptr;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct OpenMptData {
     openmpt::module* mod = 0;
     std::string song_title;
+    void* song_data = 0;
     float length;
 };
 
@@ -54,8 +57,11 @@ static const char* openmpt_supported_extensions() {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void* openmpt_create() {
+static void* openmpt_create(HippoServiceAPI* service_api) {
     OpenMptData* user_data = new OpenMptData;
+
+    g_io_api = HippoServiceAPI_get_io_api(service_api, 1);
+
 	return (void*)user_data;
 }
 
@@ -87,34 +93,43 @@ static HippoProbeResult openmpt_probe_can_play(const uint8_t* data, uint32_t dat
         }
     }
 
-    printf("openmpt: case %d not handled in switch. Assuming unsupported file\n");
+    printf("openmpt: case %d not handled in switch. Assuming unsupported file\n", res);
 
     return HippoProbeResult_Unsupported;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int openmpt_open(void* user_data, const char* buffer) {
-	// TODO: Add reader functions etc to be used instead of fopen as file may come from zip, etc
-	FILE* file = fopen(buffer, "rb");
-	fseek(file, 0, SEEK_END);
-	size_t size = ftell(file);
-	fseek(file, 0, SEEK_SET);
-	uint8_t* data = new uint8_t[size];
-	fread(data, size, 1, file);
-	fclose(file);
+static int openmpt_open(void* user_data, const char* filename) {
+    uint64_t size = 0;
+	struct OpenMptData* replayer_data = (struct OpenMptData*)user_data;
 
-	struct OpenMptData* replayerData = (struct OpenMptData*)user_data;
-    replayerData->mod = new openmpt::module(data, size);
-    replayerData->song_title = replayerData->mod->get_metadata("title");
-    replayerData->length = replayerData->mod->get_duration_seconds();
+    HippoIoErrorCode res = g_io_api->read_file_to_memory(g_io_api->priv_data,
+        filename, &replayer_data->song_data, &size);
+
+    if (res < 0) {
+        return -1;
+    }
+
+    replayer_data->mod = new openmpt::module(replayer_data->song_data, size);
+    replayer_data->song_title = replayer_data->mod->get_metadata("title");
+    replayer_data->length = replayer_data->mod->get_duration_seconds();
 
 	return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int openmpt_close(void* userData) {
+static int openmpt_close(void* user_data) {
+	struct OpenMptData* replayer_data = (struct OpenMptData*)user_data;
+
+	if (g_io_api) {
+	    g_io_api->free_file_to_memory(g_io_api->priv_data, replayer_data->song_data);
+	}
+
+	delete replayer_data->mod;
+	delete replayer_data;
+
 	return 0;
 }
 
@@ -146,8 +161,6 @@ static int openmpt_length(void* user_data) {
     OpenMptData* data = (OpenMptData*)user_data;
 	return int(data->length);
 }
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

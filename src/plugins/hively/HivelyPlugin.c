@@ -9,10 +9,13 @@
 #define FREQ 48000
 #define FRAME_SIZE ((FREQ * 2) / 50)
 
+static struct HippoIoAPI* g_io_api = 0;
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct HivelyReplayerData {
 	struct hvl_tune* tune;
+	void* song_data;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -36,9 +39,11 @@ static const char* hively_supported_extensions() {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void* hively_create() {
+static void* hively_create(HippoServiceAPI* service_api) {
 	void* data = malloc(sizeof(struct HivelyReplayerData));
 	memset(data, 0, sizeof(struct HivelyReplayerData));
+
+    g_io_api = HippoServiceAPI_get_io_api(service_api, 1);
 
 	hvl_InitReplayer();
 
@@ -49,17 +54,29 @@ static void* hively_create() {
 
 static int hively_destroy(void* user_data) {
 	struct HivelyReplayerData* data = (struct HivelyReplayerData*)user_data;
+
+	if (g_io_api) {
+	    g_io_api->free_file_to_memory(g_io_api->priv_data, data->song_data);
+	}
+
 	free(data);
+
 	return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int hively_open(void* userData, const char* buffer) {
-	// TODO: Add reader functions etc to be used instead of fopen as file may come from zip, etc
+static int hively_open(void* user_data, const char* filename) {
+    uint64_t size = 0;
+	struct HivelyReplayerData* data = (struct HivelyReplayerData*)user_data;
 
-	struct HivelyReplayerData* replayerData = (struct HivelyReplayerData*)userData;
-	replayerData->tune = hvl_load_tune(buffer, FREQ, 0);
+    HippoIoErrorCode res = g_io_api->read_file_to_memory(g_io_api->priv_data, filename, &data->song_data, &size);
+
+    if (res < 0) {
+        return -1;
+    }
+
+	data->tune = hvl_LoadTuneMemory((uint8_t*) data->song_data, (int)size, FREQ, 0);
 
 	return 0;
 }

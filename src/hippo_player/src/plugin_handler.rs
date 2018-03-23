@@ -3,14 +3,17 @@ use walkdir::{WalkDir, DirEntry};
 use std::os::raw::{c_int, c_void, c_char};
 use std::sync::Arc;
 
+use service::CHippoServiceAPI;
+
 #[derive(Clone, Debug)]
+#[repr(C)]
 pub struct CHippoPlaybackPlugin {
     pub version: u64,
     pub probe_can_play: extern "C" fn(data: *const u8, data_size: u32, total_size: u64) -> i32,
     pub info: extern "C" fn(user_data: *mut c_void) -> *const c_char,
     pub track_info: extern "C" fn(user_data: *mut c_void) -> *const c_char,
     pub supported_extensions: extern "C" fn() -> *mut c_char,
-    pub create: extern "C" fn() -> *mut c_void,
+    pub create: extern "C" fn(service_api: *const CHippoServiceAPI) -> *mut c_void,
     pub destroy: extern "C" fn(user_data: *mut c_void) -> c_int,
     pub open: extern "C" fn(user_data: *mut c_void, buffer: *const i8) -> c_int,
     pub close: extern "C" fn(user_data: *mut c_void) -> c_int,

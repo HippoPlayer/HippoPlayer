@@ -12,10 +12,59 @@ extern "C"
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 enum HippoProbeResult {
-    HippoProbeResult_Supported,
-    HippoProbeResult_Unsupported,
-    HippoProbeResult_Unsure,
+	HippoProbeResult_Supported,
+	HippoProbeResult_Unsupported,
+	HippoProbeResult_Unsure,
 };
+
+typedef enum HippoFileSeek {
+	HippoFileSeek_Start,
+	HippoFileSeek_Current,
+	HippoFileSeek_End,
+} HippoFileSeek;
+
+typedef void* HippoIoHandle;
+
+typedef struct HippoIoResult {
+	const char* error_message;
+	int status;
+} HippoIoResult;
+
+struct HippoApiPrivData;
+typedef int64_t HippoIoErrorCode;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//
+typedef struct HippoIoAPI {
+	int (*exists)(struct HippoApiPrivData* priv_data, const char* filename);
+
+	HippoIoErrorCode (*read_file_to_memory)(struct HippoApiPrivData* priv_data, const char* filename, void** dest, uint64_t* size);
+	HippoIoErrorCode (*free_file_to_memory)(struct HippoApiPrivData* priv_data, void* dest);
+
+
+    // Io functions for more control
+	HippoIoErrorCode (*open)(struct HippoApiPrivData* priv_data, const char* target, HippoIoHandle* handle);
+	HippoIoErrorCode (*close)(HippoIoHandle handle);
+	HippoIoErrorCode (*size)(HippoIoHandle handle, uint64_t* res);
+	HippoIoErrorCode (*read)(HippoIoHandle handle, void* dest, int64_t size);
+	HippoIoErrorCode (*seek)(HippoIoHandle handle, HippoFileSeek type, int64_t step);
+
+	struct HippoApiPrivData* priv_data;
+} HippoFileAPI;
+
+#define HIPPO_FILE_API_VERSION 1
+
+struct HippoServicePrivData;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef struct HippoServiceAPI {
+	HippoFileAPI* (*get_io_api)(struct HippoServicePrivData* private_data, int api_version);
+	struct HippoServicePrivData* private_data;
+} HippoServiceAPI;
+
+#define HippoServiceAPI_get_io_api(api, version) api->get_io_api(api->private_data, version)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -33,7 +82,7 @@ typedef struct HippoPlaybackPlugin {
 	const char* (*info)(void* user_data);
 	const char* (*trackInfo)(void* user_data);
 	const char* (*supported_extensions)();
-	void* (*create)();
+	void* (*create)(HippoServiceAPI* services);
 
 	int (*destroy)(void* user_data);
 	int (*open)(void* user_data, const char* buffer);

@@ -61,7 +61,7 @@ static const char* vgm_supported_extensions() {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void* vgm_create() {
+static void* vgm_create(HippoServiceAPI* service_api) {
 	void* data = malloc(sizeof(struct VgmReplayerData));
 	memset(data, 0, sizeof(struct VgmReplayerData));
 

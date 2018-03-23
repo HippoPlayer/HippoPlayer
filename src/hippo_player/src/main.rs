@@ -17,6 +17,7 @@ mod plugin_handler;
 mod audio;
 mod playerview;
 mod playlist;
+pub mod service;
 
 use plugin_handler::{Plugins};
 use audio::{HippoAudio, MusicInfo};
@@ -33,6 +34,7 @@ use playlist::PlaylistView;
 struct HippoPlayer<'a> {
     audio: HippoAudio,
     plugins: Plugins<'a>,
+    plugin_service: service::PluginService,
     main_widget: Widget,
     player_view: PlayerView,
     playlist: PlaylistView,
@@ -49,6 +51,7 @@ impl <'a> HippoPlayer<'a> {
         HippoPlayer {
             audio: HippoAudio::new(),
             plugins: Plugins::new(),
+            plugin_service: service::PluginService::new(),
             app: ui.create_application(),
             main_widget: ui.create_widget(),
             player_view: PlayerView::new(ui),
@@ -193,7 +196,7 @@ impl <'a> HippoPlayer<'a> {
                 // This is a bit hacky right now but will do the trick
                 self.audio.stop();
                 self.audio = HippoAudio::new();
-                let info = self.audio.start_with_file(&plugin, filename);
+                let info = self.audio.start_with_file(&plugin, &self.plugin_service, filename);
                 return info;
             }
         }
@@ -213,6 +216,12 @@ fn main() {
     let ui = wrui_instance.get_ui();
 
     let mut app = HippoPlayer::new(ui);
+
+    unsafe {
+        let service_api = app.plugin_service.get_c_service_api();
+        println!("{:?}", service_api);
+        ((*service_api).get_io_api)((*service_api).private_data, 1);
+    }
 
     app.plugins.add_plugins_from_path();
 

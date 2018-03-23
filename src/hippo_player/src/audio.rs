@@ -7,6 +7,8 @@ use std::os::raw::c_void;
 use std::time::Duration;
 use std::ffi::CStr;
 
+use service::PluginService;
+
 // #[derive(Clone)]
 // pub enum DecodeEvent {
 //    Position(usize),
@@ -30,9 +32,9 @@ pub struct MusicInfo {
 }
 
 impl HippoPlayback {
-    pub fn start_with_file(plugin: &DecoderPlugin, filename: &str) -> Option<HippoPlayback> {
+    pub fn start_with_file(plugin: &DecoderPlugin, plugin_service: &PluginService, filename: &str) -> Option<HippoPlayback> {
         let c_filename = CString::new(filename).unwrap();
-        let user_data = ((plugin.plugin_funcs).create)() as u64;
+        let user_data = ((plugin.plugin_funcs).create)(plugin_service.get_c_service_api()) as u64;
         let ptr_user_data = user_data as *mut c_void;
         let frame_size = (((plugin.plugin_funcs).frame_size)(ptr_user_data)) as usize;
         // TODO: Verify that state is ok
@@ -118,9 +120,9 @@ impl HippoAudio {
     //   self.audio_sink.play();
     //}
 
-    pub fn start_with_file(&mut self, plugin: &DecoderPlugin, filename: &str) -> MusicInfo {
+    pub fn start_with_file(&mut self, plugin: &DecoderPlugin, service: &PluginService, filename: &str) -> MusicInfo {
         // TODO: Do error checking
-        let playback = HippoPlayback::start_with_file(plugin, filename);
+        let playback = HippoPlayback::start_with_file(plugin, service, filename);
 
         if let Some(pb) = playback {
             // TODO: Wrap this
