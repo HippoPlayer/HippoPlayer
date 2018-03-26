@@ -42,9 +42,5 @@ char IsTFMXFilename(char *fName)
 
 void TFMXError(char *err)
 {
-#ifdef _WIN32	
-	MessageBox(NULL,err,"TFMXPlay error",MB_OK);
-#else
     printf("TFMXError %s\n", err);
-#endif
 }

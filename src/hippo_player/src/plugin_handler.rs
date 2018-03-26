@@ -70,7 +70,7 @@ impl <'a> Plugins<'a> {
         }
     }
 
-    fn add_dec_plugin(&mut self, plugin: &Arc<Lib>) {
+    fn add_dec_plugin(&mut self, name: &str, plugin: &Arc<Lib>) {
         let func: Result<Symbol<extern "C" fn() -> *const CHippoPlaybackPlugin>, ::std::io::Error> = unsafe {
             plugin.lib.get(b"getPlugin\0")
         };
@@ -80,7 +80,7 @@ impl <'a> Plugins<'a> {
 
             self.decoder_plugins.push(DecoderPlugin {
                 plugin: plugin.clone(),
-                plugin_path: "".to_owned(),
+                plugin_path: name.to_owned(),
                 plugin_funcs: unsafe { (*fun()).clone() },
             });
         }
@@ -116,7 +116,7 @@ impl <'a> Plugins<'a> {
 
     pub fn add_decoder_plugin(&mut self, name: &str) {
         match self.plugin_handler.add_library(name, PlatformName::No) {
-            Ok(lib) => self.add_dec_plugin(&lib),
+            Ok(lib) => self.add_dec_plugin(name, &lib),
             Err(e) => {
                 println!("Unable to load dynamic lib, err {:?}", e);
                 return;

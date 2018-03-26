@@ -16,8 +16,10 @@ mkdir HippoPlayer\platforms
 
 mkdir HippoPlayer\bin
 mkdir HippoPlayer\bin\player
+mkdir HippoPlayer\bin\plugins
 mkdir HippoPlayer\bin\player\buttons
 copy ..\bin\player\buttons\*.png HippoPlayer\bin\player\buttons
+robocopy ..\bin\plugins HippoPlayer\bin\plugins /s /e
 
 copy %QT5%\bin\Qt5Core.dll HippoPlayer
 copy %QT5%\bin\Qt5Widgets.dll HippoPlayer

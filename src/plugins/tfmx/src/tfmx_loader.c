@@ -15,6 +15,12 @@
 #include "unsqsh.h"
 #include "tfmx_audio.h"
 
+#ifdef _WIN32
+#include <Winsock2.h>
+#define strncasecmp _strnicmp
+#define strcasecmp _stricmp
+#endif
+
 extern struct Hdb hdb[8];
 extern struct Pdblk pdb;
 extern struct Mdb mdb;
@@ -188,43 +194,53 @@ tfmx_cyb_file_load (char *fn)
 
 char LoadTFMXFile(char *fName)
 {
-    int suffixPos, status;
+    int suffixPos, suffixPosDat, status;
     char *mfn = fName, *sfn, *c;
 
-    if(!fName) return 1;
-    if(!(sfn = strdup(mfn))) return 1;
+    if(!fName)
+    	return 1;
+
+    if(!(sfn = strdup(mfn)))
+    	return 1;
 
     if (!(c = strrchr(sfn,'/')))
-	c = sfn;
+		c = sfn;
     else
-	c++;
+		c++;
+
     suffixPos = strlen(c) - 4;	/* Get filename length */
+    suffixPosDat = strlen(c) - 5;	/* Get filename length */
 
     if (strncasecmp(c,"mdat.",5) == 0) {
-	/* Case-preserving conversion of "mdat" to "smpl" */
-	(*c++)^='m'^'s'; (*c++)^='d'^'m'; (*c++)^='a'^'p'; (*c++)^='t'^'l';
-	c-=4;
+		/* Case-preserving conversion of "mdat" to "smpl" */
+		(*c++)^='m'^'s'; (*c++)^='d'^'m'; (*c++)^='a'^'p'; (*c++)^='t'^'l';
+		c-=4;
     }
     else if (strncasecmp(c,"tfmx.",5) == 0) { /* Single Cyb' TFMX file */
-	free(sfn);
-	return tfmx_cyb_file_load(fName);
+		free(sfn);
+		return tfmx_cyb_file_load(fName);
     }
     else if (suffixPos >= 0 && strncasecmp(c + suffixPos,".tfx", 4) == 0) {
-	/* Case-preserving conversion of ".tfx" to ".sam" */
-	*(c+suffixPos+1)^='t'^'s'; *(c+suffixPos+2)^='f'^'a'; *(c+suffixPos+3)^='x'^'m';
+		/* Case-preserving conversion of ".tfx" to ".sam" */
+		*(c+suffixPos+1)^='t'^'s'; *(c+suffixPos+2)^='f'^'a'; *(c+suffixPos+3)^='x'^'m';
     }
-    else  {
-	TFMXERR("LoadTFMX: Song name prefix / suffix missing ?!");
-	free(sfn); return 1;
+    else if (suffixPos >= 0 && strncasecmp(c + suffixPosDat,".mdat", 4) == 0) {
+		*(c+suffixPosDat+1)^='m'^'s';
+		*(c+suffixPosDat+2)^='d'^'m';
+		*(c+suffixPosDat+3)^='a'^'p';
+		*(c+suffixPosDat+4)^='t'^'l';
+    } else  {
+		TFMXERR("LoadTFMX: Song name prefix / suffix missing ?!");
+		free(sfn); return 1;
     }
 
     if ((status=tfmx_loader(mfn,sfn))==1) {
-	/* TFMXERR("LoadTFMXFile: Loading of module failed"); */
-	free(sfn); return 1;
+		/* TFMXERR("LoadTFMXFile: Loading of module failed"); */
+		free(sfn); return 1;
     }
     else if (status==2) {
-	/* TFMXERR("LoadTFMXFile: Not an MDAT file"); */
-	free(sfn); return 1;
+		/* TFMXERR("LoadTFMXFile: Not an MDAT file"); */
+		free(sfn); return 1;
     }
 
     free(sfn);
@@ -244,25 +260,26 @@ static int tfmx_loader (char *mfn,char *sfn)
     }
 
     if (!fread(&mdat_header, sizeof(mdat_header), 1, gfd)) {
-	TFMXERR("LoadTFMX: Failed to read TFMX header");
-	fclose(gfd);
-	return(1);
+		TFMXERR("LoadTFMX: Failed to read TFMX header");
+		fclose(gfd);
+		return(1);
     }
+
     if (strncmp("TFMX-SONG", mdat_header.magic, 9)
-	&& strncmp("TFMX_SONG", mdat_header.magic, 9)
-	&& strncasecmp("TFMXSONG", mdat_header.magic, 8)
-	&& strncasecmp("TFMX ", mdat_header.magic, 5))
+		&& strncmp("TFMX_SONG", mdat_header.magic, 9)
+		&& strncasecmp("TFMXSONG", mdat_header.magic, 8)
+		&& strncasecmp("TFMX ", mdat_header.magic, 5))
     {
-	TFMXERR("LoadTFMX: Not a TFMX module");
-	fclose(gfd);
-	return(2);
+		TFMXERR("LoadTFMX: Not a TFMX module");
+		fclose(gfd);
+		return(2);
     }
 
     if (!(x = fread(&mdat_editbuf, sizeof(U32), MDAT_EDITBUF_LONGS, gfd)))
     {
-	TFMXERR("LoadTFMX: Read error in MDAT file");
-	fclose(gfd);
-	return(1);
+		TFMXERR("LoadTFMX: Read error in MDAT file");
+		fclose(gfd);
+		return(1);
     }
 
     fclose(gfd);
@@ -284,20 +301,20 @@ static int tfmx_loader (char *mfn,char *sfn)
     }
 
     for (x=0;x<32;x++) {
-	mdat_header.start[x]=ntohs(mdat_header.start[x]);
-	mdat_header.end[x]=ntohs(mdat_header.end[x]);
-	mdat_header.tempo[x]=ntohs(mdat_header.tempo[x]);
+		mdat_header.start[x]=ntohs(mdat_header.start[x]);
+		mdat_header.end[x]=ntohs(mdat_header.end[x]);
+		mdat_header.tempo[x]=ntohs(mdat_header.tempo[x]);
     }
 
     /* Calc the # of subsongs */
     nSongs = 0;
     for (x = 0; x < 31; x++)
     {
-	if ((mdat_header.start[x] <= mdat_header.end[x])
-	    && !(x > 0 && mdat_header.end[x] == 0L))
-	{
-	    nSongs++;
-	}
+		if ((mdat_header.start[x] <= mdat_header.end[x])
+			&& !(x > 0 && mdat_header.end[x] == 0L))
+		{
+			nSongs++;
+		}
     }
 /* Now that we have pointers to most everything, this would be a good time to
    fix everything we can... ntohs tracksteps, convert pointers to array

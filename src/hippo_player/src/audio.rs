@@ -110,6 +110,10 @@ impl HippoAudio {
 
     pub fn stop(&mut self) {
         self.audio_sink.stop();
+
+        for pb in self.playbacks.iter_mut() {
+            ((pb.plugin.plugin_funcs).close)(pb.plugin_user_data as *mut c_void);
+        }
     }
 
     //pub fn pause(&mut self) {

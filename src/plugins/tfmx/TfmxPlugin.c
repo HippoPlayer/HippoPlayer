@@ -6,11 +6,33 @@
 #include <string.h>
 #include <assert.h>
 
+#ifdef _WIN32
+#define strncasecmp _strnicmp
+#define strcasecmp _stricmp
+#endif
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const char* getFileNameFromPath(const char* path)
+{
+   for(size_t i = strlen(path) - 1;  i > 0; i--)
+   {
+      if (path[i] == '/')
+      {
+         return &path[i+1];
+      }
+   }
+
+   return path;
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef struct TfmxReplayerData
 {
 	void* tune;
+	const char* name;
+
 } TfmxReplayerData;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -22,7 +44,13 @@ static const char* tfmx_info(void* user_data) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static const char* tfmx_track_info(void* user_data) {
-	return "unknown";
+	TfmxReplayerData* plugin = (TfmxReplayerData*)user_data;
+
+	if (!plugin || !plugin->name) {
+		return "TFMX: <unknown>";
+	}
+
+	return plugin->name;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -35,20 +63,15 @@ static const char* tfmx_supported_extensions(void* user_data) {
 // TODO: These checks needs to be made much better (sanity check some more sizes in the pattern etc)
 
 enum HippoProbeResult tfmx_probe_can_play(const uint8_t* data, uint32_t data_size, uint64_t total_size) {
-	if ((data[0] == 'T') &&
-		(data[1] == 'F') &&
-		(data[2] == 'M') &&
-		(data[3] == 'X') &&
-		(data[4] == '-') &&
-		(data[5] == 'S') &&
-		(data[6] == 'O') &&
-		(data[7] == 'N') &&
-		(data[8] == 'G')) {
+    if (strncmp("TFMX-SONG", (char*)data, 9)
+    	&& strncmp("TFMX_SONG", (char*)data, 9)
+		&& strncasecmp("TFMXSONG", (char*)data, 8)
+		&& strncasecmp("TFMX ", (char*)data, 5)) {
 
-		return HippoProbeResult_Supported;
+    	return HippoProbeResult_Unsupported;
 	}
 
-    return HippoProbeResult_Unsupported;
+    return HippoProbeResult_Supported;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -71,11 +94,15 @@ static int tfmx_destroy(void* user_data) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int tfmx_open(void* user_data, const char* buffer) {
+	TfmxReplayerData* plugin = (TfmxReplayerData*)user_data;
+
 	if (LoadTFMXFile((char*)buffer) != 0)
 	    return -1;
 
 	TFMXSetSubSong(0);
     TFMXRewind();
+
+    plugin->name = strdup(getFileNameFromPath(buffer));
 
 	return 0;
 }
@@ -89,7 +116,7 @@ static int tfmx_close(void* user_data) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int tfmx_read_data(void* user_data, void* dest) {
-	int16_t temp_data[BUFSIZE];
+	int16_t temp_data[BUFSIZE] = { 0 };
 
     int block_size = (int)tfmx_get_block_size() / 2;
 

@@ -189,9 +189,32 @@ impl <'a> HippoPlayer<'a> {
         let mut f = File::open(filename).unwrap();
         let buffer_read_size = f.read(&mut buffer[..]).unwrap();
 
+        // TODO: Proper priority order of plugins. Right now we just put uade as the last one to
+        // check
+
         // find a plugin that supports the file
 
         for plugin in &self.plugins.decoder_plugins {
+            if plugin.plugin_path.rfind("uade").is_some() {
+                continue;
+            }
+
+            if plugin.probe_can_play(&buffer, buffer_read_size, metadata.len()) {
+                // This is a bit hacky right now but will do the trick
+                self.audio.stop();
+                self.audio = HippoAudio::new();
+                let info = self.audio.start_with_file(&plugin, &self.plugin_service, filename);
+                return info;
+            }
+        }
+
+        // do the same fo uade
+
+        for plugin in &self.plugins.decoder_plugins {
+            if plugin.plugin_path.rfind("uade").is_none() {
+                continue;
+            }
+
             if plugin.probe_can_play(&buffer, buffer_read_size, metadata.len()) {
                 // This is a bit hacky right now but will do the trick
                 self.audio.stop();
@@ -207,10 +230,16 @@ impl <'a> HippoPlayer<'a> {
     }
 }
 
-
+impl<'a> Drop for HippoPlayer<'a> {
+    fn drop(&mut self) {
+        self.audio.stop();
+    }
+}
 
 fn main() {
     let _args: Vec<String> = env::args().collect();
+
+    let current_path = std::env::current_dir().unwrap();
 
     let wrui_instance = SharedLibUi::new().unwrap();
     let ui = wrui_instance.get_ui();
@@ -224,6 +253,8 @@ fn main() {
     }
 
     app.plugins.add_plugins_from_path();
+
+    std::env::set_current_dir(current_path).unwrap();
 
     app.run();
 

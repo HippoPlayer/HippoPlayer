@@ -128,6 +128,7 @@ Build {
     Units = {
         "units.hippoplayer.lua",
         "units.plugins.lua",
+        "units.uade_plugin.lua",
     },
 
     Configs = {
@@ -142,6 +143,7 @@ Build {
             PlatformMappings = {
                 ['win64-msvc'] = 'x64',
             },
+
             -- Remap variant names to MSVC friendly names
             VariantMappings = {
                 ['release']    = 'Release',
