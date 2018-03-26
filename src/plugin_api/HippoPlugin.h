@@ -77,7 +77,7 @@ typedef struct HippoPlaybackPlugin {
 	// Notice that no user data is provided with this as the plugin instance hasn't actually been crated
 	// The plugin must support to parse this data without custom data being setup.
 	//
-	enum HippoProbeResult (*probe_can_play)(const uint8_t* data, uint32_t data_size, uint64_t total_size);
+	enum HippoProbeResult (*probe_can_play)(const uint8_t* data, uint32_t data_size, const char* filename, uint64_t total_size);
 
 	const char* (*info)(void* user_data);
 	const char* (*trackInfo)(void* user_data);

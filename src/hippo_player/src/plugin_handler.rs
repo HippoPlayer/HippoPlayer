@@ -2,6 +2,7 @@ use dynamic_reload::{DynamicReload, Lib, Symbol, Search, PlatformName};
 use walkdir::{WalkDir, DirEntry};
 use std::os::raw::{c_int, c_void, c_char};
 use std::sync::Arc;
+use std::ffi::CString;
 
 use service::CHippoServiceAPI;
 
@@ -9,7 +10,7 @@ use service::CHippoServiceAPI;
 #[repr(C)]
 pub struct CHippoPlaybackPlugin {
     pub version: u64,
-    pub probe_can_play: extern "C" fn(data: *const u8, data_size: u32, total_size: u64) -> i32,
+    pub probe_can_play: extern "C" fn(data: *const u8, data_size: u32, buffer: *const i8, total_size: u64) -> i32,
     pub info: extern "C" fn(user_data: *mut c_void) -> *const c_char,
     pub track_info: extern "C" fn(user_data: *mut c_void) -> *const c_char,
     pub supported_extensions: extern "C" fn() -> *mut c_char,
@@ -47,8 +48,9 @@ pub fn get_plugin_ext() -> &'static str {
 }
 
 impl DecoderPlugin {
-    pub fn probe_can_play(&self, data: &[u8], buffer_len: usize, file_size: u64) -> bool {
-        let res = ((self.plugin_funcs).probe_can_play)(data.as_ptr(), buffer_len as u32, file_size);
+    pub fn probe_can_play(&self, data: &[u8], buffer_len: usize, filename: &str, file_size: u64) -> bool {
+        let c_filename = CString::new(filename).unwrap();
+        let res = ((self.plugin_funcs).probe_can_play)(data.as_ptr(), buffer_len as u32, c_filename.as_ptr(), file_size);
 
         match res {
             0 => true,

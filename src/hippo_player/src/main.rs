@@ -199,7 +199,7 @@ impl <'a> HippoPlayer<'a> {
                 continue;
             }
 
-            if plugin.probe_can_play(&buffer, buffer_read_size, metadata.len()) {
+            if plugin.probe_can_play(&buffer, buffer_read_size, filename, metadata.len()) {
                 // This is a bit hacky right now but will do the trick
                 self.audio.stop();
                 self.audio = HippoAudio::new();
@@ -215,7 +215,7 @@ impl <'a> HippoPlayer<'a> {
                 continue;
             }
 
-            if plugin.probe_can_play(&buffer, buffer_read_size, metadata.len()) {
+            if plugin.probe_can_play(&buffer, buffer_read_size, filename, metadata.len()) {
                 // This is a bit hacky right now but will do the trick
                 self.audio.stop();
                 self.audio = HippoAudio::new();

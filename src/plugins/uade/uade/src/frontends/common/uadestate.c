@@ -208,7 +208,7 @@ static int receive_message(struct uade_event *event, struct uade_state *state)
 		event->type = UADE_EVENT_FORMAT_NAME;
 		get_string(event, um);
 		break;
-	
+
 	case UADE_REPLY_MODULENAME:
 		event->type = UADE_EVENT_MODULE_NAME;
 		get_string(event, um);
@@ -218,7 +218,7 @@ static int receive_message(struct uade_event *event, struct uade_state *state)
 		event->type = UADE_EVENT_MESSAGE;
 		get_string(event, um);
 		break;
-		
+
 	case UADE_REPLY_PLAYERNAME:
 		event->type = UADE_EVENT_PLAYER_NAME;
 		get_string(event, um);
@@ -289,7 +289,7 @@ static int receive_message(struct uade_event *event, struct uade_state *state)
 		event->subsongs.def = cursubsong;
 		event->subsongs.max = maxsubsong;
 		break;
-	
+
 	default:
 		uade_warning("Bad message type from uadecore: %u.\n", (unsigned int) um->msgtype);
 		goto error;
@@ -579,7 +579,7 @@ int uade_seek_samples(enum uade_seek_mode whence, int samples, int subsong,
 		      struct uade_state *state)
 {
 	switch (whence) {
-	case UADE_SEEK_SONG_RELATIVE:		
+	case UADE_SEEK_SONG_RELATIVE:
 		return seek_song_relative(samples, state);
 
 	case UADE_SEEK_SUBSONG_RELATIVE:
@@ -1097,7 +1097,7 @@ int uade_read(void *_data, size_t bytes, struct uade_state *state)
 	return copied;
 }
 
-struct uade_state *uade_new_state(const struct uade_config *extraconfig)
+struct uade_state *uade_new_state(const struct uade_config *extraconfig, int spawn)
 {
 	struct uade_state *state;
 	DIR *bd;
@@ -1141,23 +1141,21 @@ struct uade_state *uade_new_state(const struct uade_config *extraconfig)
 
 	uade_merge_configs(&state->config, &state->extraconfig);
 
-	//if (access(state->config.uadecore_file.name, X_OK)) {
-	//	uade_warning("Could not execute %s\n", state->config.uadecore_file.name);
-	//	goto error;
-	//}
-	if (access(state->config.uae_config_file.name, R_OK)) {
-		uade_warning("Could not read uae config file: %s\n", state->config.uae_config_file.name);
-		goto error;
-	}
+	if (spawn) {
+		if (access(state->config.uae_config_file.name, R_OK)) {
+			uade_warning("Could not read uae config file: %s\n", state->config.uae_config_file.name);
+			goto error;
+		}
 
-	if (uade_arch_spawn(&state->ipc, &state->pid, state->config.uadecore_file.name)) {
-		uade_warning("Can not spawn uade: %s\n", state->config.uadecore_file.name);
-		goto error;
-	}
+		if (uade_arch_spawn(&state->ipc, &state->pid, state->config.uadecore_file.name)) {
+			uade_warning("Can not spawn uade: %s\n", state->config.uadecore_file.name);
+			goto error;
+		}
 
-	if (uade_send_string(UADE_COMMAND_CONFIG, state->config.uae_config_file.name, &state->ipc)) {
-		uade_warning("Can not send config name: %s\n", strerror(errno));
-		goto error;
+		if (uade_send_string(UADE_COMMAND_CONFIG, state->config.uae_config_file.name, &state->ipc)) {
+			uade_warning("Can not send config name: %s\n", strerror(errno));
+			goto error;
+		}
 	}
 
 	return state;
@@ -1502,7 +1500,7 @@ int uade_stop(struct uade_state *state)
 	if (get_pending_events(state))
 		return -1;
 
-	if (state->song.recordsongtime && 
+	if (state->song.recordsongtime &&
 	    state->song.state == UADE_STATE_WAIT_SUBSONG_CHANGE) {
 		uint32_t playtime = (state->song.info.songbytes * 1000) /
 			            get_bytes_per_second(state);

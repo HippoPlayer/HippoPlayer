@@ -4,7 +4,7 @@
 #ifdef __cplusplus
 extern "C"
 {
-#endif 
+#endif
 
 /*
  * uade.h defines the interface for libuade. Developers should use
@@ -90,7 +90,7 @@ struct uade_song_info {
 
 	/*
 	 * By convention, this is set to "custom" if the song is a custom.
-	 * libuade doesn't like if you set "custom" 
+	 * libuade doesn't like if you set "custom"
 	 */
 	char playername[256];
 };
@@ -378,7 +378,7 @@ struct bencode *uade_get_rmc_from_state(const struct uade_state *state);
  * Each context is completely independent. A context is not thread-safe,
  * but different contexts can be used simultaneously in different threads.
  */
-struct uade_state *uade_new_state(const struct uade_config *uc);
+struct uade_state *uade_new_state(const struct uade_config *uc, int spawn);
 
 /*
  * uade_load_amiga_file() loads a file by using AmigaOS path search.

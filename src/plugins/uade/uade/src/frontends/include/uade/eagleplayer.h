@@ -1,6 +1,11 @@
 #ifndef _UADE_EAGLEPLAYER_H_
 #define _UADE_EAGLEPLAYER_H_
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include <uade/uadeconfstructure.h>
 
 #include <stdio.h>
@@ -93,5 +98,10 @@ int uade_set_config_options_from_flags(struct uade_state *state, int flags);
 
 int uade_parse_attribute_from_string(struct uade_attribute **attributelist,
 				     int *flags, char *item, size_t lineno);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

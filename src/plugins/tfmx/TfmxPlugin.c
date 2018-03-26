@@ -62,7 +62,7 @@ static const char* tfmx_supported_extensions(void* user_data) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // TODO: These checks needs to be made much better (sanity check some more sizes in the pattern etc)
 
-enum HippoProbeResult tfmx_probe_can_play(const uint8_t* data, uint32_t data_size, uint64_t total_size) {
+enum HippoProbeResult tfmx_probe_can_play(const uint8_t* data, uint32_t data_size, const char* filename, uint64_t total_size) {
     if (strncmp("TFMX-SONG", (char*)data, 9)
     	&& strncmp("TFMX_SONG", (char*)data, 9)
 		&& strncasecmp("TFMXSONG", (char*)data, 8)

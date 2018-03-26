@@ -73,7 +73,7 @@ static int openmpt_destroy(void* userData) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static HippoProbeResult openmpt_probe_can_play(const uint8_t* data, uint32_t data_size, uint64_t total_size) {
+static HippoProbeResult openmpt_probe_can_play(const uint8_t* data, uint32_t data_size, const char* filename, uint64_t total_size) {
     int res = openmpt::probe_file_header(openmpt::probe_file_header_flags_default, data, data_size, total_size);
 
     switch (res) {

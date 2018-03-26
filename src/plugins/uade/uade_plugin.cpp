@@ -1,5 +1,6 @@
 #include "../../plugin_api/HippoPlugin.h"
 #include <uade/uade.h>
+#include <uade/eagleplayer.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -23,6 +24,25 @@ extern "C" void uade_wait_thread() {
 
     delete s_uade_thread;
     s_uade_thread = nullptr;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+struct uade_state* create_uade_state(int spawn) {
+	struct uade_config* config = uade_new_config();
+	uade_config_set_option(config, UC_ONE_SUBSONG, NULL);
+	uade_config_set_option(config, UC_IGNORE_PLAYER_CHECK, NULL);
+	uade_config_set_option(config, UC_NO_EP_END, NULL);
+	uade_config_set_option(config, UC_FREQUENCY, "48000");
+
+	uade_config_set_option(config, UC_VERBOSE, "true");
+
+	uade_config_set_option(config, UC_BASE_DIR, "bin/plugins/uade");
+	uade_state* state = uade_new_state(config, spawn);
+
+    free(config);
+
+    return state;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -81,11 +101,19 @@ static const char* uade_track_info(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-enum HippoProbeResult uade_probe_can_play(const uint8_t* data, uint32_t data_size, uint64_t total_size) {
-    //return HippoProbeResult_Unsupported;
-	// TODO: Add lots of support :)
+enum HippoProbeResult uade_probe_can_play(const uint8_t* data, uint32_t data_size, const char* filename, uint64_t total_size) {
+    enum HippoProbeResult supported = HippoProbeResult_Unsupported;
 
-	return HippoProbeResult_Supported;
+    struct uade_detection_info detect_info;
+    struct uade_state* state = create_uade_state(0);
+
+    if (uade_analyze_eagleplayer(&detect_info, data, data_size, filename, strlen(filename), state) >= 0) {
+        supported = HippoProbeResult_Supported;
+    }
+
+    uade_cleanup_state(state);
+
+	return supported;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -101,18 +129,7 @@ static void* uade_create(struct HippoServiceAPI* services) {
 static int uade_open(void* user_data, const char* buffer) {
 	UadePlugin* plugin = (UadePlugin*)user_data;
 
-	struct uade_config* config = uade_new_config();
-	uade_config_set_option(config, UC_ONE_SUBSONG, NULL);
-	uade_config_set_option(config, UC_IGNORE_PLAYER_CHECK, NULL);
-	uade_config_set_option(config, UC_NO_EP_END, NULL);
-	uade_config_set_option(config, UC_FREQUENCY, "48000");
-
-	uade_config_set_option(config, UC_VERBOSE, "true");
-
-	uade_config_set_option(config, UC_BASE_DIR, "bin/plugins/uade");
-	plugin->state = uade_new_state(config);
-
-    free(config);
+	plugin->state = create_uade_state(1);
 
 	if (uade_play(buffer, -1, plugin->state) == 1) {
 		printf("starting play\n");

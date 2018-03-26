@@ -142,7 +142,7 @@ static int vgm_read_data(void* userData, void* dest) {
 // Right now we assume gz files are vgm which of course isn't the case but will do for now until we a
 // better implementation of this
 
-HippoProbeResult vgm_probe_can_play(const uint8_t* data, uint32_t data_size, uint64_t total_size) {
+HippoProbeResult vgm_probe_can_play(const uint8_t* data, uint32_t data_size, const char* filename, uint64_t total_size) {
 	if ((data[0] == 'V') &&
 		(data[1] == 'g') &&
 		(data[2] == 'm')) {
