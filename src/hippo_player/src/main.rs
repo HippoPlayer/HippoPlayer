@@ -25,6 +25,7 @@ use std::env;
 use std::fs;
 use std::io::prelude::*;
 use std::fs::File;
+use std::path::Path;
 
 use wrui::{SharedLibUi, Ui};
 use wrui::wrui::*;
@@ -254,7 +255,11 @@ fn main() {
 
     app.plugins.add_plugins_from_path();
 
-    std::env::set_current_dir(current_path).unwrap();
+    // No need to switch back if we are in the correct spot
+
+    if !Path::new("bin").is_dir() {
+        std::env::set_current_dir(current_path).unwrap();
+    }
 
     app.run();
 
