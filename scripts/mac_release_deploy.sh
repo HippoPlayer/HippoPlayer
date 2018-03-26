@@ -14,6 +14,7 @@ cp -vr t2-output/macosx-clang-release-default/*.dylib t2-output/HippoPlayer.app/
 
 mkdir t2-output/HippoPlayer.app/Contents/MacOS/bin
 cp -vr bin/player t2-output/HippoPlayer.app/Contents/MacOS/bin
+cp -vr bin/plugins t2-output/HippoPlayer.app/Contents/MacOS/bin
 
 cd t2-output
 rm -rfv build
