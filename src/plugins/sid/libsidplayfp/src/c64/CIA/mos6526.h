@@ -1,7 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2011-2017 Leandro Nini <drfiemost@users.sourceforge.net>
+ * Copyright 2011-2015 Leandro Nini <drfiemost@users.sourceforge.net>
  * Copyright 2009-2014 VICE Project
  * Copyright 2007-2010 Antti Lankila
  * Copyright 2000 Simon White
@@ -107,10 +107,10 @@ public:
 /**
  * InterruptSource that acts like new CIA
  */
-class InterruptSource8521 final : public InterruptSource
+class InterruptSource6526A final : public InterruptSource
 {
 public:
-    InterruptSource8521(EventScheduler &scheduler, MOS6526 &parent) :
+    InterruptSource6526A(EventScheduler &scheduler, MOS6526 &parent) :
         InterruptSource(scheduler, parent)
     {}
 
@@ -120,7 +120,7 @@ public:
 
     void event() override
     {
-        throw "8521 event called unexpectedly";
+        throw "6526A event called unexpectedly";
     }
 };
 
@@ -148,8 +148,7 @@ private:
 
 public:
     InterruptSource6526(EventScheduler &scheduler, MOS6526 &parent) :
-        InterruptSource(scheduler, parent),
-        scheduled(false)
+        InterruptSource(scheduler, parent)
     {}
 
     void trigger(uint8_t interruptMask) override;
@@ -173,7 +172,7 @@ public:
 class MOS6526
 {
     friend class InterruptSource6526;
-    friend class InterruptSource8521;
+    friend class InterruptSource6526A;
     friend class TimerA;
     friend class TimerB;
     friend class Tod;

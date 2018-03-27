@@ -5,8 +5,10 @@
 #  error Do not include directly.
 #endif
 
-#define LIBSIDPLAYFP_VERSION_MAJ 1 
-#define LIBSIDPLAYFP_VERSION_MIN 2
-#define LIBSIDPLAYFP_VERSION_LEV 3 
+
+
+#define LIBSIDPLAYFP_VERSION_MAJ 2
+#define LIBSIDPLAYFP_VERSION_MIN 0
+#define LIBSIDPLAYFP_VERSION_LEV 0beta
 
 #endif

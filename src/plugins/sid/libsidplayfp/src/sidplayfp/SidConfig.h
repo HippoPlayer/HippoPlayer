@@ -59,8 +59,7 @@ public:
         PAL,
         NTSC,
         OLD_NTSC,
-        DREAN,
-        PAL_M
+        DREAN
     } c64_model_t;
 
     /// Sampling method

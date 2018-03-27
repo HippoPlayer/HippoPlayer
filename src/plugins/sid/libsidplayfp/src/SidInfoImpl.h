@@ -39,11 +39,11 @@
 #endif
 
 #ifndef PACKAGE_NAME
-#  define PACKAGE_NAME ""
+#  define PACKAGE_NAME PACKAGE
 #endif
 
 #ifndef PACKAGE_VERSION
-#  define PACKAGE_VERSION " 1 "
+#  define PACKAGE_VERSION VERSION
 #endif
 
 /**
@@ -83,13 +83,11 @@ public:
         m_driverAddr(0),
         m_driverLength(0)
     {
-    	/*
         m_credits.push_back(PACKAGE_NAME " V" PACKAGE_VERSION " Engine:\n"
             "\tCopyright (C) 2000 Simon White\n"
             "\tCopyright (C) 2007-2010 Antti Lankila\n"
             "\tCopyright (C) 2010-2015 Leandro Nini\n"
             "\t" PACKAGE_URL "\n");
-        */
     }
 
     const char *getName() const override { return m_name.c_str(); }

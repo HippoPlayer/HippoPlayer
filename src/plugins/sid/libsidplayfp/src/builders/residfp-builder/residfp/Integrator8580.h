@@ -57,10 +57,10 @@ private:
     mutable int vx;
     mutable int vc;
 
+    const unsigned short Vth;
     unsigned short kVgt;
     unsigned short n_snake;
 
-    const double Vth;
     const double denorm;
     const double C;
     const double k;
@@ -69,7 +69,7 @@ private:
     const double N16;
 
 public:
-    Integrator8580(const unsigned short* opamp_rev, double Vth, double denorm, double C, double k, double uCox, double vmin, double N16) :
+    Integrator8580(const unsigned short* opamp_rev, unsigned short Vth, double denorm, double C, double k, double uCox, double vmin, double N16) :
         opamp_rev(opamp_rev),
         vx(0),
         vc(0),
@@ -124,7 +124,7 @@ RESID_INLINE
 int Integrator8580::solve(int vi) const
 {
     // Check that transistor is actually in triode mode
-    // VDS < VGS - Vth
+    // VDS < VGS  Vth
     assert(vi < kVgt);
 
     // DAC voltages for triode mode calculation.

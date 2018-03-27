@@ -372,11 +372,6 @@ c64::model_t Player::c64model(SidConfig::c64_model_t defaultModel, bool forced)
             model = c64::OLD_NTSC_M;
             videoSwitch = 0;
             break;
-        case SidConfig::PAL_M:
-            clockSpeed = SidTuneInfo::CLOCK_NTSC;
-            model = c64::PAL_M;
-            videoSwitch = 0; // TODO verify
-            break;
         }
     }
     else

@@ -131,7 +131,7 @@ void Tod::event()
 {
     // Reload divider according to 50/60 Hz flag
     // Only performed on expiry according to Frodo
-    cycles += period * ((cra & 0x80) ? 5 : 6);
+    cycles += period * (cra & 0x80 ? 5 : 6);
 
     // Fixed precision 25.7
     eventScheduler.schedule(*this, cycles >> 7);

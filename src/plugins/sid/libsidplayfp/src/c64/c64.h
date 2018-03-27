@@ -68,7 +68,7 @@ public:
  *
  * It consists of the following chips:
  * - CPU 6510
- * - VIC-II 6567/6569/6572/6573
+ * - VIC-II 6567/6569/6572
  * - CIA 6526
  * - SID 6581/8580
  * - PLA 7700/82S100
@@ -87,7 +87,6 @@ public:
         ,NTSC_M       ///< NTSC C64
         ,OLD_NTSC_M   ///< Old NTSC C64
         ,PAL_N        ///< C64 Drean
-        ,PAL_M        ///< C64 Brasil
     } model_t;
 
 private:

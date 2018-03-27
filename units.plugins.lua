@@ -250,11 +250,15 @@ SharedLibrary {
 }
 
 -----------------------------------------------------------------------------------------------------------------------
---[[
 
 SharedLibrary {
 	Name = "SidPlugin",
-	Defines = { "HAVE_CXX11" },
+	Defines = {
+		"HAVE_CXX11",
+		"PACKAGE_NAME=\"\"",
+		"PACKAGE_VERSION=\"\"",
+		"PACKAGE_URL=\"\"",
+	},
 
 	Includes = {
 		"src/plugins/sid/libsidplayfp/src",
@@ -268,6 +272,7 @@ SharedLibrary {
 	Libs = { "stdc++"; Config = "macosx-*-*" },
 }
 
+--[[
 -----------------------------------------------------------------------------------------------------------------------
 
 SharedLibrary {
@@ -299,10 +304,10 @@ Default "openmpt"
 Default "vgm"
 Default "DummyPlugin"
 Default "MDXPlugin"
+Default "SidPlugin"
 
 -- Default "FutureComposerPlugin"
 -- Default "TfmxPlugin"
--- Default "SidPlugin"
 --
 -- vim: ts=4:sw=4:sts=4
 

@@ -38,15 +38,17 @@ namespace libsidplayfp
 
 const char* ReSIDfp::getCredits()
 {
+    static const char* residfp_version_string = "2.0.0beta";
+
     static std::string credits;
 
     if (credits.empty())
     {
         // Setup credits
         std::ostringstream ss;
-        //ss << "ReSIDfp V" << VERSION << " Engine:\n";
+        ss << "ReSIDfp V" << "" << " Engine:\n";
         ss << "\t(C) 1999-2002 Simon White\n";
-        ss << "MOS6581 (SID) Emulation (ReSIDfp V" << "" << "):\n";
+        ss << "MOS6581 (SID) Emulation (ReSIDfp V" << residfp_version_string << "):\n";
         ss << "\t(C) 1999-2002 Dag Lem\n";
         ss << "\t(C) 2005-2011 Antti S. Lankila\n";
         ss << "\t(C) 2010-2015 Leandro Nini\n";

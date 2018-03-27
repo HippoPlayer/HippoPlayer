@@ -1,7 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2011-2017 Leandro Nini <drfiemost@users.sourceforge.net>
+ * Copyright 2011-2015 Leandro Nini <drfiemost@users.sourceforge.net>
  * Copyright 2009-2014 VICE Project
  * Copyright 2007-2010 Antti Lankila
  * Copyright 2001 Simon White
@@ -51,7 +51,6 @@ public:
         ,MOS6567R8       ///< NTSC-M
         ,MOS6569         ///< PAL-B
         ,MOS6572         ///< PAL-N
-        ,MOS6573         ///< PAL-M
     } model_t;
 
 private:

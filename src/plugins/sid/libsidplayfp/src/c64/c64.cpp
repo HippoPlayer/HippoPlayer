@@ -1,7 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2011-2017 Leandro Nini <drfiemost@users.sourceforge.net>
+ * Copyright 2011-2014 Leandro Nini <drfiemost@users.sourceforge.net>
  * Copyright 2007-2010 Antti Lankila
  * Copyright 2000 Simon White
  *
@@ -52,7 +52,6 @@ const model_data_t modelData[] =
     {3579545.455, 14., 60., MOS656X::MOS6567R8},    // NTSC-M
     {3579545.455, 14., 60., MOS656X::MOS6567R56A},  // Old NTSC-M
     {3582056.25,  14., 50., MOS656X::MOS6572},      // PAL-N
-    {3575611.49,  14., 50., MOS656X::MOS6573},      // PAL-M
 };
 
 double c64::getCpuFreq(model_t model)

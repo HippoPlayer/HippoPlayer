@@ -1,7 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2011-2017 Leandro Nini <drfiemost@users.sourceforge.net>
+ * Copyright 2011-2016 Leandro Nini <drfiemost@users.sourceforge.net>
  * Copyright 2009-2014 VICE Project
  * Copyright 2007-2010 Antti Lankila
  * Copyright 2001 Simon White
@@ -27,7 +27,6 @@
 //     http://www.uni-mainz.de/~bauec002/VIC-Article.gz
 //
 // MOS 6572 info taken from http://solidstate.com.ar/wp/?p=200
-// MOS 6573 info taken from http://csdb.dk/forums/?roomid=11&topicid=123713
 
 #include "mos656x.h"
 
@@ -49,17 +48,16 @@ const MOS656X::model_data_t MOS656X::modelData[] =
     {263, 65, &MOS656X::clockNTSC},     // NTSC-M   (MOS6567R8)
     {312, 63, &MOS656X::clockPAL},      // PAL-B    (MOS6569R1, MOS6569R3)
     {312, 65, &MOS656X::clockNTSC},     // PAL-N    (MOS6572)
-    {263, 65, &MOS656X::clockNTSC},     // PAL-M    (MOS6573)
 };
 
 const char *MOS656X::credits()
 {
     return
-            "MOS6567/6569/6572/6573 (VIC II) Emulation:\n"
+            "MOS6567/6569/6572 (VIC II) Emulation:\n"
             "\tCopyright (C) 2001 Simon White\n"
             "\tCopyright (C) 2007-2010 Antti Lankila\n"
             "\tCopyright (C) 2009-2014 VICE Project\n"
-            "\tCopyright (C) 2011-2017 Leandro Nini\n";
+            "\tCopyright (C) 2011-2016 Leandro Nini\n";
 }
 
 
