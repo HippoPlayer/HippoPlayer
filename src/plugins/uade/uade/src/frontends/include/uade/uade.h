@@ -167,7 +167,7 @@ struct uade_state;
  * Free resources of a state. This also implies uade_stop().
  * A call does nothing if state == NULL.
  */
-void uade_cleanup_state(struct uade_state *state);
+void uade_cleanup_state(struct uade_state *state, int spawn);
 
 /*
  * Return a config structure for setting playback options. The structure is

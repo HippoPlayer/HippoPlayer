@@ -105,7 +105,7 @@ static int get_bytes_per_second(const struct uade_state *state)
 	return UADE_BYTES_PER_FRAME * uade_get_sampling_rate(state);
 }
 
-void uade_cleanup_state(struct uade_state *state)
+void uade_cleanup_state(struct uade_state *state, int spawn)
 {
 	if (state == NULL)
 		return;
@@ -118,7 +118,9 @@ void uade_cleanup_state(struct uade_state *state)
 
 	uade_free_playerstore(state->playerstore);
 
-	uade_arch_kill_and_wait_uadecore(&state->ipc, &state->pid);
+	if (spawn) {
+		uade_arch_kill_and_wait_uadecore(&state->ipc, &state->pid);
+	}
 
 	memset(state, 0, sizeof(*state));
 
@@ -1161,7 +1163,7 @@ struct uade_state *uade_new_state(const struct uade_config *extraconfig, int spa
 	return state;
 
 error:
-	uade_cleanup_state(state);
+	uade_cleanup_state(state, spawn);
 	return NULL;
 }
 

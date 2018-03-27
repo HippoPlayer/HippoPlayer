@@ -13,7 +13,7 @@ static char s_player_name[1024]; // hack
 static std::thread* s_uade_thread = nullptr;
 
 extern "C" void uade_run_thread(void (*f)(void*), void* data) {
-    printf("Starting thread");
+    printf("Starting thread\n");
     s_uade_thread = new std::thread(f, data);
 }
 
@@ -21,6 +21,8 @@ extern "C" void uade_wait_thread() {
     if (s_uade_thread) {
         s_uade_thread->join();
     }
+
+    printf("ended thread\n");
 
     delete s_uade_thread;
     s_uade_thread = nullptr;
@@ -35,7 +37,7 @@ struct uade_state* create_uade_state(int spawn) {
 	uade_config_set_option(config, UC_NO_EP_END, NULL);
 	uade_config_set_option(config, UC_FREQUENCY, "48000");
 
-	uade_config_set_option(config, UC_VERBOSE, "true");
+	//uade_config_set_option(config, UC_VERBOSE, "true");
 
 	uade_config_set_option(config, UC_BASE_DIR, "bin/plugins/uade");
 	uade_state* state = uade_new_state(config, spawn);
@@ -111,7 +113,9 @@ enum HippoProbeResult uade_probe_can_play(const uint8_t* data, uint32_t data_siz
         supported = HippoProbeResult_Supported;
     }
 
-    uade_cleanup_state(state);
+    uade_cleanup_state(state, 0);
+
+    //supported = HippoProbeResult_Supported;
 
 	return supported;
 }
@@ -146,7 +150,7 @@ static int uade_close(void* user_data) {
 
 	if (plugin->state) {
 		uade_stop(plugin->state);
-		uade_cleanup_state(plugin->state);
+		uade_cleanup_state(plugin->state, 1);
 	}
 
 	plugin->state = 0;
