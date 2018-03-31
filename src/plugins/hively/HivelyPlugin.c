@@ -20,16 +20,12 @@ struct HivelyReplayerData {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const char* hively_info(void* userData) {
-	return 0;
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+/*
 static const char* hively_track_info(void* userData) {
 	struct HivelyReplayerData* user_data = (struct HivelyReplayerData*)userData;
 	return user_data->tune->ht_Name;
 }
+*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -90,7 +86,7 @@ static int hively_close(void* userData) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // TODO: These checks needs to be made much better (sanity check some more sizes in the pattern etc)
 
-enum HippoProbeResult hively_probe_can_play(const uint8_t* data, uint32_t data_size, uint64_t total_size) {
+enum HippoProbeResult hively_probe_can_play(const uint8_t* data, uint32_t data_size, const char* filename, uint64_t total_size) {
 	if ((data[0] == 'T') &&
 		(data[1] == 'H') &&
 		(data[2] == 'X') &&
@@ -112,7 +108,7 @@ enum HippoProbeResult hively_probe_can_play(const uint8_t* data, uint32_t data_s
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int hively_read_data(void* userData, void* dest) {
+static int hively_read_data(void* userData, void* dest, uint32_t max_count) {
 	int16_t temp_data[FRAME_SIZE * 4];
 	int8_t* ptr = (int8_t*)temp_data;
 
@@ -140,24 +136,17 @@ static int hively_seek(void* userData, int ms) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/*
 static int hively_length(void* userData) {
 	return -10;
 }
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static int hively_frame_size(void* userData) {
-	return FRAME_SIZE;
-}
+*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static HippoPlaybackPlugin g_hively_plugin = {
-	1,
-
+	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
 	hively_probe_can_play,
-	hively_info,
-	hively_track_info,
 	hively_supported_extensions,
 	hively_create,
 	hively_destroy,
@@ -165,13 +154,11 @@ static HippoPlaybackPlugin g_hively_plugin = {
 	hively_close,
 	hively_read_data,
 	hively_seek,
-	hively_frame_size,
-	hively_length,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-HIPPO_EXPORT HippoPlaybackPlugin* getPlugin() {
+HIPPO_EXPORT HippoPlaybackPlugin* hippo_playback_plugin() {
 	return &g_hively_plugin;
 }
 

@@ -43,13 +43,7 @@ enum HippoProbeResult sid_probe_can_play(const uint8_t* data, uint32_t data_size
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static const char* sid_info(void* user_data) {
-	return 0;
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+/*
 static const char* sid_track_info(void* user_data) {
 	struct SidReplayerData* plugin = (struct SidReplayerData*)user_data;
 
@@ -65,6 +59,7 @@ static const char* sid_track_info(void* user_data) {
 
     return  "Default: <unknwon>";
 }
+*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -165,7 +160,7 @@ static int sid_close(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int sid_read_data(void* user_data, void* dest) {
+static int sid_read_data(void* user_data, void* dest, uint32_t max_samples) {
 	SidReplayerData* data = (SidReplayerData*)user_data;
 	float* output = (float*)dest;
 
@@ -192,23 +187,9 @@ static int sid_seek(void* user_data, int ms) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int sid_frame_size(void* user_data) {
-	return FRAME_SIZE;
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static int sid_length(void* user_data) {
-	return -10;
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 static HippoPlaybackPlugin g_sid_plugin = {
-	1,
+	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
 	sid_probe_can_play,
-	sid_info,
-	sid_track_info,
 	sid_supported_extensions,
 	sid_create,
 	sid_destroy,
@@ -216,13 +197,11 @@ static HippoPlaybackPlugin g_sid_plugin = {
 	sid_close,
 	sid_read_data,
 	sid_seek,
-	sid_frame_size,
-    sid_length,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-extern "C" HIPPO_EXPORT HippoPlaybackPlugin* getPlugin() {
+extern "C" HIPPO_EXPORT HippoPlaybackPlugin* hippo_playback_plugin() {
 	return &g_sid_plugin;
 }
 

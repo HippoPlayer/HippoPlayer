@@ -37,12 +37,7 @@ typedef struct TfmxReplayerData
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const char* tfmx_info(void* user_data) {
-	return 0;
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+/*
 static const char* tfmx_track_info(void* user_data) {
 	TfmxReplayerData* plugin = (TfmxReplayerData*)user_data;
 
@@ -52,11 +47,12 @@ static const char* tfmx_track_info(void* user_data) {
 
 	return plugin->name;
 }
+*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static const char* tfmx_supported_extensions(void* user_data) {
-	return "tfmx,TFX";
+	return "tfmx,tfx";
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -115,7 +111,7 @@ static int tfmx_close(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int tfmx_read_data(void* user_data, void* dest) {
+static int tfmx_read_data(void* user_data, void* dest, uint32_t max_samples) {
 	int16_t temp_data[BUFSIZE] = { 0 };
 
     int block_size = (int)tfmx_get_block_size() / 2;
@@ -124,11 +120,9 @@ static int tfmx_read_data(void* user_data, void* dest) {
 
     if (tfmx_try_to_make_block() >= 0) {
 	    tfmx_get_block(temp_data);
-    } else {
-        memset(temp_data, 0, block_size);
     }
 
-	const float scale = 1.0f / 32768.0f;
+	const float scale = 1.0f / 32767.0f;
 
 	float* new_dest = (float*)dest;
 
@@ -147,6 +141,7 @@ static int tfmx_seek(void* user_data, int ms) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/*
 static int tfmx_frame_size(void* user_data) {
     return tfmx_get_block_size() / 2;
 }
@@ -156,14 +151,13 @@ static int tfmx_frame_size(void* user_data) {
 static int tfmx_length(void* user_data) {
 	return -10;
 }
+*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static HippoPlaybackPlugin g_tfmx_plugin = {
-	1,
+	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
 	tfmx_probe_can_play,
-	tfmx_info,
-	tfmx_track_info,
 	tfmx_supported_extensions,
 	tfmx_create,
 	tfmx_destroy,
@@ -171,13 +165,11 @@ static HippoPlaybackPlugin g_tfmx_plugin = {
 	tfmx_close,
 	tfmx_read_data,
 	tfmx_seek,
-	tfmx_frame_size,
-	tfmx_length,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-HIPPO_EXPORT HippoPlaybackPlugin* getPlugin() {
+HIPPO_EXPORT HippoPlaybackPlugin* hippo_playback_plugin() {
 	return &g_tfmx_plugin;
 }
 

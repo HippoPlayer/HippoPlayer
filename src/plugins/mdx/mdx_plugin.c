@@ -23,12 +23,6 @@ typedef struct MDXPlugin {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const char* mdx_plugin_info(void* user_data) {
-	return 0;
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 static const char* mdx_plugin_supported_extensions() {
 	return "mdx";
 }
@@ -51,9 +45,9 @@ const char* getFileNameFromPath(const char* path)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/*
 static const char* mdx_plugin_track_info(void* user_data) {
 	MDXPlugin* plugin = (MDXPlugin*)user_data;
-
 	return plugin->title;
 
 	// Not working correct so using filename for now
@@ -61,6 +55,7 @@ static const char* mdx_plugin_track_info(void* user_data) {
 	//mdx_get_title(&plugin->mdx_tune, temp_title);
 	//return sj2utf8(temp_title);
 }
+*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // I haven't found any way to probe the MDX file so have to do with extension compare :/
@@ -141,7 +136,7 @@ static int mdx_plugin_destroy(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int mdx_plugin_read_data(void* user_data, void* dest) {
+static int mdx_plugin_read_data(void* user_data, void* dest, uint32_t max_samples) {
 	MDXPlugin* plugin = (MDXPlugin*)user_data;
 	(void)plugin;
 
@@ -168,12 +163,7 @@ static int mdx_plugin_plugin_seek(void* user_data, int ms) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int mdx_plugin_frame_size(void* user_data) {
-    return 480 * 2;
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+/*
 static int mdx_plugin_length(void* user_data) {
 	MDXPlugin* plugin = (MDXPlugin*)user_data;
 	(void)plugin;
@@ -186,14 +176,13 @@ static int mdx_plugin_length(void* user_data) {
 
 	return -10;
 }
+*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static HippoPlaybackPlugin g_mdx_plugin = {
-	1,
+	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
 	mdx_plugin_probe_can_play,
-	mdx_plugin_info,
-	mdx_plugin_track_info,
 	mdx_plugin_supported_extensions,
 	mdx_plugin_create,
 	mdx_plugin_destroy,
@@ -201,13 +190,11 @@ static HippoPlaybackPlugin g_mdx_plugin = {
 	mdx_plugin_close,
 	mdx_plugin_read_data,
 	mdx_plugin_plugin_seek,
-	mdx_plugin_frame_size,
-	mdx_plugin_length,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-HIPPO_EXPORT HippoPlaybackPlugin* getPlugin() {
+HIPPO_EXPORT HippoPlaybackPlugin* hippo_playback_plugin() {
 	return &g_mdx_plugin;
 }
 

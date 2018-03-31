@@ -28,6 +28,12 @@ struct PUListWidgetItem;
 struct PUListWidgetItemFuncs;
 struct PUListWidget;
 struct PUListWidgetFuncs;
+struct PULabel;
+struct PULabelFuncs;
+struct PULineEdit;
+struct PULineEditFuncs;
+struct PUPlainTextEdit;
+struct PUPlainTextEditFuncs;
 struct PUSlider;
 struct PUSliderFuncs;
 struct PUMainWindow;
@@ -68,328 +74,6 @@ struct PULayoutType;
 struct PUPaintDevice;
 struct PUWidgetType;
 
-enum PUKeys {
-    Key_Escape,
-    Key_Tab,
-    Key_Backtab,
-    Key_Backspace,
-    Key_Return,
-    Key_Enter,
-    Key_Insert,
-    Key_Delete,
-    Key_Pause,
-    Key_Print,
-    Key_SysReq,
-    Key_Clear,
-    Key_Home,
-    Key_End,
-    Key_Left,
-    Key_Up,
-    Key_Right,
-    Key_Down,
-    Key_PageUp,
-    Key_PageDown,
-    Key_Shift,
-    Key_Control,
-    Key_Meta,
-    Key_Alt,
-    Key_CapsLock,
-    Key_NumLock,
-    Key_ScrollLock,
-    Key_F1,
-    Key_F2,
-    Key_F3,
-    Key_F4,
-    Key_F5,
-    Key_F6,
-    Key_F7,
-    Key_F8,
-    Key_F9,
-    Key_F10,
-    Key_F11,
-    Key_F12,
-    Key_F13,
-    Key_F14,
-    Key_F15,
-    Key_F16,
-    Key_F17,
-    Key_F18,
-    Key_F19,
-    Key_F20,
-    Key_F21,
-    Key_F22,
-    Key_F23,
-    Key_F24,
-    Key_F25,
-    Key_F26,
-    Key_F27,
-    Key_F28,
-    Key_F29,
-    Key_F30,
-    Key_F31,
-    Key_F32,
-    Key_F33,
-    Key_F34,
-    Key_F35,
-    Key_Super_L,
-    Key_Super_R,
-    Key_Menu,
-    Key_Hyper_L,
-    Key_Hyper_R,
-    Key_Help,
-    Key_Direction_L,
-    Key_Direction_R,
-    Key_Space,
-    Key_Any,
-    Key_Exclam,
-    Key_QuoteDbl,
-    Key_NumberSign,
-    Key_Dollar,
-    Key_Percent,
-    Key_Ampersand,
-    Key_Apostrophe,
-    Key_ParenLeft,
-    Key_ParenRight,
-    Key_Asterisk,
-    Key_Plus,
-    Key_Comma,
-    Key_Minus,
-    Key_Period,
-    Key_Slash,
-    Key_0,
-    Key_1,
-    Key_2,
-    Key_3,
-    Key_4,
-    Key_5,
-    Key_6,
-    Key_7,
-    Key_8,
-    Key_9,
-    Key_Colon,
-    Key_Semicolon,
-    Key_Less,
-    Key_Equal,
-    Key_Greater,
-    Key_Question,
-    Key_At,
-    Key_A,
-    Key_B,
-    Key_C,
-    Key_D,
-    Key_E,
-    Key_F,
-    Key_G,
-    Key_H,
-    Key_I,
-    Key_J,
-    Key_K,
-    Key_L,
-    Key_M,
-    Key_N,
-    Key_O,
-    Key_P,
-    Key_Q,
-    Key_R,
-    Key_S,
-    Key_T,
-    Key_U,
-    Key_V,
-    Key_W,
-    Key_X,
-    Key_Y,
-    Key_Z,
-    Key_BracketLeft,
-    Key_Backslash,
-    Key_BracketRight,
-    Key_AsciiCircum,
-    Key_Underscore,
-    Key_QuoteLeft,
-    Key_BraceLeft,
-    Key_Bar,
-    Key_BraceRight,
-    Key_AsciiTilde,
-    Key_Back,
-    Key_Forward,
-    Key_Stop,
-    Key_Refresh,
-    Key_VolumeDown,
-    Key_VolumeMute,
-    Key_VolumeUp,
-    Key_BassBoost,
-    Key_BassUp,
-    Key_BassDown,
-    Key_TrebleUp,
-    Key_TrebleDown,
-    Key_MediaPlay,
-    Key_MediaStop,
-    Key_MediaPrevious,
-    Key_MediaNext,
-    Key_MediaRecord,
-    Key_MediaPause,
-    Key_MediaTogglePlayPause,
-    Key_HomePage,
-    Key_Favorites,
-    Key_Search,
-    Key_Standby,
-    Key_OpenUrl,
-    Key_LaunchMail,
-    Key_LaunchMedia,
-    Key_Launch0,
-    Key_Launch1,
-    Key_Launch2,
-    Key_Launch3,
-    Key_Launch4,
-    Key_Launch5,
-    Key_Launch6,
-    Key_Launch7,
-    Key_Launch8,
-    Key_Launch9,
-    Key_LaunchA,
-    Key_LaunchB,
-    Key_LaunchC,
-    Key_LaunchD,
-    Key_LaunchE,
-    Key_LaunchF,
-    Key_MonBrightnessUp,
-    Key_MonBrightnessDown,
-    Key_KeyboardLightOnOff,
-    Key_KeyboardBrightnessUp,
-    Key_KeyboardBrightnessDown,
-    Key_PowerOff,
-    Key_WakeUp,
-    Key_Eject,
-    Key_ScreenSaver,
-    Key_WWW,
-    Key_Memo,
-    Key_LightBulb,
-    Key_Shop,
-    Key_History,
-    Key_AddFavorite,
-    Key_HotLinks,
-    Key_BrightnessAdjust,
-    Key_Finance,
-    Key_Community,
-    Key_AudioRewind,
-    Key_BackForward,
-    Key_ApplicationLeft,
-    Key_ApplicationRight,
-    Key_Book,
-    Key_CD,
-    Key_Calculator,
-    Key_ToDoList,
-    Key_ClearGrab,
-    Key_Close,
-    Key_Copy,
-    Key_Cut,
-    Key_Display,
-    Key_DOS,
-    Key_Documents,
-    Key_Excel,
-    Key_Explorer,
-    Key_Game,
-    Key_Go,
-    Key_iTouch,
-    Key_LogOff,
-    Key_Market,
-    Key_Meeting,
-    Key_MenuKB,
-    Key_MenuPB,
-    Key_MySites,
-    Key_News,
-    Key_OfficeHome,
-    Key_Option,
-    Key_Paste,
-    Key_Phone,
-    Key_Calendar,
-    Key_Reply,
-    Key_Reload,
-    Key_RotateWindows,
-    Key_RotationPB,
-    Key_RotationKB,
-    Key_Save,
-    Key_Send,
-    Key_Spell,
-    Key_SplitScreen,
-    Key_Support,
-    Key_TaskPane,
-    Key_Terminal,
-    Key_Tools,
-    Key_Travel,
-    Key_Video,
-    Key_Word,
-    Key_Xfer,
-    Key_ZoomIn,
-    Key_ZoomOut,
-    Key_Away,
-    Key_Messenger,
-    Key_WebCam,
-    Key_MailForward,
-    Key_Pictures,
-    Key_Music,
-    Key_Battery,
-    Key_Bluetooth,
-    Key_WLAN,
-    Key_UWB,
-    Key_AudioForward,
-    Key_AudioRepeat,
-    Key_AudioRandomPlay,
-    Key_Subtitle,
-    Key_AudioCycleTrack,
-    Key_Time,
-    Key_Hibernate,
-    Key_View,
-    Key_TopMenu,
-    Key_PowerDown,
-    Key_Suspend,
-    Key_ContrastAdjust,
-    Key_LaunchG,
-    Key_LaunchH,
-    Key_TouchpadToggle,
-    Key_TouchpadOn,
-    Key_TouchpadOff,
-    Key_MicMute,
-    Key_Red,
-    Key_Green,
-    Key_Yellow,
-    Key_Blue,
-    Key_ChannelUp,
-    Key_ChannelDown,
-    Key_Guide,
-    Key_Info,
-    Key_Settings,
-    Key_MicVolumeUp,
-    Key_MicVolumeDown,
-    Key_New,
-    Key_Open,
-    Key_Find,
-    Key_Undo,
-    Key_Redo,
-    Key_MediaLast,
-    Key_Select,
-    Key_Yes,
-    Key_No,
-    Key_Cancel,
-    Key_Printer,
-    Key_Execute,
-    Key_Sleep,
-    Key_Play,
-    Key_Zoom,
-    Key_Exit,
-    Key_Context1,
-    Key_Context2,
-    Key_Context3,
-    Key_Context4,
-    Key_Call,
-    Key_Hangup,
-    Key_Flip,
-    Key_ToggleCallHangup,
-    Key_VoiceDial,
-    Key_LastNumberRedial,
-    Key_Camera,
-    Key_CameraFocus,
-};
-
 struct PURect {
     int x;
     int y;
@@ -410,6 +94,7 @@ struct PUWidgetFuncs {
     void (*set_fixed_height)(struct PUBase* self_c, int width);
     void (*set_fixed_width)(struct PUBase* self_c, int width);
     void (*resize)(struct PUBase* self_c, int width, int height);
+    void (*set_parent)(struct PUBase* self_c, struct PUBase* widget);
     void (*set_layout)(struct PUBase* self_c, struct PUBase* layout);
     void (*update)(struct PUBase* self_c);
     void (*set_paint_event)(void* object, void* user_data, void (*event)(void* self_c, struct PUBase* event));
@@ -426,6 +111,7 @@ struct PUPushButtonFuncs {
     void (*set_fixed_height)(struct PUBase* self_c, int width);
     void (*set_fixed_width)(struct PUBase* self_c, int width);
     void (*resize)(struct PUBase* self_c, int width, int height);
+    void (*set_parent)(struct PUBase* self_c, struct PUBase* widget);
     void (*set_layout)(struct PUBase* self_c, struct PUBase* layout);
     void (*update)(struct PUBase* self_c);
     void (*set_pressed_event)(void* object, void* user_data, void (*event)(void* self_c));
@@ -474,6 +160,7 @@ struct PUListWidgetFuncs {
     void (*set_fixed_height)(struct PUBase* self_c, int width);
     void (*set_fixed_width)(struct PUBase* self_c, int width);
     void (*resize)(struct PUBase* self_c, int width, int height);
+    void (*set_parent)(struct PUBase* self_c, struct PUBase* widget);
     void (*set_layout)(struct PUBase* self_c, struct PUBase* layout);
     void (*update)(struct PUBase* self_c);
     void (*add_item)(struct PUBase* self_c, struct PUBase* item);
@@ -500,12 +187,68 @@ struct PUListWidget {
     struct PUBase* priv_data;
 };
 
+struct PULabelFuncs {
+    void (*destroy)(struct PUBase* self_c);
+    void (*show)(struct PUBase* self_c);
+    void (*set_fixed_height)(struct PUBase* self_c, int width);
+    void (*set_fixed_width)(struct PUBase* self_c, int width);
+    void (*resize)(struct PUBase* self_c, int width, int height);
+    void (*set_parent)(struct PUBase* self_c, struct PUBase* widget);
+    void (*set_layout)(struct PUBase* self_c, struct PUBase* layout);
+    void (*update)(struct PUBase* self_c);
+    void (*set_text)(struct PUBase* self_c, const char* text);
+};
+
+struct PULabel {
+    struct PULabelFuncs* funcs;
+    struct PUBase* priv_data;
+};
+
+struct PULineEditFuncs {
+    void (*destroy)(struct PUBase* self_c);
+    void (*show)(struct PUBase* self_c);
+    void (*set_fixed_height)(struct PUBase* self_c, int width);
+    void (*set_fixed_width)(struct PUBase* self_c, int width);
+    void (*resize)(struct PUBase* self_c, int width, int height);
+    void (*set_parent)(struct PUBase* self_c, struct PUBase* widget);
+    void (*set_layout)(struct PUBase* self_c, struct PUBase* layout);
+    void (*update)(struct PUBase* self_c);
+    void (*set_text)(struct PUBase* self_c, const char* text);
+    void (*set_read_only)(struct PUBase* self_c, bool value);
+};
+
+struct PULineEdit {
+    struct PULineEditFuncs* funcs;
+    struct PUBase* priv_data;
+};
+
+struct PUPlainTextEditFuncs {
+    void (*destroy)(struct PUBase* self_c);
+    void (*show)(struct PUBase* self_c);
+    void (*set_fixed_height)(struct PUBase* self_c, int width);
+    void (*set_fixed_width)(struct PUBase* self_c, int width);
+    void (*resize)(struct PUBase* self_c, int width, int height);
+    void (*set_parent)(struct PUBase* self_c, struct PUBase* widget);
+    void (*set_layout)(struct PUBase* self_c, struct PUBase* layout);
+    void (*update)(struct PUBase* self_c);
+    void (*clear)(struct PUBase* self_c);
+    void (*set_plain_text)(struct PUBase* self_c, const char* text);
+    void (*append_plain_text)(struct PUBase* self_c, const char* text);
+    void (*set_read_only)(struct PUBase* self_c, bool value);
+};
+
+struct PUPlainTextEdit {
+    struct PUPlainTextEditFuncs* funcs;
+    struct PUBase* priv_data;
+};
+
 struct PUSliderFuncs {
     void (*destroy)(struct PUBase* self_c);
     void (*show)(struct PUBase* self_c);
     void (*set_fixed_height)(struct PUBase* self_c, int width);
     void (*set_fixed_width)(struct PUBase* self_c, int width);
     void (*resize)(struct PUBase* self_c, int width, int height);
+    void (*set_parent)(struct PUBase* self_c, struct PUBase* widget);
     void (*set_layout)(struct PUBase* self_c, struct PUBase* layout);
     void (*update)(struct PUBase* self_c);
     void (*set_value_changed_event)(void* object, void* user_data, void (*event)(void* self_c, int value));
@@ -522,6 +265,7 @@ struct PUMainWindowFuncs {
     void (*set_fixed_height)(struct PUBase* self_c, int width);
     void (*set_fixed_width)(struct PUBase* self_c, int width);
     void (*resize)(struct PUBase* self_c, int width, int height);
+    void (*set_parent)(struct PUBase* self_c, struct PUBase* widget);
     void (*set_layout)(struct PUBase* self_c, struct PUBase* layout);
     void (*update)(struct PUBase* self_c);
     bool (*is_animated)(struct PUBase* self_c);
@@ -540,6 +284,7 @@ struct PUFramelessWindowFuncs {
     void (*set_fixed_height)(struct PUBase* self_c, int width);
     void (*set_fixed_width)(struct PUBase* self_c, int width);
     void (*resize)(struct PUBase* self_c, int width, int height);
+    void (*set_parent)(struct PUBase* self_c, struct PUBase* widget);
     void (*set_layout)(struct PUBase* self_c, struct PUBase* layout);
     void (*update)(struct PUBase* self_c);
     void (*set_window_title)(struct PUBase* self_c, const char* title);
@@ -624,6 +369,7 @@ struct PUMenuFuncs {
     void (*set_fixed_height)(struct PUBase* self_c, int width);
     void (*set_fixed_width)(struct PUBase* self_c, int width);
     void (*resize)(struct PUBase* self_c, int width, int height);
+    void (*set_parent)(struct PUBase* self_c, struct PUBase* widget);
     void (*set_layout)(struct PUBase* self_c, struct PUBase* layout);
     void (*update)(struct PUBase* self_c);
     void (*add_action_text)(struct PUBase* self_c, const char* text);
@@ -642,6 +388,7 @@ struct PUMenuBarFuncs {
     void (*set_fixed_height)(struct PUBase* self_c, int width);
     void (*set_fixed_width)(struct PUBase* self_c, int width);
     void (*resize)(struct PUBase* self_c, int width, int height);
+    void (*set_parent)(struct PUBase* self_c, struct PUBase* widget);
     void (*set_layout)(struct PUBase* self_c, struct PUBase* layout);
     void (*update)(struct PUBase* self_c);
     void (*add_menu)(struct PUBase* self_c, struct PUBase* menu);
@@ -705,6 +452,7 @@ struct PULayout {
 struct PUVBoxLayoutFuncs {
     void (*destroy)(struct PUBase* self_c);
     void (*add_widget)(struct PUBase* self_c, struct PUBase* widget);
+    void (*add_layout)(struct PUBase* self_c, struct PUBase* layout);
     void (*update)(struct PUBase* self_c);
 };
 
@@ -716,6 +464,7 @@ struct PUVBoxLayout {
 struct PUHBoxLayoutFuncs {
     void (*destroy)(struct PUBase* self_c);
     void (*add_widget)(struct PUBase* self_c, struct PUBase* widget);
+    void (*add_layout)(struct PUBase* self_c, struct PUBase* layout);
     void (*update)(struct PUBase* self_c);
 };
 
@@ -730,6 +479,9 @@ typedef struct PU {
     struct PUPainter (*create_painter)(struct PUBase* self);
     struct PUListWidgetItem (*create_list_widget_item)(struct PUBase* self);
     struct PUListWidget (*create_list_widget)(struct PUBase* self);
+    struct PULabel (*create_label)(struct PUBase* self);
+    struct PULineEdit (*create_line_edit)(struct PUBase* self);
+    struct PUPlainTextEdit (*create_plain_text_edit)(struct PUBase* self);
     struct PUSlider (*create_slider)(struct PUBase* self);
     struct PUMainWindow (*create_main_window)(struct PUBase* self);
     struct PUFramelessWindow (*create_frameless_window)(struct PUBase* self);

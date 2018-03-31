@@ -1,32 +1,3 @@
-/*
-#[repr(C)]
-pub struct i64 {
-    pub result: i32,
-    pub error_message: *const c_char,
-}
-
-#[repr(C)]
-pub struct CHippoIoAPI {
-    pub exists: extern "C" fn(target: *const i8) -> c_int,
-    pub open: extern "C" fn(priv_data: *const c_void, target: *const i8, handle: **mut u64) -> u64,
-
-    pub close: extern "C" fn(handle: u64) -> i64,
-    pub size: extern "C" fn(handle: u64, res: *mut u64) -> i64,
-    pub read: extern "C" fn(handle: u64, target: *mut c_void, size: u64) -> i64,
-    pub seek: extern "C" fn(handle: u64, seek_type: i32, seek_step: u64) -> i64,
-}
-
-#[repr(C)]
-pub struct CHippoServiceAPI {
-    pub get_io_api: extern "C" fn(priv_data: *mut c_void, version: i32) -> *const CHippoFileAPI,
-    private_data: u64,	// memory handle
-}
-
-fn get_io_api(priv_data: *mut c_void, version: i32) -> *const CHippoIoAPI {
-
-}
-*/
-
 use std::fs::File;
 use std::os::raw::{c_int, c_void, c_char};
 use std::ffi::CStr;
@@ -37,6 +8,7 @@ use std::mem::transmute;
 use std::slice;
 use std::io::Read;
 use std::collections::HashMap;
+use song_db::SongDb;
 
 struct IoApi {
     pub saved_allocs: HashMap<*const u8, Box<[u8]>>,
@@ -83,8 +55,18 @@ pub struct CHippoIoAPI {
 
 #[repr(C)]
 #[derive(Debug)]
+pub struct CMetadataAPI {
+    pub get_key: extern "C" fn(priv_data: *const c_void, resource: *const i8, key_type: u32, error_code: *mut i32) -> *const c_void,
+    pub set_key: extern "C" fn(priv_data: *const c_void, resource: *const i8, sub_song: u32, value: *const i8, key_type: *const i8) -> i32,
+    pub set_key_with_encoding: extern "C" fn(priv_data: *const c_void, resource: *const i8, sub_song: u32, value: *const i8, key_type: u32, encoding: u32) -> i32,
+    pub priv_data: *const c_void,
+}
+
+#[repr(C)]
+#[derive(Debug)]
 pub struct CHippoServiceAPI {
     pub get_io_api: extern "C" fn(priv_data: *const c_void, version: i32) -> *const CHippoIoAPI,
+    pub get_metadata_api: extern "C" fn(priv_data: *const c_void, version: i32) -> *const CMetadataAPI,
     pub private_data: *const c_void,	// memory handle
 }
 
@@ -117,7 +99,7 @@ extern "C" fn file_read_to_memory_wrapper(priv_data: *const c_void, filename: *c
 
             let d = file_api.saved_allocs.get(&ptr).unwrap();
 
-            let data_ptr: *const c_void = d.as_ptr() as *const c_void; 
+            let data_ptr: *const c_void = d.as_ptr() as *const c_void;
 
             unsafe {
                 *target = data_ptr;
@@ -189,14 +171,44 @@ extern "C" fn file_seek_wrapper(handle: *const c_void, _seek_type: i32, _seek_st
     0
 }
 
-
 extern "C" fn get_io_api_wrapper(priv_data: *const c_void, _version: i32) ->  *const CHippoIoAPI {
     let service_api: &mut ServiceApi = unsafe { &mut *(priv_data as *mut ServiceApi) };
     service_api.get_c_io_api()
 }
 
+extern "C" fn get_metadata_api(priv_data: *const c_void, _version: i32) ->  *const CMetadataAPI {
+    let service_api: &mut ServiceApi = unsafe { &mut *(priv_data as *mut ServiceApi) };
+    service_api.get_c_metadatao_api()
+}
+
+
+extern "C" fn metadata_get_key(_priv_data: *const c_void, _resource: *const i8, _key_type: u32, error_code: *mut i32) -> *const c_void {
+    // not implemented yet
+    unsafe { *error_code = -1; }
+    ptr::null()
+    //let res = unsafe { CStr::from_ptr(resource as *const c_char) };
+    //file_api.exists(&filename.to_string_lossy())
+}
+
+extern "C" fn metadata_set_key(priv_data: *const c_void, resource: *const i8, sub_song: u32, value: *const i8, key: *const i8) -> i32 {
+    let song_db: &mut SongDb = unsafe { &mut *(priv_data as *mut SongDb) };
+    // TODO: Use CFixedString
+    let res = unsafe { CStr::from_ptr(resource as *const c_char) };
+    let value = unsafe { CStr::from_ptr(value as *const c_char) };
+    let key = unsafe { CStr::from_ptr(key as *const c_char) };
+
+    song_db.set_key( &res.to_string_lossy(), sub_song as usize, &value.to_string_lossy(), &key.to_string_lossy());
+
+    0
+}
+
+extern "C" fn metadata_set_key_with_encoding(_priv_data: *const c_void, _resource: *const i8, _sub_song: u32, _value: *const i8, _key_type: u32, _encoding: u32) -> i32 {
+    -1
+}
+
 pub struct ServiceApi {
     pub c_io_api: *const CHippoIoAPI,
+    pub c_metadata_api: *const CMetadataAPI,
 }
 
 impl ServiceApi {
@@ -204,7 +216,19 @@ impl ServiceApi {
         self.c_io_api
     }
 
+    fn get_c_metadatao_api(&self) -> *const CMetadataAPI {
+        self.c_metadata_api
+    }
+
+    fn get_song_db<'a>(&'a self) -> &'a SongDb {
+    	let metadata_api = self.get_c_metadatao_api();
+    	let song_db: &SongDb = unsafe { &*((*metadata_api).priv_data as *const SongDb) };
+    	song_db
+    }
+
     fn new() -> ServiceApi {
+        // setup IO services
+
         let io_api: *const c_void = unsafe { transmute(Box::new(IoApi { saved_allocs: HashMap::new() })) };
 
         let c_io_api = Box::new(CHippoIoAPI {
@@ -221,7 +245,23 @@ impl ServiceApi {
 
         let c_io_api: *const CHippoIoAPI = unsafe { transmute(c_io_api) };
 
-        ServiceApi { c_io_api }
+        // Metadata service
+
+        let metadata_api: *const c_void = unsafe { transmute(Box::new(SongDb::new())) };
+
+        let c_metadata_api = Box::new(CMetadataAPI {
+            priv_data: metadata_api,
+            get_key: metadata_get_key,
+            set_key: metadata_set_key,
+            set_key_with_encoding: metadata_set_key_with_encoding,
+        });
+
+        let c_metadata_api: *const CMetadataAPI = unsafe { transmute(c_metadata_api) };
+
+        ServiceApi {
+            c_io_api,
+            c_metadata_api
+        }
     }
 }
 
@@ -235,6 +275,7 @@ impl PluginService {
 
         let c_service_api = Box::new(CHippoServiceAPI {
             get_io_api: get_io_api_wrapper,
+            get_metadata_api: get_metadata_api,
             private_data: service_api,
         });
 
@@ -243,6 +284,11 @@ impl PluginService {
         PluginService {
             c_service_api: t
         }
+    }
+
+    pub fn get_song_db<'a>(&'a self) -> &'a SongDb {
+    	let service_api: &ServiceApi = unsafe { &*((*self.c_service_api).private_data as *const ServiceApi) };
+    	service_api.get_song_db()
     }
 
     pub fn get_c_service_api(&self) -> *const CHippoServiceAPI {

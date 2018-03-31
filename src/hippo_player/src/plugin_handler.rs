@@ -11,17 +11,13 @@ use service::CHippoServiceAPI;
 pub struct CHippoPlaybackPlugin {
     pub version: u64,
     pub probe_can_play: extern "C" fn(data: *const u8, data_size: u32, buffer: *const i8, total_size: u64) -> i32,
-    pub info: extern "C" fn(user_data: *mut c_void) -> *const c_char,
-    pub track_info: extern "C" fn(user_data: *mut c_void) -> *const c_char,
     pub supported_extensions: extern "C" fn() -> *mut c_char,
     pub create: extern "C" fn(service_api: *const CHippoServiceAPI) -> *mut c_void,
     pub destroy: extern "C" fn(user_data: *mut c_void) -> c_int,
     pub open: extern "C" fn(user_data: *mut c_void, buffer: *const i8) -> c_int,
     pub close: extern "C" fn(user_data: *mut c_void) -> c_int,
-    pub read_data: extern "C" fn(user_data: *mut c_void, dest: *mut u8) -> c_int,
+    pub read_data: extern "C" fn(user_data: *mut c_void, dest: *mut u8, size: u32) -> c_int,
     pub seek: extern "C" fn(user_data: *mut c_void, ms: c_int) -> c_int,
-    pub frame_size: extern "C" fn(user_data: *mut c_void) -> c_int,
-    pub length: extern "C" fn(user_data: *mut c_void) -> c_int,
     pub private_data: u64,
 }
 
@@ -74,7 +70,7 @@ impl <'a> Plugins<'a> {
 
     fn add_dec_plugin(&mut self, name: &str, plugin: &Arc<Lib>) {
         let func: Result<Symbol<extern "C" fn() -> *const CHippoPlaybackPlugin>, ::std::io::Error> = unsafe {
-            plugin.lib.get(b"getPlugin\0")
+            plugin.lib.get(b"hippo_playback_plugin\0")
         };
 
         if let Ok(fun) = func {

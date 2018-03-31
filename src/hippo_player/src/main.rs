@@ -17,6 +17,8 @@ mod plugin_handler;
 mod audio;
 mod playerview;
 mod playlist;
+mod song_db;
+mod song_info;
 pub mod service;
 
 use plugin_handler::{Plugins};
@@ -31,6 +33,7 @@ use wrui::{SharedLibUi, Ui};
 use wrui::wrui::*;
 use playerview::PlayerView;
 use playlist::PlaylistView;
+use song_info::SongInfoView;
 
 struct HippoPlayer<'a> {
     audio: HippoAudio,
@@ -39,6 +42,7 @@ struct HippoPlayer<'a> {
     main_widget: Widget,
     player_view: PlayerView,
     playlist: PlaylistView,
+    song_info_view: SongInfoView,
     ui: Ui,
     app: Application,
     current_song_time: f32,
@@ -57,6 +61,7 @@ impl <'a> HippoPlayer<'a> {
             main_widget: ui.create_widget(),
             player_view: PlayerView::new(ui),
             playlist: PlaylistView::new(ui),
+            song_info_view: SongInfoView::new(ui),
             ui: ui,
             current_song_time: -10.0,
             is_playing: false,
@@ -179,6 +184,8 @@ impl <'a> HippoPlayer<'a> {
         player_window.resize(500, 800);
         player_window.show();
 
+        self.song_info_view.show();
+
         self.app.exec();
     }
 
@@ -205,6 +212,8 @@ impl <'a> HippoPlayer<'a> {
                 self.audio.stop();
                 self.audio = HippoAudio::new();
                 let info = self.audio.start_with_file(&plugin, &self.plugin_service, filename);
+
+                self.song_info_view.update_data(filename, &self.plugin_service.get_song_db());
                 return info;
             }
         }

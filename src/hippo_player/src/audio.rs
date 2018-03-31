@@ -5,7 +5,7 @@ use rodio::{Source, Sink};
 use std::ffi::CString;
 use std::os::raw::c_void;
 use std::time::Duration;
-use std::ffi::CStr;
+//use std::ffi::CStr;
 
 use service::PluginService;
 
@@ -36,7 +36,8 @@ impl HippoPlayback {
         let c_filename = CString::new(filename).unwrap();
         let user_data = ((plugin.plugin_funcs).create)(plugin_service.get_c_service_api()) as u64;
         let ptr_user_data = user_data as *mut c_void;
-        let frame_size = (((plugin.plugin_funcs).frame_size)(ptr_user_data)) as usize;
+        let frame_size = 48000;
+        //let frame_size = (((plugin.plugin_funcs).frame_size)(ptr_user_data)) as usize;
         // TODO: Verify that state is ok
         let _open_state = ((plugin.plugin_funcs).open)(ptr_user_data, c_filename.as_ptr());
 
@@ -60,7 +61,7 @@ impl Iterator for HippoPlayback {
         if self.current_offset >= self.frame_size {
             self.frame_size = ((self.plugin.plugin_funcs)
                                    .read_data)(self.plugin_user_data as *mut c_void,
-                                               self.out_data.as_slice().as_ptr() as *mut u8) as usize;
+                                               self.out_data.as_slice().as_ptr() as *mut u8, 48000/2) as usize;
 
             self.current_offset = 0;
         }
@@ -132,10 +133,15 @@ impl HippoAudio {
         if let Some(pb) = playback {
             // TODO: Wrap this
             unsafe {
-                let c_title = ((plugin.plugin_funcs).track_info)(pb.plugin_user_data as *mut c_void);
-                let length = ((plugin.plugin_funcs).length)(pb.plugin_user_data as *mut c_void);
+				//let title = service.get_song_db().get_key(filename, 0, "title").unwrap();
+				let title = service.get_song_db().get_key(filename, 0, "title").or_else(|| Some("Unknown".to_owned()));
+
+                //let c_title = ((plugin.plugin_funcs).track_info)(pb.plugin_user_data as *mut c_void);
+                //let length = ((plugin.plugin_funcs).length)(pb.plugin_user_data as *mut c_void);
+                let length = -10;
                 let info = MusicInfo {
-                    title: CStr::from_ptr(c_title).to_string_lossy().into_owned(),
+                    //title: CStr::from_ptr(c_title).to_string_lossy().into_owned(),
+                    title: title.unwrap(),
                     duration: length,
                 };
 

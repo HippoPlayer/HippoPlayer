@@ -55,12 +55,7 @@ typedef struct UadePlugin {
 } UadePlugin;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static const char* uade_info(void* user_data) {
-	return 0;
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// TODO: Fix me
 
 static const char* uade_supported_extensions() {
 	return "ahx,hvl,ml";
@@ -83,6 +78,7 @@ const char* getFileNameFromPath(const char* path)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/*
 static const char* uade_track_info(void* user_data) {
 	UadePlugin* plugin = (UadePlugin*)user_data;
 
@@ -100,6 +96,7 @@ static const char* uade_track_info(void* user_data) {
 
 	return s_player_name;
 }
+*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -166,7 +163,7 @@ static int uade_destroy(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int uade_read_data(void* user_data, void* dest) {
+static int uade_read_data(void* user_data, void* dest, uint32_t max_samples) {
 	UadePlugin* plugin = (UadePlugin*)user_data;
 
 	int16_t data[480 * 2] = { 0 };
@@ -193,12 +190,7 @@ static int uade_plugin_seek(void* user_data, int ms) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int uade_frame_size(void* user_data) {
-    return 480 * 2;
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+/*
 static int uade_length(void* user_data) {
 	UadePlugin* plugin = (UadePlugin*)user_data;
 
@@ -220,14 +212,13 @@ static int uade_length(void* user_data) {
 
 	return -10;
 }
+*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static HippoPlaybackPlugin g_uade_plugin = {
-	1,
+	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
 	uade_probe_can_play,
-	uade_info,
-	uade_track_info,
 	uade_supported_extensions,
 	uade_create,
 	uade_destroy,
@@ -235,14 +226,12 @@ static HippoPlaybackPlugin g_uade_plugin = {
 	uade_close,
 	uade_read_data,
 	uade_plugin_seek,
-	uade_frame_size,
-	uade_length,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 extern "C" {
-	HIPPO_EXPORT HippoPlaybackPlugin* getPlugin() {
+	HIPPO_EXPORT HippoPlaybackPlugin* hippo_playback_plugin() {
 		return &g_uade_plugin;
 	}
 }
