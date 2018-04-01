@@ -134,6 +134,22 @@ impl <'a> HippoPlayer<'a> {
         }
     }
 
+    fn create_plugins_menu(&mut self) -> Menu {
+        let plugin_menu = self.ui.create_menu();
+        plugin_menu.set_title("Views");
+
+        for plugin in &self.plugins.view_plugins {
+        	let name = plugin.get_name(); 
+
+			let action = self.ui.create_action();
+			action.set_text(&name);
+
+			plugin_menu.add_action(&action);
+        }
+
+        plugin_menu
+    }
+
     pub fn run(&mut self) {
         let main_window = self.ui.create_main_window();
 
@@ -157,8 +173,11 @@ impl <'a> HippoPlayer<'a> {
         file_menu.set_title("File");
         file_menu.add_action(&add_files);
 
+		let plugin_menu = self.create_plugins_menu();
+
         let menu_bar = main_window.menu_bar();
         menu_bar.add_menu(&file_menu);
+        menu_bar.add_menu(&plugin_menu);
 
         set_pressed_event!(self.player_view.prev_button, self, HippoPlayer, HippoPlayer::prev_song);
         set_pressed_event!(self.player_view.play_button, self, HippoPlayer, HippoPlayer::play_song);
