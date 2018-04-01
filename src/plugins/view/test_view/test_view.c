@@ -21,7 +21,12 @@ void* test_view_create(HippoServiceAPI* services, PU* ui_funcs) {
     memset(plugin, 0, sizeof(TestViewPlugin));
     g_ui = ui_funcs;
 
-    plugin->widget = g_ui->create_widget(g_ui->priv_data);
+    plugin->widget = PU_create_widget(g_ui);
+    
+    PUWidget_show(plugin->widget);
+
+    //plugin->widget = g_ui->create_widget(g_ui->priv_data);
+    //plugin->widget.funcs->show(plugin->widget.priv_data);
 
     return plugin;
 }
