@@ -513,8 +513,8 @@ typedef struct PU {
 #define PUPushButton_set_parent(obj, widget) obj.funcs->set_parent(obj.priv_data, widget)
 #define PUPushButton_set_layout(obj, layout) obj.funcs->set_layout(obj.priv_data, layout)
 #define PUPushButton_update(obj) obj.funcs->update(obj.priv_data)
-#define  PUPushButton_set_pressed_event(obj, user_data, event) obj.funcs->set_pressed_event(obj.priv_data, user_data, event)
-#define  PUPushButton_set_released_event(obj, user_data, event) obj.funcs->set_released_event(obj.priv_data, user_data, event)
+#define PUPushButton_set_pressed_event(obj, user_data, event) obj.funcs->set_pressed_event(obj.priv_data, user_data, event)
+#define PUPushButton_set_released_event(obj, user_data, event) obj.funcs->set_released_event(obj.priv_data, user_data, event)
 #define PUPushButton_set_icon(obj, icon) obj.funcs->set_icon(obj.priv_data, icon)
 #define PUPushButton_set_text(obj, text) obj.funcs->set_text(obj.priv_data, text)
 #define PUPushButton_set_flat(obj, flat) obj.funcs->set_flat(obj.priv_data, flat)
@@ -550,9 +550,9 @@ typedef struct PU {
 #define PUListWidget_set_drop_indicator_shown(obj, state) obj.funcs->set_drop_indicator_shown(obj.priv_data, state)
 #define PUListWidget_set_accept_drops(obj, state) obj.funcs->set_accept_drops(obj.priv_data, state)
 #define PUListWidget_add_widget_item(obj, item) obj.funcs->add_widget_item(obj.priv_data, item)
-#define  PUListWidget_set_current_row_changed_event(obj, user_data, event) obj.funcs->set_current_row_changed_event(obj.priv_data, user_data, event)
-#define  PUListWidget_set_item_clicked_event(obj, user_data, event) obj.funcs->set_item_clicked_event(obj.priv_data, user_data, event)
-#define  PUListWidget_set_item_double_clicked_event(obj, user_data, event) obj.funcs->set_item_double_clicked_event(obj.priv_data, user_data, event)
+#define PUListWidget_set_current_row_changed_event(obj, user_data, event) obj.funcs->set_current_row_changed_event(obj.priv_data, user_data, event)
+#define PUListWidget_set_item_clicked_event(obj, user_data, event) obj.funcs->set_item_clicked_event(obj.priv_data, user_data, event)
+#define PUListWidget_set_item_double_clicked_event(obj, user_data, event) obj.funcs->set_item_double_clicked_event(obj.priv_data, user_data, event)
 
 #define PULabel_show(obj) obj.funcs->show(obj.priv_data)
 #define PULabel_set_fixed_height(obj, width) obj.funcs->set_fixed_height(obj.priv_data, width)
@@ -592,7 +592,7 @@ typedef struct PU {
 #define PUSlider_set_parent(obj, widget) obj.funcs->set_parent(obj.priv_data, widget)
 #define PUSlider_set_layout(obj, layout) obj.funcs->set_layout(obj.priv_data, layout)
 #define PUSlider_update(obj) obj.funcs->update(obj.priv_data)
-#define  PUSlider_set_value_changed_event(obj, user_data, event) obj.funcs->set_value_changed_event(obj.priv_data, user_data, event)
+#define PUSlider_set_value_changed_event(obj, user_data, event) obj.funcs->set_value_changed_event(obj.priv_data, user_data, event)
 
 #define PUMainWindow_show(obj) obj.funcs->show(obj.priv_data)
 #define PUMainWindow_set_fixed_height(obj, width) obj.funcs->set_fixed_height(obj.priv_data, width)
@@ -617,7 +617,7 @@ typedef struct PU {
 
 #define PUAction_is_enabled(obj) obj.funcs->is_enabled(obj.priv_data)
 #define PUAction_set_text(obj, text) obj.funcs->set_text(obj.priv_data, text)
-#define  PUAction_set_triggered_event(obj, user_data, event) obj.funcs->set_triggered_event(obj.priv_data, user_data, event)
+#define PUAction_set_triggered_event(obj, user_data, event) obj.funcs->set_triggered_event(obj.priv_data, user_data, event)
 
 #define PUUrl_is_local_file(obj) obj.funcs->is_local_file(obj.priv_data)
 #define PUUrl_to_local_file(obj) obj.funcs->to_local_file(obj.priv_data)
@@ -628,7 +628,7 @@ typedef struct PU {
 #define PUMimeData_has_urls(obj) obj.funcs->has_urls(obj.priv_data)
 #define PUMimeData_urls(obj) obj.funcs->urls(obj.priv_data)
 
-#define  PUTimer_set_timeout_event(obj, user_data, event) obj.funcs->set_timeout_event(obj.priv_data, user_data, event)
+#define PUTimer_set_timeout_event(obj, user_data, event) obj.funcs->set_timeout_event(obj.priv_data, user_data, event)
 #define PUTimer_start(obj, time) obj.funcs->start(obj.priv_data, time)
 
 #define PUIcon_add_file(obj, filename) obj.funcs->add_file(obj.priv_data, filename)
@@ -658,7 +658,7 @@ typedef struct PU {
 
 #define PUApplication_set_style(obj, style) obj.funcs->set_style(obj.priv_data, style)
 #define PUApplication_exec(obj) obj.funcs->exec(obj.priv_data)
-#define  PUApplication_set_about_to_quit_event(obj, user_data, event) obj.funcs->set_about_to_quit_event(obj.priv_data, user_data, event)
+#define PUApplication_set_about_to_quit_event(obj, user_data, event) obj.funcs->set_about_to_quit_event(obj.priv_data, user_data, event)
 #define PUApplication_get_files(obj) obj.funcs->get_files(obj.priv_data)
 
 #define PUPaintEvent_rect(obj) obj.funcs->rect(obj.priv_data)
