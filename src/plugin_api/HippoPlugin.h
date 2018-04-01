@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include "../external/wrui_qt/c_api.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -199,7 +200,7 @@ typedef struct HippoViewPlugin {
 	uint64_t api_version;
 	const char* name;
 	const char* version;
-	void* (*create)(HippoServiceAPI* services, struct PU* ui_funcs);
+	void* (*create)(HippoServiceAPI* services, struct PU* ui_funcs, struct PUWidget window);
 	int (*destroy)(void* user_data);
 	void (*event)(int event);
 } HippoViewPlugin;

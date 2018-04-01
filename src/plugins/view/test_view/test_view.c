@@ -11,22 +11,19 @@ static PU* g_ui = 0;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef struct TestViewPlugin {
-    struct PUWidget widget;
+    struct PUWidget window;
 } TestViewPlugin;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void* test_view_create(HippoServiceAPI* services, PU* ui_funcs) {
+void* test_view_create(HippoServiceAPI* services, PU* ui_funcs, struct PUWidget window) {
     TestViewPlugin* plugin = malloc(sizeof(TestViewPlugin)); 
     memset(plugin, 0, sizeof(TestViewPlugin));
     g_ui = ui_funcs;
 
-    plugin->widget = PU_create_widget(g_ui);
-    
-    PUWidget_show(plugin->widget);
+    plugin->window = window;
 
-    //plugin->widget = g_ui->create_widget(g_ui->priv_data);
-    //plugin->widget.funcs->show(plugin->widget.priv_data);
+    PUWidget_show(plugin->window);
 
     return plugin;
 }

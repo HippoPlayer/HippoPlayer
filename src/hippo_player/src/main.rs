@@ -134,24 +134,28 @@ impl <'a> HippoPlayer<'a> {
         }
     }
 
-	fn show_plugin(&mut self, action: &Action) {
-		println!("Showing plugin {}", action.get_int_data());
-	}
+    fn show_plugin(&mut self, action: &Action) {
+        let widget = self.ui.create_widget();
+        let plugin = &self.plugins.view_plugins[action.get_int_data() as usize];
+
+        let instance = plugin.create_instance(self.ui.get_c_api(), &self.plugin_service, widget.obj.unwrap());
+
+        println!("Showing plugin {}", action.get_int_data());
+    }
 
     fn create_plugins_menu(&mut self) -> Menu {
         let plugin_menu = self.ui.create_menu();
         plugin_menu.set_title("Views");
 
         for (i, plugin) in self.plugins.view_plugins.iter().enumerate() {
-        	let name = plugin.get_name(); 
+            let name = plugin.get_name();
 
-			let action = self.ui.create_action();
-			action.set_text(&name);
-			action.set_int_data(i as i32);
+            let action = self.ui.create_action();
+            action.set_text(&name);
 
-        	set_menu_triggered_event!(plugin_menu, self, HippoPlayer, HippoPlayer::show_plugin);
+            set_menu_triggered_event!(plugin_menu, self, HippoPlayer, HippoPlayer::show_plugin);
 
-			plugin_menu.add_action(&action);
+            plugin_menu.add_action(&action);
         }
 
         plugin_menu
@@ -180,7 +184,7 @@ impl <'a> HippoPlayer<'a> {
         file_menu.set_title("File");
         file_menu.add_action(&add_files);
 
-		let plugin_menu = self.create_plugins_menu();
+        let plugin_menu = self.create_plugins_menu();
 
         let menu_bar = main_window.menu_bar();
         menu_bar.add_menu(&file_menu);
@@ -210,11 +214,11 @@ impl <'a> HippoPlayer<'a> {
         player_window.resize(500, 800);
         player_window.show();
 
-		// temp create a instance for testing
+        // temp create a instance for testing
 
-		/*
+        /*
         for plugin in &self.plugins.view_plugins {
-        	let _user_data = ((plugin.plugin_funcs).create)(self.plugin_service.get_c_service_api(), self.ui.get_c_api()) as u64;
+            let _user_data = ((plugin.plugin_funcs).create)(self.plugin_service.get_c_service_api(), self.ui.get_c_api()) as u64;
         }
         */
 
