@@ -305,6 +305,8 @@ pub struct PUActionFuncs {
     pub set_text: extern "C" fn(self_c: *const PUBase, text: *const ::std::os::raw::c_char),
     pub set_triggered_event: extern "C" fn(object: *const PUBase, user_data: *const c_void,
                                         callback: extern "C" fn(self_c: *const c_void)),
+    pub set_int_data: extern "C" fn(self_c: *const PUBase, data: i32),
+    pub get_int_data: extern "C" fn(self_c: *const PUBase) -> i32,
 }
 
 #[repr(C)]
@@ -396,6 +398,8 @@ pub struct PUMenuFuncs {
     pub set_layout: extern "C" fn(self_c: *const PUBase, layout: *const PUBase),
     pub update: extern "C" fn(self_c: *const PUBase),
     pub add_action_text: extern "C" fn(self_c: *const PUBase, text: *const ::std::os::raw::c_char),
+    pub set_triggered_event: extern "C" fn(object: *const PUBase, user_data: *const c_void,
+                                        callback: extern "C" fn(self_c: *const c_void, action: *const PUBase)),
     pub add_action: extern "C" fn(self_c: *const PUBase, action: *const PUBase),
     pub set_title: extern "C" fn(self_c: *const PUBase, title: *const ::std::os::raw::c_char),
 }

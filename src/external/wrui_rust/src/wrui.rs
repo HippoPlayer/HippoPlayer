@@ -1500,6 +1500,29 @@ impl Action {
         
         }
     }
+
+    pub fn set_int_data (&self, data: i32) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).set_int_data)(obj.privd, data);
+        
+        }
+    }
+
+    pub fn get_int_data (&self) -> i32 {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            let ret_val = ((*obj.funcs).get_int_data)(obj.privd);
+          
+            ret_val
+          
+        
+        }
+    }
 }
 
 impl Url {
@@ -2149,99 +2172,7 @@ impl LayoutType for HBoxLayout {
 
 
 #[macro_export]
-macro_rules! set_about_to_quit_event {
-  ($sender:expr, $data:expr, $call_type:ident, $callback:path) => {
-    {
-      extern "C" fn temp_call(self_c: *const ::std::os::raw::c_void) {
-          unsafe {
-              let app = self_c as *mut $call_type;
-              $callback(&mut *app);
-          }
-      }
-      fn get_data_ptr(val: &$call_type) -> *const c_void {
-         let t: *const c_void = unsafe { ::std::mem::transmute(val) };
-         t
-      }
-
-      unsafe {
-          let obj = $sender.obj.unwrap();
-         ((*obj.funcs).set_about_to_quit_event)(obj.privd, get_data_ptr($data), temp_call);
-      }
-    }
-} }
-
-
-#[macro_export]
-macro_rules! set_current_row_changed_event {
-  ($sender:expr, $data:expr, $call_type:ident, $callback:path) => {
-    {
-      extern "C" fn temp_call(self_c: *const ::std::os::raw::c_void, row: i32) {
-          unsafe {
-              let app = self_c as *mut $call_type;
-              $callback(&mut *app, row);
-          }
-      }
-      fn get_data_ptr(val: &$call_type) -> *const c_void {
-         let t: *const c_void = unsafe { ::std::mem::transmute(val) };
-         t
-      }
-
-      unsafe {
-          let obj = $sender.obj.unwrap();
-         ((*obj.funcs).set_current_row_changed_event)(obj.privd, get_data_ptr($data), temp_call);
-      }
-    }
-} }
-
-
-#[macro_export]
-macro_rules! set_item_clicked_event {
-  ($sender:expr, $data:expr, $call_type:ident, $callback:path) => {
-    {
-      extern "C" fn temp_call(self_c: *const ::std::os::raw::c_void, item: *const PUBase) {
-          unsafe {
-              let app = self_c as *mut $call_type;
-              $callback(&mut *app, &ListWidgetItem { obj: Some(*(item as *const wrui::ffi_gen::PUListWidgetItem)) });
-          }
-      }
-      fn get_data_ptr(val: &$call_type) -> *const c_void {
-         let t: *const c_void = unsafe { ::std::mem::transmute(val) };
-         t
-      }
-
-      unsafe {
-          let obj = $sender.obj.unwrap();
-         ((*obj.funcs).set_item_clicked_event)(obj.privd, get_data_ptr($data), temp_call);
-      }
-    }
-} }
-
-
-#[macro_export]
-macro_rules! set_item_double_clicked_event {
-  ($sender:expr, $data:expr, $call_type:ident, $callback:path) => {
-    {
-      extern "C" fn temp_call(self_c: *const ::std::os::raw::c_void, item: *const PUBase) {
-          unsafe {
-              let app = self_c as *mut $call_type;
-              $callback(&mut *app, &ListWidgetItem { obj: Some(*(item as *const wrui::ffi_gen::PUListWidgetItem)) });
-          }
-      }
-      fn get_data_ptr(val: &$call_type) -> *const c_void {
-         let t: *const c_void = unsafe { ::std::mem::transmute(val) };
-         t
-      }
-
-      unsafe {
-          let obj = $sender.obj.unwrap();
-         ((*obj.funcs).set_item_double_clicked_event)(obj.privd, get_data_ptr($data), temp_call);
-      }
-    }
-} }
-
-
-#[macro_export]
-macro_rules! set_pressed_event {
+macro_rules! set_push_button_pressed_event {
   ($sender:expr, $data:expr, $call_type:ident, $callback:path) => {
     {
       extern "C" fn temp_call(self_c: *const ::std::os::raw::c_void) {
@@ -2264,7 +2195,7 @@ macro_rules! set_pressed_event {
 
 
 #[macro_export]
-macro_rules! set_released_event {
+macro_rules! set_push_button_released_event {
   ($sender:expr, $data:expr, $call_type:ident, $callback:path) => {
     {
       extern "C" fn temp_call(self_c: *const ::std::os::raw::c_void) {
@@ -2287,13 +2218,13 @@ macro_rules! set_released_event {
 
 
 #[macro_export]
-macro_rules! set_timeout_event {
+macro_rules! set_list_widget_current_row_changed_event {
   ($sender:expr, $data:expr, $call_type:ident, $callback:path) => {
     {
-      extern "C" fn temp_call(self_c: *const ::std::os::raw::c_void) {
+      extern "C" fn temp_call(self_c: *const ::std::os::raw::c_void, row: i32) {
           unsafe {
               let app = self_c as *mut $call_type;
-              $callback(&mut *app);
+              $callback(&mut *app, row);
           }
       }
       fn get_data_ptr(val: &$call_type) -> *const c_void {
@@ -2303,14 +2234,83 @@ macro_rules! set_timeout_event {
 
       unsafe {
           let obj = $sender.obj.unwrap();
-         ((*obj.funcs).set_timeout_event)(obj.privd, get_data_ptr($data), temp_call);
+         ((*obj.funcs).set_current_row_changed_event)(obj.privd, get_data_ptr($data), temp_call);
       }
     }
 } }
 
 
 #[macro_export]
-macro_rules! set_triggered_event {
+macro_rules! set_list_widget_item_clicked_event {
+  ($sender:expr, $data:expr, $call_type:ident, $callback:path) => {
+    {
+      extern "C" fn temp_call(self_c: *const ::std::os::raw::c_void, item: *const PUBase) {
+          unsafe {
+              let app = self_c as *mut $call_type;
+              $callback(&mut *app, &ListWidgetItem { obj: Some(*(item as *const wrui::ffi_gen::PUListWidgetItem)) });
+          }
+      }
+      fn get_data_ptr(val: &$call_type) -> *const c_void {
+         let t: *const c_void = unsafe { ::std::mem::transmute(val) };
+         t
+      }
+
+      unsafe {
+          let obj = $sender.obj.unwrap();
+         ((*obj.funcs).set_item_clicked_event)(obj.privd, get_data_ptr($data), temp_call);
+      }
+    }
+} }
+
+
+#[macro_export]
+macro_rules! set_list_widget_item_double_clicked_event {
+  ($sender:expr, $data:expr, $call_type:ident, $callback:path) => {
+    {
+      extern "C" fn temp_call(self_c: *const ::std::os::raw::c_void, item: *const PUBase) {
+          unsafe {
+              let app = self_c as *mut $call_type;
+              $callback(&mut *app, &ListWidgetItem { obj: Some(*(item as *const wrui::ffi_gen::PUListWidgetItem)) });
+          }
+      }
+      fn get_data_ptr(val: &$call_type) -> *const c_void {
+         let t: *const c_void = unsafe { ::std::mem::transmute(val) };
+         t
+      }
+
+      unsafe {
+          let obj = $sender.obj.unwrap();
+         ((*obj.funcs).set_item_double_clicked_event)(obj.privd, get_data_ptr($data), temp_call);
+      }
+    }
+} }
+
+
+#[macro_export]
+macro_rules! set_slider_value_changed_event {
+  ($sender:expr, $data:expr, $call_type:ident, $callback:path) => {
+    {
+      extern "C" fn temp_call(self_c: *const ::std::os::raw::c_void, value: i32) {
+          unsafe {
+              let app = self_c as *mut $call_type;
+              $callback(&mut *app, value);
+          }
+      }
+      fn get_data_ptr(val: &$call_type) -> *const c_void {
+         let t: *const c_void = unsafe { ::std::mem::transmute(val) };
+         t
+      }
+
+      unsafe {
+          let obj = $sender.obj.unwrap();
+         ((*obj.funcs).set_value_changed_event)(obj.privd, get_data_ptr($data), temp_call);
+      }
+    }
+} }
+
+
+#[macro_export]
+macro_rules! set_action_triggered_event {
   ($sender:expr, $data:expr, $call_type:ident, $callback:path) => {
     {
       extern "C" fn temp_call(self_c: *const ::std::os::raw::c_void) {
@@ -2333,13 +2333,13 @@ macro_rules! set_triggered_event {
 
 
 #[macro_export]
-macro_rules! set_value_changed_event {
+macro_rules! set_timer_timeout_event {
   ($sender:expr, $data:expr, $call_type:ident, $callback:path) => {
     {
-      extern "C" fn temp_call(self_c: *const ::std::os::raw::c_void, value: i32) {
+      extern "C" fn temp_call(self_c: *const ::std::os::raw::c_void) {
           unsafe {
               let app = self_c as *mut $call_type;
-              $callback(&mut *app, value);
+              $callback(&mut *app);
           }
       }
       fn get_data_ptr(val: &$call_type) -> *const c_void {
@@ -2349,7 +2349,53 @@ macro_rules! set_value_changed_event {
 
       unsafe {
           let obj = $sender.obj.unwrap();
-         ((*obj.funcs).set_value_changed_event)(obj.privd, get_data_ptr($data), temp_call);
+         ((*obj.funcs).set_timeout_event)(obj.privd, get_data_ptr($data), temp_call);
+      }
+    }
+} }
+
+
+#[macro_export]
+macro_rules! set_menu_triggered_event {
+  ($sender:expr, $data:expr, $call_type:ident, $callback:path) => {
+    {
+      extern "C" fn temp_call(self_c: *const ::std::os::raw::c_void, action: *const PUBase) {
+          unsafe {
+              let app = self_c as *mut $call_type;
+              $callback(&mut *app, &Action { obj: Some(*(action as *const wrui::ffi_gen::PUAction)) });
+          }
+      }
+      fn get_data_ptr(val: &$call_type) -> *const c_void {
+         let t: *const c_void = unsafe { ::std::mem::transmute(val) };
+         t
+      }
+
+      unsafe {
+          let obj = $sender.obj.unwrap();
+         ((*obj.funcs).set_triggered_event)(obj.privd, get_data_ptr($data), temp_call);
+      }
+    }
+} }
+
+
+#[macro_export]
+macro_rules! set_application_about_to_quit_event {
+  ($sender:expr, $data:expr, $call_type:ident, $callback:path) => {
+    {
+      extern "C" fn temp_call(self_c: *const ::std::os::raw::c_void) {
+          unsafe {
+              let app = self_c as *mut $call_type;
+              $callback(&mut *app);
+          }
+      }
+      fn get_data_ptr(val: &$call_type) -> *const c_void {
+         let t: *const c_void = unsafe { ::std::mem::transmute(val) };
+         t
+      }
+
+      unsafe {
+          let obj = $sender.obj.unwrap();
+         ((*obj.funcs).set_about_to_quit_event)(obj.privd, get_data_ptr($data), temp_call);
       }
     }
 } }

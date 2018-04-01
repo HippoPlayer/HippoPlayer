@@ -301,6 +301,8 @@ struct PUActionFuncs {
     bool (*is_enabled)(struct PUBase* self_c);
     void (*set_text)(struct PUBase* self_c, const char* text);
     void (*set_triggered_event)(void* object, void* user_data, void (*event)(void* self_c));
+    void (*set_int_data)(struct PUBase* self_c, int data);
+    int (*get_int_data)(struct PUBase* self_c);
 };
 
 struct PUAction {
@@ -373,6 +375,7 @@ struct PUMenuFuncs {
     void (*set_layout)(struct PUBase* self_c, struct PUBase* layout);
     void (*update)(struct PUBase* self_c);
     void (*add_action_text)(struct PUBase* self_c, const char* text);
+    void (*set_triggered_event)(void* object, void* user_data, void (*event)(void* self_c, struct PUBase* action));
     void (*add_action)(struct PUBase* self_c, struct PUBase* action);
     void (*set_title)(struct PUBase* self_c, const char* title);
 };
@@ -618,6 +621,8 @@ typedef struct PU {
 #define PUAction_is_enabled(obj) obj.funcs->is_enabled(obj.priv_data)
 #define PUAction_set_text(obj, text) obj.funcs->set_text(obj.priv_data, text)
 #define PUAction_set_triggered_event(obj, user_data, event) obj.funcs->set_triggered_event(obj.priv_data, user_data, event)
+#define PUAction_set_int_data(obj, data) obj.funcs->set_int_data(obj.priv_data, data)
+#define PUAction_get_int_data(obj) obj.funcs->get_int_data(obj.priv_data)
 
 #define PUUrl_is_local_file(obj) obj.funcs->is_local_file(obj.priv_data)
 #define PUUrl_to_local_file(obj) obj.funcs->to_local_file(obj.priv_data)
@@ -644,6 +649,7 @@ typedef struct PU {
 #define PUMenu_set_layout(obj, layout) obj.funcs->set_layout(obj.priv_data, layout)
 #define PUMenu_update(obj) obj.funcs->update(obj.priv_data)
 #define PUMenu_add_action_text(obj, text) obj.funcs->add_action_text(obj.priv_data, text)
+#define PUMenu_set_triggered_event(obj, user_data, event) obj.funcs->set_triggered_event(obj.priv_data, user_data, event)
 #define PUMenu_add_action(obj, action) obj.funcs->add_action(obj.priv_data, action)
 #define PUMenu_set_title(obj, title) obj.funcs->set_title(obj.priv_data, title)
 

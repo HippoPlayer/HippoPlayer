@@ -2,8 +2,10 @@
 
 #include "c_api.h"
 #include <QObject>
+#include <QAction>
 #include <QListWidgetItem>
 
+extern struct PUActionFuncs s_action_funcs;
 extern struct PUListWidgetItemFuncs s_list_widget_item_funcs;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -23,6 +25,27 @@ public:
     }
 private:
     Signal_self_i32_void m_func;
+    void* m_data;
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef void (*Signal_self_Action_void)(void* self_c, struct PUBase* action);
+
+class QSlotWrapperSignal_self_Action_void : public QObject {
+    Q_OBJECT
+public:
+    QSlotWrapperSignal_self_Action_void(void* data, Signal_self_Action_void func) {
+        m_func = func;
+        m_data = data;
+    }
+
+    Q_SLOT void method(QAction* action) {
+        auto temp_arg_1 = PUAction { &s_action_funcs, (struct PUBase*)action };
+        m_func(m_data, (struct PUBase*)&temp_arg_1);
+    }
+private:
+    Signal_self_Action_void m_func;
     void* m_data;
 };
 

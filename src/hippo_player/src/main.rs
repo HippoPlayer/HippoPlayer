@@ -134,15 +134,22 @@ impl <'a> HippoPlayer<'a> {
         }
     }
 
+	fn show_plugin(&mut self, action: &Action) {
+		println!("Showing plugin {}", action.get_int_data());
+	}
+
     fn create_plugins_menu(&mut self) -> Menu {
         let plugin_menu = self.ui.create_menu();
         plugin_menu.set_title("Views");
 
-        for plugin in &self.plugins.view_plugins {
+        for (i, plugin) in self.plugins.view_plugins.iter().enumerate() {
         	let name = plugin.get_name(); 
 
 			let action = self.ui.create_action();
 			action.set_text(&name);
+			action.set_int_data(i as i32);
+
+        	set_menu_triggered_event!(plugin_menu, self, HippoPlayer, HippoPlayer::show_plugin);
 
 			plugin_menu.add_action(&action);
         }
@@ -179,16 +186,16 @@ impl <'a> HippoPlayer<'a> {
         menu_bar.add_menu(&file_menu);
         menu_bar.add_menu(&plugin_menu);
 
-        set_pressed_event!(self.player_view.prev_button, self, HippoPlayer, HippoPlayer::prev_song);
-        set_pressed_event!(self.player_view.play_button, self, HippoPlayer, HippoPlayer::play_song);
-        set_pressed_event!(self.player_view.stop_button, self, HippoPlayer, HippoPlayer::stop_song);
-        set_pressed_event!(self.player_view.next_button, self, HippoPlayer, HippoPlayer::next_song);
+        set_push_button_pressed_event!(self.player_view.prev_button, self, HippoPlayer, HippoPlayer::prev_song);
+        set_push_button_pressed_event!(self.player_view.play_button, self, HippoPlayer, HippoPlayer::play_song);
+        set_push_button_pressed_event!(self.player_view.stop_button, self, HippoPlayer, HippoPlayer::stop_song);
+        set_push_button_pressed_event!(self.player_view.next_button, self, HippoPlayer, HippoPlayer::next_song);
 
-        set_timeout_event!(timer, self, HippoPlayer, HippoPlayer::per_sec_update);
-        set_triggered_event!(add_files, self, HippoPlayer, HippoPlayer::add_files);
+        set_timer_timeout_event!(timer, self, HippoPlayer, HippoPlayer::per_sec_update);
+        set_action_triggered_event!(add_files, self, HippoPlayer, HippoPlayer::add_files);
 
-        set_item_double_clicked_event!(self.playlist.widget, self, HippoPlayer, HippoPlayer::select_song);
-        set_about_to_quit_event!(self.app, self, HippoPlayer, HippoPlayer::before_quit);
+        set_list_widget_item_double_clicked_event!(self.playlist.widget, self, HippoPlayer, HippoPlayer::select_song);
+        set_application_about_to_quit_event!(self.app, self, HippoPlayer, HippoPlayer::before_quit);
 
         timer.start(1000);
 
