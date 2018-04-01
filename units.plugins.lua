@@ -79,6 +79,20 @@ SharedLibrary {
 -----------------------------------------------------------------------------------------------------------------------
 
 SharedLibrary {
+	Name = "TestViewPlugin",
+
+	Includes = {
+	    "src/plugin_api",
+	},
+
+	Sources = {
+		get_c_cpp_src("src/plugins/view/test_view"),
+	},
+}
+
+-----------------------------------------------------------------------------------------------------------------------
+
+SharedLibrary {
 	Name = "openmpt",
 	Defines = { "LIBOPENMPT_BUILD" },
 	Includes = {
@@ -325,6 +339,7 @@ Default "vgm"
 Default "DummyPlugin"
 Default "MDXPlugin"
 Default "SidPlugin"
+Default "TestViewPlugin"
 
 -- Default "FutureComposerPlugin"
 -- Default "TfmxPlugin"

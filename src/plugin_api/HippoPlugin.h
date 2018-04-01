@@ -195,8 +195,11 @@ typedef struct HippoPlaybackPlugin {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct HippoViewPlugin {
-	uint64_t version;
+typedef struct HippoViewPlugin {
+	uint64_t api_version;
+	const char* name;
+	const char* version;
+	const char* author;
 	void* (*create)(HippoServiceAPI* services, struct PU* ui_funcs);
 	int (*destroy)(void* user_data);
 	void (*event)(int event);

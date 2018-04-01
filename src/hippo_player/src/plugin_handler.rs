@@ -3,13 +3,14 @@ use walkdir::{WalkDir, DirEntry};
 use std::os::raw::{c_int, c_void, c_char};
 use std::sync::Arc;
 use std::ffi::CString;
+use wrui::ffi_gen::PU;
 
 use service::CHippoServiceAPI;
 
 #[derive(Clone, Debug)]
 #[repr(C)]
 pub struct CHippoPlaybackPlugin {
-    pub version: u64,
+    pub api_version: u64,
     pub probe_can_play: extern "C" fn(data: *const u8, data_size: u32, buffer: *const i8, total_size: u64) -> i32,
     pub supported_extensions: extern "C" fn() -> *mut c_char,
     pub create: extern "C" fn(service_api: *const CHippoServiceAPI) -> *mut c_void,
@@ -24,9 +25,13 @@ pub struct CHippoPlaybackPlugin {
 #[derive(Clone, Debug)]
 #[repr(C)]
 pub struct CHippoViewPlugin {
-    pub version: u64,
-    pub create: extern "C" fn(service_api: *const CHippoServiceAPI) -> *mut c_void,
+    pub api_version: u64,
+    pub name: *const u8, 
+    pub version: *const u8, 
+    pub author: *const u8, 
+    pub create: extern "C" fn(service_api: *const CHippoServiceAPI, ui: *const PU) -> *mut c_void,
     pub destroy: extern "C" fn(user_data: *mut c_void) -> c_int,
+    pub event: extern "C" fn(event: u32),
 }
 
 #[derive(Clone)]
