@@ -4,6 +4,8 @@ use std::os::raw::{c_int, c_void, c_char};
 use std::sync::Arc;
 use std::ffi::CString;
 use wrui::ffi_gen::PU;
+use std::ffi::{CStr};
+use std::borrow::Cow;
 
 use service::CHippoServiceAPI;
 
@@ -72,6 +74,13 @@ impl DecoderPlugin {
             _ => false,
         }
     }
+}
+
+impl ViewPlugin {
+	pub fn get_name<'a>(&'a self) -> Cow<'a, str> {
+        //let res = unsafe { self.plugin_funcs.name };
+        unsafe { CStr::from_ptr(self.plugin_funcs.name as *const i8).to_string_lossy() }
+	}
 }
 
 pub struct Plugins<'a> {
