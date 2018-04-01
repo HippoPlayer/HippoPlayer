@@ -184,6 +184,14 @@ impl <'a> HippoPlayer<'a> {
         player_window.resize(500, 800);
         player_window.show();
 
+		// temp create a instance for testing
+
+		/*
+        for plugin in &self.plugins.view_plugins {
+        	let _user_data = ((plugin.plugin_funcs).create)(self.plugin_service.get_c_service_api(), self.ui.get_c_api()) as u64;
+        }
+        */
+
         self.song_info_view.show();
 
         self.app.exec();

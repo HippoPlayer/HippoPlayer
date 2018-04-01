@@ -1,4 +1,4 @@
-use wrui::wrui::{Widget, Label, LineEdit, PlainTextEdit, VBoxLayout, FramelessWindow, ListWidgetItem, ListWidget };
+use wrui::wrui::{Widget, LineEdit, PlainTextEdit, VBoxLayout };
 use wrui::Ui;
 use song_db::SongDb;
 
@@ -12,7 +12,7 @@ pub struct SongInfoView {
     pub message: PlainTextEdit,
     pub samples: PlainTextEdit,
     pub instruments: PlainTextEdit,
-    wrui: Ui,
+    _wrui: Ui,
 }
 impl SongInfoView {
     fn create_label_text(wrui: Ui, label_name: &str, parent_layout: &VBoxLayout) -> LineEdit {
@@ -81,7 +81,7 @@ impl SongInfoView {
             message,
             samples,
             instruments,
-            wrui,
+            _wrui: wrui,
         }
     }
 
@@ -121,6 +121,7 @@ impl SongInfoView {
         let message = Self::get_value(resource, "message", song_db); 
 
         self.title.set_text(&title);
+        self.authoring_tool.set_text(&tool);
         self.song_type.set_text(&song_type);
         self.artist.set_text(&artist);
         self.date.set_text(&date);

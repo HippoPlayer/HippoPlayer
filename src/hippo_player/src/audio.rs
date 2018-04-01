@@ -132,24 +132,22 @@ impl HippoAudio {
 
         if let Some(pb) = playback {
             // TODO: Wrap this
-            unsafe {
-				//let title = service.get_song_db().get_key(filename, 0, "title").unwrap();
-				let title = service.get_song_db().get_key(filename, 0, "title").or_else(|| Some("Unknown".to_owned()));
+			//let title = service.get_song_db().get_key(filename, 0, "title").unwrap();
+			let title = service.get_song_db().get_key(filename, 0, "title").or_else(|| Some("Unknown".to_owned()));
 
-                //let c_title = ((plugin.plugin_funcs).track_info)(pb.plugin_user_data as *mut c_void);
-                //let length = ((plugin.plugin_funcs).length)(pb.plugin_user_data as *mut c_void);
-                let length = -10;
-                let info = MusicInfo {
-                    //title: CStr::from_ptr(c_title).to_string_lossy().into_owned(),
-                    title: title.unwrap(),
-                    duration: length,
-                };
+			//let c_title = ((plugin.plugin_funcs).track_info)(pb.plugin_user_data as *mut c_void);
+			//let length = ((plugin.plugin_funcs).length)(pb.plugin_user_data as *mut c_void);
+			let length = -10;
+			let info = MusicInfo {
+				//title: CStr::from_ptr(c_title).to_string_lossy().into_owned(),
+				title: title.unwrap(),
+				duration: length,
+			};
 
-                self.playbacks.push(pb.clone());
-                self.audio_sink.append(pb);
+			self.playbacks.push(pb.clone());
+			self.audio_sink.append(pb);
 
-                info
-            }
+			info
         } else {
             MusicInfo::default()
         }
