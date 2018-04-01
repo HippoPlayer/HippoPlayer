@@ -12,6 +12,8 @@
 #include "options.h"
 #include "uae.h"
 
+#include <string.h>
+
 #ifndef HAVE_STRDUP
 
 char *my_strdup (const char *s)

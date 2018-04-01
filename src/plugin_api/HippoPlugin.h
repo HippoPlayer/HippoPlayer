@@ -9,6 +9,8 @@ extern "C"
 {
 #endif
 
+struct PU;
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 enum HippoProbeResult {
@@ -41,7 +43,6 @@ typedef struct HippoIoAPI {
 
 	HippoIoErrorCode (*read_file_to_memory)(struct HippoApiPrivData* priv_data, const char* filename, void** dest, uint64_t* size);
 	HippoIoErrorCode (*free_file_to_memory)(struct HippoApiPrivData* priv_data, void* dest);
-
 
     // Io functions for more control
 	HippoIoErrorCode (*open)(struct HippoApiPrivData* priv_data, const char* target, HippoIoHandle* handle);
@@ -191,6 +192,17 @@ typedef struct HippoPlaybackPlugin {
 } HippoPlaybackPlugin;
 
 #define HIPPO_PLAYBACK_PLUGIN_API_VERSION 1
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+struct HippoViewPlugin {
+	uint64_t version;
+	void* (*create)(HippoServiceAPI* services, struct PU* ui_funcs);
+	int (*destroy)(void* user_data);
+	void (*event)(int event);
+} HippoViewPlugin;
+
+#define HIPPO_VIEW_PLUGIN_API_VERSION 1
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

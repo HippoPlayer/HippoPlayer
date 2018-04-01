@@ -1,4 +1,4 @@
-#include "../../plugin_api/HippoPlugin.h"
+#include <HippoPlugin.h>
 #include "src/tfmx.h"
 #include "src/tfmx_iface.h"
 #include <stdlib.h>

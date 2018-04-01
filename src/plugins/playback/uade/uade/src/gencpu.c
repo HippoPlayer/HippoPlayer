@@ -23,6 +23,8 @@
 #include "options.h"
 #include "readcpu.h"
 
+#include <string.h>
+
 #define BOOL_TYPE "int"
 
 static FILE *headerfile;

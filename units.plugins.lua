@@ -65,9 +65,14 @@ StaticLibrary {
 
 SharedLibrary {
 	Name = "HivelyPlugin",
+
+	Includes = {
+	    "src/plugin_api",
+	},
+
 	Sources = {
-		"src/plugins/hively/HivelyPlugin.c",
-		"src/plugins/hively/replayer/hvl_replay.c"
+		"src/plugins/playback/hively/HivelyPlugin.c",
+		"src/plugins/playback/hively/replayer/hvl_replay.c"
 	},
 }
 
@@ -77,19 +82,20 @@ SharedLibrary {
 	Name = "openmpt",
 	Defines = { "LIBOPENMPT_BUILD" },
 	Includes = {
-		"src/plugins/openmpt/libopenmpt",
-		"src/plugins/openmpt/libopenmpt/common"
+	    "src/plugin_api",
+		"src/plugins/playback/openmpt/libopenmpt",
+		"src/plugins/playback/openmpt/libopenmpt/common"
 	},
 
 	Sources = {
-		get_c_cpp_src("src/plugins/openmpt/libopenmpt/soundlib"),
-		get_c_cpp_src("src/plugins/openmpt/libopenmpt/common"),
-		get_c_cpp_src("src/plugins/openmpt/libopenmpt/sounddsp"),
-		"src/plugins/openmpt/libopenmpt/libopenmpt/libopenmpt_c.cpp",
-		"src/plugins/openmpt/libopenmpt/libopenmpt/libopenmpt_cxx.cpp",
-		"src/plugins/openmpt/libopenmpt/libopenmpt/libopenmpt_impl.cpp",
-		"src/plugins/openmpt/libopenmpt/libopenmpt/libopenmpt_ext_impl.cpp",
-		"src/plugins/openmpt/openmpt.cpp",
+		get_c_cpp_src("src/plugins/playback/openmpt/libopenmpt/soundlib"),
+		get_c_cpp_src("src/plugins/playback/openmpt/libopenmpt/common"),
+		get_c_cpp_src("src/plugins/playback/openmpt/libopenmpt/sounddsp"),
+		"src/plugins/playback/openmpt/libopenmpt/libopenmpt/libopenmpt_c.cpp",
+		"src/plugins/playback/openmpt/libopenmpt/libopenmpt/libopenmpt_cxx.cpp",
+		"src/plugins/playback/openmpt/libopenmpt/libopenmpt/libopenmpt_impl.cpp",
+		"src/plugins/playback/openmpt/libopenmpt/libopenmpt/libopenmpt_ext_impl.cpp",
+		"src/plugins/playback/openmpt/openmpt.cpp",
 	},
 
 	Libs = {
@@ -103,7 +109,7 @@ SharedLibrary {
 SharedLibrary {
 	Name = "vgm",
 
-	SourceDir = "src/plugins/vgm",
+	SourceDir = "src/plugins/playback/vgm",
 
 	Defines = {
 		"DISABLE_HWOPL_SUPPORT",
@@ -113,6 +119,7 @@ SharedLibrary {
 	},
 
 	Includes = {
+	    "src/plugin_api",
 		"src/external/zlib",
 	},
 
@@ -220,8 +227,12 @@ SharedLibrary {
 SharedLibrary {
 	Name = "TfmxPlugin",
 
+	Includes = {
+	    "src/plugin_api",
+	},
+
 	Sources = {
-		get_c_cpp_src("src/plugins/tfmx"),
+		get_c_cpp_src("src/plugins/playback/tfmx"),
 	},
 
 	Libs = {
@@ -234,8 +245,12 @@ SharedLibrary {
 SharedLibrary {
 	Name = "DummyPlugin",
 
+	Includes = {
+	    "src/plugin_api",
+	},
+
 	Sources = {
-		get_c_cpp_src("src/plugins/dummy"),
+		get_c_cpp_src("src/plugins/playback/dummy"),
 	},
 }
 
@@ -244,8 +259,12 @@ SharedLibrary {
 SharedLibrary {
 	Name = "MDXPlugin",
 
+	Includes = {
+	    "src/plugin_api",
+	},
+
 	Sources = {
-		get_c_cpp_src("src/plugins/mdx"),
+		get_c_cpp_src("src/plugins/playback/mdx"),
 	},
 }
 
@@ -261,12 +280,13 @@ SharedLibrary {
 	},
 
 	Includes = {
-		"src/plugins/sid/libsidplayfp/src",
-		"src/plugins/sid/libsidplayfp/src/builders/residfp-builder/residfp",
+	    "src/plugin_api",
+		"src/plugins/playback/sid/libsidplayfp/src",
+		"src/plugins/playback/sid/libsidplayfp/src/builders/residfp-builder/residfp",
 	},
 
 	Sources = {
-		get_c_cpp_src("src/plugins/sid"),
+		get_c_cpp_src("src/plugins/playback/sid"),
 	},
 
 	Libs = { "stdc++"; Config = "macosx-*-*" },

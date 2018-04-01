@@ -2435,6 +2435,8 @@ pub struct Ui {
 impl Ui {
     pub fn new(pu: *const PU) -> Ui { Ui { pu: pu } }
 
+    pub fn get_c_api(&self) -> *const PU { self.pu }
+
     pub fn create_widget(&self) -> Widget {
         Widget { obj: Some(unsafe { ((*self.pu).create_widget)((*self.pu).privd) }) }
     }

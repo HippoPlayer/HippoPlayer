@@ -1,4 +1,4 @@
-#include "../../plugin_api/HippoPlugin.h"
+#include <HippoPlugin.h>
 #include "src/mdxmini.h"
 #include <stdlib.h>
 #include <string.h>

@@ -1,4 +1,4 @@
-#include "../../plugin_api/HippoPlugin.h"
+#include <HippoPlugin.h>
 #include <uade/uade.h>
 #include <uade/eagleplayer.h>
 #include <stdlib.h>

@@ -1,5 +1,5 @@
 #include <libopenmpt/libopenmpt.hpp>
-#include "../../plugin_api/HippoPlugin.h"
+#include <HippoPlugin.h>
 
 #include <vector>
 #include <string>

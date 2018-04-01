@@ -21,6 +21,14 @@ pub struct CHippoPlaybackPlugin {
     pub private_data: u64,
 }
 
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub struct CHippoViewPlugin {
+    pub version: u64,
+    pub create: extern "C" fn(service_api: *const CHippoServiceAPI) -> *mut c_void,
+    pub destroy: extern "C" fn(user_data: *mut c_void) -> c_int,
+}
+
 #[derive(Clone)]
 pub struct DecoderPlugin {
     pub plugin: Arc<Lib>,
