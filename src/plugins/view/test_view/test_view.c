@@ -46,7 +46,6 @@ static HippoViewPlugin s_test_view = {
     HIPPO_VIEW_PLUGIN_API_VERSION,
     "TestView",
     "0.0.1",
-    "Hippo",
     test_view_create,
     test_view_destroy,
     test_view_event,

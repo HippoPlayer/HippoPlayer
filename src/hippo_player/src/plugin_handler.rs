@@ -28,7 +28,6 @@ pub struct CHippoViewPlugin {
     pub api_version: u64,
     pub name: *const u8, 
     pub version: *const u8, 
-    pub author: *const u8, 
     pub create: extern "C" fn(service_api: *const CHippoServiceAPI, ui: *const PU) -> *mut c_void,
     pub destroy: extern "C" fn(user_data: *mut c_void) -> c_int,
     pub event: extern "C" fn(event: u32),
@@ -39,6 +38,13 @@ pub struct DecoderPlugin {
     pub plugin: Arc<Lib>,
     pub plugin_path: String,
     pub plugin_funcs: CHippoPlaybackPlugin,
+}
+
+#[derive(Clone)]
+pub struct ViewPlugin {
+    pub plugin: Arc<Lib>,
+    pub plugin_path: String,
+    pub plugin_funcs: CHippoViewPlugin,
 }
 
 #[cfg(target_os="macos")]
@@ -70,6 +76,7 @@ impl DecoderPlugin {
 
 pub struct Plugins<'a> {
     pub decoder_plugins: Vec<DecoderPlugin>,
+    pub view_plugins: Vec<ViewPlugin>,
     pub plugin_handler: DynamicReload<'a>,
 }
 
@@ -77,19 +84,34 @@ impl <'a> Plugins<'a> {
     pub fn new() -> Plugins<'a> {
         Plugins {
             decoder_plugins: Vec::new(),
+            view_plugins: Vec::new(),
             plugin_handler: DynamicReload::new(Some(vec!["."]), None, Search::Default),
         }
     }
 
-    fn add_dec_plugin(&mut self, name: &str, plugin: &Arc<Lib>) {
+    fn add_plugin_lib(&mut self, name: &str, plugin: &Arc<Lib>) {
         let func: Result<Symbol<extern "C" fn() -> *const CHippoPlaybackPlugin>, ::std::io::Error> = unsafe {
             plugin.lib.get(b"hippo_playback_plugin\0")
         };
 
         if let Ok(fun) = func {
-            println!("Found plugin with callback data {:?}", fun());
+            println!("Found playback plugin with callback data {:?}", fun());
 
             self.decoder_plugins.push(DecoderPlugin {
+                plugin: plugin.clone(),
+                plugin_path: name.to_owned(),
+                plugin_funcs: unsafe { (*fun()).clone() },
+            });
+        }
+
+        let func: Result<Symbol<extern "C" fn() -> *const CHippoViewPlugin>, ::std::io::Error> = unsafe {
+            plugin.lib.get(b"hippo_view_plugin\0")
+        };
+
+        if let Ok(fun) = func {
+            println!("Found view plugin with callback data {:?}", fun());
+
+            self.view_plugins.push(ViewPlugin {
                 plugin: plugin.clone(),
                 plugin_path: name.to_owned(),
                 plugin_funcs: unsafe { (*fun()).clone() },
@@ -113,7 +135,7 @@ impl <'a> Plugins<'a> {
         for entry in WalkDir::new(path).max_depth(1) {
             if let Ok(t) = entry {
                 if Self::check_file_type(&t) {
-                    self.add_decoder_plugin(t.path().to_str().unwrap());
+                    self.add_plugin(t.path().to_str().unwrap());
                     //println!("{}", t.path().display());
                 }
             }
@@ -125,9 +147,9 @@ impl <'a> Plugins<'a> {
         self.internal_add_plugins_from_path(".");
     }
 
-    pub fn add_decoder_plugin(&mut self, name: &str) {
+    pub fn add_plugin(&mut self, name: &str) {
         match self.plugin_handler.add_library(name, PlatformName::No) {
-            Ok(lib) => self.add_dec_plugin(name, &lib),
+            Ok(lib) => self.add_plugin_lib(name, &lib),
             Err(e) => {
                 println!("Unable to load dynamic lib, err {:?}", e);
                 return;
