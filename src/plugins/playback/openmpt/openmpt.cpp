@@ -184,6 +184,8 @@ static int openmpt_length(void* user_data) {
 
 static HippoPlaybackPlugin g_openmptPlugin = {
 	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
+	"libopenmpt",
+	"0.0.1",
 	openmpt_probe_can_play,
 	openmpt_supported_extensions,
 	openmpt_create,
@@ -192,6 +194,9 @@ static HippoPlaybackPlugin g_openmptPlugin = {
 	openmpt_close,
 	openmpt_read_data,
 	openmpt_seek,
+	NULL,
+	NULL,
+	NULL,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

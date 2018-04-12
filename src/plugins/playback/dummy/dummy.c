@@ -1,4 +1,4 @@
-#include <HippoPlugin.h> 
+#include <HippoPlugin.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -83,6 +83,8 @@ static int dummy_plugin_seek(void* user_data, int ms) {
 
 static HippoPlaybackPlugin g_dummy_plugin = {
 	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
+	"dummy",
+	"0.0.1",
 	dummy_probe_can_play,
 	dummy_supported_extensions,
 	dummy_create,
@@ -91,6 +93,9 @@ static HippoPlaybackPlugin g_dummy_plugin = {
 	dummy_close,
 	dummy_read_data,
 	dummy_plugin_seek,
+	NULL,
+	NULL,
+	NULL,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

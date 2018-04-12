@@ -176,7 +176,9 @@ static int vgm_length(void* userData) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static HippoPlaybackPlugin g_vgm_plugin = {
-	1,
+	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
+	"VGM",
+	"0.0.1",
 	vgm_probe_can_play,
 	vgm_supported_extensions,
 	vgm_create,
@@ -185,6 +187,9 @@ static HippoPlaybackPlugin g_vgm_plugin = {
 	vgm_close,
 	vgm_read_data,
 	vgm_seek,
+	NULL,
+	NULL,
+	NULL,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -182,6 +182,8 @@ static int mdx_plugin_length(void* user_data) {
 
 static HippoPlaybackPlugin g_mdx_plugin = {
 	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
+	"MDX",
+	"0.0.1",
 	mdx_plugin_probe_can_play,
 	mdx_plugin_supported_extensions,
 	mdx_plugin_create,
@@ -190,6 +192,9 @@ static HippoPlaybackPlugin g_mdx_plugin = {
 	mdx_plugin_close,
 	mdx_plugin_read_data,
 	mdx_plugin_plugin_seek,
+	NULL,
+	NULL,
+	NULL,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

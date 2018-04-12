@@ -218,6 +218,8 @@ static int uade_length(void* user_data) {
 
 static HippoPlaybackPlugin g_uade_plugin = {
 	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
+	"UADE",
+	"0.0.1",
 	uade_probe_can_play,
 	uade_supported_extensions,
 	uade_create,
@@ -226,6 +228,9 @@ static HippoPlaybackPlugin g_uade_plugin = {
 	uade_close,
 	uade_read_data,
 	uade_plugin_seek,
+	NULL,
+	NULL,
+	NULL,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

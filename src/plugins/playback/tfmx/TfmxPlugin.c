@@ -157,6 +157,8 @@ static int tfmx_length(void* user_data) {
 
 static HippoPlaybackPlugin g_tfmx_plugin = {
 	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
+	"TFMX",
+	"0.0.1",
 	tfmx_probe_can_play,
 	tfmx_supported_extensions,
 	tfmx_create,
@@ -165,6 +167,9 @@ static HippoPlaybackPlugin g_tfmx_plugin = {
 	tfmx_close,
 	tfmx_read_data,
 	tfmx_seek,
+	NULL,
+	NULL,
+	NULL,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

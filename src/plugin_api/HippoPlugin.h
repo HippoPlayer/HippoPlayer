@@ -146,7 +146,7 @@ typedef struct HippoServiceAPI {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-enum HippoEventType {
+typedef enum HippoEventType {
 	//
 	// Get an event callback when a song has changed. The callback will include the new resource
 	//
@@ -155,7 +155,7 @@ enum HippoEventType {
 	// Get an event for playlist changes (resource added/removed/etc)
 	//
 	HippoEventType_PlaylistChanges,
-}
+} HippoEventType;
 
 typedef uint64_t HippoMessageHandle;
 
@@ -163,8 +163,8 @@ typedef uint64_t HippoMessageHandle;
 // Plugins can use the MessageAPI to subscribe to events and post data that is being requested
 
 typedef struct HippoMessageAPI {
-	void (*subscribe)(struct HippoMessageAPI* priv_data, void* instance_data, HippoEventType type); 
-	void (*unsubscribe)(struct HippoMessageAPI* priv_data, void* instance_data, HippoEventType type); 
+	void (*subscribe)(struct HippoMessageAPI* priv_data, void* instance_data, HippoEventType type);
+	void (*unsubscribe)(struct HippoMessageAPI* priv_data, void* instance_data, HippoEventType type);
 
 	HippoMessageHandle (*begin_message)();
 
@@ -174,7 +174,7 @@ typedef struct HippoMessageAPI {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-// API Version of the plugin, always set this to HIPPO_PLAYBACK_PLUGIN_API_VERSION 
+// API Version of the plugin, always set this to HIPPO_PLAYBACK_PLUGIN_API_VERSION
 uint64_t api_version;
 
 // Name of the plugin. This name should be unique or it may fail to load if there is a collision.
@@ -241,6 +241,8 @@ const char* (*supported_extensions)();
 // Not to be used by plugin, owned by app
 // priv;
 
+struct HippoSaveAPI;
+struct HippoLoadAPI;
 
 typedef struct HippoPlaybackPlugin {
 	uint64_t api_version;
@@ -255,8 +257,8 @@ typedef struct HippoPlaybackPlugin {
 	int (*read_data)(void* user_data, void* dest, uint32_t max_sample_count);
 	int (*seek)(void* user_data, int ms);
 	int (*configure)(void* user_data, struct PU* ui_funcs);
-	int (*save)(void* user_data, HippoSaveAPI* save_api);
-	int (*load)(void* user_data, HippoLoadAPI* load_api);
+	int (*save)(void* user_data, struct HippoSaveAPI* save_api);
+	int (*load)(void* user_data, struct HippoLoadAPI* load_api);
 	void* priv;
 } HippoPlaybackPlugin;
 
@@ -271,10 +273,8 @@ typedef struct HippoViewPlugin {
 	void* (*create)(HippoServiceAPI* services, struct PU* ui_funcs, struct PUWidget window);
 	int (*destroy)(void* user_data);
 	void (*event)(int event);
-	// Serialize the state of the plugin and its settings (can be NULL)
-	int (*save)(void* user_data, HippoSaveAPI* save_api);
-	// Deserialzie the state of the plugin and it's setting (can be NULL)
-	int (*load)(void* user_data, HippoLoadAPI* load_api);
+	int (*save)(void* user_data, struct HippoSaveAPI* save_api);
+	int (*load)(void* user_data, struct HippoLoadAPI* load_api);
 
 } HippoViewPlugin;
 

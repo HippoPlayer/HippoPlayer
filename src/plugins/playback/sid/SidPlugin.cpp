@@ -1,4 +1,4 @@
-#include <HippoPlugin.h> 
+#include <HippoPlugin.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -189,6 +189,8 @@ static int sid_seek(void* user_data, int ms) {
 
 static HippoPlaybackPlugin g_sid_plugin = {
 	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
+	"SID",
+	"0.0.1",
 	sid_probe_can_play,
 	sid_supported_extensions,
 	sid_create,
@@ -197,6 +199,9 @@ static HippoPlaybackPlugin g_sid_plugin = {
 	sid_close,
 	sid_read_data,
 	sid_seek,
+	NULL,
+	NULL,
+	NULL,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
