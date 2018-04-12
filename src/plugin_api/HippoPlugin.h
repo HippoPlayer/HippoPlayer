@@ -146,50 +146,118 @@ typedef struct HippoServiceAPI {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+enum HippoEventType {
+	//
+	// Get an event callback when a song has changed. The callback will include the new resource
+	//
+	HippoEventType_SongChanged,
+	//
+	// Get an event for playlist changes (resource added/removed/etc)
+	//
+	HippoEventType_PlaylistChanges,
+}
+
+typedef uint64_t HippoMessageHandle;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Plugins can use the MessageAPI to subscribe to events and post data that is being requested
+
+typedef struct HippoMessageAPI {
+	void (*subscribe)(struct HippoMessageAPI* priv_data, void* instance_data, HippoEventType type); 
+	void (*unsubscribe)(struct HippoMessageAPI* priv_data, void* instance_data, HippoEventType type); 
+
+	HippoMessageHandle (*begin_message)();
+
+
+	struct HippoEventAPI* priv_data;
+} HippoMessageAPI;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// API Version of the plugin, always set this to HIPPO_PLAYBACK_PLUGIN_API_VERSION 
+uint64_t api_version;
+
+// Name of the plugin. This name should be unique or it may fail to load if there is a collision.
+const char* name;
+
+// Scematic version of the plugin. If the version doesn't follow the rules of SemVersion it may fail to load.
+const char* version;
+
+// Ask the plugin if it can play some data. The plugin has to determine from the header if it supports the
+// file or not. The input data is at least 2048 bytes but can be less if the the total file is smaller.
+//
+// Notice that no user data is provided with this as the plugin instance hasn't actually been crated
+// The plugin must support to parse this data without custom data being setup.
+enum HippoProbeResult (*probe_can_play)(const uint8_t* data, uint32_t data_size, const char* filename, uint64_t total_size);
+
+// Returns a comma separated list of supported extensions
+const char* (*supported_extensions)();
+
+// Create an instace of the plugin. The user is expected to return an instance data poniter
+// that will get passed to the other callback functions.
+// Also a services pointer is passed down to create function that has various
+// services that the plugin can use (such as FileIO, metadata registration and more)
+// see the HippoServicesAPI documentation for mor info
+//
+// create
+
+// Destroy the instance of the plugin. It's expected that the user will free
+// the user_data pointer at this point as it won't be used anymore.
+//
+// destroy
+//
+// Opens a buffer to be ready for playback. Buffer may be a file/archived/file or a file or a network resource.
+// Use the HippoFileAPI that can be optained from services to load the data
+//
+// open
+//
+// Closes the file buffer that was opend in open. Notice that the plugin isn't detroyed at this but but is
+// here for closing an open file/stream/etc
+//
+// close
+//
+// Called when Hippo is requesting sample output from the the plugin.
+// The plugin is allowed to return as many samples as it want's as long as it does't
+// go above max sample count
+//
+// read_data
+//
+// Called when Hippo is requesting a new location in the data
+//
+// seek
+//
+// Used to create configuration for this plugin. Can be NULL if no configuration.
+//
+// configure
+//
+// Serialize the state of the plugin and its settings (can be NULL)
+//
+// save
+//
+// Deserialzie the state of the plugin and it's setting (can be NULL)
+//
+// load
+//
+// Not to be used by plugin, owned by app
+// priv;
+
+
 typedef struct HippoPlaybackPlugin {
-	uint64_t version;
-	//
-	// Ask the plugin if it can play some data. The plugin has to determine from the header if it supports the
-	// file or not. The input data is at least 2048 bytes but can be less if the the total file is smaller.
-	//
-	// Notice that no user data is provided with this as the plugin instance hasn't actually been crated
-	// The plugin must support to parse this data without custom data being setup.
-	//
+	uint64_t api_version;
+	const char* name;
+	const char* version;
 	enum HippoProbeResult (*probe_can_play)(const uint8_t* data, uint32_t data_size, const char* filename, uint64_t total_size);
-
-	// Returns a comma separated list of supported extensions
 	const char* (*supported_extensions)();
-
-	// Create an instace of the plugin. The user is expected to return an instance data poniter
-	// that will get passed to the other callback functions.
-	// Also a services pointer is passed down to create function that has various
-	// services that the plugin can use (such as FileIO, metadata registration and more)
-	// see the HippoServicesAPI documentation for mor info
 	void* (*create)(HippoServiceAPI* services);
-
-	// Destroy the instance of the plugin. It's expected that the user will free
-	// the user_data pointer at this point as it won't be used anymore.
 	int (*destroy)(void* user_data);
-
-	// Opens a buffer to be ready for playback. Buffer may be a file/archived/file or a file or a network resource.
-	// Use the HippoFileAPI that can be optained from services to load the data
 	int (*open)(void* user_data, const char* buffer);
-
-	// Closes the file buffer that was opend in open. Notice that the plugin isn't detroyed at this but but is
-	// here for closing an open file/stream/etc
 	int (*close)(void* user_data);
-
-	// Called when Hippo is requesting sample output from the the plugin.
-	// The plugin is allowed to return as many samples as it want's as long as it does't
-	// go above max sample count
 	int (*read_data)(void* user_data, void* dest, uint32_t max_sample_count);
-
-	// Called when Hippo is requesting a new location in the data
 	int (*seek)(void* user_data, int ms);
-	// Not to be used by plugin, owned by app
-
+	int (*configure)(void* user_data, struct PU* ui_funcs);
+	int (*save)(void* user_data, HippoSaveAPI* save_api);
+	int (*load)(void* user_data, HippoLoadAPI* load_api);
 	void* priv;
-
 } HippoPlaybackPlugin;
 
 #define HIPPO_PLAYBACK_PLUGIN_API_VERSION 1
@@ -203,6 +271,11 @@ typedef struct HippoViewPlugin {
 	void* (*create)(HippoServiceAPI* services, struct PU* ui_funcs, struct PUWidget window);
 	int (*destroy)(void* user_data);
 	void (*event)(int event);
+	// Serialize the state of the plugin and its settings (can be NULL)
+	int (*save)(void* user_data, HippoSaveAPI* save_api);
+	// Deserialzie the state of the plugin and it's setting (can be NULL)
+	int (*load)(void* user_data, HippoLoadAPI* load_api);
+
 } HippoViewPlugin;
 
 #define HIPPO_VIEW_PLUGIN_API_VERSION 1
