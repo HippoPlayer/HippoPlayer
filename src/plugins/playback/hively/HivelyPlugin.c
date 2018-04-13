@@ -146,6 +146,8 @@ static int hively_length(void* userData) {
 
 static HippoPlaybackPlugin g_hively_plugin = {
 	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
+	"Hively",
+	"0.0.1",
 	hively_probe_can_play,
 	hively_supported_extensions,
 	hively_create,
@@ -154,6 +156,9 @@ static HippoPlaybackPlugin g_hively_plugin = {
 	hively_close,
 	hively_read_data,
 	hively_seek,
+	NULL,
+	NULL,
+	NULL,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

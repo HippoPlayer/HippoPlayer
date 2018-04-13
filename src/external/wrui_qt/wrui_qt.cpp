@@ -66,6 +66,350 @@ extern struct PUHBoxLayoutFuncs s_h_box_layout_funcs;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
+struct KeyVal { int val, key; };
+static std::map<int, int> s_meta_keys_lookup;
+static std::map<int, int> s_keys_lookup;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void create_enum_mappings() {
+    static KeyVal meta_keys_vals[] = {
+        { (int)Qt::CTRL, 0 },
+    };
+
+    for (int i = 0; i < 1; ++i) {
+        s_meta_keys_lookup[meta_keys_vals[i].key] = meta_keys_vals[i].val;
+    };
+    static KeyVal keys_vals[] = {
+        { (int)Qt::Key_Escape, 0 },
+        { (int)Qt::Key_Tab, 1 },
+        { (int)Qt::Key_Backtab, 2 },
+        { (int)Qt::Key_Backspace, 3 },
+        { (int)Qt::Key_Return, 4 },
+        { (int)Qt::Key_Enter, 5 },
+        { (int)Qt::Key_Insert, 6 },
+        { (int)Qt::Key_Delete, 7 },
+        { (int)Qt::Key_Pause, 8 },
+        { (int)Qt::Key_Print, 9 },
+        { (int)Qt::Key_SysReq, 10 },
+        { (int)Qt::Key_Clear, 11 },
+        { (int)Qt::Key_Home, 12 },
+        { (int)Qt::Key_End, 13 },
+        { (int)Qt::Key_Left, 14 },
+        { (int)Qt::Key_Up, 15 },
+        { (int)Qt::Key_Right, 16 },
+        { (int)Qt::Key_Down, 17 },
+        { (int)Qt::Key_PageUp, 18 },
+        { (int)Qt::Key_PageDown, 19 },
+        { (int)Qt::Key_Shift, 20 },
+        { (int)Qt::Key_Control, 21 },
+        { (int)Qt::Key_Meta, 22 },
+        { (int)Qt::Key_Alt, 23 },
+        { (int)Qt::Key_CapsLock, 24 },
+        { (int)Qt::Key_NumLock, 25 },
+        { (int)Qt::Key_ScrollLock, 26 },
+        { (int)Qt::Key_F1, 27 },
+        { (int)Qt::Key_F2, 28 },
+        { (int)Qt::Key_F3, 29 },
+        { (int)Qt::Key_F4, 30 },
+        { (int)Qt::Key_F5, 31 },
+        { (int)Qt::Key_F6, 32 },
+        { (int)Qt::Key_F7, 33 },
+        { (int)Qt::Key_F8, 34 },
+        { (int)Qt::Key_F9, 35 },
+        { (int)Qt::Key_F10, 36 },
+        { (int)Qt::Key_F11, 37 },
+        { (int)Qt::Key_F12, 38 },
+        { (int)Qt::Key_F13, 39 },
+        { (int)Qt::Key_F14, 40 },
+        { (int)Qt::Key_F15, 41 },
+        { (int)Qt::Key_F16, 42 },
+        { (int)Qt::Key_F17, 43 },
+        { (int)Qt::Key_F18, 44 },
+        { (int)Qt::Key_F19, 45 },
+        { (int)Qt::Key_F20, 46 },
+        { (int)Qt::Key_F21, 47 },
+        { (int)Qt::Key_F22, 48 },
+        { (int)Qt::Key_F23, 49 },
+        { (int)Qt::Key_F24, 50 },
+        { (int)Qt::Key_F25, 51 },
+        { (int)Qt::Key_F26, 52 },
+        { (int)Qt::Key_F27, 53 },
+        { (int)Qt::Key_F28, 54 },
+        { (int)Qt::Key_F29, 55 },
+        { (int)Qt::Key_F30, 56 },
+        { (int)Qt::Key_F31, 57 },
+        { (int)Qt::Key_F32, 58 },
+        { (int)Qt::Key_F33, 59 },
+        { (int)Qt::Key_F34, 60 },
+        { (int)Qt::Key_F35, 61 },
+        { (int)Qt::Key_Super_L, 62 },
+        { (int)Qt::Key_Super_R, 63 },
+        { (int)Qt::Key_Menu, 64 },
+        { (int)Qt::Key_Hyper_L, 65 },
+        { (int)Qt::Key_Hyper_R, 66 },
+        { (int)Qt::Key_Help, 67 },
+        { (int)Qt::Key_Direction_L, 68 },
+        { (int)Qt::Key_Direction_R, 69 },
+        { (int)Qt::Key_Space, 70 },
+        { (int)Qt::Key_Any, 71 },
+        { (int)Qt::Key_Exclam, 72 },
+        { (int)Qt::Key_QuoteDbl, 73 },
+        { (int)Qt::Key_NumberSign, 74 },
+        { (int)Qt::Key_Dollar, 75 },
+        { (int)Qt::Key_Percent, 76 },
+        { (int)Qt::Key_Ampersand, 77 },
+        { (int)Qt::Key_Apostrophe, 78 },
+        { (int)Qt::Key_ParenLeft, 79 },
+        { (int)Qt::Key_ParenRight, 80 },
+        { (int)Qt::Key_Asterisk, 81 },
+        { (int)Qt::Key_Plus, 82 },
+        { (int)Qt::Key_Comma, 83 },
+        { (int)Qt::Key_Minus, 84 },
+        { (int)Qt::Key_Period, 85 },
+        { (int)Qt::Key_Slash, 86 },
+        { (int)Qt::Key_0, 87 },
+        { (int)Qt::Key_1, 88 },
+        { (int)Qt::Key_2, 89 },
+        { (int)Qt::Key_3, 90 },
+        { (int)Qt::Key_4, 91 },
+        { (int)Qt::Key_5, 92 },
+        { (int)Qt::Key_6, 93 },
+        { (int)Qt::Key_7, 94 },
+        { (int)Qt::Key_8, 95 },
+        { (int)Qt::Key_9, 96 },
+        { (int)Qt::Key_Colon, 97 },
+        { (int)Qt::Key_Semicolon, 98 },
+        { (int)Qt::Key_Less, 99 },
+        { (int)Qt::Key_Equal, 100 },
+        { (int)Qt::Key_Greater, 101 },
+        { (int)Qt::Key_Question, 102 },
+        { (int)Qt::Key_At, 103 },
+        { (int)Qt::Key_A, 104 },
+        { (int)Qt::Key_B, 105 },
+        { (int)Qt::Key_C, 106 },
+        { (int)Qt::Key_D, 107 },
+        { (int)Qt::Key_E, 108 },
+        { (int)Qt::Key_F, 109 },
+        { (int)Qt::Key_G, 110 },
+        { (int)Qt::Key_H, 111 },
+        { (int)Qt::Key_I, 112 },
+        { (int)Qt::Key_J, 113 },
+        { (int)Qt::Key_K, 114 },
+        { (int)Qt::Key_L, 115 },
+        { (int)Qt::Key_M, 116 },
+        { (int)Qt::Key_N, 117 },
+        { (int)Qt::Key_O, 118 },
+        { (int)Qt::Key_P, 119 },
+        { (int)Qt::Key_Q, 120 },
+        { (int)Qt::Key_R, 121 },
+        { (int)Qt::Key_S, 122 },
+        { (int)Qt::Key_T, 123 },
+        { (int)Qt::Key_U, 124 },
+        { (int)Qt::Key_V, 125 },
+        { (int)Qt::Key_W, 126 },
+        { (int)Qt::Key_X, 127 },
+        { (int)Qt::Key_Y, 128 },
+        { (int)Qt::Key_Z, 129 },
+        { (int)Qt::Key_BracketLeft, 130 },
+        { (int)Qt::Key_Backslash, 131 },
+        { (int)Qt::Key_BracketRight, 132 },
+        { (int)Qt::Key_AsciiCircum, 133 },
+        { (int)Qt::Key_Underscore, 134 },
+        { (int)Qt::Key_QuoteLeft, 135 },
+        { (int)Qt::Key_BraceLeft, 136 },
+        { (int)Qt::Key_Bar, 137 },
+        { (int)Qt::Key_BraceRight, 138 },
+        { (int)Qt::Key_AsciiTilde, 139 },
+        { (int)Qt::Key_Back, 140 },
+        { (int)Qt::Key_Forward, 141 },
+        { (int)Qt::Key_Stop, 142 },
+        { (int)Qt::Key_Refresh, 143 },
+        { (int)Qt::Key_VolumeDown, 144 },
+        { (int)Qt::Key_VolumeMute, 145 },
+        { (int)Qt::Key_VolumeUp, 146 },
+        { (int)Qt::Key_BassBoost, 147 },
+        { (int)Qt::Key_BassUp, 148 },
+        { (int)Qt::Key_BassDown, 149 },
+        { (int)Qt::Key_TrebleUp, 150 },
+        { (int)Qt::Key_TrebleDown, 151 },
+        { (int)Qt::Key_MediaPlay, 152 },
+        { (int)Qt::Key_MediaStop, 153 },
+        { (int)Qt::Key_MediaPrevious, 154 },
+        { (int)Qt::Key_MediaNext, 155 },
+        { (int)Qt::Key_MediaRecord, 156 },
+        { (int)Qt::Key_MediaPause, 157 },
+        { (int)Qt::Key_MediaTogglePlayPause, 158 },
+        { (int)Qt::Key_HomePage, 159 },
+        { (int)Qt::Key_Favorites, 160 },
+        { (int)Qt::Key_Search, 161 },
+        { (int)Qt::Key_Standby, 162 },
+        { (int)Qt::Key_OpenUrl, 163 },
+        { (int)Qt::Key_LaunchMail, 164 },
+        { (int)Qt::Key_LaunchMedia, 165 },
+        { (int)Qt::Key_Launch0, 166 },
+        { (int)Qt::Key_Launch1, 167 },
+        { (int)Qt::Key_Launch2, 168 },
+        { (int)Qt::Key_Launch3, 169 },
+        { (int)Qt::Key_Launch4, 170 },
+        { (int)Qt::Key_Launch5, 171 },
+        { (int)Qt::Key_Launch6, 172 },
+        { (int)Qt::Key_Launch7, 173 },
+        { (int)Qt::Key_Launch8, 174 },
+        { (int)Qt::Key_Launch9, 175 },
+        { (int)Qt::Key_LaunchA, 176 },
+        { (int)Qt::Key_LaunchB, 177 },
+        { (int)Qt::Key_LaunchC, 178 },
+        { (int)Qt::Key_LaunchD, 179 },
+        { (int)Qt::Key_LaunchE, 180 },
+        { (int)Qt::Key_LaunchF, 181 },
+        { (int)Qt::Key_MonBrightnessUp, 182 },
+        { (int)Qt::Key_MonBrightnessDown, 183 },
+        { (int)Qt::Key_KeyboardLightOnOff, 184 },
+        { (int)Qt::Key_KeyboardBrightnessUp, 185 },
+        { (int)Qt::Key_KeyboardBrightnessDown, 186 },
+        { (int)Qt::Key_PowerOff, 187 },
+        { (int)Qt::Key_WakeUp, 188 },
+        { (int)Qt::Key_Eject, 189 },
+        { (int)Qt::Key_ScreenSaver, 190 },
+        { (int)Qt::Key_WWW, 191 },
+        { (int)Qt::Key_Memo, 192 },
+        { (int)Qt::Key_LightBulb, 193 },
+        { (int)Qt::Key_Shop, 194 },
+        { (int)Qt::Key_History, 195 },
+        { (int)Qt::Key_AddFavorite, 196 },
+        { (int)Qt::Key_HotLinks, 197 },
+        { (int)Qt::Key_BrightnessAdjust, 198 },
+        { (int)Qt::Key_Finance, 199 },
+        { (int)Qt::Key_Community, 200 },
+        { (int)Qt::Key_AudioRewind, 201 },
+        { (int)Qt::Key_BackForward, 202 },
+        { (int)Qt::Key_ApplicationLeft, 203 },
+        { (int)Qt::Key_ApplicationRight, 204 },
+        { (int)Qt::Key_Book, 205 },
+        { (int)Qt::Key_CD, 206 },
+        { (int)Qt::Key_Calculator, 207 },
+        { (int)Qt::Key_ToDoList, 208 },
+        { (int)Qt::Key_ClearGrab, 209 },
+        { (int)Qt::Key_Close, 210 },
+        { (int)Qt::Key_Copy, 211 },
+        { (int)Qt::Key_Cut, 212 },
+        { (int)Qt::Key_Display, 213 },
+        { (int)Qt::Key_DOS, 214 },
+        { (int)Qt::Key_Documents, 215 },
+        { (int)Qt::Key_Excel, 216 },
+        { (int)Qt::Key_Explorer, 217 },
+        { (int)Qt::Key_Game, 218 },
+        { (int)Qt::Key_Go, 219 },
+        { (int)Qt::Key_iTouch, 220 },
+        { (int)Qt::Key_LogOff, 221 },
+        { (int)Qt::Key_Market, 222 },
+        { (int)Qt::Key_Meeting, 223 },
+        { (int)Qt::Key_MenuKB, 224 },
+        { (int)Qt::Key_MenuPB, 225 },
+        { (int)Qt::Key_MySites, 226 },
+        { (int)Qt::Key_News, 227 },
+        { (int)Qt::Key_OfficeHome, 228 },
+        { (int)Qt::Key_Option, 229 },
+        { (int)Qt::Key_Paste, 230 },
+        { (int)Qt::Key_Phone, 231 },
+        { (int)Qt::Key_Calendar, 232 },
+        { (int)Qt::Key_Reply, 233 },
+        { (int)Qt::Key_Reload, 234 },
+        { (int)Qt::Key_RotateWindows, 235 },
+        { (int)Qt::Key_RotationPB, 236 },
+        { (int)Qt::Key_RotationKB, 237 },
+        { (int)Qt::Key_Save, 238 },
+        { (int)Qt::Key_Send, 239 },
+        { (int)Qt::Key_Spell, 240 },
+        { (int)Qt::Key_SplitScreen, 241 },
+        { (int)Qt::Key_Support, 242 },
+        { (int)Qt::Key_TaskPane, 243 },
+        { (int)Qt::Key_Terminal, 244 },
+        { (int)Qt::Key_Tools, 245 },
+        { (int)Qt::Key_Travel, 246 },
+        { (int)Qt::Key_Video, 247 },
+        { (int)Qt::Key_Word, 248 },
+        { (int)Qt::Key_Xfer, 249 },
+        { (int)Qt::Key_ZoomIn, 250 },
+        { (int)Qt::Key_ZoomOut, 251 },
+        { (int)Qt::Key_Away, 252 },
+        { (int)Qt::Key_Messenger, 253 },
+        { (int)Qt::Key_WebCam, 254 },
+        { (int)Qt::Key_MailForward, 255 },
+        { (int)Qt::Key_Pictures, 256 },
+        { (int)Qt::Key_Music, 257 },
+        { (int)Qt::Key_Battery, 258 },
+        { (int)Qt::Key_Bluetooth, 259 },
+        { (int)Qt::Key_WLAN, 260 },
+        { (int)Qt::Key_UWB, 261 },
+        { (int)Qt::Key_AudioForward, 262 },
+        { (int)Qt::Key_AudioRepeat, 263 },
+        { (int)Qt::Key_AudioRandomPlay, 264 },
+        { (int)Qt::Key_Subtitle, 265 },
+        { (int)Qt::Key_AudioCycleTrack, 266 },
+        { (int)Qt::Key_Time, 267 },
+        { (int)Qt::Key_Hibernate, 268 },
+        { (int)Qt::Key_View, 269 },
+        { (int)Qt::Key_TopMenu, 270 },
+        { (int)Qt::Key_PowerDown, 271 },
+        { (int)Qt::Key_Suspend, 272 },
+        { (int)Qt::Key_ContrastAdjust, 273 },
+        { (int)Qt::Key_LaunchG, 274 },
+        { (int)Qt::Key_LaunchH, 275 },
+        { (int)Qt::Key_TouchpadToggle, 276 },
+        { (int)Qt::Key_TouchpadOn, 277 },
+        { (int)Qt::Key_TouchpadOff, 278 },
+        { (int)Qt::Key_MicMute, 279 },
+        { (int)Qt::Key_Red, 280 },
+        { (int)Qt::Key_Green, 281 },
+        { (int)Qt::Key_Yellow, 282 },
+        { (int)Qt::Key_Blue, 283 },
+        { (int)Qt::Key_ChannelUp, 284 },
+        { (int)Qt::Key_ChannelDown, 285 },
+        { (int)Qt::Key_Guide, 286 },
+        { (int)Qt::Key_Info, 287 },
+        { (int)Qt::Key_Settings, 288 },
+        { (int)Qt::Key_MicVolumeUp, 289 },
+        { (int)Qt::Key_MicVolumeDown, 290 },
+        { (int)Qt::Key_New, 291 },
+        { (int)Qt::Key_Open, 292 },
+        { (int)Qt::Key_Find, 293 },
+        { (int)Qt::Key_Undo, 294 },
+        { (int)Qt::Key_Redo, 295 },
+        { (int)Qt::Key_MediaLast, 296 },
+        { (int)Qt::Key_Select, 297 },
+        { (int)Qt::Key_Yes, 298 },
+        { (int)Qt::Key_No, 299 },
+        { (int)Qt::Key_Cancel, 300 },
+        { (int)Qt::Key_Printer, 301 },
+        { (int)Qt::Key_Execute, 302 },
+        { (int)Qt::Key_Sleep, 303 },
+        { (int)Qt::Key_Play, 304 },
+        { (int)Qt::Key_Zoom, 305 },
+        { (int)Qt::Key_Exit, 306 },
+        { (int)Qt::Key_Context1, 307 },
+        { (int)Qt::Key_Context2, 308 },
+        { (int)Qt::Key_Context3, 309 },
+        { (int)Qt::Key_Context4, 310 },
+        { (int)Qt::Key_Call, 311 },
+        { (int)Qt::Key_Hangup, 312 },
+        { (int)Qt::Key_Flip, 313 },
+        { (int)Qt::Key_ToggleCallHangup, 314 },
+        { (int)Qt::Key_VoiceDial, 315 },
+        { (int)Qt::Key_LastNumberRedial, 316 },
+        { (int)Qt::Key_Camera, 317 },
+        { (int)Qt::Key_CameraFocus, 318 },
+    };
+
+    for (int i = 0; i < 319; ++i) {
+        s_keys_lookup[keys_vals[i].key] = keys_vals[i].val;
+    };
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 class WRWidget : public QWidget {
 public:
     WRWidget(QWidget* widget) : QWidget(widget) {}
@@ -1040,6 +1384,10 @@ static void action_set_text(struct PUBase* self_c, const char* text) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static void set_action_triggered_event(void* object, void* user_data, void (*event)(void* self_c)) {
     QSlotWrapperSignal_self_void* wrap = new QSlotWrapperSignal_self_void(user_data, (Signal_self_void)event);
     QObject* q_obj = (QObject*)object;
@@ -1673,6 +2021,8 @@ static struct PUApplication create_application(struct PUBase* priv_data) {
     static int argc = 0;
     QApplication* qt_obj = new QApplication(argc, 0);
 
+    create_enum_mappings();
+
     //QGuiApplication::setOrganizationName(QStringLiteral("TBL"));
     //QCoreApplication::setOrganizationDomain(QStringLiteral("tbl.org"));
 
@@ -1780,7 +2130,7 @@ static struct PUArray application_get_files(struct PUBase* self_c) {
 
    if (!dialog.exec())
 		return array;
-    
+
    auto ret_value = dialog.selectedFiles();
 
    int count = ret_value.size();
@@ -1820,17 +2170,37 @@ static void icon_add_file(struct PUBase* self_c, const char* filename) {
 */
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void action_set_int_data(struct PUBase* self_c, int data) { 
+static void action_set_int_data(struct PUBase* self_c, int data) {
     QAction* qt_data = (QAction*)self_c;
     qt_data->setData(QVariant(data));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int action_get_int_data(struct PUBase* self_c) { 
+static int action_get_int_data(struct PUBase* self_c) {
     QAction* qt_data = (QAction*)self_c;
     return qt_data->data().toInt();
 }
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void action_set_shortcut(struct PUBase* self_c, PUKeys key) {
+    QAction* qt_data = (QAction*)self_c;
+    qt_data->setShortcut(s_keys_lookup[(int)key]);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void action_set_shortcut_mod(struct PUBase* self_c, PUKeys key, PUMetaKeys modifier) {
+    QAction* qt_data = (QAction*)self_c;
+    int tkey = s_keys_lookup[(int)key];
+    int tmod = s_meta_keys_lookup[(int)modifier];
+
+    qt_data->setShortcut(tkey + tmod);
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct PUWidgetFuncs s_widget_funcs = {
@@ -2012,6 +2382,8 @@ struct PUActionFuncs s_action_funcs = {
     destroy_action,
     action_is_enabled,
     action_set_text,
+    action_set_shortcut,
+    action_set_shortcut_mod,
     set_action_triggered_event,
     action_set_int_data,
     action_get_int_data,

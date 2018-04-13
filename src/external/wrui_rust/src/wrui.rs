@@ -11,6 +11,10 @@ pub use ffi_gen::PUBase as PUBase;
 
 use std::ffi::CString;
 
+pub use ffi_gen::PUMetaKeys as MetaKeys;
+
+pub use ffi_gen::PUKeys as Keys;
+
 pub use ffi_gen::PURect as Rect;
 
 pub use ffi_gen::PUColor as Color;
@@ -1497,6 +1501,26 @@ impl Action {
             let obj = self.obj.unwrap();
         
             ((*obj.funcs).set_text)(obj.privd, str_in_text_1.as_ptr());
+        
+        }
+    }
+
+    pub fn set_shortcut (&self, key: Keys) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).set_shortcut)(obj.privd, key);
+        
+        }
+    }
+
+    pub fn set_shortcut_mod (&self, key: Keys, modifier: MetaKeys) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).set_shortcut_mod)(obj.privd, key, modifier);
         
         }
     }

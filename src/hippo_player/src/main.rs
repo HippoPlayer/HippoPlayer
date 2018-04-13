@@ -178,6 +178,7 @@ impl <'a> HippoPlayer<'a> {
         layout.add_widget(&self.playlist.widget);
 
         let add_files = self.ui.create_action();
+        add_files.set_shortcut_mod(Keys::KeyO, MetaKeys::Ctrl);
         add_files.set_text("Add Files");
 
         let file_menu = self.ui.create_menu();
