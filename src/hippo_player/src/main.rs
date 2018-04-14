@@ -138,7 +138,7 @@ impl <'a> HippoPlayer<'a> {
         let widget = self.ui.create_widget();
         let plugin = &self.plugins.view_plugins[action.get_int_data() as usize];
 
-        let instance = plugin.create_instance(self.ui.get_c_api(), &self.plugin_service, widget.obj.unwrap());
+        let _instance = plugin.create_instance(self.ui.get_c_api(), &self.plugin_service, widget.obj.unwrap());
 
         println!("Showing plugin {}", action.get_int_data());
     }
@@ -147,7 +147,7 @@ impl <'a> HippoPlayer<'a> {
         let plugin_menu = self.ui.create_menu();
         plugin_menu.set_title("Views");
 
-        for (i, plugin) in self.plugins.view_plugins.iter().enumerate() {
+        for (_i, plugin) in self.plugins.view_plugins.iter().enumerate() {
             let name = plugin.get_name();
 
             let action = self.ui.create_action();

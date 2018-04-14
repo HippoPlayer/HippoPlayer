@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static char s_player_name[1024]; // hack
+//static char s_player_name[1024]; // hack
 
 #include <thread>
 
