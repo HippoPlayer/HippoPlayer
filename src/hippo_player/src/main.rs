@@ -19,6 +19,8 @@ mod playerview;
 mod playlist;
 mod song_db;
 mod song_info;
+mod playlist_view;
+
 pub mod service;
 
 use plugin_handler::{Plugins};
@@ -32,7 +34,7 @@ use std::path::Path;
 use wrui::{SharedLibUi, Ui};
 use wrui::wrui::*;
 use playerview::PlayerView;
-use playlist::PlaylistView;
+use playlist_view::PlaylistView;
 use song_info::SongInfoView;
 
 struct HippoPlayer<'a> {
