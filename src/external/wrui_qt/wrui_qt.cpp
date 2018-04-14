@@ -1649,6 +1649,8 @@ static void application_set_style(struct PUBase* self_c, const char* style) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static void application_exec(struct PUBase* self_c) { 
     QApplication* qt_data = (QApplication*)self_c;
     qt_data->exec();
@@ -2013,6 +2015,7 @@ static void destroy_h_box_layout(struct PUBase* priv_data) {
 #include <QStyleFactory>
 #include <DarkStyle.h>
 #include <QFileDialog>
+#include <QTextStream>
 //#include <QSvgRenderer>
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2199,6 +2202,25 @@ static void action_set_shortcut_mod(struct PUBase* self_c, PUKeys key, PUMetaKey
 
     qt_data->setShortcut(tkey + tmod);
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static int application_set_style_sheet(struct PUBase* self_c, const char* filename) {
+    QApplication* qt_data = (QApplication*)self_c;
+    QFile f(QString::fromUtf8(filename));
+
+    if (!f.exists()) {
+        printf("Unable to set stylesheet: %s, file not found\n", filename);
+        return 0;
+    } else {
+        f.open(QFile::ReadOnly | QFile::Text);
+        QTextStream ts(&f);
+        qt_data->setStyleSheet(ts.readAll());
+    }
+
+    return 1;
+}
+
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2465,6 +2487,7 @@ struct PUMenuBarFuncs s_menu_bar_funcs = {
 struct PUApplicationFuncs s_application_funcs = {
     destroy_application,
     application_set_style,
+    application_set_style_sheet,
     application_exec,
     set_application_about_to_quit_event,
     application_get_files,

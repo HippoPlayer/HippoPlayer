@@ -1979,6 +1979,20 @@ impl Application {
         }
     }
 
+    pub fn set_style_sheet (&self, filename: &str) -> i32 {
+        let str_in_filename_1 = CString::new(filename).unwrap();
+
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            let ret_val = ((*obj.funcs).set_style_sheet)(obj.privd, str_in_filename_1.as_ptr());
+          
+            ret_val
+          
+        
+        }
+    }
+
     pub fn exec (&self) {
         
         unsafe {

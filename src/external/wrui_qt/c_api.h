@@ -733,6 +733,7 @@ struct PUMenuBar {
 struct PUApplicationFuncs {
     void (*destroy)(struct PUBase* self_c);
     void (*set_style)(struct PUBase* self_c, const char* style);
+    int (*set_style_sheet)(struct PUBase* self_c, const char* filename);
     void (*exec)(struct PUBase* self_c);
     void (*set_about_to_quit_event)(void* object, void* user_data, void (*event)(void* self_c));
     struct PUArray (*get_files)(struct PUBase* self_c);
@@ -993,6 +994,7 @@ typedef struct PU {
 #define PUMenuBar_add_menu(obj, menu) obj.funcs->add_menu(obj.priv_data, menu)
 
 #define PUApplication_set_style(obj, style) obj.funcs->set_style(obj.priv_data, style)
+#define PUApplication_set_style_sheet(obj, filename) obj.funcs->set_style_sheet(obj.priv_data, filename)
 #define PUApplication_exec(obj) obj.funcs->exec(obj.priv_data)
 #define PUApplication_set_about_to_quit_event(obj, user_data, event) obj.funcs->set_about_to_quit_event(obj.priv_data, user_data, event)
 #define PUApplication_get_files(obj) obj.funcs->get_files(obj.priv_data)

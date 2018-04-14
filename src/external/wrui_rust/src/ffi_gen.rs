@@ -767,6 +767,7 @@ pub struct PUMenuBar {
 pub struct PUApplicationFuncs {
     pub destroy: extern "C" fn(self_c: *const PUBase),
     pub set_style: extern "C" fn(self_c: *const PUBase, style: *const ::std::os::raw::c_char),
+    pub set_style_sheet: extern "C" fn(self_c: *const PUBase, filename: *const ::std::os::raw::c_char) -> i32,
     pub exec: extern "C" fn(self_c: *const PUBase),
     pub set_about_to_quit_event: extern "C" fn(object: *const PUBase, user_data: *const c_void,
                                         callback: extern "C" fn(self_c: *const c_void)),

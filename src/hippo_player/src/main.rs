@@ -162,6 +162,8 @@ impl <'a> HippoPlayer<'a> {
     }
 
     pub fn run(&mut self) {
+        self.app.set_style_sheet("bin/player/themes/dark/style.qss");
+
         let main_window = self.ui.create_main_window();
 
         self.player_view.setup();
