@@ -608,6 +608,26 @@ pub struct PUMainWindow {
 }
 
 #[repr(C)]
+pub struct PUToolWindowManagerFuncs {
+    pub destroy: extern "C" fn(self_c: *const PUBase),
+    pub show: extern "C" fn(self_c: *const PUBase),
+    pub set_fixed_height: extern "C" fn(self_c: *const PUBase, width: i32),
+    pub set_fixed_width: extern "C" fn(self_c: *const PUBase, width: i32),
+    pub resize: extern "C" fn(self_c: *const PUBase, width: i32, height: i32),
+    pub set_parent: extern "C" fn(self_c: *const PUBase, widget: *const PUBase),
+    pub set_layout: extern "C" fn(self_c: *const PUBase, layout: *const PUBase),
+    pub update: extern "C" fn(self_c: *const PUBase),
+    pub add_to_docking: extern "C" fn(self_c: *const PUBase, widget: *const PUBase),
+}
+
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct PUToolWindowManager {
+    pub funcs: *const PUToolWindowManagerFuncs,
+    pub privd: *const PUBase,
+}
+
+#[repr(C)]
 pub struct PUFramelessWindowFuncs {
     pub destroy: extern "C" fn(self_c: *const PUBase),
     pub show: extern "C" fn(self_c: *const PUBase),
@@ -872,6 +892,7 @@ pub struct PU {
     pub create_plain_text_edit: extern "C" fn(priv_data: *const PUBase) -> PUPlainTextEdit,
     pub create_slider: extern "C" fn(priv_data: *const PUBase) -> PUSlider,
     pub create_main_window: extern "C" fn(priv_data: *const PUBase) -> PUMainWindow,
+    pub create_tool_window_manager: extern "C" fn(priv_data: *const PUBase) -> PUToolWindowManager,
     pub create_frameless_window: extern "C" fn(priv_data: *const PUBase) -> PUFramelessWindow,
     pub create_action: extern "C" fn(priv_data: *const PUBase) -> PUAction,
     pub create_timer: extern "C" fn(priv_data: *const PUBase) -> PUTimer,

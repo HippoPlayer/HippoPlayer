@@ -70,6 +70,11 @@ pub struct MainWindow {
 }
 
 #[derive(Clone)]
+pub struct ToolWindowManager {
+    pub obj: Option<PUToolWindowManager>,
+}
+
+#[derive(Clone)]
 pub struct FramelessWindow {
     pub obj: Option<PUFramelessWindow>,
 }
@@ -1357,6 +1362,110 @@ impl WidgetType for MainWindow {
     }
 }
 
+impl ToolWindowManager {
+    pub fn destroy(&mut self) {
+       unsafe {
+          let obj = self.obj.unwrap();
+          ((*obj.funcs).destroy)(obj.privd);
+          self.obj = None;
+       }
+    }
+
+    pub fn show (&self) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).show)(obj.privd);
+        
+        }
+    }
+
+    pub fn set_fixed_height (&self, width: i32) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).set_fixed_height)(obj.privd, width);
+        
+        }
+    }
+
+    pub fn set_fixed_width (&self, width: i32) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).set_fixed_width)(obj.privd, width);
+        
+        }
+    }
+
+    pub fn resize (&self, width: i32, height: i32) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).resize)(obj.privd, width, height);
+        
+        }
+    }
+
+    pub fn set_parent (&self, widget: &WidgetType) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).set_parent)(obj.privd, widget.get_widget_type_obj() as *const PUBase);
+        
+        }
+    }
+
+    pub fn set_layout (&self, layout: &LayoutType) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).set_layout)(obj.privd, layout.get_layout_type_obj() as *const PUBase);
+        
+        }
+    }
+
+    pub fn update (&self) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).update)(obj.privd);
+        
+        }
+    }
+
+    pub fn add_to_docking (&self, widget: &WidgetType) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).add_to_docking)(obj.privd, widget.get_widget_type_obj() as *const PUBase);
+        
+        }
+    }
+}
+
+impl PaintDevice for ToolWindowManager {
+    fn get_paint_device_obj(&self) -> *const PUBase {
+       let obj = self.obj.unwrap();
+       obj.privd as *const PUBase
+    }
+}
+
+impl WidgetType for ToolWindowManager {
+    fn get_widget_type_obj(&self) -> *const PUBase {
+       let obj = self.obj.unwrap();
+       obj.privd as *const PUBase
+    }
+}
+
 impl FramelessWindow {
     pub fn destroy(&mut self) {
        unsafe {
@@ -2559,6 +2668,10 @@ impl Ui {
 
     pub fn create_main_window(&self) -> MainWindow {
         MainWindow { obj: Some(unsafe { ((*self.pu).create_main_window)((*self.pu).privd) }) }
+    }
+
+    pub fn create_tool_window_manager(&self) -> ToolWindowManager {
+        ToolWindowManager { obj: Some(unsafe { ((*self.pu).create_tool_window_manager)((*self.pu).privd) }) }
     }
 
     pub fn create_frameless_window(&self) -> FramelessWindow {

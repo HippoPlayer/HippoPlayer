@@ -38,6 +38,8 @@ struct PUSlider;
 struct PUSliderFuncs;
 struct PUMainWindow;
 struct PUMainWindowFuncs;
+struct PUToolWindowManager;
+struct PUToolWindowManagerFuncs;
 struct PUFramelessWindow;
 struct PUFramelessWindowFuncs;
 struct PUAction;
@@ -604,6 +606,23 @@ struct PUMainWindow {
     struct PUBase* priv_data;
 };
 
+struct PUToolWindowManagerFuncs {
+    void (*destroy)(struct PUBase* self_c);
+    void (*show)(struct PUBase* self_c);
+    void (*set_fixed_height)(struct PUBase* self_c, int width);
+    void (*set_fixed_width)(struct PUBase* self_c, int width);
+    void (*resize)(struct PUBase* self_c, int width, int height);
+    void (*set_parent)(struct PUBase* self_c, struct PUBase* widget);
+    void (*set_layout)(struct PUBase* self_c, struct PUBase* layout);
+    void (*update)(struct PUBase* self_c);
+    void (*add_to_docking)(struct PUBase* self_c, struct PUBase* widget);
+};
+
+struct PUToolWindowManager {
+    struct PUToolWindowManagerFuncs* funcs;
+    struct PUBase* priv_data;
+};
+
 struct PUFramelessWindowFuncs {
     void (*destroy)(struct PUBase* self_c);
     void (*show)(struct PUBase* self_c);
@@ -816,6 +835,7 @@ typedef struct PU {
     struct PUPlainTextEdit (*create_plain_text_edit)(struct PUBase* self);
     struct PUSlider (*create_slider)(struct PUBase* self);
     struct PUMainWindow (*create_main_window)(struct PUBase* self);
+    struct PUToolWindowManager (*create_tool_window_manager)(struct PUBase* self);
     struct PUFramelessWindow (*create_frameless_window)(struct PUBase* self);
     struct PUAction (*create_action)(struct PUBase* self);
     struct PUTimer (*create_timer)(struct PUBase* self);
@@ -937,6 +957,15 @@ typedef struct PU {
 #define PUMainWindow_menu_bar(obj) obj.funcs->menu_bar(obj.priv_data)
 #define PUMainWindow_set_central_widget(obj, widget) obj.funcs->set_central_widget(obj.priv_data, widget)
 
+#define PUToolWindowManager_show(obj) obj.funcs->show(obj.priv_data)
+#define PUToolWindowManager_set_fixed_height(obj, width) obj.funcs->set_fixed_height(obj.priv_data, width)
+#define PUToolWindowManager_set_fixed_width(obj, width) obj.funcs->set_fixed_width(obj.priv_data, width)
+#define PUToolWindowManager_resize(obj, width, height) obj.funcs->resize(obj.priv_data, width, height)
+#define PUToolWindowManager_set_parent(obj, widget) obj.funcs->set_parent(obj.priv_data, widget)
+#define PUToolWindowManager_set_layout(obj, layout) obj.funcs->set_layout(obj.priv_data, layout)
+#define PUToolWindowManager_update(obj) obj.funcs->update(obj.priv_data)
+#define PUToolWindowManager_add_to_docking(obj, widget) obj.funcs->add_to_docking(obj.priv_data, widget)
+
 #define PUFramelessWindow_show(obj) obj.funcs->show(obj.priv_data)
 #define PUFramelessWindow_set_fixed_height(obj, width) obj.funcs->set_fixed_height(obj.priv_data, width)
 #define PUFramelessWindow_set_fixed_width(obj, width) obj.funcs->set_fixed_width(obj.priv_data, width)
@@ -1026,6 +1055,7 @@ typedef struct PU {
 #define PU_create_plain_text_edit(ui) ui->create_plain_text_edit(ui->priv_data)
 #define PU_create_slider(ui) ui->create_slider(ui->priv_data)
 #define PU_create_main_window(ui) ui->create_main_window(ui->priv_data)
+#define PU_create_tool_window_manager(ui) ui->create_tool_window_manager(ui->priv_data)
 #define PU_create_frameless_window(ui) ui->create_frameless_window(ui->priv_data)
 #define PU_create_action(ui) ui->create_action(ui->priv_data)
 #define PU_create_timer(ui) ui->create_timer(ui->priv_data)

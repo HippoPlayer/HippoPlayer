@@ -11,6 +11,7 @@
 #include <QPlainTextEdit>
 #include <QSlider>
 #include <QMainWindow>
+#include <QToolWindowManager>
 #include <QFramelessWindow>
 #include <QAction>
 #include <QUrl>
@@ -47,6 +48,7 @@ extern struct PULineEditFuncs s_line_edit_funcs;
 extern struct PUPlainTextEditFuncs s_plain_text_edit_funcs;
 extern struct PUSliderFuncs s_slider_funcs;
 extern struct PUMainWindowFuncs s_main_window_funcs;
+extern struct PUToolWindowManagerFuncs s_tool_window_manager_funcs;
 extern struct PUFramelessWindowFuncs s_frameless_window_funcs;
 extern struct PUActionFuncs s_action_funcs;
 extern struct PUUrlFuncs s_url_funcs;
@@ -546,6 +548,15 @@ class WRMainWindow : public QMainWindow {
 public:
     WRMainWindow(QWidget* widget) : QMainWindow(widget) {}
     virtual ~WRMainWindow() {}
+
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+class WRToolWindowManager : public QToolWindowManager {
+public:
+    WRToolWindowManager(QWidget* widget) : QToolWindowManager(widget) {}
+    virtual ~WRToolWindowManager() {}
 
 };
 
@@ -1304,6 +1315,59 @@ static void main_window_set_central_widget(struct PUBase* self_c, struct PUBase*
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void tool_window_manager_show(struct PUBase* self_c) { 
+    WRToolWindowManager* qt_data = (WRToolWindowManager*)self_c;
+    qt_data->show();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void tool_window_manager_set_fixed_height(struct PUBase* self_c, int width) { 
+    WRToolWindowManager* qt_data = (WRToolWindowManager*)self_c;
+    qt_data->setFixedHeight(width);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void tool_window_manager_set_fixed_width(struct PUBase* self_c, int width) { 
+    WRToolWindowManager* qt_data = (WRToolWindowManager*)self_c;
+    qt_data->setFixedWidth(width);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void tool_window_manager_resize(struct PUBase* self_c, int width, int height) { 
+    WRToolWindowManager* qt_data = (WRToolWindowManager*)self_c;
+    qt_data->resize(width, height);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void tool_window_manager_set_parent(struct PUBase* self_c, struct PUBase* widget) { 
+    WRToolWindowManager* qt_data = (WRToolWindowManager*)self_c;
+    qt_data->setParent((QWidget*)widget);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void tool_window_manager_set_layout(struct PUBase* self_c, struct PUBase* layout) { 
+    WRToolWindowManager* qt_data = (WRToolWindowManager*)self_c;
+    qt_data->setLayout((QLayout*)layout);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void tool_window_manager_update(struct PUBase* self_c) { 
+    WRToolWindowManager* qt_data = (WRToolWindowManager*)self_c;
+    qt_data->update();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static void frameless_window_show(struct PUBase* self_c) { 
     WRFramelessWindow* qt_data = (WRFramelessWindow*)self_c;
     qt_data->show();
@@ -1905,6 +1969,18 @@ static void destroy_main_window(struct PUBase* priv_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static struct PUToolWindowManager create_tool_window_manager(struct PUBase* priv_data) {
+    return create_widget_func<struct PUToolWindowManager, struct PUToolWindowManagerFuncs, WRToolWindowManager>(&s_tool_window_manager_funcs, priv_data);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void destroy_tool_window_manager(struct PUBase* priv_data) {
+    destroy_generic<WRToolWindowManager>(priv_data);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static struct PUFramelessWindow create_frameless_window(struct PUBase* priv_data) {
     return create_widget_func<struct PUFramelessWindow, struct PUFramelessWindowFuncs, WRFramelessWindow>(&s_frameless_window_funcs, priv_data);
 }
@@ -2025,33 +2101,6 @@ static struct PUApplication create_application(struct PUBase* priv_data) {
     QApplication* qt_obj = new QApplication(argc, 0);
 
     create_enum_mappings();
-
-    //QGuiApplication::setOrganizationName(QStringLiteral("TBL"));
-    //QCoreApplication::setOrganizationDomain(QStringLiteral("tbl.org"));
-
-    qt_obj->setStyle(new DarkStyle);
-
-    /*
-    qt_obj->setStyle(QStyleFactory::create(QStringLiteral("Fusion")));
-
-    QPalette darkPalette;
-    darkPalette.setColor(QPalette::Window, QColor(53,53,53));
-    darkPalette.setColor(QPalette::WindowText, QColor(170,170,170));
-    darkPalette.setColor(QPalette::Text, QColor(170,170,170));
-    darkPalette.setColor(QPalette::Base, QColor(25,25,25));
-    darkPalette.setColor(QPalette::AlternateBase, QColor(53,53,53));
-    darkPalette.setColor(QPalette::ToolTipBase, Qt::white);
-    darkPalette.setColor(QPalette::ToolTipText, Qt::white);
-    darkPalette.setColor(QPalette::Button, QColor(53,53,53));
-    darkPalette.setColor(QPalette::ButtonText, Qt::white);
-    darkPalette.setColor(QPalette::BrightText, Qt::red);
-    darkPalette.setColor(QPalette::Link, QColor(42, 130, 218));
-
-    darkPalette.setColor(QPalette::Highlight, QColor(50, 60, 70));
-    darkPalette.setColor(QPalette::HighlightedText, Qt::black);
-
-    qt_obj->setPalette(darkPalette);
-    */
 
     struct PUApplication ctl;
     ctl.funcs = &s_application_funcs;
@@ -2201,6 +2250,24 @@ static void action_set_shortcut_mod(struct PUBase* self_c, PUKeys key, PUMetaKey
     int tmod = s_meta_keys_lookup[(int)modifier];
 
     qt_data->setShortcut(tkey + tmod);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void tool_window_manager_add_to_docking(struct PUBase* self_c, struct PUBase* widget) {
+    WRToolWindowManager* qt_data = (WRToolWindowManager*)self_c;
+    ToolWindowManager::AreaReferenceType type;
+
+    static int hack = 0;
+
+    if (hack == 0) {
+        type = ToolWindowManager::EmptySpace;
+        hack = 1;
+    } else {
+        type = ToolWindowManager::LastUsedArea;
+    }
+
+    qt_data->addToolWindow((QWidget*)widget, type);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2385,6 +2452,20 @@ struct PUMainWindowFuncs s_main_window_funcs = {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+struct PUToolWindowManagerFuncs s_tool_window_manager_funcs = {
+    destroy_tool_window_manager,
+    tool_window_manager_show,
+    tool_window_manager_set_fixed_height,
+    tool_window_manager_set_fixed_width,
+    tool_window_manager_resize,
+    tool_window_manager_set_parent,
+    tool_window_manager_set_layout,
+    tool_window_manager_update,
+    tool_window_manager_add_to_docking,
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 struct PUFramelessWindowFuncs s_frameless_window_funcs = {
     destroy_frameless_window,
     frameless_window_show,
@@ -2547,6 +2628,7 @@ static struct PU s_pu = {
     create_plain_text_edit,
     create_slider,
     create_main_window,
+    create_tool_window_manager,
     create_frameless_window,
     create_action,
     create_timer,

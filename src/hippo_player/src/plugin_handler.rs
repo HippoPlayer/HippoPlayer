@@ -13,6 +13,8 @@ use service::{PluginService, CHippoServiceAPI};
 #[repr(C)]
 pub struct CHippoPlaybackPlugin {
     pub api_version: u64,
+    pub name: u64,
+    pub version: u64,
     pub probe_can_play: extern "C" fn(data: *const u8, data_size: u32, buffer: *const i8, total_size: u64) -> i32,
     pub supported_extensions: extern "C" fn() -> *mut c_char,
     pub create: extern "C" fn(service_api: *const CHippoServiceAPI) -> *mut c_void,
@@ -21,6 +23,9 @@ pub struct CHippoPlaybackPlugin {
     pub close: extern "C" fn(user_data: *mut c_void) -> c_int,
     pub read_data: extern "C" fn(user_data: *mut c_void, dest: *mut u8, size: u32) -> c_int,
     pub seek: extern "C" fn(user_data: *mut c_void, ms: c_int) -> c_int,
+    pub dummy0: extern "C" fn(user_data: *mut c_void, ms: c_int) -> c_int,
+    pub dummy1: extern "C" fn(user_data: *mut c_void, ms: c_int) -> c_int,
+    pub dummy2: extern "C" fn(user_data: *mut c_void, ms: c_int) -> c_int,
     pub private_data: u64,
 }
 
@@ -28,8 +33,8 @@ pub struct CHippoPlaybackPlugin {
 #[repr(C)]
 pub struct CHippoViewPlugin {
     pub api_version: u64,
-    pub name: *const u8, 
-    pub version: *const u8, 
+    pub name: *const u8,
+    pub version: *const u8,
     pub create: extern "C" fn(service_api: *const CHippoServiceAPI, ui: *const PU, window: PUWidget) -> *mut c_void,
     pub destroy: extern "C" fn(user_data: *mut c_void) -> c_int,
     pub event: extern "C" fn(event: u32),
@@ -90,7 +95,7 @@ impl ViewPlugin {
 
 	pub fn create_instance(&self, pu: *const PU, plugin_service: &PluginService, window: PUWidget) -> ViewPluginInstance {
 		let user_data = ((self.plugin_funcs).create)(
-			plugin_service.get_c_service_api(), 
+			plugin_service.get_c_service_api(),
 			pu,
 			window);
 

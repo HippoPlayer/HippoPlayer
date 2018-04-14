@@ -43,6 +43,7 @@ struct HippoPlayer<'a> {
     player_view: PlayerView,
     playlist: PlaylistView,
     song_info_view: SongInfoView,
+    tool_window_manager: ToolWindowManager,
     ui: Ui,
     app: Application,
     current_song_time: f32,
@@ -62,6 +63,7 @@ impl <'a> HippoPlayer<'a> {
             player_view: PlayerView::new(ui),
             playlist: PlaylistView::new(ui),
             song_info_view: SongInfoView::new(ui),
+            tool_window_manager: ui.create_tool_window_manager(),
             ui: ui,
             current_song_time: -10.0,
             is_playing: false,
@@ -176,8 +178,8 @@ impl <'a> HippoPlayer<'a> {
         let timer = self.ui.create_timer();
         let layout = self.ui.create_v_box_layout();
 
-        layout.add_widget(&self.player_view.widget);
-        layout.add_widget(&self.playlist.widget);
+        //layout.add_widget(&self.player_view.widget);
+        //layout.add_widget(&self.playlist.widget);
 
         let add_files = self.ui.create_action();
         add_files.set_shortcut_mod(Keys::KeyO, MetaKeys::Ctrl);
@@ -207,15 +209,24 @@ impl <'a> HippoPlayer<'a> {
         timer.start(1000);
 
         self.main_widget.set_layout(&layout);
+        self.main_widget.resize(1200, 1000);
 
-        let player_window = self.ui.create_frameless_window();
+        //let player_window = self.ui.create_widget();
         main_window.set_central_widget(&self.main_widget);
 
-        player_window.set_content(&main_window);
-        player_window.set_window_title(&format!("HippoPlayer 0.0.1 {}", build_id()));
+        self.tool_window_manager.set_parent(&self.main_widget);
 
-        player_window.resize(500, 800);
-        player_window.show();
+        self.tool_window_manager.add_to_docking(&self.player_view.widget);
+        self.tool_window_manager.add_to_docking(&self.playlist.widget);
+        self.tool_window_manager.add_to_docking(&self.song_info_view.view);
+
+        layout.add_widget(&self.tool_window_manager);
+
+        //player_window.set_content(&main_window);
+        //player_window.set_window_title(&format!("HippoPlayer 0.0.1 {}", build_id()));
+
+        main_window.resize(1200, 1000);
+        main_window.show();
 
         // temp create a instance for testing
 
@@ -225,7 +236,8 @@ impl <'a> HippoPlayer<'a> {
         }
         */
 
-        self.song_info_view.show();
+        //main_window.show();
+        //self.song_info_view.show();
 
         self.app.exec();
     }
