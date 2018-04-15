@@ -3,6 +3,7 @@ use std::io::{BufWriter, BufReader};
 use std::io;
 
 use serde_json;
+use rmp_rpc::message::{Request, Response};
 
 ///
 /// Metadata for each entry. We will likely stuff more things here later on.
@@ -77,6 +78,16 @@ impl Playlist {
         self.widget.set_current_row(playlist.current_song as i32);
 
         Ok(())
+    }
+
+    pub fn handle_message(request: &Request) -> Option<Response> {
+        match request.method {
+            "hippo_playlist_get_urls" => {
+                None
+            }
+
+            _ => None,
+        }
     }
 }
 
