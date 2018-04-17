@@ -1,9 +1,8 @@
+use rmp_rpc::message::{Request, Response};
+use serde_json;
 use std::fs::File;
 use std::io::{BufWriter, BufReader};
 use std::io;
-
-use serde_json;
-use rmp_rpc::message::{Request, Response};
 
 ///
 /// Metadata for each entry. We will likely stuff more things here later on.
@@ -23,35 +22,23 @@ pub struct Playlist {
 
 
 impl Playlist {
+
+    ///
+    ///
+    ///
+    pub fn new() -> Playlist {
+        Playlist {
+            entries: Vec::new(),
+            current_song: 0,
+        }
+    }
+
     ///
     /// Serialize the playlist and write it to filename
     ///
-    pub fn save_playlist(&mut self, filename: &str) -> io::Result<()> {
-        let mut playlist = PlaylistData {
-            entries: Vec::new(),
-            current_song: self.widget.current_row() as usize,
-        };
-
-        for index in 0..self.widget.count() {
-            if let Some(entry) = self.widget.item(index) {
-                // we store the path to the file in the string data and use that as the key
-                let path = entry.get_string_data();
-
-                if let Some(entry) = self.playlist_data.get(&path) {
-                    playlist.entries.push(entry.clone());
-                } else {
-                    // This path should never happen
-                    playlist.entries.push(PlaylistEntry {
-                        path: path.clone(),
-                        title: entry.text(),
-                        duration: -10.0,
-                    });
-                }
-            }
-        }
-
+    pub fn save(&mut self, filename: &str) -> io::Result<()> {
         let f = BufWriter::new(File::create(filename)?);
-        serde_json::to_writer_pretty(f, &playlist)?;
+        serde_json::to_writer_pretty(f, self)?;
 
         Ok(())
     }
@@ -59,23 +46,9 @@ impl Playlist {
     ///
     /// Load the playlist
     ///
-    pub fn load_playlist(&mut self, filename: &str) -> io::Result<()> {
+    pub fn load(&mut self, filename: &str) -> io::Result<()> {
         let f = BufReader::new(File::open(filename)?);
-        let playlist: PlaylistData = serde_json::from_reader(f)?;
-
-        self.playlist_data.clear();
-
-        for item in &playlist.entries {
-            self.playlist_data.insert(item.path.clone(), item.clone());
-
-            let list_item = self.wrui.create_list_widget_item();
-            list_item.set_text(&item.title);
-            list_item.set_string_data(&item.path);
-
-            self.widget.add_item(&list_item);
-        }
-
-        self.widget.set_current_row(playlist.current_song as i32);
+        *self = serde_json::from_reader(f)?;
 
         Ok(())
     }
@@ -88,6 +61,23 @@ impl Playlist {
 
             _ => None,
         }
+    }
+
+    ///
+    /// Get the next song to play
+    ///
+    pub fn get_next_song(&mut self) -> Option<&str> {
+        let count = self.entries.len();
+
+        let mut current_item = self.current_item + 1;
+
+        if current_item >= count  {
+            current_item = 0;
+        }
+
+        self.current_item = current_item;
+
+        Some(&self.entries[current_item].path)
     }
 }
 

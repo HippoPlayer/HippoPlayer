@@ -5,6 +5,7 @@ extern crate walkdir;
 extern crate serde_derive;
 extern crate serde;
 extern crate serde_json;
+extern crate rmp_rpc;
 
 #[macro_use]
 extern crate wrui;
@@ -13,13 +14,13 @@ extern crate dynamic_reload;
 
 use std::os::raw::c_void;
 
-mod plugin_handler;
 mod audio;
 mod playerview;
 mod playlist;
+mod playlist_view;
+mod plugin_handler;
 mod song_db;
 mod song_info;
-mod playlist_view;
 
 pub mod service;
 
@@ -30,6 +31,7 @@ use std::fs;
 use std::io::prelude::*;
 use std::fs::File;
 use std::path::Path;
+use playlist::Playlist;
 
 use wrui::{SharedLibUi, Ui};
 use wrui::wrui::*;
@@ -43,7 +45,8 @@ struct HippoPlayer<'a> {
     plugin_service: service::PluginService,
     main_widget: Widget,
     player_view: PlayerView,
-    playlist: PlaylistView,
+    playlist_view: PlaylistView,
+    playlist: Playlist,
     song_info_view: SongInfoView,
     tool_window_manager: ToolWindowManager,
     ui: Ui,
@@ -63,7 +66,8 @@ impl <'a> HippoPlayer<'a> {
             app: ui.create_application(),
             main_widget: ui.create_widget(),
             player_view: PlayerView::new(ui),
-            playlist: PlaylistView::new(ui),
+            playlist_view: PlaylistView::new(ui),
+            playlist: Playlist::new(),
             song_info_view: SongInfoView::new(ui),
             tool_window_manager: ui.create_tool_window_manager(),
             ui: ui,
@@ -73,6 +77,7 @@ impl <'a> HippoPlayer<'a> {
     }
 
     fn select_song(&mut self, item: &ListWidgetItem) {
+        /*
         let info = self.play_file(&item.get_string_data());
         self.current_song_time = info.duration as f32;
         self.is_playing = true;
@@ -81,6 +86,7 @@ impl <'a> HippoPlayer<'a> {
         self.player_view.set_title(&info.title);
 
         self.playlist.select_song(item, &info);
+        */
     }
 
     fn per_sec_update(&mut self) {

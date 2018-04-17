@@ -1,16 +1,12 @@
 use std::collections::HashMap;
-use std::fs::File;
-use std::io::{BufWriter, BufReader};
 use std::path::Path;
 use std::ffi::OsStr;
-use std::io;
 use wrui::wrui::{ListWidgetItem, ListWidget, DragEnterEvent, DropEvent};
 use wrui::Ui;
 use audio::MusicInfo;
 
 use std::os::raw::c_void;
 
-use serde_json;
 use playlist::PlaylistEntry;
 
 pub struct PlaylistView {
