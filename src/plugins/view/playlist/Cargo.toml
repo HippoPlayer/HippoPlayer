@@ -8,4 +8,4 @@ name = "playlist"
 crate-type = ["cdylib"]
 
 [dependencies]
-hippo_api = { path = "../../../plugin/api/rust/hippo_api }
+hippo_api = { path = "../../../plugin_api/rust/hippo_api" }

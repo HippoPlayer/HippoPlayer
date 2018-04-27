@@ -334,7 +334,6 @@ SharedLibrary {
 --  View plugins
 -----------------------------------------------------------------------------------------------------------------------
 
---[[
 RustSharedLibrary {
 	Name = "playlist",
 	CargoConfig = "src/plugins/view/playlist/Cargo.toml",
@@ -344,7 +343,6 @@ RustSharedLibrary {
 		get_rs_src("api/rust/prodbg_ui"),
 	}
 }
---]]
 
 -----------------------------------------------------------------------------------------------------------------------
 -- Default plugins
@@ -362,7 +360,7 @@ Default "SidPlugin"
 
 -- Views
 
---Default "playlist"
+Default "playlist"
 Default "TestViewPlugin"
 
 -- Default "FutureComposerPlugin"

@@ -2631,6 +2631,7 @@ pub struct PluginUi {
 }
 
 impl PluginUi {
+    pub fn new(pu: *const PUPluginUI) -> PluginUi { PluginUi { pu } }
     pub fn get_c_api(&self) -> *const PUPluginUI { self.pu }
 
     pub fn create_widget(&self) -> Widget {
@@ -2717,7 +2718,7 @@ pub struct Ui {
 }
 
 impl Ui {
-    pub fn new(pu: *const PU) -> Ui { Ui { pu: pu } }
+    pub fn new(pu: *const PU) -> Ui { Ui { pu } }
 
     pub fn get_c_api(&self) -> *const PU { self.pu }
 
