@@ -881,6 +881,32 @@ pub struct PUHBoxLayout {
 }
 
 #[repr(C)]
+#[derive(Copy, Clone)]
+pub struct PUPluginUI {
+    pub create_widget: extern "C" fn(priv_data: *const PUBase) -> PUWidget,
+    pub create_push_button: extern "C" fn(priv_data: *const PUBase) -> PUPushButton,
+    pub create_painter: extern "C" fn(priv_data: *const PUBase) -> PUPainter,
+    pub create_list_widget_item: extern "C" fn(priv_data: *const PUBase) -> PUListWidgetItem,
+    pub create_list_widget: extern "C" fn(priv_data: *const PUBase) -> PUListWidget,
+    pub create_label: extern "C" fn(priv_data: *const PUBase) -> PULabel,
+    pub create_line_edit: extern "C" fn(priv_data: *const PUBase) -> PULineEdit,
+    pub create_plain_text_edit: extern "C" fn(priv_data: *const PUBase) -> PUPlainTextEdit,
+    pub create_slider: extern "C" fn(priv_data: *const PUBase) -> PUSlider,
+    pub create_main_window: extern "C" fn(priv_data: *const PUBase) -> PUMainWindow,
+    pub create_frameless_window: extern "C" fn(priv_data: *const PUBase) -> PUFramelessWindow,
+    pub create_action: extern "C" fn(priv_data: *const PUBase) -> PUAction,
+    pub create_timer: extern "C" fn(priv_data: *const PUBase) -> PUTimer,
+    pub create_icon: extern "C" fn(priv_data: *const PUBase) -> PUIcon,
+    pub create_font: extern "C" fn(priv_data: *const PUBase) -> PUFont,
+    pub create_menu: extern "C" fn(priv_data: *const PUBase) -> PUMenu,
+    pub create_menu_bar: extern "C" fn(priv_data: *const PUBase) -> PUMenuBar,
+    pub create_v_box_layout: extern "C" fn(priv_data: *const PUBase) -> PUVBoxLayout,
+    pub create_h_box_layout: extern "C" fn(priv_data: *const PUBase) -> PUHBoxLayout,
+    pub open_files_dialog: extern "C" fn(self_c: *const PUBase) -> PUArray,
+    pub privd: *const PUBase,
+}
+
+#[repr(C)]
 pub struct PU {
     pub create_widget: extern "C" fn(priv_data: *const PUBase) -> PUWidget,
     pub create_push_button: extern "C" fn(priv_data: *const PUBase) -> PUPushButton,
@@ -904,6 +930,8 @@ pub struct PU {
     pub create_v_box_layout: extern "C" fn(priv_data: *const PUBase) -> PUVBoxLayout,
     pub create_h_box_layout: extern "C" fn(priv_data: *const PUBase) -> PUHBoxLayout,
     pub open_files_dialog: extern "C" fn(self_c: *const PUBase) -> PUArray,
+    pub create_plugin_ui: extern "C" fn(self_c: *const PUBase, parent: *const PUBase) -> *const PUPluginUI,
+    pub destroy_plugin_ui: extern "C" fn(self_c: *const PUPluginUI),
     pub privd: *const PUBase,
 }
 

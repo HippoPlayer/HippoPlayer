@@ -330,7 +330,27 @@ SharedLibrary {
 
 --]]
 
+-----------------------------------------------------------------------------------------------------------------------
+--  View plugins
+-----------------------------------------------------------------------------------------------------------------------
 
+--[[
+RustSharedLibrary {
+	Name = "playlist",
+	CargoConfig = "src/plugins/view/playlist/Cargo.toml",
+	Sources = {
+		get_rs_src("src/plugins/view/playlist"),
+		get_rs_src("api/rust/prodbg"),
+		get_rs_src("api/rust/prodbg_ui"),
+	}
+}
+--]]
+
+-----------------------------------------------------------------------------------------------------------------------
+-- Default plugins
+-----------------------------------------------------------------------------------------------------------------------
+
+-- Decoders
 
 Default "TfmxPlugin"
 Default "HivelyPlugin"
@@ -339,6 +359,10 @@ Default "vgm"
 Default "DummyPlugin"
 Default "MDXPlugin"
 Default "SidPlugin"
+
+-- Views
+
+--Default "playlist"
 Default "TestViewPlugin"
 
 -- Default "FutureComposerPlugin"

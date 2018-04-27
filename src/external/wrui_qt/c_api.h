@@ -824,6 +824,30 @@ struct PUHBoxLayout {
     struct PUBase* priv_data;
 };
 
+typedef struct PUPluginUI { 
+    struct PUWidget (*create_widget)(struct PUBase* self);
+    struct PUPushButton (*create_push_button)(struct PUBase* self);
+    struct PUPainter (*create_painter)(struct PUBase* self);
+    struct PUListWidgetItem (*create_list_widget_item)(struct PUBase* self);
+    struct PUListWidget (*create_list_widget)(struct PUBase* self);
+    struct PULabel (*create_label)(struct PUBase* self);
+    struct PULineEdit (*create_line_edit)(struct PUBase* self);
+    struct PUPlainTextEdit (*create_plain_text_edit)(struct PUBase* self);
+    struct PUSlider (*create_slider)(struct PUBase* self);
+    struct PUMainWindow (*create_main_window)(struct PUBase* self);
+    struct PUFramelessWindow (*create_frameless_window)(struct PUBase* self);
+    struct PUAction (*create_action)(struct PUBase* self);
+    struct PUTimer (*create_timer)(struct PUBase* self);
+    struct PUIcon (*create_icon)(struct PUBase* self);
+    struct PUFont (*create_font)(struct PUBase* self);
+    struct PUMenu (*create_menu)(struct PUBase* self);
+    struct PUMenuBar (*create_menu_bar)(struct PUBase* self);
+    struct PUVBoxLayout (*create_v_box_layout)(struct PUBase* self);
+    struct PUHBoxLayout (*create_h_box_layout)(struct PUBase* self);
+    struct PUArray (*open_files_dialog)(struct PUBase* self_c);
+    struct PUBase* priv_data;
+} PUPlugin;
+
 typedef struct PU { 
     struct PUWidget (*create_widget)(struct PUBase* self);
     struct PUPushButton (*create_push_button)(struct PUBase* self);
@@ -847,6 +871,8 @@ typedef struct PU {
     struct PUVBoxLayout (*create_v_box_layout)(struct PUBase* self);
     struct PUHBoxLayout (*create_h_box_layout)(struct PUBase* self);
     struct PUArray (*open_files_dialog)(struct PUBase* self_c);
+    struct PUPluginUI* (*create_plugin_ui)(struct PUBase* self, struct PUBase* parent);
+    void (*destroy_plugin_ui)(struct PUPluginUI* self);
     struct PUBase* priv_data;
 } PU;
 

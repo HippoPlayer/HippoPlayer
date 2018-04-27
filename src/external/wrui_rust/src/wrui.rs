@@ -154,6 +154,11 @@ pub struct HBoxLayout {
     pub obj: Option<PUHBoxLayout>,
 }
 
+#[derive(Clone)]
+pub struct PluginUI {
+    pub obj: Option<PUPluginUI>,
+}
+
 pub trait LayoutType {
     fn get_layout_type_obj(&self) -> *const PUBase;
 }
@@ -2621,6 +2626,92 @@ macro_rules! set_paint_event {
 
 
 #[derive(Copy, Clone)]
+pub struct PluginUi {
+    pu: *const PUPluginUI
+}
+
+impl PluginUi {
+    pub fn get_c_api(&self) -> *const PUPluginUI { self.pu }
+
+    pub fn create_widget(&self) -> Widget {
+        Widget { obj: Some(unsafe { ((*self.pu).create_widget)((*self.pu).privd) }) }
+    }
+
+    pub fn create_push_button(&self) -> PushButton {
+        PushButton { obj: Some(unsafe { ((*self.pu).create_push_button)((*self.pu).privd) }) }
+    }
+
+    pub fn create_painter(&self) -> Painter {
+        Painter { obj: Some(unsafe { ((*self.pu).create_painter)((*self.pu).privd) }) }
+    }
+
+    pub fn create_list_widget_item(&self) -> ListWidgetItem {
+        ListWidgetItem { obj: Some(unsafe { ((*self.pu).create_list_widget_item)((*self.pu).privd) }) }
+    }
+
+    pub fn create_list_widget(&self) -> ListWidget {
+        ListWidget { obj: Some(unsafe { ((*self.pu).create_list_widget)((*self.pu).privd) }) }
+    }
+
+    pub fn create_label(&self) -> Label {
+        Label { obj: Some(unsafe { ((*self.pu).create_label)((*self.pu).privd) }) }
+    }
+
+    pub fn create_line_edit(&self) -> LineEdit {
+        LineEdit { obj: Some(unsafe { ((*self.pu).create_line_edit)((*self.pu).privd) }) }
+    }
+
+    pub fn create_plain_text_edit(&self) -> PlainTextEdit {
+        PlainTextEdit { obj: Some(unsafe { ((*self.pu).create_plain_text_edit)((*self.pu).privd) }) }
+    }
+
+    pub fn create_slider(&self) -> Slider {
+        Slider { obj: Some(unsafe { ((*self.pu).create_slider)((*self.pu).privd) }) }
+    }
+
+    pub fn create_main_window(&self) -> MainWindow {
+        MainWindow { obj: Some(unsafe { ((*self.pu).create_main_window)((*self.pu).privd) }) }
+    }
+
+    pub fn create_frameless_window(&self) -> FramelessWindow {
+        FramelessWindow { obj: Some(unsafe { ((*self.pu).create_frameless_window)((*self.pu).privd) }) }
+    }
+
+    pub fn create_action(&self) -> Action {
+        Action { obj: Some(unsafe { ((*self.pu).create_action)((*self.pu).privd) }) }
+    }
+
+    pub fn create_timer(&self) -> Timer {
+        Timer { obj: Some(unsafe { ((*self.pu).create_timer)((*self.pu).privd) }) }
+    }
+
+    pub fn create_icon(&self) -> Icon {
+        Icon { obj: Some(unsafe { ((*self.pu).create_icon)((*self.pu).privd) }) }
+    }
+
+    pub fn create_font(&self) -> Font {
+        Font { obj: Some(unsafe { ((*self.pu).create_font)((*self.pu).privd) }) }
+    }
+
+    pub fn create_menu(&self) -> Menu {
+        Menu { obj: Some(unsafe { ((*self.pu).create_menu)((*self.pu).privd) }) }
+    }
+
+    pub fn create_menu_bar(&self) -> MenuBar {
+        MenuBar { obj: Some(unsafe { ((*self.pu).create_menu_bar)((*self.pu).privd) }) }
+    }
+
+    pub fn create_v_box_layout(&self) -> VBoxLayout {
+        VBoxLayout { obj: Some(unsafe { ((*self.pu).create_v_box_layout)((*self.pu).privd) }) }
+    }
+
+    pub fn create_h_box_layout(&self) -> HBoxLayout {
+        HBoxLayout { obj: Some(unsafe { ((*self.pu).create_h_box_layout)((*self.pu).privd) }) }
+    }
+
+}
+
+#[derive(Copy, Clone)]
 pub struct Ui {
     pu: *const PU
 }
@@ -2714,4 +2805,9 @@ impl Ui {
         HBoxLayout { obj: Some(unsafe { ((*self.pu).create_h_box_layout)((*self.pu).privd) }) }
     }
 
+    pub fn create_plugin_ui(&self, parent: &WidgetType) -> PluginUi {
+        PluginUi { pu: unsafe { ((*self.pu).create_plugin_ui)((*self.pu).privd, parent.get_widget_type_obj()) } }
+    }
 }
+
+

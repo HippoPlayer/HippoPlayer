@@ -6,24 +6,19 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static PU* g_ui = 0; 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef struct TestViewPlugin {
-    struct PUWidget window;
+	struct PUPluginUI* ui;
 } TestViewPlugin;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void* test_view_create(HippoServiceAPI* services, PU* ui_funcs, struct PUWidget window) {
-    TestViewPlugin* plugin = malloc(sizeof(TestViewPlugin)); 
+void* test_view_create(HippoServiceAPI* services, struct PUPluginUI* ui_funcs) {
+    TestViewPlugin* plugin = malloc(sizeof(TestViewPlugin));
     memset(plugin, 0, sizeof(TestViewPlugin));
-    g_ui = ui_funcs;
-
-    plugin->window = window;
-
-    PUWidget_show(plugin->window);
+    plugin->ui = ui_funcs;
 
     return plugin;
 }

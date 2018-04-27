@@ -1,7 +1,6 @@
 #pragma once
 
 #include <stdint.h>
-#include "../external/wrui_qt/c_api.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -10,7 +9,7 @@ extern "C"
 {
 #endif
 
-struct PU;
+struct PUPluginUI;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -175,23 +174,23 @@ typedef struct HippoMessageAPI {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // API Version of the plugin, always set this to HIPPO_PLAYBACK_PLUGIN_API_VERSION
-uint64_t api_version;
+//uint64_t api_version;
 
 // Name of the plugin. This name should be unique or it may fail to load if there is a collision.
-const char* name;
+//const char* name;
 
 // Scematic version of the plugin. If the version doesn't follow the rules of SemVersion it may fail to load.
-const char* version;
+//const char* version;
 
 // Ask the plugin if it can play some data. The plugin has to determine from the header if it supports the
 // file or not. The input data is at least 2048 bytes but can be less if the the total file is smaller.
 //
 // Notice that no user data is provided with this as the plugin instance hasn't actually been crated
 // The plugin must support to parse this data without custom data being setup.
-enum HippoProbeResult (*probe_can_play)(const uint8_t* data, uint32_t data_size, const char* filename, uint64_t total_size);
+//enum HippoProbeResult (*probe_can_play)(const uint8_t* data, uint32_t data_size, const char* filename, uint64_t total_size);
 
 // Returns a comma separated list of supported extensions
-const char* (*supported_extensions)();
+//const char* (*supported_extensions)();
 
 // Create an instace of the plugin. The user is expected to return an instance data poniter
 // that will get passed to the other callback functions.
@@ -256,7 +255,7 @@ typedef struct HippoPlaybackPlugin {
 	int (*close)(void* user_data);
 	int (*read_data)(void* user_data, void* dest, uint32_t max_sample_count);
 	int (*seek)(void* user_data, int ms);
-	int (*configure)(void* user_data, struct PU* ui_funcs);
+	int (*configure)(void* user_data, struct PUPluginUI* ui_funcs);
 	int (*save)(void* user_data, struct HippoSaveAPI* save_api);
 	int (*load)(void* user_data, struct HippoLoadAPI* load_api);
 	void* priv;
@@ -270,7 +269,7 @@ typedef struct HippoViewPlugin {
 	uint64_t api_version;
 	const char* name;
 	const char* version;
-	void* (*create)(HippoServiceAPI* services, struct PU* ui_funcs, struct PUWidget window);
+	void* (*create)(HippoServiceAPI* services, struct PUPluginUI* ui_funcs);
 	int (*destroy)(void* user_data);
 	void (*event)(int event);
 	int (*save)(void* user_data, struct HippoSaveAPI* save_api);

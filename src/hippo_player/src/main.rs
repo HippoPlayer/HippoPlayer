@@ -107,6 +107,7 @@ impl <'a> HippoPlayer<'a> {
     }
 
     fn prev_song(&mut self) {
+        /*
         let next_song = self.playlist.get_prev_song();
 
         if let Some(next) = next_song {
@@ -114,15 +115,19 @@ impl <'a> HippoPlayer<'a> {
         } else {
             self.is_playing = false;
         }
+        */
     }
 
     fn play_song(&mut self) {
+        /*
         if let Some(current) = self.playlist.widget.current_item() {
             self.select_song(&current);
         }
+        */
     }
 
     fn next_song(&mut self) {
+        /*
         let next_song = self.playlist.get_next_song();
 
         if let Some(next) = next_song {
@@ -130,18 +135,23 @@ impl <'a> HippoPlayer<'a> {
         } else {
             self.is_playing = false;
         }
+        */
     }
 
     fn before_quit(&mut self) {
+        /*
         if let Err(err) = self.playlist.save_playlist("playlist.json") {
             println!("Unable to save playlist {:?}", err);
         }
+        */
     }
 
     fn add_files(&mut self) {
+        /*
         for url in self.app.get_files().iter().filter(|u| u.is_local_file()) {
             self.playlist.add_file(&url.to_local_file());
         }
+        */
     }
 
     fn show_plugin(&mut self, action: &Action) {
@@ -177,11 +187,13 @@ impl <'a> HippoPlayer<'a> {
         let main_window = self.ui.create_main_window();
 
         self.player_view.setup();
-        self.playlist.setup();
+        //self.playlist.setup();
 
+        /*
         if let Err(err) = self.playlist.load_playlist("playlist.json") {
             println!("Unable to load playlist {:?}", err);
         }
+        */
 
         let timer = self.ui.create_timer();
         let layout = self.ui.create_v_box_layout();
@@ -211,7 +223,7 @@ impl <'a> HippoPlayer<'a> {
         set_timer_timeout_event!(timer, self, HippoPlayer, HippoPlayer::per_sec_update);
         set_action_triggered_event!(add_files, self, HippoPlayer, HippoPlayer::add_files);
 
-        set_list_widget_item_double_clicked_event!(self.playlist.widget, self, HippoPlayer, HippoPlayer::select_song);
+        //set_list_widget_item_double_clicked_event!(self.playlist.widget, self, HippoPlayer, HippoPlayer::select_song);
         set_application_about_to_quit_event!(self.app, self, HippoPlayer, HippoPlayer::before_quit);
 
         timer.start(1000);
@@ -225,7 +237,7 @@ impl <'a> HippoPlayer<'a> {
         self.tool_window_manager.set_parent(&self.main_widget);
 
         self.tool_window_manager.add_to_docking(&self.player_view.widget);
-        self.tool_window_manager.add_to_docking(&self.playlist.widget);
+        //self.tool_window_manager.add_to_docking(&self.playlist.widget);
         self.tool_window_manager.add_to_docking(&self.song_info_view.view);
 
         layout.add_widget(&self.tool_window_manager);

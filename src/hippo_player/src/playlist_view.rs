@@ -50,6 +50,7 @@ impl PlaylistView {
     }
 
     pub fn select_song(&mut self, item: &ListWidgetItem, music_info: &MusicInfo) {
+        /*
         if music_info.title != "" {
             item.set_text(&music_info.title);
         }
@@ -63,9 +64,11 @@ impl PlaylistView {
 
             lookup.duration = music_info.duration as f32;
         }
+        */
     }
 
-    pub fn add_file(&mut self, local_file: &str) {
+    pub fn add_file(&mut self, _local_file: &str) {
+        /*
         if let Some(filename) = get_filename_only(&local_file) {
             let item = self.wrui.create_list_widget_item();
 
@@ -83,6 +86,7 @@ impl PlaylistView {
         } else {
             println!("Skipped adding {} as no proper filename was found", local_file);
         }
+        */
     }
 
     fn drop_files(&mut self, event: &DropEvent) {

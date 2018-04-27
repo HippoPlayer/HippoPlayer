@@ -33,7 +33,6 @@ static char s_temp_string_buffer[8192];
 
 struct PrivData {
     QWidget* parent;
-    void* user_data;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2617,6 +2616,49 @@ struct PUHBoxLayoutFuncs s_h_box_layout_funcs = {
     h_box_layout_update,
 };
 
+static struct PUPluginUI s_plugin_ui = {
+    create_widget,
+    create_push_button,
+    create_painter,
+    create_list_widget_item,
+    create_list_widget,
+    create_label,
+    create_line_edit,
+    create_plain_text_edit,
+    create_slider,
+    create_main_window,
+    create_frameless_window,
+    create_action,
+    create_timer,
+    create_icon,
+    create_font,
+    create_menu,
+    create_menu_bar,
+    create_v_box_layout,
+    create_h_box_layout,
+    0,
+
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+struct PUPluginUI* create_plugin_ui(struct PUBase* user_data, struct PUBase* parent) {
+    struct PUPluginUI* instance = new PUPluginUI;
+    memcpy(instance, &s_plugin_ui, sizeof(PUPluginUI));
+    PrivData* priv_data = new PrivData;
+    priv_data->parent = (QWidget*)parent;
+    instance->priv_data = (PUBase*)priv_data;
+    return instance;
+}
+
+void destroy_plugin_ui(PUPluginUI* plugin_ui) {
+    PrivData* priv_data = (PrivData*)plugin_ui->priv_data;
+    delete priv_data;
+    delete plugin_ui;
+}
+
+
 static struct PU s_pu = {
     create_widget,
     create_push_button,
@@ -2639,21 +2681,13 @@ static struct PU s_pu = {
     create_application,
     create_v_box_layout,
     create_h_box_layout,
+    0,    create_plugin_ui,
+    destroy_plugin_ui,
     0,
 
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-struct PU* PU_create_instance(void* user_data, QWidget* parent) {
-    struct PU* instance = new PU;
-    memcpy(instance, &s_pu, sizeof(PU));
-    PrivData* priv_data = new PrivData;
-    priv_data->parent = parent;
-    priv_data->user_data = user_data;
-    return instance;
-}
 
 
 

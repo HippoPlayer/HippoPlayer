@@ -54,6 +54,7 @@ impl Playlist {
     }
 
     pub fn handle_message(request: &Request) -> Option<Response> {
+        /*
         match request.method {
             "hippo_playlist_get_urls" => {
                 None
@@ -61,12 +62,16 @@ impl Playlist {
 
             _ => None,
         }
+        */
+
+        None
     }
 
     ///
     /// Get the next song to play
     ///
     pub fn get_next_song(&mut self) -> Option<&str> {
+        /*
         let count = self.entries.len();
 
         let mut current_item = self.current_item + 1;
@@ -78,6 +83,9 @@ impl Playlist {
         self.current_item = current_item;
 
         Some(&self.entries[current_item].path)
+        */
+
+        None
     }
 }
 

@@ -1,0 +1,11 @@
+[package]
+name = "playlist"
+version = "0.1.0"
+authors = ["Daniel Collin <daniel@collin.com>"]
+
+[lib]
+name = "playlist"
+crate-type = ["cdylib"]
+
+[dependencies]
+hippo_api = { path = "../../../plugin/api/rust/hippo_api }
