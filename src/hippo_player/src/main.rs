@@ -155,12 +155,13 @@ impl <'a> HippoPlayer<'a> {
     }
 
     fn show_plugin(&mut self, action: &Action) {
+        let plugin_index = action.get_int_data() as usize;
         let widget = self.ui.create_widget();
-        let plugin = &self.plugins.view_plugins[action.get_int_data() as usize];
+        let plugin = &self.plugins.view_plugins[plugin_index];
 
         let _instance = plugin.create_instance(&self.ui, &self.plugin_service, &widget);
 
-        println!("Showing plugin {}", action.get_int_data());
+        println!("Showing plugin {}", plugin_index);
 
         widget.show();
     }
@@ -169,11 +170,12 @@ impl <'a> HippoPlayer<'a> {
         let plugin_menu = self.ui.create_menu();
         plugin_menu.set_title("Views");
 
-        for (_i, plugin) in self.plugins.view_plugins.iter().enumerate() {
+        for (i, plugin) in self.plugins.view_plugins.iter().enumerate() {
             let name = plugin.get_name();
 
             let action = self.ui.create_action();
             action.set_text(&name);
+            action.set_int_data(i as i32);
 
             set_menu_triggered_event!(plugin_menu, self, HippoPlayer, HippoPlayer::show_plugin);
 
