@@ -170,14 +170,14 @@ impl <'a> HippoPlayer<'a> {
         let plugin_menu = self.ui.create_menu();
         plugin_menu.set_title("Views");
 
+        set_menu_triggered_event!(plugin_menu, self, HippoPlayer, HippoPlayer::show_plugin);
+
         for (i, plugin) in self.plugins.view_plugins.iter().enumerate() {
             let name = plugin.get_name();
 
             let action = self.ui.create_action();
             action.set_text(&name);
             action.set_int_data(i as i32);
-
-            set_menu_triggered_event!(plugin_menu, self, HippoPlayer, HippoPlayer::show_plugin);
 
             plugin_menu.add_action(&action);
         }
