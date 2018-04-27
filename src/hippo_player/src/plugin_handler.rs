@@ -8,6 +8,8 @@ use std::ffi::{CStr};
 use std::borrow::Cow;
 
 use service::{PluginService, CHippoServiceAPI};
+use wrui::wrui::*;
+use wrui::ffi_gen::*;
 
 #[derive(Clone, Debug)]
 #[repr(C)]
@@ -35,7 +37,7 @@ pub struct CHippoViewPlugin {
     pub api_version: u64,
     pub name: *const u8,
     pub version: *const u8,
-    pub create: extern "C" fn(service_api: *const CHippoServiceAPI, ui: *const PU, window: PUWidget) -> *mut c_void,
+    pub create: extern "C" fn(service_api: *const CHippoServiceAPI, ui: *const PUPluginUI) -> *mut c_void,
     pub destroy: extern "C" fn(user_data: *mut c_void) -> c_int,
     pub event: extern "C" fn(event: u32),
 }
@@ -57,7 +59,7 @@ pub struct ViewPlugin {
 pub struct ViewPluginInstance {
 	pub plugin: ViewPlugin,
 	pub user_data: u64,
-	pub window: PUWidget,
+	pub ui: PluginUi,
 }
 
 #[cfg(target_os="macos")]
@@ -93,16 +95,17 @@ impl ViewPlugin {
         unsafe { CStr::from_ptr(self.plugin_funcs.name as *const i8).to_string_lossy() }
 	}
 
-	pub fn create_instance(&self, pu: *const PU, plugin_service: &PluginService, window: PUWidget) -> ViewPluginInstance {
+	pub fn create_instance(&self, ui: &Ui, plugin_service: &PluginService, window: &Widget) -> ViewPluginInstance {
+        let plugin_ui = ui.create_plugin_ui(window);
+
 		let user_data = ((self.plugin_funcs).create)(
 			plugin_service.get_c_service_api(),
-			pu,
-			window);
+			plugin_ui.get_c_api());
 
 		ViewPluginInstance {
 			plugin: self.clone(),
 			user_data: user_data as u64,
-			window,
+			ui: plugin_ui,
 		}
 	}
 }

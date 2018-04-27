@@ -20,6 +20,10 @@ void* test_view_create(HippoServiceAPI* services, struct PUPluginUI* ui_funcs) {
     memset(plugin, 0, sizeof(TestViewPlugin));
     plugin->ui = ui_funcs;
 
+    struct PUPushButton button = PU_create_push_button(plugin->ui);
+
+	PUPushButton_set_text(button, "foobar");
+
     return plugin;
 }
 

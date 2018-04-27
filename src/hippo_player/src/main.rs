@@ -158,9 +158,11 @@ impl <'a> HippoPlayer<'a> {
         let widget = self.ui.create_widget();
         let plugin = &self.plugins.view_plugins[action.get_int_data() as usize];
 
-        let _instance = plugin.create_instance(self.ui.get_c_api(), &self.plugin_service, widget.obj.unwrap());
+        let _instance = plugin.create_instance(&self.ui, &self.plugin_service, &widget);
 
         println!("Showing plugin {}", action.get_int_data());
+
+        widget.show();
     }
 
     fn create_plugins_menu(&mut self) -> Menu {
