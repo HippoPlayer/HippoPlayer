@@ -26,6 +26,7 @@ impl View for Playlist {
 #[no_mangle]
 pub fn hippo_view_plugin() -> *const std::os::raw::c_void {
     define_view_plugin!(PLUGIN, b"Playlist\0", b"0.0.1\0", Playlist);
+    // Would be nice to get rid of this
     let ret: *const std::os::raw::c_void = unsafe { std::mem::transmute(&PLUGIN) };
     ret
 }

@@ -40,8 +40,8 @@ macro_rules! define_view_plugin {
             event: None,
         };
 
-        let ret: *const std::os::raw::c_void = unsafe { std::mem::transmute(&$p_name) };
-        ret
+        //let ret: *const std::os::raw::c_void = unsafe { std::mem::transmute(&$p_name) };
+        //ret
     }
 }
 
