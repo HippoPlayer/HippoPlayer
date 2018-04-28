@@ -37,7 +37,8 @@ pub struct CHippoViewPlugin {
     pub api_version: u64,
     pub name: *const u8,
     pub version: *const u8,
-    pub create: extern "C" fn(service_api: *const CHippoServiceAPI, ui: *const PUPluginUI) -> *mut c_void,
+    pub create: extern "C" fn(service: *const CHippoServiceAPI) -> *mut c_void,
+    pub setup_ui: extern "C" fn(user_data: *mut c_void, ui: *const PUPluginUI),
     pub destroy: extern "C" fn(user_data: *mut c_void) -> c_int,
     pub event: extern "C" fn(event: u32),
 }
@@ -99,8 +100,9 @@ impl ViewPlugin {
         let plugin_ui = ui.create_plugin_ui(window);
 
 		let user_data = ((self.plugin_funcs).create)(
-			plugin_service.get_c_service_api(),
-			plugin_ui.get_c_api());
+			plugin_service.get_c_service_api());
+
+		((self.plugin_funcs).setup_ui)(user_data, plugin_ui.get_c_api());
 
 		ViewPluginInstance {
 			plugin: self.clone(),

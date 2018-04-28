@@ -40,19 +40,19 @@ use playlist_view::PlaylistView;
 use song_info::SongInfoView;
 
 struct HippoPlayer<'a> {
-    audio: HippoAudio,
-    plugins: Plugins<'a>,
-    plugin_service: service::PluginService,
-    main_widget: Widget,
-    player_view: PlayerView,
-    playlist_view: PlaylistView,
-    playlist: Playlist,
-    song_info_view: SongInfoView,
-    tool_window_manager: ToolWindowManager,
-    ui: Ui,
-    app: Application,
-    current_song_time: f32,
-    is_playing: bool,
+audio: HippoAudio,
+           plugins: Plugins<'a>,
+           plugin_service: service::PluginService,
+           main_widget: Widget,
+           player_view: PlayerView,
+           playlist_view: PlaylistView,
+           playlist: Playlist,
+           song_info_view: SongInfoView,
+           tool_window_manager: ToolWindowManager,
+           ui: Ui,
+           app: Application,
+           current_song_time: f32,
+           is_playing: bool,
 }
 
 include!(concat!(env!("OUT_DIR"), "/build_id.rs"));
@@ -60,33 +60,33 @@ include!(concat!(env!("OUT_DIR"), "/build_id.rs"));
 impl <'a> HippoPlayer<'a> {
     pub fn new(ui: Ui) -> HippoPlayer<'a> {
         HippoPlayer {
-            audio: HippoAudio::new(),
-            plugins: Plugins::new(),
-            plugin_service: service::PluginService::new(),
-            app: ui.create_application(),
-            main_widget: ui.create_widget(),
-            player_view: PlayerView::new(ui),
-            playlist_view: PlaylistView::new(ui),
-            playlist: Playlist::new(),
-            song_info_view: SongInfoView::new(ui),
-            tool_window_manager: ui.create_tool_window_manager(),
-            ui: ui,
-            current_song_time: -10.0,
-            is_playing: false,
+audio: HippoAudio::new(),
+           plugins: Plugins::new(),
+           plugin_service: service::PluginService::new(),
+           app: ui.create_application(),
+           main_widget: ui.create_widget(),
+           player_view: PlayerView::new(ui),
+           playlist_view: PlaylistView::new(ui),
+           playlist: Playlist::new(),
+           song_info_view: SongInfoView::new(ui),
+           tool_window_manager: ui.create_tool_window_manager(),
+           ui: ui,
+           current_song_time: -10.0,
+           is_playing: false,
         }
     }
 
     fn select_song(&mut self, item: &ListWidgetItem) {
         /*
-        let info = self.play_file(&item.get_string_data());
-        self.current_song_time = info.duration as f32;
-        self.is_playing = true;
+           let info = self.play_file(&item.get_string_data());
+           self.current_song_time = info.duration as f32;
+           self.is_playing = true;
 
-        self.player_view.set_current_time(self.current_song_time);
-        self.player_view.set_title(&info.title);
+           self.player_view.set_current_time(self.current_song_time);
+           self.player_view.set_title(&info.title);
 
-        self.playlist.select_song(item, &info);
-        */
+           self.playlist.select_song(item, &info);
+           */
     }
 
     fn per_sec_update(&mut self) {
@@ -108,50 +108,50 @@ impl <'a> HippoPlayer<'a> {
 
     fn prev_song(&mut self) {
         /*
-        let next_song = self.playlist.get_prev_song();
+           let next_song = self.playlist.get_prev_song();
 
-        if let Some(next) = next_song {
-            self.select_song(&next);
-        } else {
-            self.is_playing = false;
-        }
-        */
+           if let Some(next) = next_song {
+           self.select_song(&next);
+           } else {
+           self.is_playing = false;
+           }
+           */
     }
 
     fn play_song(&mut self) {
         /*
-        if let Some(current) = self.playlist.widget.current_item() {
-            self.select_song(&current);
-        }
-        */
+           if let Some(current) = self.playlist.widget.current_item() {
+           self.select_song(&current);
+           }
+           */
     }
 
     fn next_song(&mut self) {
         /*
-        let next_song = self.playlist.get_next_song();
+           let next_song = self.playlist.get_next_song();
 
-        if let Some(next) = next_song {
-            self.select_song(&next);
-        } else {
-            self.is_playing = false;
-        }
-        */
+           if let Some(next) = next_song {
+           self.select_song(&next);
+           } else {
+           self.is_playing = false;
+           }
+           */
     }
 
     fn before_quit(&mut self) {
         /*
-        if let Err(err) = self.playlist.save_playlist("playlist.json") {
-            println!("Unable to save playlist {:?}", err);
-        }
-        */
+           if let Err(err) = self.playlist.save_playlist("playlist.json") {
+           println!("Unable to save playlist {:?}", err);
+           }
+           */
     }
 
     fn add_files(&mut self) {
         /*
-        for url in self.app.get_files().iter().filter(|u| u.is_local_file()) {
-            self.playlist.add_file(&url.to_local_file());
-        }
-        */
+           for url in self.app.get_files().iter().filter(|u| u.is_local_file()) {
+           self.playlist.add_file(&url.to_local_file());
+           }
+           */
     }
 
     fn show_plugin(&mut self, action: &Action) {
@@ -194,10 +194,10 @@ impl <'a> HippoPlayer<'a> {
         //self.playlist.setup();
 
         /*
-        if let Err(err) = self.playlist.load_playlist("playlist.json") {
-            println!("Unable to load playlist {:?}", err);
-        }
-        */
+           if let Err(err) = self.playlist.load_playlist("playlist.json") {
+           println!("Unable to load playlist {:?}", err);
+           }
+           */
 
         let timer = self.ui.create_timer();
         let layout = self.ui.create_v_box_layout();
@@ -255,10 +255,10 @@ impl <'a> HippoPlayer<'a> {
         // temp create a instance for testing
 
         /*
-        for plugin in &self.plugins.view_plugins {
-            let _user_data = ((plugin.plugin_funcs).create)(self.plugin_service.get_c_service_api(), self.ui.get_c_api()) as u64;
-        }
-        */
+           for plugin in &self.plugins.view_plugins {
+           let _user_data = ((plugin.plugin_funcs).create)(self.plugin_service.get_c_service_api(), self.ui.get_c_api()) as u64;
+           }
+           */
 
         //main_window.show();
         //self.song_info_view.show();

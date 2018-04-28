@@ -15,16 +15,21 @@ typedef struct TestViewPlugin {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void* test_view_create(HippoServiceAPI* services, struct PUPluginUI* ui_funcs) {
+void* test_view_create(HippoServiceAPI* services) {
     TestViewPlugin* plugin = malloc(sizeof(TestViewPlugin));
     memset(plugin, 0, sizeof(TestViewPlugin));
+    return plugin;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void test_view_setup_ui(void* user_data, struct PUPluginUI* ui_funcs) {
+    TestViewPlugin* plugin = (TestViewPlugin*)user_data;
     plugin->ui = ui_funcs;
 
     struct PUPushButton button = PU_create_push_button(plugin->ui);
 
 	PUPushButton_set_text(button, "foobar");
-
-    return plugin;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -48,6 +53,7 @@ static HippoViewPlugin s_test_view = {
     "TestView",
     "0.0.1",
     test_view_create,
+    test_view_setup_ui,
     test_view_destroy,
     test_view_event,
 };

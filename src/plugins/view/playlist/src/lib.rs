@@ -11,11 +11,13 @@ struct Playlist {
 }
 
 impl View for Playlist {
-    fn new(_service: &Service, ui: PluginUi) -> Playlist {
+    fn new(_service: &Service) -> Playlist {
+        Playlist { _dummy: 0 }
+    }
+
+    fn setup_ui(&mut self, ui: PluginUi) {
         let button = ui.create_push_button();
         button.set_text("foo from rust");
-
-        Playlist { _dummy: 0 }
     }
 
     fn destroy(&mut self) {
@@ -30,4 +32,3 @@ pub fn hippo_view_plugin() -> *const std::os::raw::c_void {
     let ret: *const std::os::raw::c_void = unsafe { std::mem::transmute(&PLUGIN) };
     ret
 }
-

@@ -269,7 +269,8 @@ typedef struct HippoViewPlugin {
 	uint64_t api_version;
 	const char* name;
 	const char* version;
-	void* (*create)(HippoServiceAPI* services, struct PUPluginUI* ui_funcs);
+	void* (*create)(HippoServiceAPI* services);
+	void (*setup_ui)(void* user_data, struct PUPluginUI* ui_funcs);
 	int (*destroy)(void* user_data);
 	void (*event)(int event);
 	int (*save)(void* user_data, struct HippoSaveAPI* save_api);

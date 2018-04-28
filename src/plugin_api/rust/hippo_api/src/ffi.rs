@@ -239,10 +239,8 @@ pub struct HippoViewPlugin {
     pub api_version: u64,
     pub name: *const u8,
     pub version: *const u8,
-    pub create: ::std::option::Option<
-        fn(services: *const HippoServiceAPI, ui_funcs: *const PUPluginUI)
-            -> *mut ::std::os::raw::c_void,
-    >,
+    pub create: ::std::option::Option<fn(services: *const HippoServiceAPI) -> *mut ::std::os::raw::c_void >,
+    pub setup_ui: ::std::option::Option<fn(user_data: *mut c_void, ui_funcs: *const PUPluginUI)>,
     pub destroy: ::std::option::Option<
         fn(user_data: *mut ::std::os::raw::c_void),
     >,
