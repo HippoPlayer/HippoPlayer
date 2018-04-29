@@ -7,7 +7,7 @@ extern crate serde_derive;
 extern crate serde;
 extern crate serde_json;
 extern crate rmp_rpc;
-extern crate rmp;
+pub extern crate rmp;
 
 #[macro_use]
 extern crate wrui;
@@ -26,6 +26,8 @@ mod song_info;
 
 mod service;
 pub mod service_ffi;
+
+pub use rmp as msgpack;
 
 use plugin_handler::{Plugins};
 use audio::{HippoAudio, MusicInfo};

@@ -1,11 +1,13 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::fs;
 use std::io;
 
+
 use std::io::Read;
-use rmp::Marker;
-use rmp::encode::{ValueWriteError};
+use msgpack;
+use msgpack::Marker;
+use msgpack::encode::{ValueWriteError};
 
 pub struct IoApi {
     pub saved_allocs: HashMap<*const u8, Box<[u8]>>,
@@ -40,18 +42,26 @@ const REQUEST_MESSAGE: u64 = 0;
 const RESPONSE_MESSAGE: u64 = 1;
 const NOTIFICATION_MESSAGE: u64 = 2;
 
+struct PluginSubscribe {
+    message_types: HashSet<'static str>,
+}
+
 struct MessageApi {
     request_id: u32,
+    subscriptions: HashMap<u64, PluginSubscribe>,
 }
 
 impl MessageApi {
+    //fn subscribe(&mut self,
+
+
     fn begin_request(&mut self, name: &str, size_hint: usize) -> Result<Message, ValueWriteError> {
         let mut message = Message::new(size_hint);
 
         // Construct a MessagePack-RPC message
-        ::rmp::encode::write_array_len(&mut message.data, 4)?;
-        ::rmp::encode::write_uint(&mut message.data, REQUEST_MESSAGE)?;
-        ::rmp::encode::write_str(&mut message.data, name)?;
+        msgpack::encode::write_array_len(&mut message.data, 4)?;
+        msgpack::encode::write_uint(&mut message.data, REQUEST_MESSAGE)?;
+        msgpack::encode::write_str(&mut message.data, name)?;
 
         // This is to keep track of that the user acutally write some data. Otherwise we add
         // something dummy to make sure that we have a valid message
@@ -74,11 +84,11 @@ impl Message {
     }
 
     fn write_str(&mut self, data: &str) -> Result<(), ValueWriteError> {
-        ::rmp::encode::write_str(&mut self.data, data)
+        msgpack::encode::write_str(&mut self.data, data)
     }
 
     fn write_array_len(&mut self, size: u32) -> Result<Marker, ValueWriteError> {
-        ::rmp::encode::write_array_len(&mut self.data, size)
+        msgpack::encode::write_array_len(&mut self.data, size)
     }
 }
 
