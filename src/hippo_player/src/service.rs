@@ -4,7 +4,8 @@ use std::fs;
 use std::io;
 
 use std::io::Read;
-use rmp;
+use rmp::Marker;
+use rmp::encode::{ValueWriteError};
 
 pub struct IoApi {
     pub saved_allocs: HashMap<*const u8, Box<[u8]>>,
@@ -44,13 +45,13 @@ struct MessageApi {
 }
 
 impl MessageApi {
-    fn begin_request(&mut self, name: &str, size_hint: usize) -> Result<Message> {
+    fn begin_request(&mut self, name: &str, size_hint: usize) -> Result<Message, ValueWriteError> {
         let mut message = Message::new(size_hint);
 
         // Construct a MessagePack-RPC message
-        rmp::encode::write_array_len(&mut message.data, 4)?;
-        rmp::encode::write_uint(&mut message.data, REQUEST_MESSAGE)?;
-        rmp::encode::write_str(&mut message.data, name)?;
+        ::rmp::encode::write_array_len(&mut message.data, 4)?;
+        ::rmp::encode::write_uint(&mut message.data, REQUEST_MESSAGE)?;
+        ::rmp::encode::write_str(&mut message.data, name)?;
 
         // This is to keep track of that the user acutally write some data. Otherwise we add
         // something dummy to make sure that we have a valid message
@@ -60,8 +61,8 @@ impl MessageApi {
 }
 
 pub struct Message {
-    data: Vec<u8>
-    header_size,
+    data: Vec<u8>,
+    header_size: usize,
 }
 
 impl Message {
@@ -73,11 +74,11 @@ impl Message {
     }
 
     fn write_str(&mut self, data: &str) -> Result<(), ValueWriteError> {
-        rmp::encode::write_str(self.data, data)
+        ::rmp::encode::write_str(&mut self.data, data)
     }
 
     fn write_array_len(&mut self, size: u32) -> Result<Marker, ValueWriteError> {
-        rmp::encode::write_array_len(self.data, data)
+        ::rmp::encode::write_array_len(&mut self.data, size)
     }
 }
 

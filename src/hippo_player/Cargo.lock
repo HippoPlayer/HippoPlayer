@@ -191,6 +191,7 @@ version = "0.1.0"
 dependencies = [
  "dynamic_reload 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "hippo_api 0.1.0",
+ "rmp 0.8.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "rmp-rpc 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rodio 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.27 (registry+https://github.com/rust-lang/crates.io-index)",

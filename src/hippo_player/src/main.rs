@@ -7,6 +7,7 @@ extern crate serde_derive;
 extern crate serde;
 extern crate serde_json;
 extern crate rmp_rpc;
+extern crate rmp;
 
 #[macro_use]
 extern crate wrui;
