@@ -3,11 +3,10 @@ use walkdir::{WalkDir, DirEntry};
 use std::os::raw::{c_int, c_void, c_char};
 use std::sync::Arc;
 use std::ffi::CString;
-use wrui::ffi_gen::{PU, PUWidget};
 use std::ffi::{CStr};
 use std::borrow::Cow;
 
-use service::{PluginService, CHippoServiceAPI};
+use service_ffi::{PluginService, CHippoServiceAPI};
 use wrui::wrui::*;
 use wrui::ffi_gen::*;
 

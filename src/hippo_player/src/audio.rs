@@ -7,7 +7,7 @@ use std::os::raw::c_void;
 use std::time::Duration;
 //use std::ffi::CStr;
 
-use service::PluginService;
+use service_ffi::PluginService;
 
 // #[derive(Clone)]
 // pub enum DecodeEvent {

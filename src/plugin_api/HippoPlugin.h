@@ -165,8 +165,13 @@ typedef struct HippoMessageAPI {
 	void (*subscribe)(struct HippoMessageAPI* priv_data, void* instance_data, HippoEventType type);
 	void (*unsubscribe)(struct HippoMessageAPI* priv_data, void* instance_data, HippoEventType type);
 
-	HippoMessageHandle (*begin_message)();
+	int (*message_get_id)(HippoMessageHandle handle);
 
+	HippoMessageHandle (*write_begin_message)(struct HippoMessageAPI* priv_data, const char* id, int size_hint);
+	int (*write_blob)(HippoMessageHandle handle, void* data, int size);
+	int (*write_array_count)(HippoMessageHandle handle, int count);
+	int (*write_str)(HippoMessageHandle handle, const char* input);
+	void (*write_end_message)(HippoMessageHandle handle);
 
 	struct HippoEventAPI* priv_data;
 } HippoMessageAPI;

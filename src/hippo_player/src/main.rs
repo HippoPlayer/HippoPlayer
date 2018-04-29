@@ -22,7 +22,7 @@ mod plugin_handler;
 mod song_db;
 mod song_info;
 
-pub mod service;
+pub mod service_ffi;
 
 use plugin_handler::{Plugins};
 use audio::{HippoAudio, MusicInfo};
@@ -42,7 +42,7 @@ use song_info::SongInfoView;
 struct HippoPlayer<'a> {
 audio: HippoAudio,
            plugins: Plugins<'a>,
-           plugin_service: service::PluginService,
+           plugin_service: service_ffi::PluginService,
            main_widget: Widget,
            player_view: PlayerView,
            playlist_view: PlaylistView,
@@ -60,9 +60,9 @@ include!(concat!(env!("OUT_DIR"), "/build_id.rs"));
 impl <'a> HippoPlayer<'a> {
     pub fn new(ui: Ui) -> HippoPlayer<'a> {
         HippoPlayer {
-audio: HippoAudio::new(),
+           audio: HippoAudio::new(),
            plugins: Plugins::new(),
-           plugin_service: service::PluginService::new(),
+           plugin_service: service_ffi::PluginService::new(),
            app: ui.create_application(),
            main_widget: ui.create_widget(),
            player_view: PlayerView::new(ui),
