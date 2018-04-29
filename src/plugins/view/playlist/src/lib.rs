@@ -2,7 +2,6 @@
 extern crate hippo_api;
 
 use hippo_api::view::View;
-use hippo_api::HippoViewPlugin;
 use hippo_api::wrui::PluginUi;
 use hippo_api::service::Service;
 

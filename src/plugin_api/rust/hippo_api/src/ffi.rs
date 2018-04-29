@@ -52,15 +52,17 @@ pub struct CHippoPlaybackPlugin {
     pub private_data: u64,
 }
 
+unsafe impl Sync for CHippoViewPlugin {}
+
 #[derive(Clone, Debug)]
 #[repr(C)]
 pub struct CHippoViewPlugin {
     pub api_version: u64,
     pub name: *const u8,
     pub version: *const u8,
-    pub create: extern "C" fn(service: *const CHippoServiceAPI) -> *mut c_void,
-    pub setup_ui: extern "C" fn(user_data: *mut c_void, ui: *const PUPluginUI),
-    pub destroy: extern "C" fn(user_data: *mut c_void) -> c_int,
-    pub event: extern "C" fn(event: u32),
+    pub create: Option<extern "C" fn(service: *const CHippoServiceAPI) -> *mut c_void>,
+    pub setup_ui: Option<extern "C" fn(user_data: *mut c_void, ui: *const PUPluginUI)>,
+    pub destroy: Option<extern "C" fn(user_data: *mut c_void)>,
+    pub event: Option<extern "C" fn(event: u32)>,
 }
 
