@@ -137,7 +137,10 @@ RustCrate {
 RustProgram {
     Name = "hippo_player",
     CargoConfig = "src/hippo_player/Cargo.toml",
-    Sources = get_rs_src("src/hippo_player/src"),
+    Sources = {
+        get_rs_src("src/hippo_player/src"),
+		get_rs_src("src/plugin_api/rust/hippo_api"),
+    },
     Depends = { "wrui_rust", "wrui_qt" },
 }
 

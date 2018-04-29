@@ -1,7 +1,7 @@
 use service::Service;
 use wrui::ffi_gen::PUPluginUI;
 use wrui::wrui::PluginUi;
-use std::os::raw::{c_uchar, c_void};
+use std::os::raw::{c_void};
 use std::mem::transmute;
 use ffi::{CHippoServiceAPI};
 

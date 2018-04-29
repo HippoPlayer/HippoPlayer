@@ -65,10 +65,10 @@ impl ViewPlugin {
 	pub fn create_instance(&self, ui: &Ui, plugin_service: &PluginService, window: &Widget) -> ViewPluginInstance {
         let plugin_ui = ui.create_plugin_ui(window);
 
-		let user_data = ((self.plugin_funcs).create)(
+		let user_data = ((self.plugin_funcs).create).unwrap()(
 			plugin_service.get_c_service_api());
 
-		((self.plugin_funcs).setup_ui)(user_data, plugin_ui.get_c_api());
+		((self.plugin_funcs).setup_ui).unwrap()(user_data, plugin_ui.get_c_api());
 
 		ViewPluginInstance {
 			plugin: self.clone(),

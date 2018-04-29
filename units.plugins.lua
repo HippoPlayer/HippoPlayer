@@ -339,8 +339,7 @@ RustSharedLibrary {
 	CargoConfig = "src/plugins/view/playlist/Cargo.toml",
 	Sources = {
 		get_rs_src("src/plugins/view/playlist"),
-		get_rs_src("api/rust/prodbg"),
-		get_rs_src("api/rust/prodbg_ui"),
+		get_rs_src("src/plugin_api/rust/hippo_api"),
 	}
 }
 
