@@ -156,7 +156,7 @@ typedef enum HippoEventType {
 	HippoEventType_PlaylistChanges,
 } HippoEventType;
 
-typedef uint64_t HippoMessageHandle;
+typedef void* HippoMessageHandle;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Plugins can use the MessageAPI to subscribe to events and post data that is being requested
@@ -165,10 +165,12 @@ typedef struct HippoMessageAPI {
 	void (*subscribe)(struct HippoMessageAPI* priv_data, void* instance_data, HippoEventType type);
 	void (*unsubscribe)(struct HippoMessageAPI* priv_data, void* instance_data, HippoEventType type);
 
+	HippoMessageHandle (*begin_request)(struct HippoMessageAPI* priv_data, const char* id, int size_hint);
+	HippoMessageHandle (*begin_notification)(struct HippoMessageAPI* priv_data, const char* id, int size_hint);
+
 	int (*message_get_id)(HippoMessageHandle handle);
 
-	HippoMessageHandle (*write_begin_message)(struct HippoMessageAPI* priv_data, const char* id, int size_hint);
-	int (*write_blob)(HippoMessageHandle handle, void* data, int size);
+	int (*write_formatted_blob)(HippoMessageHandle handle, void* data, int size);
 	int (*write_array_count)(HippoMessageHandle handle, int count);
 	int (*write_str)(HippoMessageHandle handle, const char* input);
 	void (*write_end_message)(HippoMessageHandle handle);
