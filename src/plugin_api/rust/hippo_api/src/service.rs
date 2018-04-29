@@ -1,13 +1,13 @@
-use std::os::raw::{c_void, c_uchar};
-use ffi::HippoServiceAPI;
+use std::os::raw::{c_uchar, c_void};
+use ffi::CHippoServiceAPI;
 
 #[derive(Clone, Copy)]
 pub struct Service {
-    api: *const HippoServiceAPI,
+    api: *const CHippoServiceAPI,
 }
 
 impl Service {
-    pub fn new(api: *const HippoServiceAPI) -> Service {
+    pub fn new(api: *const CHippoServiceAPI) -> Service {
         Service { api }
     }
 }

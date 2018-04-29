@@ -1,5 +1,6 @@
 extern crate rodio;
 extern crate walkdir;
+extern crate hippo_api;
 
 #[macro_use]
 extern crate serde_derive;
@@ -22,6 +23,7 @@ mod plugin_handler;
 mod song_db;
 mod song_info;
 
+mod service;
 pub mod service_ffi;
 
 use plugin_handler::{Plugins};
@@ -40,19 +42,19 @@ use playlist_view::PlaylistView;
 use song_info::SongInfoView;
 
 struct HippoPlayer<'a> {
-audio: HippoAudio,
-           plugins: Plugins<'a>,
-           plugin_service: service_ffi::PluginService,
-           main_widget: Widget,
-           player_view: PlayerView,
-           playlist_view: PlaylistView,
-           playlist: Playlist,
-           song_info_view: SongInfoView,
-           tool_window_manager: ToolWindowManager,
-           ui: Ui,
-           app: Application,
-           current_song_time: f32,
-           is_playing: bool,
+    audio: HippoAudio,
+    plugins: Plugins<'a>,
+    plugin_service: service_ffi::PluginService,
+    main_widget: Widget,
+    player_view: PlayerView,
+    playlist_view: PlaylistView,
+    playlist: Playlist,
+    song_info_view: SongInfoView,
+    tool_window_manager: ToolWindowManager,
+    ui: Ui,
+    app: Application,
+    current_song_time: f32,
+    is_playing: bool,
 }
 
 include!(concat!(env!("OUT_DIR"), "/build_id.rs"));

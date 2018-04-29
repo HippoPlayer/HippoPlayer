@@ -3,7 +3,7 @@ use wrui::ffi_gen::PUPluginUI;
 use wrui::wrui::PluginUi;
 use std::os::raw::{c_uchar, c_void};
 use std::mem::transmute;
-use ffi::HippoServiceAPI;
+use ffi::{CHippoServiceAPI};
 
 pub trait View {
     fn new(service: &Service) -> Self;
@@ -11,7 +11,7 @@ pub trait View {
     fn destroy(&mut self) {}
 }
 
-pub fn create_view_instance<T: View>(service_api: *const ::ffi::HippoServiceAPI) -> *mut c_void {
+pub fn create_view_instance<T: View>(service_api: *const CHippoServiceAPI) -> *mut c_void {
     let service = Service::new(service_api);
     let instance = unsafe { transmute(Box::new(T::new(&service))) };
     instance

@@ -1,74 +1,13 @@
-use std::fs::File;
-use std::os::raw::{c_int, c_void, c_char};
+use std::os::raw::{c_void, c_char};
 use std::ffi::CStr;
-use std::fs;
 use std::ptr;
-use std::io;
 use std::mem::transmute;
 use std::slice;
 use std::io::Read;
-use std::collections::HashMap;
 use song_db::SongDb;
-
-struct IoApi {
-    pub saved_allocs: HashMap<*const u8, Box<[u8]>>,
-}
-
-impl IoApi {
-    fn exists(&self, target: &str) -> i32 {
-        match fs::metadata(target) {
-            Err(_e) => 0,
-            Ok(res) => if res.is_file() { 1 } else { 0 },
-        }
-    }
-
-    fn open(&self, stream: &str) -> io::Result<File> {
-        File::open(stream)
-    }
-
-    fn read_file_to_memory(&self, filename: &str) -> io::Result<Box<[u8]>> {
-        let mut file = File::open(filename)?;
-        let size = file.metadata()?.len();
-        let mut dest_mem = vec![0; size as usize].into_boxed_slice();
-        file.read(&mut dest_mem)?;
-        Ok(dest_mem)
-    }
-}
-
-struct FileWrapper {
-    file: fs::File,
-}
-
-#[repr(C)]
-#[derive(Debug)]
-pub struct CHippoIoAPI {
-    pub exists: extern "C" fn(priv_data: *const c_void, target: *const u8) -> c_int,
-    pub read_file_to_memory: extern "C" fn(priv_data: *const c_void, filename: *const u8, target: *mut *const c_void, target_size: *mut u64) -> i64,
-    pub free_file_to_memory: extern "C" fn(priv_data: *const c_void, handle: *const c_void) -> i64,
-    pub open: extern "C" fn(priv_data: *const c_void, target: *const u8, handle: *mut *const c_void) -> i64,
-    pub close: extern "C" fn(handle: *const c_void) -> i64,
-    pub size: extern "C" fn(handle: *const c_void, res: *mut u64) -> i64,
-    pub read: extern "C" fn(handle: *const c_void, target: *mut u8, size: u64) -> i64,
-    pub seek: extern "C" fn(handle: *const c_void, seek_type: i32, seek_step: u64) -> i64,
-    pub priv_data: *const c_void,
-}
-
-#[repr(C)]
-#[derive(Debug)]
-pub struct CMetadataAPI {
-    pub get_key: extern "C" fn(priv_data: *const c_void, resource: *const i8, key_type: u32, error_code: *mut i32) -> *const c_void,
-    pub set_key: extern "C" fn(priv_data: *const c_void, resource: *const i8, sub_song: u32, value: *const i8, key_type: *const i8) -> i32,
-    pub set_key_with_encoding: extern "C" fn(priv_data: *const c_void, resource: *const i8, sub_song: u32, value: *const i8, key_type: u32, encoding: u32) -> i32,
-    pub priv_data: *const c_void,
-}
-
-#[repr(C)]
-#[derive(Debug)]
-pub struct CHippoServiceAPI {
-    pub get_io_api: extern "C" fn(priv_data: *const c_void, version: i32) -> *const CHippoIoAPI,
-    pub get_metadata_api: extern "C" fn(priv_data: *const c_void, version: i32) -> *const CMetadataAPI,
-    pub private_data: *const c_void,	// memory handle
-}
+use std::collections::HashMap;
+use service::{IoApi, FileWrapper};
+use hippo_api::ffi::{CHippoIoAPI, CMetadataAPI, CHippoServiceAPI};
 
 extern "C" fn file_exists_wrapper(priv_data: *const c_void, target: *const u8) -> i32 {
     let file_api: &mut IoApi = unsafe { &mut *(priv_data as *mut IoApi) };
@@ -132,7 +71,6 @@ extern "C" fn file_open_wrapper(priv_data: *const c_void, target: *const u8, han
         }
 
         Ok(f) => {
-            println!("open file ok!");
             let file_wrapper: *const c_void = unsafe { transmute(Box::new(FileWrapper { file: f })) };
             unsafe { *handle = file_wrapper };
             0
