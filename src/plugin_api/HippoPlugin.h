@@ -156,24 +156,29 @@ typedef enum HippoEventType {
 	HippoEventType_PlaylistChanges,
 } HippoEventType;
 
-typedef void* HippoMessageHandle;
+struct HippoMessagePrivData;
+
+typedef struct HippoMessage {
+	int (*message_get_id)(struct HippoMessagePrivData* handle);
+	int (*write_formatted_blob)(struct HippoMessagePrivData* handle, void* data, int size);
+	int (*write_array_count)(struct HippoMessagePrivData* handle, int count);
+	int (*write_str)(struct HippoMessagePrivData* handle, const char* input);
+
+    struct HippoMessagePrivData* priv_data;
+} HippoMessage;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Plugins can use the MessageAPI to subscribe to events and post data that is being requested
 
 typedef struct HippoMessageAPI {
-	void (*subscribe)(struct HippoMessageAPI* priv_data, void* instance_data, HippoEventType type);
-	void (*unsubscribe)(struct HippoMessageAPI* priv_data, void* instance_data, HippoEventType type);
+	void (*subscribe)(struct HippoMessageAPI* priv_data, void* instance_data, const char* type);
+	void (*unsubscribe)(struct HippoMessageAPI* priv_data, void* instance_data, const char* type);
 
-	HippoMessageHandle (*begin_request)(struct HippoMessageAPI* priv_data, const char* id, int size_hint);
-	HippoMessageHandle (*begin_notification)(struct HippoMessageAPI* priv_data, const char* id, int size_hint);
+	struct HippoMessage* (*begin_request)(struct HippoMessageAPI* priv_data, const char* id, int size_hint);
+	struct HippoMessage* (*begin_notification)(struct HippoMessageAPI* priv_data, const char* id, int size_hint);
 
-	int (*message_get_id)(HippoMessageHandle handle);
-
-	int (*write_formatted_blob)(HippoMessageHandle handle, void* data, int size);
-	int (*write_array_count)(HippoMessageHandle handle, int count);
-	int (*write_str)(HippoMessageHandle handle, const char* input);
-	void (*write_end_message)(HippoMessageHandle handle);
+	void (*end_request)(struct HippoMessageAPI* priv_data, HippoMessage* message);
+	void (*end_notification)(struct HippoMessageAPI* priv_data, HippoMessage* message);
 
 	struct HippoEventAPI* priv_data;
 } HippoMessageAPI;
