@@ -6,21 +6,74 @@ use hippo_api::wrui::PluginUi;
 use hippo_api::service::Service;
 
 struct Playlist {
-    _dummy: u32,
+    widget: Option<ListWidget>,
+    ui: Option<PluginUi>,
 }
 
 impl View for Playlist {
     fn new(_service: &Service) -> Playlist {
-        Playlist { _dummy: 0 }
+        Playlist {
+            widget: None,
+            ui: None,
+        }
     }
 
     fn setup_ui(&mut self, ui: PluginUi) {
-        let button = ui.create_push_button();
-        button.set_text("foo from rust");
+        let widget = ui.create_list_widget();
+
+        widget.set_drag_enabled(true);
+        widget.set_accept_drops(true);
+        widget.set_drop_indicator_shown(true);
+
+        set_drag_enter_event!(self.widget, self, Playlist, Playlist::drag_enter);
+        set_drop_event!(self.widget, self, Playlist, Playlist::drop_files);
+
+        widget.resize(500, 500);
+
+        self.ui = Some(ui);
+        self.widget = Some(widget)
     }
 
     fn destroy(&mut self) {
         println!("Destroy plugin");
+    }
+}
+
+impl Playlist {
+    fn get_filename_only(filename: &str) -> Option<&str> {
+        Path::new(filename).file_name().and_then(OsStr::to_str)
+    }
+
+    fn drop_files(&mut self, event: &DropEvent) {
+        for url in event.mime_data().urls().iter().filter(|u| u.is_local_file()) {
+            self.add_file(&url.to_local_file());
+        }
+
+        event.accept_proposed_action();
+    }
+
+    fn add_file(&mut self, local_file: &str) {
+        if let Some(filename) = Self::get_filename_only(&local_file) {
+            let item = self.ui.create_list_widget_item();
+
+            // Check if we already have this file added then we can use the title again
+
+            if let Some(entry) = self.playlist_data.get(local_file) {
+                item.set_text(&entry.title);
+            } else {
+                item.set_text(filename);
+            }
+
+            item.set_string_data(&local_file);
+
+            self.widget.add_item(&item);
+        } else {
+            println!("Skipped adding {} as no proper filename was found", local_file);
+        }
+    }
+
+    fn drag_enter(&mut self, event: &DragEnterEvent) {
+        event.accept();
     }
 }
 
