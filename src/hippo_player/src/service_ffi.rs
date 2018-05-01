@@ -6,8 +6,8 @@ use std::slice;
 use std::io::Read;
 use song_db::SongDb;
 use std::collections::HashMap;
-use service::{IoApi, FileWrapper};
-use hippo_api::ffi::{CHippoIoAPI, CMetadataAPI, CHippoServiceAPI};
+use service::{IoApi, FileWrapper, Message, MessageApi};
+use hippo_api::ffi::*;
 
 extern "C" fn file_exists_wrapper(priv_data: *const c_void, target: *const u8) -> i32 {
     let file_api: &mut IoApi = unsafe { &mut *(priv_data as *mut IoApi) };
@@ -119,6 +119,10 @@ extern "C" fn get_metadata_api(priv_data: *const c_void, _version: i32) ->  *con
     service_api.get_c_metadatao_api()
 }
 
+extern "C" fn get_message_api(priv_data: *const c_void, _version: i32) ->  *const CMessageAPI {
+    let service_api: &mut ServiceApi = unsafe { &mut *(priv_data as *mut ServiceApi) };
+    service_api.get_c_message_api()
+}
 
 extern "C" fn metadata_get_key(_priv_data: *const c_void, _resource: *const i8, _key_type: u32, error_code: *mut i32) -> *const c_void {
     // not implemented yet
@@ -144,9 +148,62 @@ extern "C" fn metadata_set_key_with_encoding(_priv_data: *const c_void, _resourc
     -1
 }
 
+extern "C" fn message_get_id(_priv_data: *const c_void) -> u32 {
+    0
+}
+
+extern "C" fn message_write_blob(priv_data: *const c_void, _data: *const c_void, _len: u32) -> i32 {
+    let _message: &mut Message = unsafe { &mut *(priv_data as *mut Message) };
+    0
+}
+
+extern "C" fn message_write_array_count(priv_data: *const c_void, count: u32) -> i32 {
+    let message: &mut Message = unsafe { &mut *(priv_data as *mut Message) };
+    // TODO: Proper error handling
+    message.write_array_len(count).unwrap();
+    1
+}
+
+extern "C" fn message_write_str(priv_data: *const c_void, name: *const i8) -> i32 {
+    let message: &mut Message = unsafe { &mut *(priv_data as *mut Message) };
+    let name_id = unsafe { CStr::from_ptr(name as *const c_char) };
+    // TODO: Proper error handling
+    message.write_str(&name_id.to_string_lossy()).unwrap();
+    1
+}
+
+extern "C" fn mesage_api_begin_request(priv_data: *const c_void, id: *const i8) -> *const c_void {
+    let message_api: &mut MessageApi = unsafe { &mut *(priv_data as *mut MessageApi) };
+    let name_id = unsafe { CStr::from_ptr(id as *const c_char) };
+
+    println!("mesage_api_begin_request");
+
+    // TODO: Proper error handling
+    let message = message_api.begin_request(&name_id.to_string_lossy()).unwrap();
+
+    let message_ptr: *const c_void = unsafe { transmute(message) };
+
+    let message_c = Box::new(CMessage {
+        priv_data: message_ptr,
+        get_id: message_get_id,
+        write_blob: message_write_blob,
+        write_str: message_write_str,
+        write_array_count: message_write_array_count,
+    });
+
+    let message_wrap: *const c_void = unsafe { transmute(message_c) };
+    message_wrap
+}
+
+extern "C" fn mesage_api_end_request(priv_data: *const c_void, _message: *const c_void) {
+    let _message_api: &mut MessageApi = unsafe { &mut *(priv_data as *mut MessageApi) };
+    println!("mesage_api_end_request")
+}
+
 pub struct ServiceApi {
     pub c_io_api: *const CHippoIoAPI,
     pub c_metadata_api: *const CMetadataAPI,
+    pub c_message_api: *const CMessageAPI,
 }
 
 impl ServiceApi {
@@ -156,6 +213,10 @@ impl ServiceApi {
 
     fn get_c_metadatao_api(&self) -> *const CMetadataAPI {
         self.c_metadata_api
+    }
+
+    fn get_c_message_api(&self) -> *const CMessageAPI {
+        self.c_message_api
     }
 
     fn get_song_db<'a>(&'a self) -> &'a SongDb {
@@ -196,9 +257,22 @@ impl ServiceApi {
 
         let c_metadata_api: *const CMetadataAPI = unsafe { transmute(c_metadata_api) };
 
+        // Message API
+
+        let message_api: *const c_void = unsafe { transmute(Box::new(MessageApi::new())) };
+
+        let c_message_api = Box::new(CMessageAPI {
+           priv_data: message_api,
+           begin_request: mesage_api_begin_request,
+           end_request: mesage_api_end_request,
+        });
+
+        let c_message_api: *const CMessageAPI = unsafe { transmute(c_message_api) };
+
         ServiceApi {
             c_io_api,
-            c_metadata_api
+            c_metadata_api,
+            c_message_api
         }
     }
 }
@@ -214,6 +288,7 @@ impl PluginService {
         let c_service_api = Box::new(CHippoServiceAPI {
             get_io_api: get_io_api_wrapper,
             get_metadata_api: get_metadata_api,
+            get_message_api: get_message_api,
             private_data: service_api,
         });
 

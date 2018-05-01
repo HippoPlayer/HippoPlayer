@@ -26,9 +26,28 @@ pub struct CMetadataAPI {
 
 #[repr(C)]
 #[derive(Debug)]
+pub struct CMessageAPI {
+    pub priv_data: *const c_void,
+    pub begin_request: extern "C" fn(priv_data: *const c_void, id: *const i8) -> *const c_void,
+    pub end_request: extern "C" fn(priv_data: *const c_void, message: *const c_void),
+}
+
+#[repr(C)]
+#[derive(Debug)]
+pub struct CMessage {
+    pub priv_data: *const c_void,
+    pub get_id: extern "C" fn(priv_data: *const c_void) -> u32,
+    pub write_blob: extern "C" fn(priv_data: *const c_void, data: *const c_void, len: u32) -> i32,
+    pub write_array_count: extern "C" fn(priv_data: *const c_void, len: u32) -> i32,
+    pub write_str: extern "C" fn(priv_data: *const c_void, data: *const c_char) -> i32,
+}
+
+#[repr(C)]
+#[derive(Debug)]
 pub struct CHippoServiceAPI {
     pub get_io_api: extern "C" fn(priv_data: *const c_void, version: i32) -> *const CHippoIoAPI,
     pub get_metadata_api: extern "C" fn(priv_data: *const c_void, version: i32) -> *const CMetadataAPI,
+    pub get_message_api: extern "C" fn(priv_data: *const c_void, version: i32) -> *const CMessageAPI,
     pub private_data: *const c_void,	// memory handle
 }
 

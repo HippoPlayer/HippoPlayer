@@ -52,17 +52,26 @@ pub struct Message {
     header_size: usize,
 }
 
-struct MessageApi {
+pub struct MessageApi {
     request_id: u32,
     //subscriptions: HashMap<u64, PluginSubscribe>,
     request_queue: Vec<Vec<u8>>,
-    notifaction_queu: Vec<Message>,
-    respones_queue: Vec<Message>,
+    notifaction_queue: Vec<Message>,
+    respones_queue: Vec<Box<Message>>,
 }
 
 impl MessageApi {
-    fn begin_request(&mut self, name: &str, size_hint: usize) -> Result<Message, ValueWriteError> {
-        let mut message = Message::new(size_hint, self.request_id);
+    pub fn new() -> MessageApi {
+        MessageApi {
+            request_id: 0,
+            request_queue: Vec::new(),
+            notifaction_queue: Vec::new(),
+            respones_queue: Vec::new(),
+        }
+    }
+
+    pub fn begin_request(&mut self, name: &str) -> Result<Box<Message>, ValueWriteError> {
+        let mut message = Message::new(self.request_id);
 
         message.write_array_len(4)?;
         message.write_uint(REQUEST_MESSAGE)?;
@@ -77,7 +86,7 @@ impl MessageApi {
     }
 
     // TODO: Remove the copy here by using a linear allocator to fill in the memory
-    fn end_request(&mut self, message: &mut Message) {
+    pub fn end_request(&mut self, message: &mut Message) {
         self.request_queue.push(message.data.as_ref().unwrap().clone());
         // Mark the message as retired
         message.data = None;
@@ -86,15 +95,15 @@ impl MessageApi {
 
 
 impl Message {
-    fn new(size_hint: usize, id: u32) -> Message {
-        Message {
-            data: Some(Vec::with_capacity(size_hint)),
+    fn new(id: u32) -> Box<Message> {
+        Box::new(Message {
+            data: Some(Vec::new()),
             header_size: 0,
             id,
-        }
+        })
     }
 
-    fn write_str(&mut self, data: &str) -> Result<(), ValueWriteError> {
+    pub fn write_str(&mut self, data: &str) -> Result<(), ValueWriteError> {
         if let Some(ref mut dest) = self.data {
             msgpack::encode::write_str(dest, data)
         } else {
@@ -102,7 +111,7 @@ impl Message {
         }
     }
 
-    fn write_uint(&mut self, data: u64) -> Result<Marker, ValueWriteError> {
+    pub fn write_uint(&mut self, data: u64) -> Result<Marker, ValueWriteError> {
         if let Some(ref mut dest) = self.data {
             msgpack::encode::write_uint(dest, data)
         } else {
@@ -110,7 +119,7 @@ impl Message {
         }
     }
 
-    fn write_array_len(&mut self, size: u32) -> Result<Marker, ValueWriteError> {
+    pub fn write_array_len(&mut self, size: u32) -> Result<Marker, ValueWriteError> {
         if let Some(ref mut dest) = self.data {
             msgpack::encode::write_array_len(dest, size)
         } else {
