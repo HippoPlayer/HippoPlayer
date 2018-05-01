@@ -6,6 +6,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+HippoMessageAPI* g_message_api;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -18,6 +19,9 @@ typedef struct TestViewPlugin {
 void* test_view_create(HippoServiceAPI* services) {
     TestViewPlugin* plugin = malloc(sizeof(TestViewPlugin));
     memset(plugin, 0, sizeof(TestViewPlugin));
+
+	g_message_api = HippoServiceAPI_get_message_api(services, 0);
+
     return plugin;
 }
 
@@ -28,6 +32,14 @@ void test_view_setup_ui(void* user_data, struct PUPluginUI* ui_funcs) {
     plugin->ui = ui_funcs;
 
     struct PUPushButton button = PU_create_push_button(plugin->ui);
+
+    // Test sending a message
+
+    HippoMessage* message = g_message_api->begin_request(g_message_api->priv_data, "test_request");
+    message->write_array_count(message->priv_data, 1);
+    message->write_str(message->priv_data, "foo.mod");
+
+	g_message_api->end_request(g_message_api->priv_data, message);
 
 	PUPushButton_set_text(button, "foobar");
 }

@@ -48,7 +48,7 @@ pub struct CHippoServiceAPI {
     pub get_io_api: extern "C" fn(priv_data: *const c_void, version: i32) -> *const CHippoIoAPI,
     pub get_metadata_api: extern "C" fn(priv_data: *const c_void, version: i32) -> *const CMetadataAPI,
     pub get_message_api: extern "C" fn(priv_data: *const c_void, version: i32) -> *const CMessageAPI,
-    pub private_data: *const c_void,	// memory handle
+    pub priv_data: *const c_void,	// memory handle
 }
 
 #[derive(Clone, Debug)]

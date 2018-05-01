@@ -341,7 +341,7 @@ fn main() {
     unsafe {
         let service_api = app.plugin_service.get_c_service_api();
         println!("{:?}", service_api);
-        ((*service_api).get_io_api)((*service_api).private_data, 1);
+        ((*service_api).get_io_api)((*service_api).priv_data, 1);
     }
 
     app.plugins.add_plugins_from_path();

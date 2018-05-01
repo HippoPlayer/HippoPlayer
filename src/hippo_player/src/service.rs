@@ -105,6 +105,7 @@ impl Message {
 
     pub fn write_str(&mut self, data: &str) -> Result<(), ValueWriteError> {
         if let Some(ref mut dest) = self.data {
+            println!("message:write_str {}", data);
             msgpack::encode::write_str(dest, data)
         } else {
             Err(ValueWriteError::InvalidDataWrite(Error::new(ErrorKind::Other, "Not possible to write. Message has ended?")))
@@ -121,6 +122,7 @@ impl Message {
 
     pub fn write_array_len(&mut self, size: u32) -> Result<Marker, ValueWriteError> {
         if let Some(ref mut dest) = self.data {
+            println!("message:write_array_len {}", size);
             msgpack::encode::write_array_len(dest, size)
         } else {
             Err(ValueWriteError::InvalidDataWrite(Error::new(ErrorKind::Other, "Not possible to write. Message has ended?")))

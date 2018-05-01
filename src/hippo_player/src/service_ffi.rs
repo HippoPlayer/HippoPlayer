@@ -289,7 +289,7 @@ impl PluginService {
             get_io_api: get_io_api_wrapper,
             get_metadata_api: get_metadata_api,
             get_message_api: get_message_api,
-            private_data: service_api,
+            priv_data: service_api,
         });
 
         let t: *const CHippoServiceAPI = unsafe { transmute(c_service_api) };
@@ -300,7 +300,7 @@ impl PluginService {
     }
 
     pub fn get_song_db<'a>(&'a self) -> &'a SongDb {
-    	let service_api: &ServiceApi = unsafe { &*((*self.c_service_api).private_data as *const ServiceApi) };
+    	let service_api: &ServiceApi = unsafe { &*((*self.c_service_api).priv_data as *const ServiceApi) };
     	service_api.get_song_db()
     }
 

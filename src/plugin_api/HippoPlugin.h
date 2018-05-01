@@ -127,21 +127,9 @@ typedef struct HippoMetadataAPI {
 
 #define HippoMetadata_set_key(api, buffer, sub_song, value, type) api->set_key(api->priv_data, buffer, sub_song, value, type)
 #define HippoMetadata_set_key_with_encoding(api, buffer, type, value, encode_type, error_code) api->set_key(api->priv_data, buffer, type, value, encode_type, error_code)
-
 #define HippoMetadata_get_key(api, buffer, type, error_code) api->get_key(api->priv_data, buffer, type, error_code)
 
-struct HippoServicePrivData;
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-typedef struct HippoServiceAPI {
-	HippoFileAPI* (*get_io_api)(struct HippoServicePrivData* private_data, int api_version);
-	HippoMetadataAPI* (*get_metadata_api)(struct HippoServicePrivData* private_data, int api_version);
-	struct HippoServicePrivData* private_data;
-} HippoServiceAPI;
-
-#define HippoServiceAPI_get_io_api(api, version) api->get_io_api(api->private_data, version)
-#define HippoServiceAPI_get_metadata_api(api, version) api->get_metadata_api(api->private_data, version)
 
 struct HippoMessagePrivData;
 
@@ -170,6 +158,21 @@ typedef struct HippoMessageAPI {
 	//void (*end_notification)(struct HippoMessageAPI* priv_data, HippoMessage* message);
 
 } HippoMessageAPI;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+struct HippoServicePrivData;
+
+typedef struct HippoServiceAPI {
+	HippoFileAPI* (*get_io_api)(struct HippoServicePrivData* private_data, int api_version);
+	HippoMetadataAPI* (*get_metadata_api)(struct HippoServicePrivData* private_data, int api_version);
+	HippoMessageAPI* (*get_message_api)(struct HippoServicePrivData* private_data, int api_version);
+	struct HippoServicePrivData* private_data;
+} HippoServiceAPI;
+
+#define HippoServiceAPI_get_io_api(api, version) api->get_io_api(api->private_data, version)
+#define HippoServiceAPI_get_metadata_api(api, version) api->get_metadata_api(api->private_data, version)
+#define HippoServiceAPI_get_message_api(api, version) api->get_message_api(api->private_data, version)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
