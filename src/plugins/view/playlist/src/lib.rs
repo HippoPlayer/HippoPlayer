@@ -1,8 +1,18 @@
 #[macro_use]
 extern crate hippo_api;
 
+#[macro_use]
+extern crate wrui;
+
+use std::path::Path;
+use std::ffi::OsStr;
+use wrui::wrui::{ListWidget, DragEnterEvent, DropEvent};
+use wrui::PluginUi;
+
+// TODO: Fix me
+use std::os::raw::c_void;
+
 use hippo_api::view::View;
-use hippo_api::wrui::PluginUi;
 use hippo_api::service::Service;
 
 struct Playlist {
@@ -25,8 +35,8 @@ impl View for Playlist {
         widget.set_accept_drops(true);
         widget.set_drop_indicator_shown(true);
 
-        set_drag_enter_event!(self.widget, self, Playlist, Playlist::drag_enter);
-        set_drop_event!(self.widget, self, Playlist, Playlist::drop_files);
+        set_drag_enter_event!(widget, self, Playlist, Playlist::drag_enter);
+        set_drop_event!(widget, self, Playlist, Playlist::drop_files);
 
         widget.resize(500, 500);
 
@@ -53,20 +63,17 @@ impl Playlist {
     }
 
     fn add_file(&mut self, local_file: &str) {
+        let ui = self.ui.unwrap();
+
         if let Some(filename) = Self::get_filename_only(&local_file) {
-            let item = self.ui.create_list_widget_item();
+            let item = ui.create_list_widget_item();
 
             // Check if we already have this file added then we can use the title again
-
-            if let Some(entry) = self.playlist_data.get(local_file) {
-                item.set_text(&entry.title);
-            } else {
-                item.set_text(filename);
-            }
-
+            // TODO: Request song name for this file
+            item.set_text(filename);
             item.set_string_data(&local_file);
 
-            self.widget.add_item(&item);
+            self.widget.as_ref().unwrap().add_item(&item);
         } else {
             println!("Skipped adding {} as no proper filename was found", local_file);
         }
