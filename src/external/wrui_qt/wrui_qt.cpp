@@ -1367,6 +1367,8 @@ static void tool_window_manager_update(struct PUBase* self_c) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static void frameless_window_show(struct PUBase* self_c) { 
     WRFramelessWindow* qt_data = (WRFramelessWindow*)self_c;
     qt_data->show();
@@ -2271,6 +2273,14 @@ static void tool_window_manager_add_to_docking(struct PUBase* self_c, struct PUB
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void tool_window_manager_add_to_docking_floating(struct PUBase* self_c, struct PUBase* widget) {
+    WRToolWindowManager* qt_data = (WRToolWindowManager*)self_c;
+    auto type = ToolWindowManager::NewFloatingArea;
+    qt_data->addToolWindow((QWidget*)widget, type);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static int application_set_style_sheet(struct PUBase* self_c, const char* filename) {
     QApplication* qt_data = (QApplication*)self_c;
     QFile f(QString::fromUtf8(filename));
@@ -2461,6 +2471,7 @@ struct PUToolWindowManagerFuncs s_tool_window_manager_funcs = {
     tool_window_manager_set_layout,
     tool_window_manager_update,
     tool_window_manager_add_to_docking,
+    tool_window_manager_add_to_docking_floating,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

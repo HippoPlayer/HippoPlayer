@@ -166,6 +166,8 @@ impl <'a> HippoPlayer<'a> {
 
         let _instance = plugin.create_instance(&self.ui, &self.plugin_service, &widget);
 
+        self.tool_window_manager.add_to_docking_floating(&widget);
+
         println!("Showing plugin {}", plugin_index);
 
         widget.show();

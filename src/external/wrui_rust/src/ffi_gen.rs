@@ -618,6 +618,7 @@ pub struct PUToolWindowManagerFuncs {
     pub set_layout: extern "C" fn(self_c: *const PUBase, layout: *const PUBase),
     pub update: extern "C" fn(self_c: *const PUBase),
     pub add_to_docking: extern "C" fn(self_c: *const PUBase, widget: *const PUBase),
+    pub add_to_docking_floating: extern "C" fn(self_c: *const PUBase, widget: *const PUBase),
 }
 
 #[repr(C)]

@@ -1455,6 +1455,16 @@ impl ToolWindowManager {
         
         }
     }
+
+    pub fn add_to_docking_floating (&self, widget: &WidgetType) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).add_to_docking_floating)(obj.privd, widget.get_widget_type_obj() as *const PUBase);
+        
+        }
+    }
 }
 
 impl PaintDevice for ToolWindowManager {

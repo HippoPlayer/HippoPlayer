@@ -616,6 +616,7 @@ struct PUToolWindowManagerFuncs {
     void (*set_layout)(struct PUBase* self_c, struct PUBase* layout);
     void (*update)(struct PUBase* self_c);
     void (*add_to_docking)(struct PUBase* self_c, struct PUBase* widget);
+    void (*add_to_docking_floating)(struct PUBase* self_c, struct PUBase* widget);
 };
 
 struct PUToolWindowManager {
@@ -991,6 +992,7 @@ typedef struct PU {
 #define PUToolWindowManager_set_layout(obj, layout) obj.funcs->set_layout(obj.priv_data, layout)
 #define PUToolWindowManager_update(obj) obj.funcs->update(obj.priv_data)
 #define PUToolWindowManager_add_to_docking(obj, widget) obj.funcs->add_to_docking(obj.priv_data, widget)
+#define PUToolWindowManager_add_to_docking_floating(obj, widget) obj.funcs->add_to_docking_floating(obj.priv_data, widget)
 
 #define PUFramelessWindow_show(obj) obj.funcs->show(obj.priv_data)
 #define PUFramelessWindow_set_fixed_height(obj, width) obj.funcs->set_fixed_height(obj.priv_data, width)
