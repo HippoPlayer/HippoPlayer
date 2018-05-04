@@ -17,17 +17,17 @@ pub struct SharedLibUi {
 
 #[cfg(target_os="macos")]
 pub fn get_rute_name() -> &'static str {
-    "librute_qt.dylib"
+    "librute_cpp.dylib"
 }
 
 #[cfg(target_os="linux")]
 pub fn get_rute_name() -> &'static str {
-    "librute_qt.so"
+    "librute_cpp.so"
 }
 
 #[cfg(target_os="windows")]
 pub fn get_rute_name() -> &'static str {
-    "rute_qt.dll"
+    "rute_cpp.dll"
 }
 
 impl SharedLibUi {
