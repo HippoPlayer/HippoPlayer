@@ -6,169 +6,169 @@
 use ffi_gen::*;
 use std::ffi::CStr;
 use std::slice;
-pub use ffi_gen::PUBase as PUBase;
+pub use ffi_gen::RUBase as RUBase;
 
 
 use std::ffi::CString;
 
-pub use ffi_gen::PUMetaKeys as MetaKeys;
+pub use ffi_gen::RUMetaKeys as MetaKeys;
 
-pub use ffi_gen::PUKeys as Keys;
+pub use ffi_gen::RUKeys as Keys;
 
-pub use ffi_gen::PURect as Rect;
+pub use ffi_gen::RURect as Rect;
 
-pub use ffi_gen::PUColor as Color;
+pub use ffi_gen::RUColor as Color;
 
 #[derive(Clone)]
 pub struct Widget {
-    pub obj: Option<PUWidget>,
+    pub obj: Option<RUWidget>,
 }
 
 #[derive(Clone)]
 pub struct PushButton {
-    pub obj: Option<PUPushButton>,
+    pub obj: Option<RUPushButton>,
 }
 
 #[derive(Clone)]
 pub struct Painter {
-    pub obj: Option<PUPainter>,
+    pub obj: Option<RUPainter>,
 }
 
 #[derive(Clone)]
 pub struct ListWidgetItem {
-    pub obj: Option<PUListWidgetItem>,
+    pub obj: Option<RUListWidgetItem>,
 }
 
 #[derive(Clone)]
 pub struct ListWidget {
-    pub obj: Option<PUListWidget>,
+    pub obj: Option<RUListWidget>,
 }
 
 #[derive(Clone)]
 pub struct Label {
-    pub obj: Option<PULabel>,
+    pub obj: Option<RULabel>,
 }
 
 #[derive(Clone)]
 pub struct LineEdit {
-    pub obj: Option<PULineEdit>,
+    pub obj: Option<RULineEdit>,
 }
 
 #[derive(Clone)]
 pub struct PlainTextEdit {
-    pub obj: Option<PUPlainTextEdit>,
+    pub obj: Option<RUPlainTextEdit>,
 }
 
 #[derive(Clone)]
 pub struct Slider {
-    pub obj: Option<PUSlider>,
+    pub obj: Option<RUSlider>,
 }
 
 #[derive(Clone)]
 pub struct MainWindow {
-    pub obj: Option<PUMainWindow>,
+    pub obj: Option<RUMainWindow>,
 }
 
 #[derive(Clone)]
 pub struct ToolWindowManager {
-    pub obj: Option<PUToolWindowManager>,
+    pub obj: Option<RUToolWindowManager>,
 }
 
 #[derive(Clone)]
 pub struct FramelessWindow {
-    pub obj: Option<PUFramelessWindow>,
+    pub obj: Option<RUFramelessWindow>,
 }
 
 #[derive(Clone)]
 pub struct Action {
-    pub obj: Option<PUAction>,
+    pub obj: Option<RUAction>,
 }
 
 #[derive(Clone)]
 pub struct Url {
-    pub obj: Option<PUUrl>,
+    pub obj: Option<RUUrl>,
 }
 
 #[derive(Clone)]
 pub struct MimeData {
-    pub obj: Option<PUMimeData>,
+    pub obj: Option<RUMimeData>,
 }
 
 #[derive(Clone)]
 pub struct Timer {
-    pub obj: Option<PUTimer>,
+    pub obj: Option<RUTimer>,
 }
 
 #[derive(Clone)]
 pub struct Icon {
-    pub obj: Option<PUIcon>,
+    pub obj: Option<RUIcon>,
 }
 
 #[derive(Clone)]
 pub struct Font {
-    pub obj: Option<PUFont>,
+    pub obj: Option<RUFont>,
 }
 
 #[derive(Clone)]
 pub struct Menu {
-    pub obj: Option<PUMenu>,
+    pub obj: Option<RUMenu>,
 }
 
 #[derive(Clone)]
 pub struct MenuBar {
-    pub obj: Option<PUMenuBar>,
+    pub obj: Option<RUMenuBar>,
 }
 
 #[derive(Clone)]
 pub struct Application {
-    pub obj: Option<PUApplication>,
+    pub obj: Option<RUApplication>,
 }
 
 #[derive(Clone)]
 pub struct PaintEvent {
-    pub obj: Option<PUPaintEvent>,
+    pub obj: Option<RUPaintEvent>,
 }
 
 #[derive(Clone)]
 pub struct DragEnterEvent {
-    pub obj: Option<PUDragEnterEvent>,
+    pub obj: Option<RUDragEnterEvent>,
 }
 
 #[derive(Clone)]
 pub struct DropEvent {
-    pub obj: Option<PUDropEvent>,
+    pub obj: Option<RUDropEvent>,
 }
 
 #[derive(Clone)]
 pub struct Layout {
-    pub obj: Option<PULayout>,
+    pub obj: Option<RULayout>,
 }
 
 #[derive(Clone)]
 pub struct VBoxLayout {
-    pub obj: Option<PUVBoxLayout>,
+    pub obj: Option<RUVBoxLayout>,
 }
 
 #[derive(Clone)]
 pub struct HBoxLayout {
-    pub obj: Option<PUHBoxLayout>,
+    pub obj: Option<RUHBoxLayout>,
 }
 
 #[derive(Clone)]
 pub struct PluginUI {
-    pub obj: Option<PUPluginUI>,
+    pub obj: Option<RUPluginUI>,
 }
 
 pub trait LayoutType {
-    fn get_layout_type_obj(&self) -> *const PUBase;
+    fn get_layout_type_obj(&self) -> *const RUBase;
 }
 
 pub trait PaintDevice {
-    fn get_paint_device_obj(&self) -> *const PUBase;
+    fn get_paint_device_obj(&self) -> *const RUBase;
 }
 
 pub trait WidgetType {
-    fn get_widget_type_obj(&self) -> *const PUBase;
+    fn get_widget_type_obj(&self) -> *const RUBase;
 }
 
 impl Widget {
@@ -225,7 +225,7 @@ impl Widget {
         unsafe {
             let obj = self.obj.unwrap();
         
-            ((*obj.funcs).set_parent)(obj.privd, widget.get_widget_type_obj() as *const PUBase);
+            ((*obj.funcs).set_parent)(obj.privd, widget.get_widget_type_obj() as *const RUBase);
         
         }
     }
@@ -235,7 +235,7 @@ impl Widget {
         unsafe {
             let obj = self.obj.unwrap();
         
-            ((*obj.funcs).set_layout)(obj.privd, layout.get_layout_type_obj() as *const PUBase);
+            ((*obj.funcs).set_layout)(obj.privd, layout.get_layout_type_obj() as *const RUBase);
         
         }
     }
@@ -252,16 +252,16 @@ impl Widget {
 }
 
 impl PaintDevice for Widget {
-    fn get_paint_device_obj(&self) -> *const PUBase {
+    fn get_paint_device_obj(&self) -> *const RUBase {
        let obj = self.obj.unwrap();
-       obj.privd as *const PUBase
+       obj.privd as *const RUBase
     }
 }
 
 impl WidgetType for Widget {
-    fn get_widget_type_obj(&self) -> *const PUBase {
+    fn get_widget_type_obj(&self) -> *const RUBase {
        let obj = self.obj.unwrap();
-       obj.privd as *const PUBase
+       obj.privd as *const RUBase
     }
 }
 
@@ -319,7 +319,7 @@ impl PushButton {
         unsafe {
             let obj = self.obj.unwrap();
         
-            ((*obj.funcs).set_parent)(obj.privd, widget.get_widget_type_obj() as *const PUBase);
+            ((*obj.funcs).set_parent)(obj.privd, widget.get_widget_type_obj() as *const RUBase);
         
         }
     }
@@ -329,7 +329,7 @@ impl PushButton {
         unsafe {
             let obj = self.obj.unwrap();
         
-            ((*obj.funcs).set_layout)(obj.privd, layout.get_layout_type_obj() as *const PUBase);
+            ((*obj.funcs).set_layout)(obj.privd, layout.get_layout_type_obj() as *const RUBase);
         
         }
     }
@@ -377,16 +377,16 @@ impl PushButton {
 }
 
 impl PaintDevice for PushButton {
-    fn get_paint_device_obj(&self) -> *const PUBase {
+    fn get_paint_device_obj(&self) -> *const RUBase {
        let obj = self.obj.unwrap();
-       obj.privd as *const PUBase
+       obj.privd as *const RUBase
     }
 }
 
 impl WidgetType for PushButton {
-    fn get_widget_type_obj(&self) -> *const PUBase {
+    fn get_widget_type_obj(&self) -> *const RUBase {
        let obj = self.obj.unwrap();
-       obj.privd as *const PUBase
+       obj.privd as *const RUBase
     }
 }
 
@@ -404,7 +404,7 @@ impl Painter {
         unsafe {
             let obj = self.obj.unwrap();
         
-            ((*obj.funcs).begin)(obj.privd, target.get_paint_device_obj() as *const PUBase);
+            ((*obj.funcs).begin)(obj.privd, target.get_paint_device_obj() as *const RUBase);
         
         }
     }
@@ -465,7 +465,7 @@ impl Drop for Painter {
     fn drop(&mut self) {
        unsafe {
           let obj = self.obj.unwrap();
-          ((*obj.funcs).destroy)(obj.privd as *const PUBase)
+          ((*obj.funcs).destroy)(obj.privd as *const RUBase)
        }
     }
 }
@@ -582,7 +582,7 @@ impl ListWidget {
         unsafe {
             let obj = self.obj.unwrap();
         
-            ((*obj.funcs).set_parent)(obj.privd, widget.get_widget_type_obj() as *const PUBase);
+            ((*obj.funcs).set_parent)(obj.privd, widget.get_widget_type_obj() as *const RUBase);
         
         }
     }
@@ -592,7 +592,7 @@ impl ListWidget {
         unsafe {
             let obj = self.obj.unwrap();
         
-            ((*obj.funcs).set_layout)(obj.privd, layout.get_layout_type_obj() as *const PUBase);
+            ((*obj.funcs).set_layout)(obj.privd, layout.get_layout_type_obj() as *const RUBase);
         
         }
     }
@@ -669,7 +669,7 @@ impl ListWidget {
                 Vec::new()
             } else {
                 let mut data = Vec::with_capacity(ret_val.count as usize);
-                let slice = slice::from_raw_parts(ret_val.elements as *const PUListWidgetItem, ret_val.count as usize);
+                let slice = slice::from_raw_parts(ret_val.elements as *const RUListWidgetItem, ret_val.count as usize);
 
                 for item in slice {
                     data.push(ListWidgetItem { obj: Some(*item) });
@@ -764,16 +764,16 @@ impl ListWidget {
 }
 
 impl PaintDevice for ListWidget {
-    fn get_paint_device_obj(&self) -> *const PUBase {
+    fn get_paint_device_obj(&self) -> *const RUBase {
        let obj = self.obj.unwrap();
-       obj.privd as *const PUBase
+       obj.privd as *const RUBase
     }
 }
 
 impl WidgetType for ListWidget {
-    fn get_widget_type_obj(&self) -> *const PUBase {
+    fn get_widget_type_obj(&self) -> *const RUBase {
        let obj = self.obj.unwrap();
-       obj.privd as *const PUBase
+       obj.privd as *const RUBase
     }
 }
 
@@ -831,7 +831,7 @@ impl Label {
         unsafe {
             let obj = self.obj.unwrap();
         
-            ((*obj.funcs).set_parent)(obj.privd, widget.get_widget_type_obj() as *const PUBase);
+            ((*obj.funcs).set_parent)(obj.privd, widget.get_widget_type_obj() as *const RUBase);
         
         }
     }
@@ -841,7 +841,7 @@ impl Label {
         unsafe {
             let obj = self.obj.unwrap();
         
-            ((*obj.funcs).set_layout)(obj.privd, layout.get_layout_type_obj() as *const PUBase);
+            ((*obj.funcs).set_layout)(obj.privd, layout.get_layout_type_obj() as *const RUBase);
         
         }
     }
@@ -869,16 +869,16 @@ impl Label {
 }
 
 impl PaintDevice for Label {
-    fn get_paint_device_obj(&self) -> *const PUBase {
+    fn get_paint_device_obj(&self) -> *const RUBase {
        let obj = self.obj.unwrap();
-       obj.privd as *const PUBase
+       obj.privd as *const RUBase
     }
 }
 
 impl WidgetType for Label {
-    fn get_widget_type_obj(&self) -> *const PUBase {
+    fn get_widget_type_obj(&self) -> *const RUBase {
        let obj = self.obj.unwrap();
-       obj.privd as *const PUBase
+       obj.privd as *const RUBase
     }
 }
 
@@ -936,7 +936,7 @@ impl LineEdit {
         unsafe {
             let obj = self.obj.unwrap();
         
-            ((*obj.funcs).set_parent)(obj.privd, widget.get_widget_type_obj() as *const PUBase);
+            ((*obj.funcs).set_parent)(obj.privd, widget.get_widget_type_obj() as *const RUBase);
         
         }
     }
@@ -946,7 +946,7 @@ impl LineEdit {
         unsafe {
             let obj = self.obj.unwrap();
         
-            ((*obj.funcs).set_layout)(obj.privd, layout.get_layout_type_obj() as *const PUBase);
+            ((*obj.funcs).set_layout)(obj.privd, layout.get_layout_type_obj() as *const RUBase);
         
         }
     }
@@ -984,16 +984,16 @@ impl LineEdit {
 }
 
 impl PaintDevice for LineEdit {
-    fn get_paint_device_obj(&self) -> *const PUBase {
+    fn get_paint_device_obj(&self) -> *const RUBase {
        let obj = self.obj.unwrap();
-       obj.privd as *const PUBase
+       obj.privd as *const RUBase
     }
 }
 
 impl WidgetType for LineEdit {
-    fn get_widget_type_obj(&self) -> *const PUBase {
+    fn get_widget_type_obj(&self) -> *const RUBase {
        let obj = self.obj.unwrap();
-       obj.privd as *const PUBase
+       obj.privd as *const RUBase
     }
 }
 
@@ -1051,7 +1051,7 @@ impl PlainTextEdit {
         unsafe {
             let obj = self.obj.unwrap();
         
-            ((*obj.funcs).set_parent)(obj.privd, widget.get_widget_type_obj() as *const PUBase);
+            ((*obj.funcs).set_parent)(obj.privd, widget.get_widget_type_obj() as *const RUBase);
         
         }
     }
@@ -1061,7 +1061,7 @@ impl PlainTextEdit {
         unsafe {
             let obj = self.obj.unwrap();
         
-            ((*obj.funcs).set_layout)(obj.privd, layout.get_layout_type_obj() as *const PUBase);
+            ((*obj.funcs).set_layout)(obj.privd, layout.get_layout_type_obj() as *const RUBase);
         
         }
     }
@@ -1120,16 +1120,16 @@ impl PlainTextEdit {
 }
 
 impl PaintDevice for PlainTextEdit {
-    fn get_paint_device_obj(&self) -> *const PUBase {
+    fn get_paint_device_obj(&self) -> *const RUBase {
        let obj = self.obj.unwrap();
-       obj.privd as *const PUBase
+       obj.privd as *const RUBase
     }
 }
 
 impl WidgetType for PlainTextEdit {
-    fn get_widget_type_obj(&self) -> *const PUBase {
+    fn get_widget_type_obj(&self) -> *const RUBase {
        let obj = self.obj.unwrap();
-       obj.privd as *const PUBase
+       obj.privd as *const RUBase
     }
 }
 
@@ -1187,7 +1187,7 @@ impl Slider {
         unsafe {
             let obj = self.obj.unwrap();
         
-            ((*obj.funcs).set_parent)(obj.privd, widget.get_widget_type_obj() as *const PUBase);
+            ((*obj.funcs).set_parent)(obj.privd, widget.get_widget_type_obj() as *const RUBase);
         
         }
     }
@@ -1197,7 +1197,7 @@ impl Slider {
         unsafe {
             let obj = self.obj.unwrap();
         
-            ((*obj.funcs).set_layout)(obj.privd, layout.get_layout_type_obj() as *const PUBase);
+            ((*obj.funcs).set_layout)(obj.privd, layout.get_layout_type_obj() as *const RUBase);
         
         }
     }
@@ -1214,16 +1214,16 @@ impl Slider {
 }
 
 impl PaintDevice for Slider {
-    fn get_paint_device_obj(&self) -> *const PUBase {
+    fn get_paint_device_obj(&self) -> *const RUBase {
        let obj = self.obj.unwrap();
-       obj.privd as *const PUBase
+       obj.privd as *const RUBase
     }
 }
 
 impl WidgetType for Slider {
-    fn get_widget_type_obj(&self) -> *const PUBase {
+    fn get_widget_type_obj(&self) -> *const RUBase {
        let obj = self.obj.unwrap();
-       obj.privd as *const PUBase
+       obj.privd as *const RUBase
     }
 }
 
@@ -1281,7 +1281,7 @@ impl MainWindow {
         unsafe {
             let obj = self.obj.unwrap();
         
-            ((*obj.funcs).set_parent)(obj.privd, widget.get_widget_type_obj() as *const PUBase);
+            ((*obj.funcs).set_parent)(obj.privd, widget.get_widget_type_obj() as *const RUBase);
         
         }
     }
@@ -1291,7 +1291,7 @@ impl MainWindow {
         unsafe {
             let obj = self.obj.unwrap();
         
-            ((*obj.funcs).set_layout)(obj.privd, layout.get_layout_type_obj() as *const PUBase);
+            ((*obj.funcs).set_layout)(obj.privd, layout.get_layout_type_obj() as *const RUBase);
         
         }
     }
@@ -1338,7 +1338,7 @@ impl MainWindow {
         unsafe {
             let obj = self.obj.unwrap();
         
-            ((*obj.funcs).set_central_widget)(obj.privd, widget.get_widget_type_obj() as *const PUBase);
+            ((*obj.funcs).set_central_widget)(obj.privd, widget.get_widget_type_obj() as *const RUBase);
         
         }
     }
@@ -1348,22 +1348,22 @@ impl Drop for MainWindow {
     fn drop(&mut self) {
        unsafe {
           let obj = self.obj.unwrap();
-          ((*obj.funcs).destroy)(obj.privd as *const PUBase)
+          ((*obj.funcs).destroy)(obj.privd as *const RUBase)
        }
     }
 }
 
 impl PaintDevice for MainWindow {
-    fn get_paint_device_obj(&self) -> *const PUBase {
+    fn get_paint_device_obj(&self) -> *const RUBase {
        let obj = self.obj.unwrap();
-       obj.privd as *const PUBase
+       obj.privd as *const RUBase
     }
 }
 
 impl WidgetType for MainWindow {
-    fn get_widget_type_obj(&self) -> *const PUBase {
+    fn get_widget_type_obj(&self) -> *const RUBase {
        let obj = self.obj.unwrap();
-       obj.privd as *const PUBase
+       obj.privd as *const RUBase
     }
 }
 
@@ -1421,7 +1421,7 @@ impl ToolWindowManager {
         unsafe {
             let obj = self.obj.unwrap();
         
-            ((*obj.funcs).set_parent)(obj.privd, widget.get_widget_type_obj() as *const PUBase);
+            ((*obj.funcs).set_parent)(obj.privd, widget.get_widget_type_obj() as *const RUBase);
         
         }
     }
@@ -1431,7 +1431,7 @@ impl ToolWindowManager {
         unsafe {
             let obj = self.obj.unwrap();
         
-            ((*obj.funcs).set_layout)(obj.privd, layout.get_layout_type_obj() as *const PUBase);
+            ((*obj.funcs).set_layout)(obj.privd, layout.get_layout_type_obj() as *const RUBase);
         
         }
     }
@@ -1451,7 +1451,7 @@ impl ToolWindowManager {
         unsafe {
             let obj = self.obj.unwrap();
         
-            ((*obj.funcs).add_to_docking)(obj.privd, widget.get_widget_type_obj() as *const PUBase);
+            ((*obj.funcs).add_to_docking)(obj.privd, widget.get_widget_type_obj() as *const RUBase);
         
         }
     }
@@ -1461,23 +1461,23 @@ impl ToolWindowManager {
         unsafe {
             let obj = self.obj.unwrap();
         
-            ((*obj.funcs).add_to_docking_floating)(obj.privd, widget.get_widget_type_obj() as *const PUBase);
+            ((*obj.funcs).add_to_docking_floating)(obj.privd, widget.get_widget_type_obj() as *const RUBase);
         
         }
     }
 }
 
 impl PaintDevice for ToolWindowManager {
-    fn get_paint_device_obj(&self) -> *const PUBase {
+    fn get_paint_device_obj(&self) -> *const RUBase {
        let obj = self.obj.unwrap();
-       obj.privd as *const PUBase
+       obj.privd as *const RUBase
     }
 }
 
 impl WidgetType for ToolWindowManager {
-    fn get_widget_type_obj(&self) -> *const PUBase {
+    fn get_widget_type_obj(&self) -> *const RUBase {
        let obj = self.obj.unwrap();
-       obj.privd as *const PUBase
+       obj.privd as *const RUBase
     }
 }
 
@@ -1535,7 +1535,7 @@ impl FramelessWindow {
         unsafe {
             let obj = self.obj.unwrap();
         
-            ((*obj.funcs).set_parent)(obj.privd, widget.get_widget_type_obj() as *const PUBase);
+            ((*obj.funcs).set_parent)(obj.privd, widget.get_widget_type_obj() as *const RUBase);
         
         }
     }
@@ -1545,7 +1545,7 @@ impl FramelessWindow {
         unsafe {
             let obj = self.obj.unwrap();
         
-            ((*obj.funcs).set_layout)(obj.privd, layout.get_layout_type_obj() as *const PUBase);
+            ((*obj.funcs).set_layout)(obj.privd, layout.get_layout_type_obj() as *const RUBase);
         
         }
     }
@@ -1576,23 +1576,23 @@ impl FramelessWindow {
         unsafe {
             let obj = self.obj.unwrap();
         
-            ((*obj.funcs).set_content)(obj.privd, widget.get_widget_type_obj() as *const PUBase);
+            ((*obj.funcs).set_content)(obj.privd, widget.get_widget_type_obj() as *const RUBase);
         
         }
     }
 }
 
 impl PaintDevice for FramelessWindow {
-    fn get_paint_device_obj(&self) -> *const PUBase {
+    fn get_paint_device_obj(&self) -> *const RUBase {
        let obj = self.obj.unwrap();
-       obj.privd as *const PUBase
+       obj.privd as *const RUBase
     }
 }
 
 impl WidgetType for FramelessWindow {
-    fn get_widget_type_obj(&self) -> *const PUBase {
+    fn get_widget_type_obj(&self) -> *const RUBase {
        let obj = self.obj.unwrap();
-       obj.privd as *const PUBase
+       obj.privd as *const RUBase
     }
 }
 
@@ -1767,7 +1767,7 @@ impl MimeData {
                 Vec::new()
             } else {
                 let mut data = Vec::with_capacity(ret_val.count as usize);
-                let slice = slice::from_raw_parts(ret_val.elements as *const PUUrl, ret_val.count as usize);
+                let slice = slice::from_raw_parts(ret_val.elements as *const RUUrl, ret_val.count as usize);
 
                 for item in slice {
                     data.push(Url { obj: Some(*item) });
@@ -1907,7 +1907,7 @@ impl Menu {
         unsafe {
             let obj = self.obj.unwrap();
         
-            ((*obj.funcs).set_parent)(obj.privd, widget.get_widget_type_obj() as *const PUBase);
+            ((*obj.funcs).set_parent)(obj.privd, widget.get_widget_type_obj() as *const RUBase);
         
         }
     }
@@ -1917,7 +1917,7 @@ impl Menu {
         unsafe {
             let obj = self.obj.unwrap();
         
-            ((*obj.funcs).set_layout)(obj.privd, layout.get_layout_type_obj() as *const PUBase);
+            ((*obj.funcs).set_layout)(obj.privd, layout.get_layout_type_obj() as *const RUBase);
         
         }
     }
@@ -1966,16 +1966,16 @@ impl Menu {
 }
 
 impl PaintDevice for Menu {
-    fn get_paint_device_obj(&self) -> *const PUBase {
+    fn get_paint_device_obj(&self) -> *const RUBase {
        let obj = self.obj.unwrap();
-       obj.privd as *const PUBase
+       obj.privd as *const RUBase
     }
 }
 
 impl WidgetType for Menu {
-    fn get_widget_type_obj(&self) -> *const PUBase {
+    fn get_widget_type_obj(&self) -> *const RUBase {
        let obj = self.obj.unwrap();
-       obj.privd as *const PUBase
+       obj.privd as *const RUBase
     }
 }
 
@@ -2033,7 +2033,7 @@ impl MenuBar {
         unsafe {
             let obj = self.obj.unwrap();
         
-            ((*obj.funcs).set_parent)(obj.privd, widget.get_widget_type_obj() as *const PUBase);
+            ((*obj.funcs).set_parent)(obj.privd, widget.get_widget_type_obj() as *const RUBase);
         
         }
     }
@@ -2043,7 +2043,7 @@ impl MenuBar {
         unsafe {
             let obj = self.obj.unwrap();
         
-            ((*obj.funcs).set_layout)(obj.privd, layout.get_layout_type_obj() as *const PUBase);
+            ((*obj.funcs).set_layout)(obj.privd, layout.get_layout_type_obj() as *const RUBase);
         
         }
     }
@@ -2070,16 +2070,16 @@ impl MenuBar {
 }
 
 impl PaintDevice for MenuBar {
-    fn get_paint_device_obj(&self) -> *const PUBase {
+    fn get_paint_device_obj(&self) -> *const RUBase {
        let obj = self.obj.unwrap();
-       obj.privd as *const PUBase
+       obj.privd as *const RUBase
     }
 }
 
 impl WidgetType for MenuBar {
-    fn get_widget_type_obj(&self) -> *const PUBase {
+    fn get_widget_type_obj(&self) -> *const RUBase {
        let obj = self.obj.unwrap();
-       obj.privd as *const PUBase
+       obj.privd as *const RUBase
     }
 }
 
@@ -2138,7 +2138,7 @@ impl Application {
                 Vec::new()
             } else {
                 let mut data = Vec::with_capacity(ret_val.count as usize);
-                let slice = slice::from_raw_parts(ret_val.elements as *const PUUrl, ret_val.count as usize);
+                let slice = slice::from_raw_parts(ret_val.elements as *const RUUrl, ret_val.count as usize);
 
                 for item in slice {
                     data.push(Url { obj: Some(*item) });
@@ -2156,7 +2156,7 @@ impl Drop for Application {
     fn drop(&mut self) {
        unsafe {
           let obj = self.obj.unwrap();
-          ((*obj.funcs).destroy)(obj.privd as *const PUBase)
+          ((*obj.funcs).destroy)(obj.privd as *const RUBase)
        }
     }
 }
@@ -2225,16 +2225,16 @@ impl Layout {
         unsafe {
             let obj = self.obj.unwrap();
         
-            ((*obj.funcs).add_widget)(obj.privd, widget.get_widget_type_obj() as *const PUBase);
+            ((*obj.funcs).add_widget)(obj.privd, widget.get_widget_type_obj() as *const RUBase);
         
         }
     }
 }
 
 impl LayoutType for Layout {
-    fn get_layout_type_obj(&self) -> *const PUBase {
+    fn get_layout_type_obj(&self) -> *const RUBase {
        let obj = self.obj.unwrap();
-       obj.privd as *const PUBase
+       obj.privd as *const RUBase
     }
 }
 
@@ -2252,7 +2252,7 @@ impl VBoxLayout {
         unsafe {
             let obj = self.obj.unwrap();
         
-            ((*obj.funcs).add_widget)(obj.privd, widget.get_widget_type_obj() as *const PUBase);
+            ((*obj.funcs).add_widget)(obj.privd, widget.get_widget_type_obj() as *const RUBase);
         
         }
     }
@@ -2262,7 +2262,7 @@ impl VBoxLayout {
         unsafe {
             let obj = self.obj.unwrap();
         
-            ((*obj.funcs).add_layout)(obj.privd, layout.get_layout_type_obj() as *const PUBase);
+            ((*obj.funcs).add_layout)(obj.privd, layout.get_layout_type_obj() as *const RUBase);
         
         }
     }
@@ -2279,9 +2279,9 @@ impl VBoxLayout {
 }
 
 impl LayoutType for VBoxLayout {
-    fn get_layout_type_obj(&self) -> *const PUBase {
+    fn get_layout_type_obj(&self) -> *const RUBase {
        let obj = self.obj.unwrap();
-       obj.privd as *const PUBase
+       obj.privd as *const RUBase
     }
 }
 
@@ -2299,7 +2299,7 @@ impl HBoxLayout {
         unsafe {
             let obj = self.obj.unwrap();
         
-            ((*obj.funcs).add_widget)(obj.privd, widget.get_widget_type_obj() as *const PUBase);
+            ((*obj.funcs).add_widget)(obj.privd, widget.get_widget_type_obj() as *const RUBase);
         
         }
     }
@@ -2309,7 +2309,7 @@ impl HBoxLayout {
         unsafe {
             let obj = self.obj.unwrap();
         
-            ((*obj.funcs).add_layout)(obj.privd, layout.get_layout_type_obj() as *const PUBase);
+            ((*obj.funcs).add_layout)(obj.privd, layout.get_layout_type_obj() as *const RUBase);
         
         }
     }
@@ -2326,9 +2326,9 @@ impl HBoxLayout {
 }
 
 impl LayoutType for HBoxLayout {
-    fn get_layout_type_obj(&self) -> *const PUBase {
+    fn get_layout_type_obj(&self) -> *const RUBase {
        let obj = self.obj.unwrap();
-       obj.privd as *const PUBase
+       obj.privd as *const RUBase
     }
 }
 
@@ -2406,10 +2406,10 @@ macro_rules! set_list_widget_current_row_changed_event {
 macro_rules! set_list_widget_item_clicked_event {
   ($sender:expr, $data:expr, $call_type:ident, $callback:path) => {
     {
-      extern "C" fn temp_call(self_c: *const ::std::os::raw::c_void, item: *const PUBase) {
+      extern "C" fn temp_call(self_c: *const ::std::os::raw::c_void, item: *const RUBase) {
           unsafe {
               let app = self_c as *mut $call_type;
-              $callback(&mut *app, &ListWidgetItem { obj: Some(*(item as *const wrui::ffi_gen::PUListWidgetItem)) });
+              $callback(&mut *app, &ListWidgetItem { obj: Some(*(item as *const rute::ffi_gen::RUListWidgetItem)) });
           }
       }
       fn get_data_ptr(val: &$call_type) -> *const c_void {
@@ -2429,10 +2429,10 @@ macro_rules! set_list_widget_item_clicked_event {
 macro_rules! set_list_widget_item_double_clicked_event {
   ($sender:expr, $data:expr, $call_type:ident, $callback:path) => {
     {
-      extern "C" fn temp_call(self_c: *const ::std::os::raw::c_void, item: *const PUBase) {
+      extern "C" fn temp_call(self_c: *const ::std::os::raw::c_void, item: *const RUBase) {
           unsafe {
               let app = self_c as *mut $call_type;
-              $callback(&mut *app, &ListWidgetItem { obj: Some(*(item as *const wrui::ffi_gen::PUListWidgetItem)) });
+              $callback(&mut *app, &ListWidgetItem { obj: Some(*(item as *const rute::ffi_gen::RUListWidgetItem)) });
           }
       }
       fn get_data_ptr(val: &$call_type) -> *const c_void {
@@ -2521,10 +2521,10 @@ macro_rules! set_timer_timeout_event {
 macro_rules! set_menu_triggered_event {
   ($sender:expr, $data:expr, $call_type:ident, $callback:path) => {
     {
-      extern "C" fn temp_call(self_c: *const ::std::os::raw::c_void, action: *const PUBase) {
+      extern "C" fn temp_call(self_c: *const ::std::os::raw::c_void, action: *const RUBase) {
           unsafe {
               let app = self_c as *mut $call_type;
-              $callback(&mut *app, &Action { obj: Some(*(action as *const wrui::ffi_gen::PUAction)) });
+              $callback(&mut *app, &Action { obj: Some(*(action as *const rute::ffi_gen::RUAction)) });
           }
       }
       fn get_data_ptr(val: &$call_type) -> *const c_void {
@@ -2567,10 +2567,10 @@ macro_rules! set_application_about_to_quit_event {
 macro_rules! set_drag_enter_event {
   ($sender:expr, $data:expr, $call_type:ident, $callback:path) => {
     {
-      extern "C" fn temp_call(self_c: *const ::std::os::raw::c_void, event: *const ::wrui::wrui::PUBase) {
+      extern "C" fn temp_call(self_c: *const ::std::os::raw::c_void, event: *const ::rute::rute::RUBase) {
           unsafe {
               let app = self_c as *mut $call_type;
-              let event = DragEnterEvent { obj: Some(*(event as *const ::wrui::ffi_gen::PUDragEnterEvent)) };
+              let event = DragEnterEvent { obj: Some(*(event as *const ::rute::ffi_gen::RUDragEnterEvent)) };
               $callback(&mut *app, &event);
           }
       }
@@ -2591,10 +2591,10 @@ macro_rules! set_drag_enter_event {
 macro_rules! set_drop_event {
   ($sender:expr, $data:expr, $call_type:ident, $callback:path) => {
     {
-      extern "C" fn temp_call(self_c: *const ::std::os::raw::c_void, event: *const ::wrui::wrui::PUBase) {
+      extern "C" fn temp_call(self_c: *const ::std::os::raw::c_void, event: *const ::rute::rute::RUBase) {
           unsafe {
               let app = self_c as *mut $call_type;
-              let event = DropEvent { obj: Some(*(event as *const ::wrui::ffi_gen::PUDropEvent)) };
+              let event = DropEvent { obj: Some(*(event as *const ::rute::ffi_gen::RUDropEvent)) };
               $callback(&mut *app, &event);
           }
       }
@@ -2615,10 +2615,10 @@ macro_rules! set_drop_event {
 macro_rules! set_paint_event {
   ($sender:expr, $data:expr, $call_type:ident, $callback:path) => {
     {
-      extern "C" fn temp_call(self_c: *const ::std::os::raw::c_void, event: *const ::wrui::wrui::PUBase) {
+      extern "C" fn temp_call(self_c: *const ::std::os::raw::c_void, event: *const ::rute::rute::RUBase) {
           unsafe {
               let app = self_c as *mut $call_type;
-              let event = PaintEvent { obj: Some(*(event as *const ::wrui::ffi_gen::PUPaintEvent)) };
+              let event = PaintEvent { obj: Some(*(event as *const ::rute::ffi_gen::RUPaintEvent)) };
               $callback(&mut *app, &event);
           }
       }
@@ -2637,12 +2637,12 @@ macro_rules! set_paint_event {
 
 #[derive(Copy, Clone)]
 pub struct PluginUi {
-    pu: *const PUPluginUI
+    pu: *const RUPluginUI
 }
 
 impl PluginUi {
-    pub fn new(pu: *const PUPluginUI) -> PluginUi { PluginUi { pu } }
-    pub fn get_c_api(&self) -> *const PUPluginUI { self.pu }
+    pub fn new(pu: *const RUPluginUI) -> PluginUi { PluginUi { pu } }
+    pub fn get_c_api(&self) -> *const RUPluginUI { self.pu }
 
     pub fn create_widget(&self) -> Widget {
         Widget { obj: Some(unsafe { ((*self.pu).create_widget)((*self.pu).privd) }) }
@@ -2724,13 +2724,13 @@ impl PluginUi {
 
 #[derive(Copy, Clone)]
 pub struct Ui {
-    pu: *const PU
+    pu: *const RU
 }
 
 impl Ui {
-    pub fn new(pu: *const PU) -> Ui { Ui { pu } }
+    pub fn new(pu: *const RU) -> Ui { Ui { pu } }
 
-    pub fn get_c_api(&self) -> *const PU { self.pu }
+    pub fn get_c_api(&self) -> *const RU { self.pu }
 
     pub fn create_widget(&self) -> Widget {
         Widget { obj: Some(unsafe { ((*self.pu).create_widget)((*self.pu).privd) }) }

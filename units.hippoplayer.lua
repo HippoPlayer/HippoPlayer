@@ -37,27 +37,27 @@ end
 -----------------------------------------------------------------------------------------------------------------------
 
 SharedLibrary {
-    Name = "wrui_qt",
+    Name = "rute_cpp",
     Sources = {
         Glob {
-            Dir = "src/external/wrui_qt",
+            Dir = "src/external/rute_cpp",
             Extensions = { ".cpp", ".h" },
             Recursive = true,
         },
 
-        gen_moc("src/external/wrui_qt/qt_api_gen.h"),
-        gen_moc("src/external/wrui_qt/ToolWindowManager/ToolWindowManager.h"),
-        gen_moc("src/external/wrui_qt/ToolWindowManager/ToolWindowManagerArea.h"),
-        gen_moc("src/external/wrui_qt/ToolWindowManager/ToolWindowManagerSplitter.h"),
-        gen_moc("src/external/wrui_qt/ToolWindowManager/ToolWindowManagerTabBar.h"),
-        gen_moc("src/external/wrui_qt/ToolWindowManager/ToolWindowManagerWrapper.h"),
+        gen_moc("src/external/rute_cpp/qt_api_gen.h"),
+        gen_moc("src/external/rute_cpp/ToolWindowManager/ToolWindowManager.h"),
+        gen_moc("src/external/rute_cpp/ToolWindowManager/ToolWindowManagerArea.h"),
+        gen_moc("src/external/rute_cpp/ToolWindowManager/ToolWindowManagerSplitter.h"),
+        gen_moc("src/external/rute_cpp/ToolWindowManager/ToolWindowManagerTabBar.h"),
+        gen_moc("src/external/rute_cpp/ToolWindowManager/ToolWindowManagerWrapper.h"),
 
-        gen_moc("src/external/wrui_qt/FramlessWindow/framelesswindow/framelesswindow.h"),
-        gen_moc("src/external/wrui_qt/FramlessWindow/framelesswindow/windowdragger.h"),
-        gen_moc("src/external/wrui_qt/FramlessWindow/DarkStyle.h"),
+        gen_moc("src/external/rute_cpp/FramlessWindow/framelesswindow/framelesswindow.h"),
+        gen_moc("src/external/rute_cpp/FramlessWindow/framelesswindow/windowdragger.h"),
+        gen_moc("src/external/rute_cpp/FramlessWindow/DarkStyle.h"),
 
-        gen_uic("src/external/wrui_qt/FramlessWindow/framelesswindow/framelesswindow.ui"),
-        gen_rcc("src/external/wrui_qt/FramlessWindow/darkstyle.qrc"),
+        gen_uic("src/external/rute_cpp/FramlessWindow/framelesswindow/framelesswindow.ui"),
+        gen_rcc("src/external/rute_cpp/FramlessWindow/darkstyle.qrc"),
     },
 
     Env = {
@@ -79,10 +79,10 @@ SharedLibrary {
         },
 
         CPPPATH = {
-            "src/external/wrui_qt/ToolWindowManager/",
-            "src/external/wrui_qt/ToolWindowManager/",
-			"src/external/wrui_qt/FramlessWindow/framelesswindow",
-			"src/external/wrui_qt/FramlessWindow",
+            "src/external/rute_cpp/ToolWindowManager/",
+            "src/external/rute_cpp/ToolWindowManager/",
+			"src/external/rute_cpp/FramlessWindow/framelesswindow",
+			"src/external/rute_cpp/FramlessWindow",
 
             "$(QT5)/include",
             "$(QT5)/include/QtCore",
@@ -125,10 +125,10 @@ end
 -----------------------------------------------------------------------------------------------------------------------
 
 RustCrate {
-    Name = "wrui_rust",
-    CargoConfig = "src/external/wrui_rust/Cargo.toml",
+    Name = "rute",
+    CargoConfig = "src/external/rute/Cargo.toml",
     Sources = {
-        get_rs_src("src/external/wrui_rust"),
+        get_rs_src("src/external/rute"),
     },
 }
 
@@ -141,7 +141,8 @@ RustProgram {
         get_rs_src("src/hippo_player/src"),
 		get_rs_src("src/plugin_api/rust/hippo_api"),
     },
-    Depends = { "wrui_rust", "wrui_qt" },
+
+    Depends = { "rute", "rute_cpp" },
 }
 
 -----------------------------------------------------------------------------------------------------------------------

@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../../../external/wrui_qt/c_api.h"
+#include "../../../external/rute_cpp/c_api.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -11,7 +11,7 @@ HippoMessageAPI* g_message_api;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef struct TestViewPlugin {
-	struct PUPluginUI* ui;
+	struct RUPluginUI* ui;
 } TestViewPlugin;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -27,11 +27,11 @@ void* test_view_create(HippoServiceAPI* services) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void test_view_setup_ui(void* user_data, struct PUPluginUI* ui_funcs) {
+void test_view_setup_ui(void* user_data, struct RUPluginUI* ui_funcs) {
     TestViewPlugin* plugin = (TestViewPlugin*)user_data;
     plugin->ui = ui_funcs;
 
-    struct PUPushButton button = PU_create_push_button(plugin->ui);
+    struct RUPushButton button = RU_create_push_button(plugin->ui);
 
     // Test sending a message
 
@@ -41,7 +41,7 @@ void test_view_setup_ui(void* user_data, struct PUPluginUI* ui_funcs) {
 
 	g_message_api->end_request(g_message_api->priv_data, message);
 
-	PUPushButton_set_text(button, "foobar");
+	RUPushButton_set_text(button, "foobar");
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

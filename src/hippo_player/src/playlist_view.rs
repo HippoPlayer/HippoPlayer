@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 use std::path::Path;
 use std::ffi::OsStr;
-use wrui::wrui::{ListWidgetItem, ListWidget, DragEnterEvent, DropEvent};
-use wrui::Ui;
+use rute::rute::{ListWidgetItem, ListWidget, DragEnterEvent, DropEvent};
+use rute::Ui;
 use audio::MusicInfo;
 
 use std::os::raw::c_void;
@@ -12,7 +12,7 @@ use playlist::PlaylistEntry;
 pub struct PlaylistView {
     pub widget: ListWidget,
     playlist_data: HashMap<String, PlaylistEntry>,
-    wrui: Ui,
+    rute: Ui,
 }
 
 fn get_filename_only(filename: &str) -> Option<&str> {
@@ -23,11 +23,11 @@ fn get_filename_only(filename: &str) -> Option<&str> {
 /// Displays and handles playlist
 ///
 impl PlaylistView {
-    pub fn new(wrui: Ui) -> PlaylistView {
+    pub fn new(rute: Ui) -> PlaylistView {
         PlaylistView {
             playlist_data: HashMap::new(),
-            widget: wrui.create_list_widget(),
-            wrui,
+            widget: rute.create_list_widget(),
+            rute,
         }
     }
 
@@ -70,7 +70,7 @@ impl PlaylistView {
     pub fn add_file(&mut self, _local_file: &str) {
         /*
         if let Some(filename) = get_filename_only(&local_file) {
-            let item = self.wrui.create_list_widget_item();
+            let item = self.rute.create_list_widget_item();
 
             // Check if we already have this file added then we can use the title again
 

@@ -1,38 +1,38 @@
 extern crate libloading;
 
 pub mod ffi_gen;
-pub mod wrui;
+pub mod rute;
 
 use libloading::{Library, Symbol};
 use std::rc::Rc;
 
-pub use wrui::Ui;
+pub use rute::Ui;
 
-pub use wrui::*;
+pub use rute::*;
 
 pub struct SharedLibUi {
     _lib: Rc<libloading::Library>,
-    c_api: *const ffi_gen::PU,
+    c_api: *const ffi_gen::RU,
 }
 
 #[cfg(target_os="macos")]
-pub fn get_wrui_name() -> &'static str {
-    "libwrui_qt.dylib"
+pub fn get_rute_name() -> &'static str {
+    "librute_qt.dylib"
 }
 
 #[cfg(target_os="linux")]
-pub fn get_wrui_name() -> &'static str {
-    "libwrui_qt.so"
+pub fn get_rute_name() -> &'static str {
+    "librute_qt.so"
 }
 
 #[cfg(target_os="windows")]
-pub fn get_wrui_name() -> &'static str {
-    "wrui_qt.dll"
+pub fn get_rute_name() -> &'static str {
+    "rute_qt.dll"
 }
 
 impl SharedLibUi {
     pub fn new() -> Option<SharedLibUi> {
-        let wrui_filename = get_wrui_name();
+        let rute_filename = get_rute_name();
 
         // TODO: We should do better error handling here
         // This to enforce we load relative to the current exe
@@ -45,19 +45,19 @@ impl SharedLibUi {
 
         println!("The current directory is {}", path.display());
 
-        // If wrui is found it next to the executable we load that first. This only happens in a
+        // If rute is found it next to the executable we load that first. This only happens in a
         // release build but the check for an existing file is fast so we have it like this
         // Otherwise we load the file from the tundra output directory
 
-        let lib = Rc::new(Library::new(wrui_filename).unwrap());
+        let lib = Rc::new(Library::new(rute_filename).unwrap());
 
         unsafe {
-            let wrui_get: Symbol<unsafe extern "C" fn() -> *const ffi_gen::PU> =
-                lib.get(b"wrui_get\0").unwrap();
+            let rute_get: Symbol<unsafe extern "C" fn() -> *const ffi_gen::RU> =
+                lib.get(b"rute_get\0").unwrap();
 
             Some(SharedLibUi {
                 _lib: lib.clone(),
-                c_api: wrui_get(),
+                c_api: rute_get(),
             })
         }
     }

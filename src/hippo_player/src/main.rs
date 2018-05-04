@@ -10,7 +10,7 @@ extern crate rmp_rpc;
 pub extern crate rmp;
 
 #[macro_use]
-extern crate wrui;
+extern crate rute;
 
 extern crate dynamic_reload;
 
@@ -38,8 +38,8 @@ use std::fs::File;
 use std::path::Path;
 use playlist::Playlist;
 
-use wrui::{SharedLibUi, Ui};
-use wrui::wrui::*;
+use rute::{SharedLibUi, Ui};
+use rute::rute::*;
 use playerview::PlayerView;
 use playlist_view::PlaylistView;
 use song_info::SongInfoView;
@@ -335,8 +335,8 @@ fn main() {
 
     let current_path = std::env::current_dir().unwrap();
 
-    let wrui_instance = SharedLibUi::new().unwrap();
-    let ui = wrui_instance.get_ui();
+    let rute_instance = SharedLibUi::new().unwrap();
+    let ui = rute_instance.get_ui();
 
     let mut app = HippoPlayer::new(ui);
 

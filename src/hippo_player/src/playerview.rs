@@ -3,11 +3,11 @@
 
 use std::os::raw::c_void;
 
-use wrui::Ui;
-use wrui::wrui::*;
+use rute::Ui;
+use rute::rute::*;
 
 pub struct PlayerView {
-    wrui: Ui,
+    rute: Ui,
     player_display: Widget,
     display_font: Font,
     title: String,
@@ -21,17 +21,17 @@ pub struct PlayerView {
 
 
 impl PlayerView {
-    pub fn new(wrui: Ui) -> PlayerView {
+    pub fn new(rute: Ui) -> PlayerView {
         PlayerView {
-            wrui,
+            rute,
             current_time: -10.0,
-            player_display: wrui.create_widget(),
-            display_font: wrui.create_font(),
-            prev_button: wrui.create_push_button(),
-            stop_button: wrui.create_push_button(),
-            play_button: wrui.create_push_button(),
-            next_button: wrui.create_push_button(),
-            widget: wrui.create_widget(),
+            player_display: rute.create_widget(),
+            display_font: rute.create_font(),
+            prev_button: rute.create_push_button(),
+            stop_button: rute.create_push_button(),
+            play_button: rute.create_push_button(),
+            next_button: rute.create_push_button(),
+            widget: rute.create_widget(),
             title: String::new(),
         }
     }
@@ -42,7 +42,7 @@ impl PlayerView {
     }
 
     pub fn draw_display(&mut self, event: &PaintEvent) {
-        let painter = self.wrui.create_painter();
+        let painter = self.rute.create_painter();
 
         let test_color = Color { r: 30, g: 30, b: 30, a: 255 };
 
@@ -75,13 +75,13 @@ impl PlayerView {
         self.display_font.set_family("Arial");
         self.display_font.set_point_size(20);
 
-        //let display = self.wrui.create_widget();
-        let buttons = self.wrui.create_widget();
+        //let display = self.rute.create_widget();
+        let buttons = self.rute.create_widget();
 
-        let prev_icon = self.wrui.create_icon();
-        let stop_icon = self.wrui.create_icon();
-        let play_icon = self.wrui.create_icon();
-        let next_icon = self.wrui.create_icon();
+        let prev_icon = self.rute.create_icon();
+        let stop_icon = self.rute.create_icon();
+        let play_icon = self.rute.create_icon();
+        let next_icon = self.rute.create_icon();
 
         prev_icon.add_file("bin/player/buttons/hip_button_back.png");
         stop_icon.add_file("bin/player/buttons/hip_button_stop.png");
@@ -103,8 +103,8 @@ impl PlayerView {
 
         set_paint_event!(self.player_display, self, PlayerView, PlayerView::draw_display);
 
-        let vbox = self.wrui.create_v_box_layout();
-        let hbox = self.wrui.create_h_box_layout();
+        let vbox = self.rute.create_v_box_layout();
+        let hbox = self.rute.create_h_box_layout();
 
         hbox.add_widget(&self.prev_button);
         hbox.add_widget(&self.stop_button);

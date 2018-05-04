@@ -1,5 +1,5 @@
 use std::os::raw::{c_int, c_void, c_char};
-use wrui::ffi_gen::PUPluginUI;
+use rute::ffi_gen::RUPluginUI;
 
 #[repr(C)]
 #[derive(Debug)]
@@ -80,7 +80,7 @@ pub struct CHippoViewPlugin {
     pub name: *const u8,
     pub version: *const u8,
     pub create: Option<extern "C" fn(service: *const CHippoServiceAPI) -> *mut c_void>,
-    pub setup_ui: Option<extern "C" fn(user_data: *mut c_void, ui: *const PUPluginUI)>,
+    pub setup_ui: Option<extern "C" fn(user_data: *mut c_void, ui: *const RUPluginUI)>,
     pub destroy: Option<extern "C" fn(user_data: *mut c_void)>,
     pub event: Option<extern "C" fn(event: u32)>,
 }

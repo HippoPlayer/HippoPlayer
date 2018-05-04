@@ -1,6 +1,6 @@
 use service::Service;
-use wrui::ffi_gen::PUPluginUI;
-use wrui::wrui::PluginUi;
+use rute::ffi_gen::RUPluginUI;
+use rute::rute::PluginUi;
 use std::os::raw::{c_void};
 use std::mem::transmute;
 use ffi::{CHippoServiceAPI};
@@ -17,7 +17,7 @@ pub extern "C" fn create_view_instance<T: View>(service_api: *const CHippoServic
     instance
 }
 
-pub extern "C" fn setup_ui_view_instance<T: View>(user_data: *mut c_void, ui: *const PUPluginUI) {
+pub extern "C" fn setup_ui_view_instance<T: View>(user_data: *mut c_void, ui: *const RUPluginUI) {
     let view: &mut T = unsafe { &mut *(user_data as *mut T) };
     let plugin_ui = PluginUi::new(ui);
     view.setup_ui(plugin_ui)

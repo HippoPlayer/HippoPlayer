@@ -5,8 +5,8 @@
 #include <QAction>
 #include <QListWidgetItem>
 
-extern struct PUActionFuncs s_action_funcs;
-extern struct PUListWidgetItemFuncs s_list_widget_item_funcs;
+extern struct RUActionFuncs s_action_funcs;
+extern struct RUListWidgetItemFuncs s_list_widget_item_funcs;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -30,7 +30,7 @@ private:
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-typedef void (*Signal_self_Action_void)(void* self_c, struct PUBase* action);
+typedef void (*Signal_self_Action_void)(void* self_c, struct RUBase* action);
 
 class QSlotWrapperSignal_self_Action_void : public QObject {
     Q_OBJECT
@@ -41,8 +41,8 @@ public:
     }
 
     Q_SLOT void method(QAction* action) {
-        auto temp_arg_1 = PUAction { &s_action_funcs, (struct PUBase*)action };
-        m_func(m_data, (struct PUBase*)&temp_arg_1);
+        auto temp_arg_1 = RUAction { &s_action_funcs, (struct RUBase*)action };
+        m_func(m_data, (struct RUBase*)&temp_arg_1);
     }
 private:
     Signal_self_Action_void m_func;
@@ -51,7 +51,7 @@ private:
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-typedef void (*Signal_self_ListWidgetItem_void)(void* self_c, struct PUBase* item);
+typedef void (*Signal_self_ListWidgetItem_void)(void* self_c, struct RUBase* item);
 
 class QSlotWrapperSignal_self_ListWidgetItem_void : public QObject {
     Q_OBJECT
@@ -62,8 +62,8 @@ public:
     }
 
     Q_SLOT void method(QListWidgetItem* item) {
-        auto temp_arg_1 = PUListWidgetItem { &s_list_widget_item_funcs, (struct PUBase*)item };
-        m_func(m_data, (struct PUBase*)&temp_arg_1);
+        auto temp_arg_1 = RUListWidgetItem { &s_list_widget_item_funcs, (struct RUBase*)item };
+        m_func(m_data, (struct RUBase*)&temp_arg_1);
     }
 private:
     Signal_self_ListWidgetItem_void m_func;

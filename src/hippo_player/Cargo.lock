@@ -182,7 +182,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "hippo_api"
 version = "0.1.0"
 dependencies = [
- "wrui 0.1.0",
+ "rute 0.1.0",
 ]
 
 [[package]]
@@ -194,11 +194,11 @@ dependencies = [
  "rmp 0.8.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "rmp-rpc 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rodio 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rute 0.1.0",
  "serde 1.0.27 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.27 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "walkdir 2.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "wrui 0.1.0",
 ]
 
 [[package]]
@@ -522,6 +522,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "rute"
+version = "0.1.0"
+dependencies = [
+ "libloading 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "same-file"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -722,13 +729,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "winapi-x86_64-pc-windows-gnu"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[[package]]
-name = "wrui"
-version = "0.1.0"
-dependencies = [
- "libloading 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
-]
 
 [[package]]
 name = "ws2_32-sys"

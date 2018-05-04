@@ -37,33 +37,33 @@ struct PrivData {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-extern struct PUWidgetFuncs s_widget_funcs;
-extern struct PUPushButtonFuncs s_push_button_funcs;
-extern struct PUPainterFuncs s_painter_funcs;
-extern struct PUListWidgetItemFuncs s_list_widget_item_funcs;
-extern struct PUListWidgetFuncs s_list_widget_funcs;
-extern struct PULabelFuncs s_label_funcs;
-extern struct PULineEditFuncs s_line_edit_funcs;
-extern struct PUPlainTextEditFuncs s_plain_text_edit_funcs;
-extern struct PUSliderFuncs s_slider_funcs;
-extern struct PUMainWindowFuncs s_main_window_funcs;
-extern struct PUToolWindowManagerFuncs s_tool_window_manager_funcs;
-extern struct PUFramelessWindowFuncs s_frameless_window_funcs;
-extern struct PUActionFuncs s_action_funcs;
-extern struct PUUrlFuncs s_url_funcs;
-extern struct PUMimeDataFuncs s_mime_data_funcs;
-extern struct PUTimerFuncs s_timer_funcs;
-extern struct PUIconFuncs s_icon_funcs;
-extern struct PUFontFuncs s_font_funcs;
-extern struct PUMenuFuncs s_menu_funcs;
-extern struct PUMenuBarFuncs s_menu_bar_funcs;
-extern struct PUApplicationFuncs s_application_funcs;
-extern struct PUPaintEventFuncs s_paint_event_funcs;
-extern struct PUDragEnterEventFuncs s_drag_enter_event_funcs;
-extern struct PUDropEventFuncs s_drop_event_funcs;
-extern struct PULayoutFuncs s_layout_funcs;
-extern struct PUVBoxLayoutFuncs s_v_box_layout_funcs;
-extern struct PUHBoxLayoutFuncs s_h_box_layout_funcs;
+extern struct RUWidgetFuncs s_widget_funcs;
+extern struct RUPushButtonFuncs s_push_button_funcs;
+extern struct RUPainterFuncs s_painter_funcs;
+extern struct RUListWidgetItemFuncs s_list_widget_item_funcs;
+extern struct RUListWidgetFuncs s_list_widget_funcs;
+extern struct RULabelFuncs s_label_funcs;
+extern struct RULineEditFuncs s_line_edit_funcs;
+extern struct RUPlainTextEditFuncs s_plain_text_edit_funcs;
+extern struct RUSliderFuncs s_slider_funcs;
+extern struct RUMainWindowFuncs s_main_window_funcs;
+extern struct RUToolWindowManagerFuncs s_tool_window_manager_funcs;
+extern struct RUFramelessWindowFuncs s_frameless_window_funcs;
+extern struct RUActionFuncs s_action_funcs;
+extern struct RUUrlFuncs s_url_funcs;
+extern struct RUMimeDataFuncs s_mime_data_funcs;
+extern struct RUTimerFuncs s_timer_funcs;
+extern struct RUIconFuncs s_icon_funcs;
+extern struct RUFontFuncs s_font_funcs;
+extern struct RUMenuFuncs s_menu_funcs;
+extern struct RUMenuBarFuncs s_menu_bar_funcs;
+extern struct RUApplicationFuncs s_application_funcs;
+extern struct RUPaintEventFuncs s_paint_event_funcs;
+extern struct RUDragEnterEventFuncs s_drag_enter_event_funcs;
+extern struct RUDropEventFuncs s_drop_event_funcs;
+extern struct RULayoutFuncs s_layout_funcs;
+extern struct RUVBoxLayoutFuncs s_v_box_layout_funcs;
+extern struct RUHBoxLayoutFuncs s_h_box_layout_funcs;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -419,23 +419,23 @@ public:
 protected:
     virtual void paintEvent(QPaintEvent* event) {
         if (m_paint) {
-            PUPaintEvent e;
+            RUPaintEvent e;
             e.funcs = &s_paint_event_funcs;
-            e.priv_data = (struct PUBase*)event;
-            m_paint(m_paint_user_data, (struct PUBase*)&e);
+            e.priv_data = (struct RUBase*)event;
+            m_paint(m_paint_user_data, (struct RUBase*)&e);
         } else {
             QWidget::paintEvent(event);
         }
     }
 
 public:
-    void (*m_paint)(void* self_c, struct PUBase* event) = nullptr;
+    void (*m_paint)(void* self_c, struct RUBase* event) = nullptr;
     void* m_paint_user_data = nullptr;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void set_widget_paint_event(void* object, void* user_data, void (*event)(void* self_c, struct PUBase* event)) {
+static void set_widget_paint_event(void* object, void* user_data, void (*event)(void* self_c, struct RUBase* event)) {
     WRWidget* qt_object = (WRWidget*)object;
     qt_object->m_paint_user_data = user_data;
     qt_object->m_paint = event;
@@ -460,38 +460,38 @@ public:
 protected:
     virtual void dragEnterEvent(QDragEnterEvent* event) {
         if (m_drag_enter) {
-            PUDragEnterEvent e;
+            RUDragEnterEvent e;
             e.funcs = &s_drag_enter_event_funcs;
-            e.priv_data = (struct PUBase*)event;
-            m_drag_enter(m_drag_enter_user_data, (struct PUBase*)&e);
+            e.priv_data = (struct RUBase*)event;
+            m_drag_enter(m_drag_enter_user_data, (struct RUBase*)&e);
         } else {
             QListWidget::dragEnterEvent(event);
         }
     }
 
 public:
-    void (*m_drag_enter)(void* self_c, struct PUBase* event) = nullptr;
+    void (*m_drag_enter)(void* self_c, struct RUBase* event) = nullptr;
     void* m_drag_enter_user_data = nullptr;
 protected:
     virtual void dropEvent(QDropEvent* event) {
         if (m_drop) {
-            PUDropEvent e;
+            RUDropEvent e;
             e.funcs = &s_drop_event_funcs;
-            e.priv_data = (struct PUBase*)event;
-            m_drop(m_drop_user_data, (struct PUBase*)&e);
+            e.priv_data = (struct RUBase*)event;
+            m_drop(m_drop_user_data, (struct RUBase*)&e);
         } else {
             QListWidget::dropEvent(event);
         }
     }
 
 public:
-    void (*m_drop)(void* self_c, struct PUBase* event) = nullptr;
+    void (*m_drop)(void* self_c, struct RUBase* event) = nullptr;
     void* m_drop_user_data = nullptr;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void set_list_widget_drag_enter_event(void* object, void* user_data, void (*event)(void* self_c, struct PUBase* event)) {
+static void set_list_widget_drag_enter_event(void* object, void* user_data, void (*event)(void* self_c, struct RUBase* event)) {
     WRListWidget* qt_object = (WRListWidget*)object;
     qt_object->m_drag_enter_user_data = user_data;
     qt_object->m_drag_enter = event;
@@ -499,7 +499,7 @@ static void set_list_widget_drag_enter_event(void* object, void* user_data, void
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void set_list_widget_drop_event(void* object, void* user_data, void (*event)(void* self_c, struct PUBase* event)) {
+static void set_list_widget_drop_event(void* object, void* user_data, void (*event)(void* self_c, struct RUBase* event)) {
     WRListWidget* qt_object = (WRListWidget*)object;
     qt_object->m_drop_user_data = user_data;
     qt_object->m_drop = event;
@@ -606,49 +606,49 @@ public:
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void widget_show(struct PUBase* self_c) { 
+static void widget_show(struct RUBase* self_c) { 
     WRWidget* qt_data = (WRWidget*)self_c;
     qt_data->show();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void widget_set_fixed_height(struct PUBase* self_c, int width) { 
+static void widget_set_fixed_height(struct RUBase* self_c, int width) { 
     WRWidget* qt_data = (WRWidget*)self_c;
     qt_data->setFixedHeight(width);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void widget_set_fixed_width(struct PUBase* self_c, int width) { 
+static void widget_set_fixed_width(struct RUBase* self_c, int width) { 
     WRWidget* qt_data = (WRWidget*)self_c;
     qt_data->setFixedWidth(width);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void widget_resize(struct PUBase* self_c, int width, int height) { 
+static void widget_resize(struct RUBase* self_c, int width, int height) { 
     WRWidget* qt_data = (WRWidget*)self_c;
     qt_data->resize(width, height);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void widget_set_parent(struct PUBase* self_c, struct PUBase* widget) { 
+static void widget_set_parent(struct RUBase* self_c, struct RUBase* widget) { 
     WRWidget* qt_data = (WRWidget*)self_c;
     qt_data->setParent((QWidget*)widget);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void widget_set_layout(struct PUBase* self_c, struct PUBase* layout) { 
+static void widget_set_layout(struct RUBase* self_c, struct RUBase* layout) { 
     WRWidget* qt_data = (WRWidget*)self_c;
     qt_data->setLayout((QLayout*)layout);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void widget_update(struct PUBase* self_c) { 
+static void widget_update(struct RUBase* self_c) { 
     WRWidget* qt_data = (WRWidget*)self_c;
     qt_data->update();
 }
@@ -657,49 +657,49 @@ static void widget_update(struct PUBase* self_c) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void push_button_show(struct PUBase* self_c) { 
+static void push_button_show(struct RUBase* self_c) { 
     WRPushButton* qt_data = (WRPushButton*)self_c;
     qt_data->show();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void push_button_set_fixed_height(struct PUBase* self_c, int width) { 
+static void push_button_set_fixed_height(struct RUBase* self_c, int width) { 
     WRPushButton* qt_data = (WRPushButton*)self_c;
     qt_data->setFixedHeight(width);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void push_button_set_fixed_width(struct PUBase* self_c, int width) { 
+static void push_button_set_fixed_width(struct RUBase* self_c, int width) { 
     WRPushButton* qt_data = (WRPushButton*)self_c;
     qt_data->setFixedWidth(width);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void push_button_resize(struct PUBase* self_c, int width, int height) { 
+static void push_button_resize(struct RUBase* self_c, int width, int height) { 
     WRPushButton* qt_data = (WRPushButton*)self_c;
     qt_data->resize(width, height);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void push_button_set_parent(struct PUBase* self_c, struct PUBase* widget) { 
+static void push_button_set_parent(struct RUBase* self_c, struct RUBase* widget) { 
     WRPushButton* qt_data = (WRPushButton*)self_c;
     qt_data->setParent((QWidget*)widget);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void push_button_set_layout(struct PUBase* self_c, struct PUBase* layout) { 
+static void push_button_set_layout(struct RUBase* self_c, struct RUBase* layout) { 
     WRPushButton* qt_data = (WRPushButton*)self_c;
     qt_data->setLayout((QLayout*)layout);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void push_button_update(struct PUBase* self_c) { 
+static void push_button_update(struct RUBase* self_c) { 
     WRPushButton* qt_data = (WRPushButton*)self_c;
     qt_data->update();
 }
@@ -724,56 +724,56 @@ static void set_push_button_released_event(void* object, void* user_data, void (
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void push_button_set_icon(struct PUBase* self_c, struct PUBase* icon) { 
+static void push_button_set_icon(struct RUBase* self_c, struct RUBase* icon) { 
     WRPushButton* qt_data = (WRPushButton*)self_c;
     qt_data->setIcon(*(QIcon*)icon);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void push_button_set_text(struct PUBase* self_c, const char* text) { 
+static void push_button_set_text(struct RUBase* self_c, const char* text) { 
     WRPushButton* qt_data = (WRPushButton*)self_c;
     qt_data->setText(QString::fromUtf8(text));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void push_button_set_flat(struct PUBase* self_c, bool flat) { 
+static void push_button_set_flat(struct RUBase* self_c, bool flat) { 
     WRPushButton* qt_data = (WRPushButton*)self_c;
     qt_data->setFlat(flat);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void painter_begin(struct PUBase* self_c, struct PUBase* target) { 
+static void painter_begin(struct RUBase* self_c, struct RUBase* target) { 
     QPainter* qt_data = (QPainter*)self_c;
     qt_data->begin(dynamic_cast<QPaintDevice*>((QObject*)target));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void painter_end(struct PUBase* self_c) { 
+static void painter_end(struct RUBase* self_c) { 
     QPainter* qt_data = (QPainter*)self_c;
     qt_data->end();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void painter_set_font(struct PUBase* self_c, struct PUBase* font) { 
+static void painter_set_font(struct RUBase* self_c, struct RUBase* font) { 
     QPainter* qt_data = (QPainter*)self_c;
     qt_data->setFont(*(QFont*)font);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void painter_draw_text(struct PUBase* self_c, int x, int y, const char* text) { 
+static void painter_draw_text(struct RUBase* self_c, int x, int y, const char* text) { 
     QPainter* qt_data = (QPainter*)self_c;
     qt_data->drawText(x, y, QString::fromUtf8(text));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void painter_draw_line(struct PUBase* self_c, int x1, int y1, int x2, int y2) { 
+static void painter_draw_line(struct RUBase* self_c, int x1, int y1, int x2, int y2) { 
     QPainter* qt_data = (QPainter*)self_c;
     qt_data->drawLine(x1, y1, x2, y2);
 }
@@ -782,14 +782,14 @@ static void painter_draw_line(struct PUBase* self_c, int x1, int y1, int x2, int
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void list_widget_item_set_text(struct PUBase* self_c, const char* text) { 
+static void list_widget_item_set_text(struct RUBase* self_c, const char* text) { 
     QListWidgetItem* qt_data = (QListWidgetItem*)self_c;
     qt_data->setText(QString::fromUtf8(text));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const char* list_widget_item_text(struct PUBase* self_c) { 
+static const char* list_widget_item_text(struct RUBase* self_c) { 
     QListWidgetItem* qt_data = (QListWidgetItem*)self_c;
     auto ret_value = qt_data->text();
     QByteArray ba = ret_value.toUtf8();
@@ -806,49 +806,49 @@ static const char* list_widget_item_text(struct PUBase* self_c) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void list_widget_show(struct PUBase* self_c) { 
+static void list_widget_show(struct RUBase* self_c) { 
     WRListWidget* qt_data = (WRListWidget*)self_c;
     qt_data->show();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void list_widget_set_fixed_height(struct PUBase* self_c, int width) { 
+static void list_widget_set_fixed_height(struct RUBase* self_c, int width) { 
     WRListWidget* qt_data = (WRListWidget*)self_c;
     qt_data->setFixedHeight(width);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void list_widget_set_fixed_width(struct PUBase* self_c, int width) { 
+static void list_widget_set_fixed_width(struct RUBase* self_c, int width) { 
     WRListWidget* qt_data = (WRListWidget*)self_c;
     qt_data->setFixedWidth(width);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void list_widget_resize(struct PUBase* self_c, int width, int height) { 
+static void list_widget_resize(struct RUBase* self_c, int width, int height) { 
     WRListWidget* qt_data = (WRListWidget*)self_c;
     qt_data->resize(width, height);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void list_widget_set_parent(struct PUBase* self_c, struct PUBase* widget) { 
+static void list_widget_set_parent(struct RUBase* self_c, struct RUBase* widget) { 
     WRListWidget* qt_data = (WRListWidget*)self_c;
     qt_data->setParent((QWidget*)widget);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void list_widget_set_layout(struct PUBase* self_c, struct PUBase* layout) { 
+static void list_widget_set_layout(struct RUBase* self_c, struct RUBase* layout) { 
     WRListWidget* qt_data = (WRListWidget*)self_c;
     qt_data->setLayout((QLayout*)layout);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void list_widget_update(struct PUBase* self_c) { 
+static void list_widget_update(struct RUBase* self_c) { 
     WRListWidget* qt_data = (WRListWidget*)self_c;
     qt_data->update();
 }
@@ -857,7 +857,7 @@ static void list_widget_update(struct PUBase* self_c) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void list_widget_add_item(struct PUBase* self_c, struct PUBase* item) { 
+static void list_widget_add_item(struct RUBase* self_c, struct RUBase* item) { 
     WRListWidget* qt_data = (WRListWidget*)self_c;
     qt_data->addItem((QListWidgetItem*)item);
 }
@@ -866,18 +866,18 @@ static void list_widget_add_item(struct PUBase* self_c, struct PUBase* item) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static struct PUListWidgetItem list_widget_current_item(struct PUBase* self_c) { 
+static struct RUListWidgetItem list_widget_current_item(struct RUBase* self_c) { 
     WRListWidget* qt_data = (WRListWidget*)self_c;
     auto ret_value = qt_data->currentItem();
-    PUListWidgetItem ctl;
+    RUListWidgetItem ctl;
     ctl.funcs = &s_list_widget_item_funcs;
-    ctl.priv_data = (struct PUBase*)ret_value;
+    ctl.priv_data = (struct RUBase*)ret_value;
     return ctl;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int list_widget_current_row(struct PUBase* self_c) { 
+static int list_widget_current_row(struct RUBase* self_c) { 
     WRListWidget* qt_data = (WRListWidget*)self_c;
     auto ret_value = qt_data->currentRow();
     return ret_value;
@@ -885,16 +885,16 @@ static int list_widget_current_row(struct PUBase* self_c) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static struct PUArray list_widget_selected_items(struct PUBase* self_c) { 
+static struct RUArray list_widget_selected_items(struct RUBase* self_c) { 
     WRListWidget* qt_data = (WRListWidget*)self_c;
     auto ret_value = qt_data->selectedItems();
     int count = ret_value.size();
-    PUArray array = { 0 };
+    RUArray array = { 0 };
     if (count > 0) {
-        PUListWidgetItem* elements = new PUListWidgetItem[count];
+        RUListWidgetItem* elements = new RUListWidgetItem[count];
         for (int i = 0; i < count; ++i) {
             elements[i].funcs = &s_list_widget_item_funcs;
-            elements[i].priv_data = (struct PUBase*)ret_value.at(i);
+            elements[i].priv_data = (struct RUBase*)ret_value.at(i);
        }
        array.elements = (void*)elements;
        array.count = int(count);
@@ -904,25 +904,25 @@ static struct PUArray list_widget_selected_items(struct PUBase* self_c) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static struct PUListWidgetItem list_widget_item(struct PUBase* self_c, int index) { 
+static struct RUListWidgetItem list_widget_item(struct RUBase* self_c, int index) { 
     WRListWidget* qt_data = (WRListWidget*)self_c;
     auto ret_value = qt_data->item(index);
-    PUListWidgetItem ctl;
+    RUListWidgetItem ctl;
     ctl.funcs = &s_list_widget_item_funcs;
-    ctl.priv_data = (struct PUBase*)ret_value;
+    ctl.priv_data = (struct RUBase*)ret_value;
     return ctl;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void list_widget_set_current_row(struct PUBase* self_c, int index) { 
+static void list_widget_set_current_row(struct RUBase* self_c, int index) { 
     WRListWidget* qt_data = (WRListWidget*)self_c;
     qt_data->setCurrentRow(index);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int list_widget_count(struct PUBase* self_c) { 
+static int list_widget_count(struct RUBase* self_c) { 
     WRListWidget* qt_data = (WRListWidget*)self_c;
     auto ret_value = qt_data->count();
     return ret_value;
@@ -930,14 +930,14 @@ static int list_widget_count(struct PUBase* self_c) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void list_widget_set_drag_enabled(struct PUBase* self_c, bool state) { 
+static void list_widget_set_drag_enabled(struct RUBase* self_c, bool state) { 
     WRListWidget* qt_data = (WRListWidget*)self_c;
     qt_data->setDragEnabled(state);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void list_widget_set_drop_indicator_shown(struct PUBase* self_c, bool state) { 
+static void list_widget_set_drop_indicator_shown(struct RUBase* self_c, bool state) { 
     WRListWidget* qt_data = (WRListWidget*)self_c;
     qt_data->setDropIndicatorShown(state);
 }
@@ -960,7 +960,7 @@ static void set_list_widget_current_row_changed_event(void* object, void* user_d
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void set_list_widget_item_clicked_event(void* object, void* user_data, void (*event)(void* self_c, struct PUBase* item)) {
+static void set_list_widget_item_clicked_event(void* object, void* user_data, void (*event)(void* self_c, struct RUBase* item)) {
     QSlotWrapperSignal_self_ListWidgetItem_void* wrap = new QSlotWrapperSignal_self_ListWidgetItem_void(user_data, (Signal_self_ListWidgetItem_void)event);
     QObject* q_obj = (QObject*)object;
     QObject::connect(q_obj, SIGNAL(itemClicked(QListWidgetItem*)), wrap, SLOT(method(QListWidgetItem*)));
@@ -968,7 +968,7 @@ static void set_list_widget_item_clicked_event(void* object, void* user_data, vo
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void set_list_widget_item_double_clicked_event(void* object, void* user_data, void (*event)(void* self_c, struct PUBase* item)) {
+static void set_list_widget_item_double_clicked_event(void* object, void* user_data, void (*event)(void* self_c, struct RUBase* item)) {
     QSlotWrapperSignal_self_ListWidgetItem_void* wrap = new QSlotWrapperSignal_self_ListWidgetItem_void(user_data, (Signal_self_ListWidgetItem_void)event);
     QObject* q_obj = (QObject*)object;
     QObject::connect(q_obj, SIGNAL(itemDoubleClicked(QListWidgetItem*)), wrap, SLOT(method(QListWidgetItem*)));
@@ -976,49 +976,49 @@ static void set_list_widget_item_double_clicked_event(void* object, void* user_d
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void label_show(struct PUBase* self_c) { 
+static void label_show(struct RUBase* self_c) { 
     WRLabel* qt_data = (WRLabel*)self_c;
     qt_data->show();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void label_set_fixed_height(struct PUBase* self_c, int width) { 
+static void label_set_fixed_height(struct RUBase* self_c, int width) { 
     WRLabel* qt_data = (WRLabel*)self_c;
     qt_data->setFixedHeight(width);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void label_set_fixed_width(struct PUBase* self_c, int width) { 
+static void label_set_fixed_width(struct RUBase* self_c, int width) { 
     WRLabel* qt_data = (WRLabel*)self_c;
     qt_data->setFixedWidth(width);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void label_resize(struct PUBase* self_c, int width, int height) { 
+static void label_resize(struct RUBase* self_c, int width, int height) { 
     WRLabel* qt_data = (WRLabel*)self_c;
     qt_data->resize(width, height);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void label_set_parent(struct PUBase* self_c, struct PUBase* widget) { 
+static void label_set_parent(struct RUBase* self_c, struct RUBase* widget) { 
     WRLabel* qt_data = (WRLabel*)self_c;
     qt_data->setParent((QWidget*)widget);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void label_set_layout(struct PUBase* self_c, struct PUBase* layout) { 
+static void label_set_layout(struct RUBase* self_c, struct RUBase* layout) { 
     WRLabel* qt_data = (WRLabel*)self_c;
     qt_data->setLayout((QLayout*)layout);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void label_update(struct PUBase* self_c) { 
+static void label_update(struct RUBase* self_c) { 
     WRLabel* qt_data = (WRLabel*)self_c;
     qt_data->update();
 }
@@ -1027,56 +1027,56 @@ static void label_update(struct PUBase* self_c) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void label_set_text(struct PUBase* self_c, const char* text) { 
+static void label_set_text(struct RUBase* self_c, const char* text) { 
     WRLabel* qt_data = (WRLabel*)self_c;
     qt_data->setText(QString::fromUtf8(text));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void line_edit_show(struct PUBase* self_c) { 
+static void line_edit_show(struct RUBase* self_c) { 
     WRLineEdit* qt_data = (WRLineEdit*)self_c;
     qt_data->show();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void line_edit_set_fixed_height(struct PUBase* self_c, int width) { 
+static void line_edit_set_fixed_height(struct RUBase* self_c, int width) { 
     WRLineEdit* qt_data = (WRLineEdit*)self_c;
     qt_data->setFixedHeight(width);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void line_edit_set_fixed_width(struct PUBase* self_c, int width) { 
+static void line_edit_set_fixed_width(struct RUBase* self_c, int width) { 
     WRLineEdit* qt_data = (WRLineEdit*)self_c;
     qt_data->setFixedWidth(width);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void line_edit_resize(struct PUBase* self_c, int width, int height) { 
+static void line_edit_resize(struct RUBase* self_c, int width, int height) { 
     WRLineEdit* qt_data = (WRLineEdit*)self_c;
     qt_data->resize(width, height);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void line_edit_set_parent(struct PUBase* self_c, struct PUBase* widget) { 
+static void line_edit_set_parent(struct RUBase* self_c, struct RUBase* widget) { 
     WRLineEdit* qt_data = (WRLineEdit*)self_c;
     qt_data->setParent((QWidget*)widget);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void line_edit_set_layout(struct PUBase* self_c, struct PUBase* layout) { 
+static void line_edit_set_layout(struct RUBase* self_c, struct RUBase* layout) { 
     WRLineEdit* qt_data = (WRLineEdit*)self_c;
     qt_data->setLayout((QLayout*)layout);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void line_edit_update(struct PUBase* self_c) { 
+static void line_edit_update(struct RUBase* self_c) { 
     WRLineEdit* qt_data = (WRLineEdit*)self_c;
     qt_data->update();
 }
@@ -1085,63 +1085,63 @@ static void line_edit_update(struct PUBase* self_c) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void line_edit_set_text(struct PUBase* self_c, const char* text) { 
+static void line_edit_set_text(struct RUBase* self_c, const char* text) { 
     WRLineEdit* qt_data = (WRLineEdit*)self_c;
     qt_data->setText(QString::fromUtf8(text));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void line_edit_set_read_only(struct PUBase* self_c, bool value) { 
+static void line_edit_set_read_only(struct RUBase* self_c, bool value) { 
     WRLineEdit* qt_data = (WRLineEdit*)self_c;
     qt_data->setReadOnly(value);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void plain_text_edit_show(struct PUBase* self_c) { 
+static void plain_text_edit_show(struct RUBase* self_c) { 
     WRPlainTextEdit* qt_data = (WRPlainTextEdit*)self_c;
     qt_data->show();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void plain_text_edit_set_fixed_height(struct PUBase* self_c, int width) { 
+static void plain_text_edit_set_fixed_height(struct RUBase* self_c, int width) { 
     WRPlainTextEdit* qt_data = (WRPlainTextEdit*)self_c;
     qt_data->setFixedHeight(width);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void plain_text_edit_set_fixed_width(struct PUBase* self_c, int width) { 
+static void plain_text_edit_set_fixed_width(struct RUBase* self_c, int width) { 
     WRPlainTextEdit* qt_data = (WRPlainTextEdit*)self_c;
     qt_data->setFixedWidth(width);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void plain_text_edit_resize(struct PUBase* self_c, int width, int height) { 
+static void plain_text_edit_resize(struct RUBase* self_c, int width, int height) { 
     WRPlainTextEdit* qt_data = (WRPlainTextEdit*)self_c;
     qt_data->resize(width, height);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void plain_text_edit_set_parent(struct PUBase* self_c, struct PUBase* widget) { 
+static void plain_text_edit_set_parent(struct RUBase* self_c, struct RUBase* widget) { 
     WRPlainTextEdit* qt_data = (WRPlainTextEdit*)self_c;
     qt_data->setParent((QWidget*)widget);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void plain_text_edit_set_layout(struct PUBase* self_c, struct PUBase* layout) { 
+static void plain_text_edit_set_layout(struct RUBase* self_c, struct RUBase* layout) { 
     WRPlainTextEdit* qt_data = (WRPlainTextEdit*)self_c;
     qt_data->setLayout((QLayout*)layout);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void plain_text_edit_update(struct PUBase* self_c) { 
+static void plain_text_edit_update(struct RUBase* self_c) { 
     WRPlainTextEdit* qt_data = (WRPlainTextEdit*)self_c;
     qt_data->update();
 }
@@ -1150,77 +1150,77 @@ static void plain_text_edit_update(struct PUBase* self_c) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void plain_text_edit_clear(struct PUBase* self_c) { 
+static void plain_text_edit_clear(struct RUBase* self_c) { 
     WRPlainTextEdit* qt_data = (WRPlainTextEdit*)self_c;
     qt_data->clear();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void plain_text_edit_set_plain_text(struct PUBase* self_c, const char* text) { 
+static void plain_text_edit_set_plain_text(struct RUBase* self_c, const char* text) { 
     WRPlainTextEdit* qt_data = (WRPlainTextEdit*)self_c;
     qt_data->setPlainText(QString::fromUtf8(text));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void plain_text_edit_append_plain_text(struct PUBase* self_c, const char* text) { 
+static void plain_text_edit_append_plain_text(struct RUBase* self_c, const char* text) { 
     WRPlainTextEdit* qt_data = (WRPlainTextEdit*)self_c;
     qt_data->appendPlainText(QString::fromUtf8(text));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void plain_text_edit_set_read_only(struct PUBase* self_c, bool value) { 
+static void plain_text_edit_set_read_only(struct RUBase* self_c, bool value) { 
     WRPlainTextEdit* qt_data = (WRPlainTextEdit*)self_c;
     qt_data->setReadOnly(value);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void slider_show(struct PUBase* self_c) { 
+static void slider_show(struct RUBase* self_c) { 
     WRSlider* qt_data = (WRSlider*)self_c;
     qt_data->show();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void slider_set_fixed_height(struct PUBase* self_c, int width) { 
+static void slider_set_fixed_height(struct RUBase* self_c, int width) { 
     WRSlider* qt_data = (WRSlider*)self_c;
     qt_data->setFixedHeight(width);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void slider_set_fixed_width(struct PUBase* self_c, int width) { 
+static void slider_set_fixed_width(struct RUBase* self_c, int width) { 
     WRSlider* qt_data = (WRSlider*)self_c;
     qt_data->setFixedWidth(width);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void slider_resize(struct PUBase* self_c, int width, int height) { 
+static void slider_resize(struct RUBase* self_c, int width, int height) { 
     WRSlider* qt_data = (WRSlider*)self_c;
     qt_data->resize(width, height);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void slider_set_parent(struct PUBase* self_c, struct PUBase* widget) { 
+static void slider_set_parent(struct RUBase* self_c, struct RUBase* widget) { 
     WRSlider* qt_data = (WRSlider*)self_c;
     qt_data->setParent((QWidget*)widget);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void slider_set_layout(struct PUBase* self_c, struct PUBase* layout) { 
+static void slider_set_layout(struct RUBase* self_c, struct RUBase* layout) { 
     WRSlider* qt_data = (WRSlider*)self_c;
     qt_data->setLayout((QLayout*)layout);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void slider_update(struct PUBase* self_c) { 
+static void slider_update(struct RUBase* self_c) { 
     WRSlider* qt_data = (WRSlider*)self_c;
     qt_data->update();
 }
@@ -1237,49 +1237,49 @@ static void set_slider_value_changed_event(void* object, void* user_data, void (
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void main_window_show(struct PUBase* self_c) { 
+static void main_window_show(struct RUBase* self_c) { 
     WRMainWindow* qt_data = (WRMainWindow*)self_c;
     qt_data->show();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void main_window_set_fixed_height(struct PUBase* self_c, int width) { 
+static void main_window_set_fixed_height(struct RUBase* self_c, int width) { 
     WRMainWindow* qt_data = (WRMainWindow*)self_c;
     qt_data->setFixedHeight(width);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void main_window_set_fixed_width(struct PUBase* self_c, int width) { 
+static void main_window_set_fixed_width(struct RUBase* self_c, int width) { 
     WRMainWindow* qt_data = (WRMainWindow*)self_c;
     qt_data->setFixedWidth(width);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void main_window_resize(struct PUBase* self_c, int width, int height) { 
+static void main_window_resize(struct RUBase* self_c, int width, int height) { 
     WRMainWindow* qt_data = (WRMainWindow*)self_c;
     qt_data->resize(width, height);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void main_window_set_parent(struct PUBase* self_c, struct PUBase* widget) { 
+static void main_window_set_parent(struct RUBase* self_c, struct RUBase* widget) { 
     WRMainWindow* qt_data = (WRMainWindow*)self_c;
     qt_data->setParent((QWidget*)widget);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void main_window_set_layout(struct PUBase* self_c, struct PUBase* layout) { 
+static void main_window_set_layout(struct RUBase* self_c, struct RUBase* layout) { 
     WRMainWindow* qt_data = (WRMainWindow*)self_c;
     qt_data->setLayout((QLayout*)layout);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void main_window_update(struct PUBase* self_c) { 
+static void main_window_update(struct RUBase* self_c) { 
     WRMainWindow* qt_data = (WRMainWindow*)self_c;
     qt_data->update();
 }
@@ -1288,7 +1288,7 @@ static void main_window_update(struct PUBase* self_c) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static bool main_window_is_animated(struct PUBase* self_c) { 
+static bool main_window_is_animated(struct RUBase* self_c) { 
     WRMainWindow* qt_data = (WRMainWindow*)self_c;
     auto ret_value = qt_data->isAnimated();
     return ret_value;
@@ -1296,67 +1296,67 @@ static bool main_window_is_animated(struct PUBase* self_c) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static struct PUMenuBar main_window_menu_bar(struct PUBase* self_c) { 
+static struct RUMenuBar main_window_menu_bar(struct RUBase* self_c) { 
     WRMainWindow* qt_data = (WRMainWindow*)self_c;
     auto ret_value = qt_data->menuBar();
-    PUMenuBar ctl;
+    RUMenuBar ctl;
     ctl.funcs = &s_menu_bar_funcs;
-    ctl.priv_data = (struct PUBase*)ret_value;
+    ctl.priv_data = (struct RUBase*)ret_value;
     return ctl;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void main_window_set_central_widget(struct PUBase* self_c, struct PUBase* widget) { 
+static void main_window_set_central_widget(struct RUBase* self_c, struct RUBase* widget) { 
     WRMainWindow* qt_data = (WRMainWindow*)self_c;
     qt_data->setCentralWidget((QWidget*)widget);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void tool_window_manager_show(struct PUBase* self_c) { 
+static void tool_window_manager_show(struct RUBase* self_c) { 
     WRToolWindowManager* qt_data = (WRToolWindowManager*)self_c;
     qt_data->show();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void tool_window_manager_set_fixed_height(struct PUBase* self_c, int width) { 
+static void tool_window_manager_set_fixed_height(struct RUBase* self_c, int width) { 
     WRToolWindowManager* qt_data = (WRToolWindowManager*)self_c;
     qt_data->setFixedHeight(width);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void tool_window_manager_set_fixed_width(struct PUBase* self_c, int width) { 
+static void tool_window_manager_set_fixed_width(struct RUBase* self_c, int width) { 
     WRToolWindowManager* qt_data = (WRToolWindowManager*)self_c;
     qt_data->setFixedWidth(width);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void tool_window_manager_resize(struct PUBase* self_c, int width, int height) { 
+static void tool_window_manager_resize(struct RUBase* self_c, int width, int height) { 
     WRToolWindowManager* qt_data = (WRToolWindowManager*)self_c;
     qt_data->resize(width, height);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void tool_window_manager_set_parent(struct PUBase* self_c, struct PUBase* widget) { 
+static void tool_window_manager_set_parent(struct RUBase* self_c, struct RUBase* widget) { 
     WRToolWindowManager* qt_data = (WRToolWindowManager*)self_c;
     qt_data->setParent((QWidget*)widget);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void tool_window_manager_set_layout(struct PUBase* self_c, struct PUBase* layout) { 
+static void tool_window_manager_set_layout(struct RUBase* self_c, struct RUBase* layout) { 
     WRToolWindowManager* qt_data = (WRToolWindowManager*)self_c;
     qt_data->setLayout((QLayout*)layout);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void tool_window_manager_update(struct PUBase* self_c) { 
+static void tool_window_manager_update(struct RUBase* self_c) { 
     WRToolWindowManager* qt_data = (WRToolWindowManager*)self_c;
     qt_data->update();
 }
@@ -1369,49 +1369,49 @@ static void tool_window_manager_update(struct PUBase* self_c) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void frameless_window_show(struct PUBase* self_c) { 
+static void frameless_window_show(struct RUBase* self_c) { 
     WRFramelessWindow* qt_data = (WRFramelessWindow*)self_c;
     qt_data->show();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void frameless_window_set_fixed_height(struct PUBase* self_c, int width) { 
+static void frameless_window_set_fixed_height(struct RUBase* self_c, int width) { 
     WRFramelessWindow* qt_data = (WRFramelessWindow*)self_c;
     qt_data->setFixedHeight(width);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void frameless_window_set_fixed_width(struct PUBase* self_c, int width) { 
+static void frameless_window_set_fixed_width(struct RUBase* self_c, int width) { 
     WRFramelessWindow* qt_data = (WRFramelessWindow*)self_c;
     qt_data->setFixedWidth(width);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void frameless_window_resize(struct PUBase* self_c, int width, int height) { 
+static void frameless_window_resize(struct RUBase* self_c, int width, int height) { 
     WRFramelessWindow* qt_data = (WRFramelessWindow*)self_c;
     qt_data->resize(width, height);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void frameless_window_set_parent(struct PUBase* self_c, struct PUBase* widget) { 
+static void frameless_window_set_parent(struct RUBase* self_c, struct RUBase* widget) { 
     WRFramelessWindow* qt_data = (WRFramelessWindow*)self_c;
     qt_data->setParent((QWidget*)widget);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void frameless_window_set_layout(struct PUBase* self_c, struct PUBase* layout) { 
+static void frameless_window_set_layout(struct RUBase* self_c, struct RUBase* layout) { 
     WRFramelessWindow* qt_data = (WRFramelessWindow*)self_c;
     qt_data->setLayout((QLayout*)layout);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void frameless_window_update(struct PUBase* self_c) { 
+static void frameless_window_update(struct RUBase* self_c) { 
     WRFramelessWindow* qt_data = (WRFramelessWindow*)self_c;
     qt_data->update();
 }
@@ -1420,21 +1420,21 @@ static void frameless_window_update(struct PUBase* self_c) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void frameless_window_set_window_title(struct PUBase* self_c, const char* title) { 
+static void frameless_window_set_window_title(struct RUBase* self_c, const char* title) { 
     WRFramelessWindow* qt_data = (WRFramelessWindow*)self_c;
     qt_data->setWindowTitle(QString::fromUtf8(title));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void frameless_window_set_content(struct PUBase* self_c, struct PUBase* widget) { 
+static void frameless_window_set_content(struct RUBase* self_c, struct RUBase* widget) { 
     WRFramelessWindow* qt_data = (WRFramelessWindow*)self_c;
     qt_data->setContent((QWidget*)widget);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static bool action_is_enabled(struct PUBase* self_c) { 
+static bool action_is_enabled(struct RUBase* self_c) { 
     QAction* qt_data = (QAction*)self_c;
     auto ret_value = qt_data->isEnabled();
     return ret_value;
@@ -1442,7 +1442,7 @@ static bool action_is_enabled(struct PUBase* self_c) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void action_set_text(struct PUBase* self_c, const char* text) { 
+static void action_set_text(struct RUBase* self_c, const char* text) { 
     QAction* qt_data = (QAction*)self_c;
     qt_data->setText(QString::fromUtf8(text));
 }
@@ -1465,7 +1465,7 @@ static void set_action_triggered_event(void* object, void* user_data, void (*eve
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static bool url_is_local_file(struct PUBase* self_c) { 
+static bool url_is_local_file(struct RUBase* self_c) { 
     QUrl* qt_data = (QUrl*)self_c;
     auto ret_value = qt_data->isLocalFile();
     return ret_value;
@@ -1473,7 +1473,7 @@ static bool url_is_local_file(struct PUBase* self_c) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const char* url_to_local_file(struct PUBase* self_c) { 
+static const char* url_to_local_file(struct RUBase* self_c) { 
     QUrl* qt_data = (QUrl*)self_c;
     auto ret_value = qt_data->toLocalFile();
     QByteArray ba = ret_value.toUtf8();
@@ -1486,7 +1486,7 @@ static const char* url_to_local_file(struct PUBase* self_c) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static bool mime_data_has_color(struct PUBase* self_c) { 
+static bool mime_data_has_color(struct RUBase* self_c) { 
     QMimeData* qt_data = (QMimeData*)self_c;
     auto ret_value = qt_data->hasColor();
     return ret_value;
@@ -1494,7 +1494,7 @@ static bool mime_data_has_color(struct PUBase* self_c) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static bool mime_data_has_image(struct PUBase* self_c) { 
+static bool mime_data_has_image(struct RUBase* self_c) { 
     QMimeData* qt_data = (QMimeData*)self_c;
     auto ret_value = qt_data->hasImage();
     return ret_value;
@@ -1502,7 +1502,7 @@ static bool mime_data_has_image(struct PUBase* self_c) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static bool mime_data_has_text(struct PUBase* self_c) { 
+static bool mime_data_has_text(struct RUBase* self_c) { 
     QMimeData* qt_data = (QMimeData*)self_c;
     auto ret_value = qt_data->hasText();
     return ret_value;
@@ -1510,7 +1510,7 @@ static bool mime_data_has_text(struct PUBase* self_c) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static bool mime_data_has_urls(struct PUBase* self_c) { 
+static bool mime_data_has_urls(struct RUBase* self_c) { 
     QMimeData* qt_data = (QMimeData*)self_c;
     auto ret_value = qt_data->hasUrls();
     return ret_value;
@@ -1518,17 +1518,17 @@ static bool mime_data_has_urls(struct PUBase* self_c) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static struct PUArray mime_data_urls(struct PUBase* self_c) { 
+static struct RUArray mime_data_urls(struct RUBase* self_c) { 
     QMimeData* qt_data = (QMimeData*)self_c;
     auto ret_value = qt_data->urls();
     int count = ret_value.size();
-    PUArray array = { 0 };
+    RUArray array = { 0 };
     if (count > 0) {
-        PUUrl* elements = new PUUrl[count];
+        RUUrl* elements = new RUUrl[count];
         for (int i = 0; i < count; ++i) {
             elements[i].funcs = &s_url_funcs;
             QUrl* temp = new QUrl(ret_value.at(i));
-            elements[i].priv_data = (struct PUBase*)temp;
+            elements[i].priv_data = (struct RUBase*)temp;
        }
        array.elements = (void*)elements;
        array.count = int(count);
@@ -1546,77 +1546,77 @@ static void set_timer_timeout_event(void* object, void* user_data, void (*event)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void timer_start(struct PUBase* self_c, int time) { 
+static void timer_start(struct RUBase* self_c, int time) { 
     QTimer* qt_data = (QTimer*)self_c;
     qt_data->start(time);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void icon_add_file(struct PUBase* self_c, const char* filename) { 
+static void icon_add_file(struct RUBase* self_c, const char* filename) { 
     QIcon* qt_data = (QIcon*)self_c;
     qt_data->addFile(QString::fromUtf8(filename));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void font_set_family(struct PUBase* self_c, const char* family) { 
+static void font_set_family(struct RUBase* self_c, const char* family) { 
     QFont* qt_data = (QFont*)self_c;
     qt_data->setFamily(QString::fromUtf8(family));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void font_set_point_size(struct PUBase* self_c, int size) { 
+static void font_set_point_size(struct RUBase* self_c, int size) { 
     QFont* qt_data = (QFont*)self_c;
     qt_data->setPointSize(size);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void menu_show(struct PUBase* self_c) { 
+static void menu_show(struct RUBase* self_c) { 
     WRMenu* qt_data = (WRMenu*)self_c;
     qt_data->show();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void menu_set_fixed_height(struct PUBase* self_c, int width) { 
+static void menu_set_fixed_height(struct RUBase* self_c, int width) { 
     WRMenu* qt_data = (WRMenu*)self_c;
     qt_data->setFixedHeight(width);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void menu_set_fixed_width(struct PUBase* self_c, int width) { 
+static void menu_set_fixed_width(struct RUBase* self_c, int width) { 
     WRMenu* qt_data = (WRMenu*)self_c;
     qt_data->setFixedWidth(width);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void menu_resize(struct PUBase* self_c, int width, int height) { 
+static void menu_resize(struct RUBase* self_c, int width, int height) { 
     WRMenu* qt_data = (WRMenu*)self_c;
     qt_data->resize(width, height);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void menu_set_parent(struct PUBase* self_c, struct PUBase* widget) { 
+static void menu_set_parent(struct RUBase* self_c, struct RUBase* widget) { 
     WRMenu* qt_data = (WRMenu*)self_c;
     qt_data->setParent((QWidget*)widget);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void menu_set_layout(struct PUBase* self_c, struct PUBase* layout) { 
+static void menu_set_layout(struct RUBase* self_c, struct RUBase* layout) { 
     WRMenu* qt_data = (WRMenu*)self_c;
     qt_data->setLayout((QLayout*)layout);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void menu_update(struct PUBase* self_c) { 
+static void menu_update(struct RUBase* self_c) { 
     WRMenu* qt_data = (WRMenu*)self_c;
     qt_data->update();
 }
@@ -1627,7 +1627,7 @@ static void menu_update(struct PUBase* self_c) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void set_menu_triggered_event(void* object, void* user_data, void (*event)(void* self_c, struct PUBase* action)) {
+static void set_menu_triggered_event(void* object, void* user_data, void (*event)(void* self_c, struct RUBase* action)) {
     QSlotWrapperSignal_self_Action_void* wrap = new QSlotWrapperSignal_self_Action_void(user_data, (Signal_self_Action_void)event);
     QObject* q_obj = (QObject*)object;
     QObject::connect(q_obj, SIGNAL(triggered(QAction*)), wrap, SLOT(method(QAction*)));
@@ -1635,63 +1635,63 @@ static void set_menu_triggered_event(void* object, void* user_data, void (*event
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void menu_add_action(struct PUBase* self_c, struct PUBase* action) { 
+static void menu_add_action(struct RUBase* self_c, struct RUBase* action) { 
     WRMenu* qt_data = (WRMenu*)self_c;
     qt_data->addAction((QAction*)action);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void menu_set_title(struct PUBase* self_c, const char* title) { 
+static void menu_set_title(struct RUBase* self_c, const char* title) { 
     WRMenu* qt_data = (WRMenu*)self_c;
     qt_data->setTitle(QString::fromUtf8(title));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void menu_bar_show(struct PUBase* self_c) { 
+static void menu_bar_show(struct RUBase* self_c) { 
     WRMenuBar* qt_data = (WRMenuBar*)self_c;
     qt_data->show();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void menu_bar_set_fixed_height(struct PUBase* self_c, int width) { 
+static void menu_bar_set_fixed_height(struct RUBase* self_c, int width) { 
     WRMenuBar* qt_data = (WRMenuBar*)self_c;
     qt_data->setFixedHeight(width);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void menu_bar_set_fixed_width(struct PUBase* self_c, int width) { 
+static void menu_bar_set_fixed_width(struct RUBase* self_c, int width) { 
     WRMenuBar* qt_data = (WRMenuBar*)self_c;
     qt_data->setFixedWidth(width);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void menu_bar_resize(struct PUBase* self_c, int width, int height) { 
+static void menu_bar_resize(struct RUBase* self_c, int width, int height) { 
     WRMenuBar* qt_data = (WRMenuBar*)self_c;
     qt_data->resize(width, height);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void menu_bar_set_parent(struct PUBase* self_c, struct PUBase* widget) { 
+static void menu_bar_set_parent(struct RUBase* self_c, struct RUBase* widget) { 
     WRMenuBar* qt_data = (WRMenuBar*)self_c;
     qt_data->setParent((QWidget*)widget);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void menu_bar_set_layout(struct PUBase* self_c, struct PUBase* layout) { 
+static void menu_bar_set_layout(struct RUBase* self_c, struct RUBase* layout) { 
     WRMenuBar* qt_data = (WRMenuBar*)self_c;
     qt_data->setLayout((QLayout*)layout);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void menu_bar_update(struct PUBase* self_c) { 
+static void menu_bar_update(struct RUBase* self_c) { 
     WRMenuBar* qt_data = (WRMenuBar*)self_c;
     qt_data->update();
 }
@@ -1700,14 +1700,14 @@ static void menu_bar_update(struct PUBase* self_c) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void menu_bar_add_menu(struct PUBase* self_c, struct PUBase* menu) { 
+static void menu_bar_add_menu(struct RUBase* self_c, struct RUBase* menu) { 
     WRMenuBar* qt_data = (WRMenuBar*)self_c;
     qt_data->addMenu((QMenu*)menu);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void application_set_style(struct PUBase* self_c, const char* style) { 
+static void application_set_style(struct RUBase* self_c, const char* style) { 
     QApplication* qt_data = (QApplication*)self_c;
     qt_data->setStyle(QString::fromUtf8(style));
 }
@@ -1716,7 +1716,7 @@ static void application_set_style(struct PUBase* self_c, const char* style) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void application_exec(struct PUBase* self_c) { 
+static void application_exec(struct RUBase* self_c) { 
     QApplication* qt_data = (QApplication*)self_c;
     qt_data->exec();
 }
@@ -1735,82 +1735,82 @@ static void set_application_about_to_quit_event(void* object, void* user_data, v
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static struct PURect paint_event_rect(struct PUBase* self_c) { 
+static struct RURect paint_event_rect(struct RUBase* self_c) { 
     QPaintEvent* qt_data = (QPaintEvent*)self_c;
     const auto& t = qt_data->rect();
-    return PURect { t.x(), t.y(), t.width(), t.height() };
+    return RURect { t.x(), t.y(), t.width(), t.height() };
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void drag_enter_event_accept(struct PUBase* self_c) { 
+static void drag_enter_event_accept(struct RUBase* self_c) { 
     QDragEnterEvent* qt_data = (QDragEnterEvent*)self_c;
     qt_data->accept();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void drop_event_accept_proposed_action(struct PUBase* self_c) { 
+static void drop_event_accept_proposed_action(struct RUBase* self_c) { 
     QDropEvent* qt_data = (QDropEvent*)self_c;
     qt_data->acceptProposedAction();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static struct PUMimeData drop_event_mime_data(struct PUBase* self_c) { 
+static struct RUMimeData drop_event_mime_data(struct RUBase* self_c) { 
     QDropEvent* qt_data = (QDropEvent*)self_c;
     auto ret_value = qt_data->mimeData();
-    PUMimeData ctl;
+    RUMimeData ctl;
     ctl.funcs = &s_mime_data_funcs;
-    ctl.priv_data = (struct PUBase*)ret_value;
+    ctl.priv_data = (struct RUBase*)ret_value;
     return ctl;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void layout_add_widget(struct PUBase* self_c, struct PUBase* widget) { 
+static void layout_add_widget(struct RUBase* self_c, struct RUBase* widget) { 
     QLayout* qt_data = (QLayout*)self_c;
     qt_data->addWidget((QWidget*)widget);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void v_box_layout_add_widget(struct PUBase* self_c, struct PUBase* widget) { 
+static void v_box_layout_add_widget(struct RUBase* self_c, struct RUBase* widget) { 
     QVBoxLayout* qt_data = (QVBoxLayout*)self_c;
     qt_data->addWidget((QWidget*)widget);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void v_box_layout_add_layout(struct PUBase* self_c, struct PUBase* layout) { 
+static void v_box_layout_add_layout(struct RUBase* self_c, struct RUBase* layout) { 
     WRVBoxLayout* qt_data = (WRVBoxLayout*)self_c;
     qt_data->addLayout((QLayout*)layout);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void v_box_layout_update(struct PUBase* self_c) { 
+static void v_box_layout_update(struct RUBase* self_c) { 
     WRVBoxLayout* qt_data = (WRVBoxLayout*)self_c;
     qt_data->update();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void h_box_layout_add_widget(struct PUBase* self_c, struct PUBase* widget) { 
+static void h_box_layout_add_widget(struct RUBase* self_c, struct RUBase* widget) { 
     QHBoxLayout* qt_data = (QHBoxLayout*)self_c;
     qt_data->addWidget((QWidget*)widget);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void h_box_layout_add_layout(struct PUBase* self_c, struct PUBase* layout) { 
+static void h_box_layout_add_layout(struct RUBase* self_c, struct RUBase* layout) { 
     WRHBoxLayout* qt_data = (WRHBoxLayout*)self_c;
     qt_data->addLayout((QLayout*)layout);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void h_box_layout_update(struct PUBase* self_c) { 
+static void h_box_layout_update(struct RUBase* self_c) { 
     WRHBoxLayout* qt_data = (WRHBoxLayout*)self_c;
     qt_data->update();
 }
@@ -1827,7 +1827,7 @@ template<typename T, typename F, typename QT> T create_widget_func(F* funcs, voi
     }
     T ctl;
     ctl.funcs = funcs;
-    ctl.priv_data = (struct PUBase*)qt_obj;
+    ctl.priv_data = (struct RUBase*)qt_obj;
     return ctl;
 }
 
@@ -1837,254 +1837,254 @@ template<typename T, typename F, typename QT> T create_generic_func(F* funcs, vo
     QT* qt_obj = new QT();
     T ctl;
     ctl.funcs = funcs;
-    ctl.priv_data = (struct PUBase*)qt_obj;
+    ctl.priv_data = (struct RUBase*)qt_obj;
     return ctl;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-template<typename QT> void destroy_generic(struct PUBase* qt_data) {
+template<typename QT> void destroy_generic(struct RUBase* qt_data) {
     QT* qt_obj = (QT*)qt_data;
     delete qt_obj;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static struct PUWidget create_widget(struct PUBase* priv_data) {
-    return create_widget_func<struct PUWidget, struct PUWidgetFuncs, WRWidget>(&s_widget_funcs, priv_data);
+static struct RUWidget create_widget(struct RUBase* priv_data) {
+    return create_widget_func<struct RUWidget, struct RUWidgetFuncs, WRWidget>(&s_widget_funcs, priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void destroy_widget(struct PUBase* priv_data) {
+static void destroy_widget(struct RUBase* priv_data) {
     destroy_generic<WRWidget>(priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static struct PUPushButton create_push_button(struct PUBase* priv_data) {
-    return create_widget_func<struct PUPushButton, struct PUPushButtonFuncs, WRPushButton>(&s_push_button_funcs, priv_data);
+static struct RUPushButton create_push_button(struct RUBase* priv_data) {
+    return create_widget_func<struct RUPushButton, struct RUPushButtonFuncs, WRPushButton>(&s_push_button_funcs, priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void destroy_push_button(struct PUBase* priv_data) {
+static void destroy_push_button(struct RUBase* priv_data) {
     destroy_generic<WRPushButton>(priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static struct PUPainter create_painter(struct PUBase* priv_data) {
-    return create_generic_func<struct PUPainter, struct PUPainterFuncs, QPainter>(&s_painter_funcs, priv_data);
+static struct RUPainter create_painter(struct RUBase* priv_data) {
+    return create_generic_func<struct RUPainter, struct RUPainterFuncs, QPainter>(&s_painter_funcs, priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void destroy_painter(struct PUBase* priv_data) {
+static void destroy_painter(struct RUBase* priv_data) {
     destroy_generic<QPainter>(priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static struct PUListWidgetItem create_list_widget_item(struct PUBase* priv_data) {
-    return create_generic_func<struct PUListWidgetItem, struct PUListWidgetItemFuncs, QListWidgetItem>(&s_list_widget_item_funcs, priv_data);
+static struct RUListWidgetItem create_list_widget_item(struct RUBase* priv_data) {
+    return create_generic_func<struct RUListWidgetItem, struct RUListWidgetItemFuncs, QListWidgetItem>(&s_list_widget_item_funcs, priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void destroy_list_widget_item(struct PUBase* priv_data) {
+static void destroy_list_widget_item(struct RUBase* priv_data) {
     destroy_generic<QListWidgetItem>(priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static struct PUListWidget create_list_widget(struct PUBase* priv_data) {
-    return create_widget_func<struct PUListWidget, struct PUListWidgetFuncs, WRListWidget>(&s_list_widget_funcs, priv_data);
+static struct RUListWidget create_list_widget(struct RUBase* priv_data) {
+    return create_widget_func<struct RUListWidget, struct RUListWidgetFuncs, WRListWidget>(&s_list_widget_funcs, priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void destroy_list_widget(struct PUBase* priv_data) {
+static void destroy_list_widget(struct RUBase* priv_data) {
     destroy_generic<WRListWidget>(priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static struct PULabel create_label(struct PUBase* priv_data) {
-    return create_widget_func<struct PULabel, struct PULabelFuncs, WRLabel>(&s_label_funcs, priv_data);
+static struct RULabel create_label(struct RUBase* priv_data) {
+    return create_widget_func<struct RULabel, struct RULabelFuncs, WRLabel>(&s_label_funcs, priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void destroy_label(struct PUBase* priv_data) {
+static void destroy_label(struct RUBase* priv_data) {
     destroy_generic<WRLabel>(priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static struct PULineEdit create_line_edit(struct PUBase* priv_data) {
-    return create_widget_func<struct PULineEdit, struct PULineEditFuncs, WRLineEdit>(&s_line_edit_funcs, priv_data);
+static struct RULineEdit create_line_edit(struct RUBase* priv_data) {
+    return create_widget_func<struct RULineEdit, struct RULineEditFuncs, WRLineEdit>(&s_line_edit_funcs, priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void destroy_line_edit(struct PUBase* priv_data) {
+static void destroy_line_edit(struct RUBase* priv_data) {
     destroy_generic<WRLineEdit>(priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static struct PUPlainTextEdit create_plain_text_edit(struct PUBase* priv_data) {
-    return create_widget_func<struct PUPlainTextEdit, struct PUPlainTextEditFuncs, WRPlainTextEdit>(&s_plain_text_edit_funcs, priv_data);
+static struct RUPlainTextEdit create_plain_text_edit(struct RUBase* priv_data) {
+    return create_widget_func<struct RUPlainTextEdit, struct RUPlainTextEditFuncs, WRPlainTextEdit>(&s_plain_text_edit_funcs, priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void destroy_plain_text_edit(struct PUBase* priv_data) {
+static void destroy_plain_text_edit(struct RUBase* priv_data) {
     destroy_generic<WRPlainTextEdit>(priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static struct PUSlider create_slider(struct PUBase* priv_data) {
-    return create_widget_func<struct PUSlider, struct PUSliderFuncs, WRSlider>(&s_slider_funcs, priv_data);
+static struct RUSlider create_slider(struct RUBase* priv_data) {
+    return create_widget_func<struct RUSlider, struct RUSliderFuncs, WRSlider>(&s_slider_funcs, priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void destroy_slider(struct PUBase* priv_data) {
+static void destroy_slider(struct RUBase* priv_data) {
     destroy_generic<WRSlider>(priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static struct PUMainWindow create_main_window(struct PUBase* priv_data) {
-    return create_widget_func<struct PUMainWindow, struct PUMainWindowFuncs, WRMainWindow>(&s_main_window_funcs, priv_data);
+static struct RUMainWindow create_main_window(struct RUBase* priv_data) {
+    return create_widget_func<struct RUMainWindow, struct RUMainWindowFuncs, WRMainWindow>(&s_main_window_funcs, priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void destroy_main_window(struct PUBase* priv_data) {
+static void destroy_main_window(struct RUBase* priv_data) {
     destroy_generic<WRMainWindow>(priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static struct PUToolWindowManager create_tool_window_manager(struct PUBase* priv_data) {
-    return create_widget_func<struct PUToolWindowManager, struct PUToolWindowManagerFuncs, WRToolWindowManager>(&s_tool_window_manager_funcs, priv_data);
+static struct RUToolWindowManager create_tool_window_manager(struct RUBase* priv_data) {
+    return create_widget_func<struct RUToolWindowManager, struct RUToolWindowManagerFuncs, WRToolWindowManager>(&s_tool_window_manager_funcs, priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void destroy_tool_window_manager(struct PUBase* priv_data) {
+static void destroy_tool_window_manager(struct RUBase* priv_data) {
     destroy_generic<WRToolWindowManager>(priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static struct PUFramelessWindow create_frameless_window(struct PUBase* priv_data) {
-    return create_widget_func<struct PUFramelessWindow, struct PUFramelessWindowFuncs, WRFramelessWindow>(&s_frameless_window_funcs, priv_data);
+static struct RUFramelessWindow create_frameless_window(struct RUBase* priv_data) {
+    return create_widget_func<struct RUFramelessWindow, struct RUFramelessWindowFuncs, WRFramelessWindow>(&s_frameless_window_funcs, priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void destroy_frameless_window(struct PUBase* priv_data) {
+static void destroy_frameless_window(struct RUBase* priv_data) {
     destroy_generic<WRFramelessWindow>(priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static struct PUAction create_action(struct PUBase* priv_data) {
-    return create_generic_func<struct PUAction, struct PUActionFuncs, QAction>(&s_action_funcs, priv_data);
+static struct RUAction create_action(struct RUBase* priv_data) {
+    return create_generic_func<struct RUAction, struct RUActionFuncs, QAction>(&s_action_funcs, priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void destroy_action(struct PUBase* priv_data) {
+static void destroy_action(struct RUBase* priv_data) {
     destroy_generic<QAction>(priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static struct PUTimer create_timer(struct PUBase* priv_data) {
-    return create_generic_func<struct PUTimer, struct PUTimerFuncs, QTimer>(&s_timer_funcs, priv_data);
+static struct RUTimer create_timer(struct RUBase* priv_data) {
+    return create_generic_func<struct RUTimer, struct RUTimerFuncs, QTimer>(&s_timer_funcs, priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void destroy_timer(struct PUBase* priv_data) {
+static void destroy_timer(struct RUBase* priv_data) {
     destroy_generic<QTimer>(priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static struct PUIcon create_icon(struct PUBase* priv_data) {
-    return create_generic_func<struct PUIcon, struct PUIconFuncs, QIcon>(&s_icon_funcs, priv_data);
+static struct RUIcon create_icon(struct RUBase* priv_data) {
+    return create_generic_func<struct RUIcon, struct RUIconFuncs, QIcon>(&s_icon_funcs, priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void destroy_icon(struct PUBase* priv_data) {
+static void destroy_icon(struct RUBase* priv_data) {
     destroy_generic<QIcon>(priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static struct PUFont create_font(struct PUBase* priv_data) {
-    return create_generic_func<struct PUFont, struct PUFontFuncs, QFont>(&s_font_funcs, priv_data);
+static struct RUFont create_font(struct RUBase* priv_data) {
+    return create_generic_func<struct RUFont, struct RUFontFuncs, QFont>(&s_font_funcs, priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void destroy_font(struct PUBase* priv_data) {
+static void destroy_font(struct RUBase* priv_data) {
     destroy_generic<QFont>(priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static struct PUMenu create_menu(struct PUBase* priv_data) {
-    return create_widget_func<struct PUMenu, struct PUMenuFuncs, WRMenu>(&s_menu_funcs, priv_data);
+static struct RUMenu create_menu(struct RUBase* priv_data) {
+    return create_widget_func<struct RUMenu, struct RUMenuFuncs, WRMenu>(&s_menu_funcs, priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void destroy_menu(struct PUBase* priv_data) {
+static void destroy_menu(struct RUBase* priv_data) {
     destroy_generic<WRMenu>(priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static struct PUMenuBar create_menu_bar(struct PUBase* priv_data) {
-    return create_widget_func<struct PUMenuBar, struct PUMenuBarFuncs, WRMenuBar>(&s_menu_bar_funcs, priv_data);
+static struct RUMenuBar create_menu_bar(struct RUBase* priv_data) {
+    return create_widget_func<struct RUMenuBar, struct RUMenuBarFuncs, WRMenuBar>(&s_menu_bar_funcs, priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void destroy_menu_bar(struct PUBase* priv_data) {
+static void destroy_menu_bar(struct RUBase* priv_data) {
     destroy_generic<WRMenuBar>(priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static struct PUVBoxLayout create_v_box_layout(struct PUBase* priv_data) {
-    return create_widget_func<struct PUVBoxLayout, struct PUVBoxLayoutFuncs, WRVBoxLayout>(&s_v_box_layout_funcs, priv_data);
+static struct RUVBoxLayout create_v_box_layout(struct RUBase* priv_data) {
+    return create_widget_func<struct RUVBoxLayout, struct RUVBoxLayoutFuncs, WRVBoxLayout>(&s_v_box_layout_funcs, priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void destroy_v_box_layout(struct PUBase* priv_data) {
+static void destroy_v_box_layout(struct RUBase* priv_data) {
     destroy_generic<WRVBoxLayout>(priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static struct PUHBoxLayout create_h_box_layout(struct PUBase* priv_data) {
-    return create_widget_func<struct PUHBoxLayout, struct PUHBoxLayoutFuncs, WRHBoxLayout>(&s_h_box_layout_funcs, priv_data);
+static struct RUHBoxLayout create_h_box_layout(struct RUBase* priv_data) {
+    return create_widget_func<struct RUHBoxLayout, struct RUHBoxLayoutFuncs, WRHBoxLayout>(&s_h_box_layout_funcs, priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void destroy_h_box_layout(struct PUBase* priv_data) {
+static void destroy_h_box_layout(struct RUBase* priv_data) {
     destroy_generic<WRHBoxLayout>(priv_data);
 }
 
@@ -2097,41 +2097,41 @@ static void destroy_h_box_layout(struct PUBase* priv_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static struct PUApplication create_application(struct PUBase* priv_data) {
+static struct RUApplication create_application(struct RUBase* priv_data) {
     static int argc = 0;
     QApplication* qt_obj = new QApplication(argc, 0);
 
     create_enum_mappings();
 
-    struct PUApplication ctl;
+    struct RUApplication ctl;
     ctl.funcs = &s_application_funcs;
-    ctl.priv_data = (struct PUBase*)qt_obj;
+    ctl.priv_data = (struct RUBase*)qt_obj;
     return ctl;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void destroy_application(struct PUBase* priv_data) {
+static void destroy_application(struct RUBase* priv_data) {
     destroy_generic<QApplication>(priv_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void list_widget_add_widget_item(struct PUBase* self_c, struct PUBase* item) {
+static void list_widget_add_widget_item(struct RUBase* self_c, struct RUBase* item) {
     WRListWidget* qt_data = (WRListWidget*)self_c;
     qt_data->addItem((QListWidgetItem*)item);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void menu_add_action_text(struct PUBase* self_c, const char* text) {
+static void menu_add_action_text(struct RUBase* self_c, const char* text) {
     WRMenu* qt_data = (WRMenu*)self_c;
     qt_data->addAction(QString::fromLatin1(text));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void list_widget_set_accept_drops(struct PUBase* self_c, bool state) {
+static void list_widget_set_accept_drops(struct RUBase* self_c, bool state) {
     WRListWidget* qt_data = (WRListWidget*)self_c;
 	qt_data->viewport()->setAcceptDrops(state);
 	qt_data->setDragDropMode(QAbstractItemView::InternalMove);
@@ -2139,7 +2139,7 @@ static void list_widget_set_accept_drops(struct PUBase* self_c, bool state) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void painter_fill_rect_color(struct PUBase* self_c, struct PURect rect, struct PUColor color) {
+static void painter_fill_rect_color(struct RUBase* self_c, struct RURect rect, struct RUColor color) {
     QPainter* qt_data = (QPainter*)self_c;
     qt_data->fillRect(QRect(rect.x, rect.y, rect.width, rect.height), QColor(color.r, color.g, color.b, color.a));
 }
@@ -2147,14 +2147,14 @@ static void painter_fill_rect_color(struct PUBase* self_c, struct PURect rect, s
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void list_widget_item_set_string_data(struct PUBase* self_c, const char* text) {
+static void list_widget_item_set_string_data(struct RUBase* self_c, const char* text) {
     QListWidgetItem* qt_data = (QListWidgetItem*)self_c;
     qt_data->setData(Qt::UserRole, QString::fromLatin1(text));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const char* list_widget_item_get_string_data(struct PUBase* self_c) {
+static const char* list_widget_item_get_string_data(struct RUBase* self_c) {
     QListWidgetItem* qt_data = (QListWidgetItem*)self_c;
     auto ret_value = qt_data->data(Qt::UserRole).toString();
     QByteArray ba = ret_value.toUtf8();
@@ -2166,16 +2166,16 @@ static const char* list_widget_item_get_string_data(struct PUBase* self_c) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void list_widget_add_text_item(struct PUBase* self_c, const char* text) {
+static void list_widget_add_text_item(struct RUBase* self_c, const char* text) {
     WRListWidget* qt_data = (WRListWidget*)self_c;
     qt_data->addItem(QString::fromLatin1(text));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static struct PUArray application_get_files(struct PUBase* self_c) {
+static struct RUArray application_get_files(struct RUBase* self_c) {
    QApplication* qt_data = (QApplication*)self_c;
-   PUArray array = { 0 };
+   RUArray array = { 0 };
    (void)qt_data;
    QFileDialog dialog(QApplication::activeWindow());
    dialog.setFileMode(QFileDialog::ExistingFiles);
@@ -2189,11 +2189,11 @@ static struct PUArray application_get_files(struct PUBase* self_c) {
    int count = ret_value.size();
 
    if (count > 0) {
-       PUUrl* elements = new PUUrl[count];
+       RUUrl* elements = new RUUrl[count];
        for (int i = 0; i < count; ++i) {
            elements[i].funcs = &s_url_funcs;
            QUrl* temp = new QUrl(QUrl::fromLocalFile(ret_value.at(i)));
-           elements[i].priv_data = (struct PUBase*)temp;
+           elements[i].priv_data = (struct RUBase*)temp;
       }
 
       array.elements = (void*)elements;
@@ -2206,7 +2206,7 @@ static struct PUArray application_get_files(struct PUBase* self_c) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*
-static void icon_add_file(struct PUBase* self_c, const char* filename) {
+static void icon_add_file(struct RUBase* self_c, const char* filename) {
     QIcon* qt_data = (QIcon*)self_c;
     QSvgRenderer svgRenderer(QString::fromLatin1(filename));
     printf("filling with svg renderer\n");
@@ -2223,14 +2223,14 @@ static void icon_add_file(struct PUBase* self_c, const char* filename) {
 */
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void action_set_int_data(struct PUBase* self_c, int data) {
+static void action_set_int_data(struct RUBase* self_c, int data) {
     QAction* qt_data = (QAction*)self_c;
     qt_data->setData(QVariant(data));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int action_get_int_data(struct PUBase* self_c) {
+static int action_get_int_data(struct RUBase* self_c) {
     QAction* qt_data = (QAction*)self_c;
     return qt_data->data().toInt();
 }
@@ -2238,14 +2238,14 @@ static int action_get_int_data(struct PUBase* self_c) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void action_set_shortcut(struct PUBase* self_c, PUKeys key) {
+static void action_set_shortcut(struct RUBase* self_c, RUKeys key) {
     QAction* qt_data = (QAction*)self_c;
     qt_data->setShortcut(s_keys_lookup[(int)key]);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void action_set_shortcut_mod(struct PUBase* self_c, PUKeys key, PUMetaKeys modifier) {
+static void action_set_shortcut_mod(struct RUBase* self_c, RUKeys key, RUMetaKeys modifier) {
     QAction* qt_data = (QAction*)self_c;
     int tkey = s_keys_lookup[(int)key];
     int tmod = s_meta_keys_lookup[(int)modifier];
@@ -2255,7 +2255,7 @@ static void action_set_shortcut_mod(struct PUBase* self_c, PUKeys key, PUMetaKey
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void tool_window_manager_add_to_docking(struct PUBase* self_c, struct PUBase* widget) {
+static void tool_window_manager_add_to_docking(struct RUBase* self_c, struct RUBase* widget) {
     WRToolWindowManager* qt_data = (WRToolWindowManager*)self_c;
     ToolWindowManager::AreaReferenceType type;
 
@@ -2273,7 +2273,7 @@ static void tool_window_manager_add_to_docking(struct PUBase* self_c, struct PUB
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void tool_window_manager_add_to_docking_floating(struct PUBase* self_c, struct PUBase* widget) {
+static void tool_window_manager_add_to_docking_floating(struct RUBase* self_c, struct RUBase* widget) {
     WRToolWindowManager* qt_data = (WRToolWindowManager*)self_c;
     auto type = ToolWindowManager::NewFloatingArea;
     qt_data->addToolWindow((QWidget*)widget, type);
@@ -2281,7 +2281,7 @@ static void tool_window_manager_add_to_docking_floating(struct PUBase* self_c, s
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int application_set_style_sheet(struct PUBase* self_c, const char* filename) {
+static int application_set_style_sheet(struct RUBase* self_c, const char* filename) {
     QApplication* qt_data = (QApplication*)self_c;
     QFile f(QString::fromUtf8(filename));
 
@@ -2301,7 +2301,7 @@ static int application_set_style_sheet(struct PUBase* self_c, const char* filena
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct PUWidgetFuncs s_widget_funcs = {
+struct RUWidgetFuncs s_widget_funcs = {
     destroy_widget,
     widget_show,
     widget_set_fixed_height,
@@ -2315,7 +2315,7 @@ struct PUWidgetFuncs s_widget_funcs = {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct PUPushButtonFuncs s_push_button_funcs = {
+struct RUPushButtonFuncs s_push_button_funcs = {
     destroy_push_button,
     push_button_show,
     push_button_set_fixed_height,
@@ -2333,7 +2333,7 @@ struct PUPushButtonFuncs s_push_button_funcs = {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct PUPainterFuncs s_painter_funcs = {
+struct RUPainterFuncs s_painter_funcs = {
     destroy_painter,
     painter_begin,
     painter_end,
@@ -2345,7 +2345,7 @@ struct PUPainterFuncs s_painter_funcs = {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct PUListWidgetItemFuncs s_list_widget_item_funcs = {
+struct RUListWidgetItemFuncs s_list_widget_item_funcs = {
     destroy_list_widget_item,
     list_widget_item_set_text,
     list_widget_item_text,
@@ -2355,7 +2355,7 @@ struct PUListWidgetItemFuncs s_list_widget_item_funcs = {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct PUListWidgetFuncs s_list_widget_funcs = {
+struct RUListWidgetFuncs s_list_widget_funcs = {
     destroy_list_widget,
     list_widget_show,
     list_widget_set_fixed_height,
@@ -2385,7 +2385,7 @@ struct PUListWidgetFuncs s_list_widget_funcs = {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct PULabelFuncs s_label_funcs = {
+struct RULabelFuncs s_label_funcs = {
     destroy_label,
     label_show,
     label_set_fixed_height,
@@ -2399,7 +2399,7 @@ struct PULabelFuncs s_label_funcs = {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct PULineEditFuncs s_line_edit_funcs = {
+struct RULineEditFuncs s_line_edit_funcs = {
     destroy_line_edit,
     line_edit_show,
     line_edit_set_fixed_height,
@@ -2414,7 +2414,7 @@ struct PULineEditFuncs s_line_edit_funcs = {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct PUPlainTextEditFuncs s_plain_text_edit_funcs = {
+struct RUPlainTextEditFuncs s_plain_text_edit_funcs = {
     destroy_plain_text_edit,
     plain_text_edit_show,
     plain_text_edit_set_fixed_height,
@@ -2431,7 +2431,7 @@ struct PUPlainTextEditFuncs s_plain_text_edit_funcs = {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct PUSliderFuncs s_slider_funcs = {
+struct RUSliderFuncs s_slider_funcs = {
     destroy_slider,
     slider_show,
     slider_set_fixed_height,
@@ -2445,7 +2445,7 @@ struct PUSliderFuncs s_slider_funcs = {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct PUMainWindowFuncs s_main_window_funcs = {
+struct RUMainWindowFuncs s_main_window_funcs = {
     destroy_main_window,
     main_window_show,
     main_window_set_fixed_height,
@@ -2461,7 +2461,7 @@ struct PUMainWindowFuncs s_main_window_funcs = {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct PUToolWindowManagerFuncs s_tool_window_manager_funcs = {
+struct RUToolWindowManagerFuncs s_tool_window_manager_funcs = {
     destroy_tool_window_manager,
     tool_window_manager_show,
     tool_window_manager_set_fixed_height,
@@ -2476,7 +2476,7 @@ struct PUToolWindowManagerFuncs s_tool_window_manager_funcs = {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct PUFramelessWindowFuncs s_frameless_window_funcs = {
+struct RUFramelessWindowFuncs s_frameless_window_funcs = {
     destroy_frameless_window,
     frameless_window_show,
     frameless_window_set_fixed_height,
@@ -2491,7 +2491,7 @@ struct PUFramelessWindowFuncs s_frameless_window_funcs = {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct PUActionFuncs s_action_funcs = {
+struct RUActionFuncs s_action_funcs = {
     destroy_action,
     action_is_enabled,
     action_set_text,
@@ -2504,14 +2504,14 @@ struct PUActionFuncs s_action_funcs = {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct PUUrlFuncs s_url_funcs = {
+struct RUUrlFuncs s_url_funcs = {
     url_is_local_file,
     url_to_local_file,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct PUMimeDataFuncs s_mime_data_funcs = {
+struct RUMimeDataFuncs s_mime_data_funcs = {
     mime_data_has_color,
     mime_data_has_image,
     mime_data_has_text,
@@ -2521,7 +2521,7 @@ struct PUMimeDataFuncs s_mime_data_funcs = {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct PUTimerFuncs s_timer_funcs = {
+struct RUTimerFuncs s_timer_funcs = {
     destroy_timer,
     set_timer_timeout_event,
     timer_start,
@@ -2529,14 +2529,14 @@ struct PUTimerFuncs s_timer_funcs = {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct PUIconFuncs s_icon_funcs = {
+struct RUIconFuncs s_icon_funcs = {
     destroy_icon,
     icon_add_file,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct PUFontFuncs s_font_funcs = {
+struct RUFontFuncs s_font_funcs = {
     destroy_font,
     font_set_family,
     font_set_point_size,
@@ -2544,7 +2544,7 @@ struct PUFontFuncs s_font_funcs = {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct PUMenuFuncs s_menu_funcs = {
+struct RUMenuFuncs s_menu_funcs = {
     destroy_menu,
     menu_show,
     menu_set_fixed_height,
@@ -2561,7 +2561,7 @@ struct PUMenuFuncs s_menu_funcs = {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct PUMenuBarFuncs s_menu_bar_funcs = {
+struct RUMenuBarFuncs s_menu_bar_funcs = {
     destroy_menu_bar,
     menu_bar_show,
     menu_bar_set_fixed_height,
@@ -2575,7 +2575,7 @@ struct PUMenuBarFuncs s_menu_bar_funcs = {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct PUApplicationFuncs s_application_funcs = {
+struct RUApplicationFuncs s_application_funcs = {
     destroy_application,
     application_set_style,
     application_set_style_sheet,
@@ -2586,32 +2586,32 @@ struct PUApplicationFuncs s_application_funcs = {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct PUPaintEventFuncs s_paint_event_funcs = {
+struct RUPaintEventFuncs s_paint_event_funcs = {
     paint_event_rect,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct PUDragEnterEventFuncs s_drag_enter_event_funcs = {
+struct RUDragEnterEventFuncs s_drag_enter_event_funcs = {
     drag_enter_event_accept,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct PUDropEventFuncs s_drop_event_funcs = {
+struct RUDropEventFuncs s_drop_event_funcs = {
     drop_event_accept_proposed_action,
     drop_event_mime_data,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct PULayoutFuncs s_layout_funcs = {
+struct RULayoutFuncs s_layout_funcs = {
     layout_add_widget,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct PUVBoxLayoutFuncs s_v_box_layout_funcs = {
+struct RUVBoxLayoutFuncs s_v_box_layout_funcs = {
     destroy_v_box_layout,
     v_box_layout_add_widget,
     v_box_layout_add_layout,
@@ -2620,14 +2620,14 @@ struct PUVBoxLayoutFuncs s_v_box_layout_funcs = {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct PUHBoxLayoutFuncs s_h_box_layout_funcs = {
+struct RUHBoxLayoutFuncs s_h_box_layout_funcs = {
     destroy_h_box_layout,
     h_box_layout_add_widget,
     h_box_layout_add_layout,
     h_box_layout_update,
 };
 
-static struct PUPluginUI s_plugin_ui = {
+static struct RUPluginUI s_plugin_ui = {
     create_widget,
     create_push_button,
     create_painter,
@@ -2654,23 +2654,23 @@ static struct PUPluginUI s_plugin_ui = {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-struct PUPluginUI* create_plugin_ui(struct PUBase* user_data, struct PUBase* parent) {
-    struct PUPluginUI* instance = new PUPluginUI;
-    memcpy(instance, &s_plugin_ui, sizeof(PUPluginUI));
+struct RUPluginUI* create_plugin_ui(struct RUBase* user_data, struct RUBase* parent) {
+    struct RUPluginUI* instance = new RUPluginUI;
+    memcpy(instance, &s_plugin_ui, sizeof(RUPluginUI));
     PrivData* priv_data = new PrivData;
     priv_data->parent = (QWidget*)parent;
-    instance->priv_data = (PUBase*)priv_data;
+    instance->priv_data = (RUBase*)priv_data;
     return instance;
 }
 
-void destroy_plugin_ui(PUPluginUI* plugin_ui) {
+void destroy_plugin_ui(RUPluginUI* plugin_ui) {
     PrivData* priv_data = (PrivData*)plugin_ui->priv_data;
     delete priv_data;
     delete plugin_ui;
 }
 
 
-static struct PU s_pu = {
+static struct RU s_pu = {
     create_widget,
     create_push_button,
     create_painter,
@@ -2705,9 +2705,9 @@ static struct PU s_pu = {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef _WIN32
-extern "C" __declspec(dllexport) struct PU* wrui_get() {
+extern "C" __declspec(dllexport) struct RU* rute_get() {
 #else
-extern "C" struct PU* wrui_get() {
+extern "C" struct RU* rute_get() {
 #endif
-    return (PU*)&s_pu;
+    return (RU*)&s_pu;
 }

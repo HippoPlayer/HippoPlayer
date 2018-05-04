@@ -2,7 +2,7 @@
 name = "hippo_api"
 version = "0.1.0"
 dependencies = [
- "wrui 0.1.0",
+ "rute 0.1.0",
 ]
 
 [[package]]
@@ -34,7 +34,14 @@ name = "playlist"
 version = "0.1.0"
 dependencies = [
  "hippo_api 0.1.0",
- "wrui 0.1.0",
+ "rute 0.1.0",
+]
+
+[[package]]
+name = "rute"
+version = "0.1.0"
+dependencies = [
+ "libloading 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -46,13 +53,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "winapi-build"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[[package]]
-name = "wrui"
-version = "0.1.0"
-dependencies = [
- "libloading 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)",
-]
 
 [metadata]
 "checksum kernel32-sys 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "7507624b29483431c0ba2d82aece8ca6cdba9382bff4ddd0f7490560c056098d"

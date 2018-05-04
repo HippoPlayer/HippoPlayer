@@ -9,7 +9,7 @@ extern "C"
 {
 #endif
 
-struct PUPluginUI;
+struct RUPluginUI;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -258,7 +258,7 @@ typedef struct HippoPlaybackPlugin {
 	int (*close)(void* user_data);
 	int (*read_data)(void* user_data, void* dest, uint32_t max_sample_count);
 	int (*seek)(void* user_data, int ms);
-	int (*configure)(void* user_data, struct PUPluginUI* ui_funcs);
+	int (*configure)(void* user_data, struct RUPluginUI* ui_funcs);
 	int (*save)(void* user_data, struct HippoSaveAPI* save_api);
 	int (*load)(void* user_data, struct HippoLoadAPI* load_api);
 	void* priv;
@@ -273,7 +273,7 @@ typedef struct HippoViewPlugin {
 	const char* name;
 	const char* version;
 	void* (*create)(HippoServiceAPI* services);
-	void (*setup_ui)(void* user_data, struct PUPluginUI* ui_funcs);
+	void (*setup_ui)(void* user_data, struct RUPluginUI* ui_funcs);
 	int (*destroy)(void* user_data);
 	void (*event)(int event);
 	int (*save)(void* user_data, struct HippoSaveAPI* save_api);

@@ -7,7 +7,7 @@ use std::borrow::Cow;
 
 use hippo_api::ffi::{CHippoPlaybackPlugin, CHippoViewPlugin};
 use service_ffi::{PluginService};
-use wrui::wrui::*;
+use rute::rute::*;
 
 #[derive(Clone)]
 pub struct DecoderPlugin {
@@ -126,7 +126,7 @@ impl <'a> Plugins<'a> {
     fn check_file_type(entry: &DirEntry) -> bool {
         let path = entry.path();
 
-        if path.ends_with(::wrui::get_wrui_name()) {
+        if path.ends_with(::rute::get_rute_name()) {
             false
         } else if let Some(ext) = path.extension() {
             ext == get_plugin_ext()

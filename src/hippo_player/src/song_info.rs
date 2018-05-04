@@ -1,5 +1,5 @@
-use wrui::wrui::{Widget, LineEdit, PlainTextEdit, VBoxLayout };
-use wrui::Ui;
+use rute::rute::{Widget, LineEdit, PlainTextEdit, VBoxLayout };
+use rute::Ui;
 use song_db::SongDb;
 
 pub struct SongInfoView {
@@ -12,31 +12,14 @@ pub struct SongInfoView {
     pub message: PlainTextEdit,
     pub samples: PlainTextEdit,
     pub instruments: PlainTextEdit,
-    _wrui: Ui,
+    _rute: Ui,
 }
 impl SongInfoView {
-    fn create_label_text(wrui: Ui, label_name: &str, parent_layout: &VBoxLayout) -> LineEdit {
-        let layout = wrui.create_h_box_layout();
+    fn create_label_text(rute: Ui, label_name: &str, parent_layout: &VBoxLayout) -> LineEdit {
+        let layout = rute.create_h_box_layout();
 
-        let label_text = wrui.create_label();
-        let line = wrui.create_line_edit();
-
-        //line.set_read_only(true);
-        label_text.set_text(label_name);
-
-        layout.add_widget(&label_text);
-        layout.add_widget(&line);
-
-        parent_layout.add_layout(&layout);
-
-        line
-    }
-
-    fn create_label_plain_text(wrui: Ui, label_name: &str, parent_layout: &VBoxLayout) -> PlainTextEdit {
-        let layout = wrui.create_h_box_layout();
-
-        let label_text = wrui.create_label();
-        let line = wrui.create_plain_text_edit();
+        let label_text = rute.create_label();
+        let line = rute.create_line_edit();
 
         //line.set_read_only(true);
         label_text.set_text(label_name);
@@ -49,25 +32,42 @@ impl SongInfoView {
         line
     }
 
-    pub fn new(wrui: Ui) -> SongInfoView {
-        //let view = wrui.create_frameless_window();
-        let view = wrui.create_widget();
+    fn create_label_plain_text(rute: Ui, label_name: &str, parent_layout: &VBoxLayout) -> PlainTextEdit {
+        let layout = rute.create_h_box_layout();
 
-        let main_layout = wrui.create_v_box_layout();
+        let label_text = rute.create_label();
+        let line = rute.create_plain_text_edit();
 
-        // basic line 
+        //line.set_read_only(true);
+        label_text.set_text(label_name);
 
-        let title = Self::create_label_text(wrui, "Title", &main_layout);
-        let artist = Self::create_label_text(wrui, "Artist", &main_layout);
-        let song_type = Self::create_label_text(wrui, "Type", &main_layout);
-        let authoring_tool = Self::create_label_text(wrui, "Tool", &main_layout);
-        let date = Self::create_label_text(wrui, "Date", &main_layout);
+        layout.add_widget(&label_text);
+        layout.add_widget(&line);
+
+        parent_layout.add_layout(&layout);
+
+        line
+    }
+
+    pub fn new(rute: Ui) -> SongInfoView {
+        //let view = rute.create_frameless_window();
+        let view = rute.create_widget();
+
+        let main_layout = rute.create_v_box_layout();
+
+        // basic line
+
+        let title = Self::create_label_text(rute, "Title", &main_layout);
+        let artist = Self::create_label_text(rute, "Artist", &main_layout);
+        let song_type = Self::create_label_text(rute, "Type", &main_layout);
+        let authoring_tool = Self::create_label_text(rute, "Tool", &main_layout);
+        let date = Self::create_label_text(rute, "Date", &main_layout);
 
         // message box
 
-        let message = Self::create_label_plain_text(wrui, "Message", &main_layout);
-        let samples = Self::create_label_plain_text(wrui, "Samples", &main_layout);
-        let instruments = Self::create_label_plain_text(wrui, "Instruments", &main_layout);
+        let message = Self::create_label_plain_text(rute, "Message", &main_layout);
+        let samples = Self::create_label_plain_text(rute, "Samples", &main_layout);
+        let instruments = Self::create_label_plain_text(rute, "Instruments", &main_layout);
 
         view.set_layout(&main_layout);
 
@@ -81,7 +81,7 @@ impl SongInfoView {
             message,
             samples,
             instruments,
-            _wrui: wrui,
+            _rute: rute,
         }
     }
 
@@ -102,7 +102,7 @@ impl SongInfoView {
 
         loop {
             let s = format!("{}_{:04}", init_val, count);
-            
+
             match song_db.get_key(resource, 0, &s) {
                 None => break,
                 Some(text) => view.append_plain_text(&text),
@@ -113,12 +113,12 @@ impl SongInfoView {
     }
 
     pub fn update_data(&mut self, resource: &str, song_db: &SongDb) {
-        let title = Self::get_value(resource, "title", song_db); 
-        let song_type = Self::get_value(resource, "type", song_db); 
-        let tool = Self::get_value(resource, "authoring_tool", song_db); 
-        let artist = Self::get_value(resource, "artist", song_db); 
-        let date = Self::get_value(resource, "date", song_db); 
-        let message = Self::get_value(resource, "message", song_db); 
+        let title = Self::get_value(resource, "title", song_db);
+        let song_type = Self::get_value(resource, "type", song_db);
+        let tool = Self::get_value(resource, "authoring_tool", song_db);
+        let artist = Self::get_value(resource, "artist", song_db);
+        let date = Self::get_value(resource, "date", song_db);
+        let message = Self::get_value(resource, "message", song_db);
 
         self.title.set_text(&title);
         self.authoring_tool.set_text(&tool);

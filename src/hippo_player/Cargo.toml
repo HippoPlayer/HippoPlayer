@@ -5,7 +5,7 @@ authors = ["Daniel Collin <daniel@collin.com>"]
 build = "build.rs"
 
 [dependencies]
-wrui = { path = "../external/wrui_rust" }
+rute = { path = "../external/rute" }
 hippo_api = { path = "../plugin_api/rust/hippo_api" }
 rodio = "0.5.2"
 dynamic_reload = "0.3.0"

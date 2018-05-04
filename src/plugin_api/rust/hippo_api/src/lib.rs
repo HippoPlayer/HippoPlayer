@@ -1,4 +1,4 @@
-extern crate wrui;
+extern crate rute;
 
 pub mod ffi;
 pub mod service;

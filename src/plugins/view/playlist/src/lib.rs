@@ -2,12 +2,12 @@
 extern crate hippo_api;
 
 #[macro_use]
-extern crate wrui;
+extern crate rute;
 
 use std::path::Path;
 use std::ffi::OsStr;
-use wrui::wrui::{ListWidget, DragEnterEvent, DropEvent};
-use wrui::PluginUi;
+use rute::rute::{ListWidget, DragEnterEvent, DropEvent};
+use rute::PluginUi;
 
 // TODO: Fix me
 use std::os::raw::c_void;
