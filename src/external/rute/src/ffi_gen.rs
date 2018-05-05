@@ -382,6 +382,8 @@ pub enum RUKeys {
 pub struct RUWidgetFuncs {
     pub destroy: extern "C" fn(self_c: *const RUBase),
     pub show: extern "C" fn(self_c: *const RUBase),
+    pub set_persist_data: extern "C" fn(self_c: *const RUBase, text: *const ::std::os::raw::c_char),
+    pub persist_data: extern "C" fn(self_c: *const RUBase) -> *const ::std::os::raw::c_char,
     pub set_fixed_height: extern "C" fn(self_c: *const RUBase, width: i32),
     pub set_fixed_width: extern "C" fn(self_c: *const RUBase, width: i32),
     pub resize: extern "C" fn(self_c: *const RUBase, width: i32, height: i32),
@@ -403,6 +405,8 @@ pub struct RUWidget {
 pub struct RUPushButtonFuncs {
     pub destroy: extern "C" fn(self_c: *const RUBase),
     pub show: extern "C" fn(self_c: *const RUBase),
+    pub set_persist_data: extern "C" fn(self_c: *const RUBase, text: *const ::std::os::raw::c_char),
+    pub persist_data: extern "C" fn(self_c: *const RUBase) -> *const ::std::os::raw::c_char,
     pub set_fixed_height: extern "C" fn(self_c: *const RUBase, width: i32),
     pub set_fixed_width: extern "C" fn(self_c: *const RUBase, width: i32),
     pub resize: extern "C" fn(self_c: *const RUBase, width: i32, height: i32),
@@ -463,6 +467,8 @@ pub struct RUListWidgetItem {
 pub struct RUListWidgetFuncs {
     pub destroy: extern "C" fn(self_c: *const RUBase),
     pub show: extern "C" fn(self_c: *const RUBase),
+    pub set_persist_data: extern "C" fn(self_c: *const RUBase, text: *const ::std::os::raw::c_char),
+    pub persist_data: extern "C" fn(self_c: *const RUBase) -> *const ::std::os::raw::c_char,
     pub set_fixed_height: extern "C" fn(self_c: *const RUBase, width: i32),
     pub set_fixed_width: extern "C" fn(self_c: *const RUBase, width: i32),
     pub resize: extern "C" fn(self_c: *const RUBase, width: i32, height: i32),
@@ -504,6 +510,8 @@ pub struct RUListWidget {
 pub struct RULabelFuncs {
     pub destroy: extern "C" fn(self_c: *const RUBase),
     pub show: extern "C" fn(self_c: *const RUBase),
+    pub set_persist_data: extern "C" fn(self_c: *const RUBase, text: *const ::std::os::raw::c_char),
+    pub persist_data: extern "C" fn(self_c: *const RUBase) -> *const ::std::os::raw::c_char,
     pub set_fixed_height: extern "C" fn(self_c: *const RUBase, width: i32),
     pub set_fixed_width: extern "C" fn(self_c: *const RUBase, width: i32),
     pub resize: extern "C" fn(self_c: *const RUBase, width: i32, height: i32),
@@ -524,6 +532,8 @@ pub struct RULabel {
 pub struct RULineEditFuncs {
     pub destroy: extern "C" fn(self_c: *const RUBase),
     pub show: extern "C" fn(self_c: *const RUBase),
+    pub set_persist_data: extern "C" fn(self_c: *const RUBase, text: *const ::std::os::raw::c_char),
+    pub persist_data: extern "C" fn(self_c: *const RUBase) -> *const ::std::os::raw::c_char,
     pub set_fixed_height: extern "C" fn(self_c: *const RUBase, width: i32),
     pub set_fixed_width: extern "C" fn(self_c: *const RUBase, width: i32),
     pub resize: extern "C" fn(self_c: *const RUBase, width: i32, height: i32),
@@ -545,6 +555,8 @@ pub struct RULineEdit {
 pub struct RUPlainTextEditFuncs {
     pub destroy: extern "C" fn(self_c: *const RUBase),
     pub show: extern "C" fn(self_c: *const RUBase),
+    pub set_persist_data: extern "C" fn(self_c: *const RUBase, text: *const ::std::os::raw::c_char),
+    pub persist_data: extern "C" fn(self_c: *const RUBase) -> *const ::std::os::raw::c_char,
     pub set_fixed_height: extern "C" fn(self_c: *const RUBase, width: i32),
     pub set_fixed_width: extern "C" fn(self_c: *const RUBase, width: i32),
     pub resize: extern "C" fn(self_c: *const RUBase, width: i32, height: i32),
@@ -568,6 +580,8 @@ pub struct RUPlainTextEdit {
 pub struct RUSliderFuncs {
     pub destroy: extern "C" fn(self_c: *const RUBase),
     pub show: extern "C" fn(self_c: *const RUBase),
+    pub set_persist_data: extern "C" fn(self_c: *const RUBase, text: *const ::std::os::raw::c_char),
+    pub persist_data: extern "C" fn(self_c: *const RUBase) -> *const ::std::os::raw::c_char,
     pub set_fixed_height: extern "C" fn(self_c: *const RUBase, width: i32),
     pub set_fixed_width: extern "C" fn(self_c: *const RUBase, width: i32),
     pub resize: extern "C" fn(self_c: *const RUBase, width: i32, height: i32),
@@ -589,6 +603,8 @@ pub struct RUSlider {
 pub struct RUMainWindowFuncs {
     pub destroy: extern "C" fn(self_c: *const RUBase),
     pub show: extern "C" fn(self_c: *const RUBase),
+    pub set_persist_data: extern "C" fn(self_c: *const RUBase, text: *const ::std::os::raw::c_char),
+    pub persist_data: extern "C" fn(self_c: *const RUBase) -> *const ::std::os::raw::c_char,
     pub set_fixed_height: extern "C" fn(self_c: *const RUBase, width: i32),
     pub set_fixed_width: extern "C" fn(self_c: *const RUBase, width: i32),
     pub resize: extern "C" fn(self_c: *const RUBase, width: i32, height: i32),
@@ -611,12 +627,16 @@ pub struct RUMainWindow {
 pub struct RUToolWindowManagerFuncs {
     pub destroy: extern "C" fn(self_c: *const RUBase),
     pub show: extern "C" fn(self_c: *const RUBase),
+    pub set_persist_data: extern "C" fn(self_c: *const RUBase, text: *const ::std::os::raw::c_char),
+    pub persist_data: extern "C" fn(self_c: *const RUBase) -> *const ::std::os::raw::c_char,
     pub set_fixed_height: extern "C" fn(self_c: *const RUBase, width: i32),
     pub set_fixed_width: extern "C" fn(self_c: *const RUBase, width: i32),
     pub resize: extern "C" fn(self_c: *const RUBase, width: i32, height: i32),
     pub set_parent: extern "C" fn(self_c: *const RUBase, widget: *const RUBase),
     pub set_layout: extern "C" fn(self_c: *const RUBase, layout: *const RUBase),
     pub update: extern "C" fn(self_c: *const RUBase),
+    pub save_state: extern "C" fn(self_c: *const RUBase) -> *const ::std::os::raw::c_char,
+    pub restore_state: extern "C" fn(self_c: *const RUBase, state: *const ::std::os::raw::c_char),
     pub add_to_docking: extern "C" fn(self_c: *const RUBase, widget: *const RUBase),
     pub add_to_docking_floating: extern "C" fn(self_c: *const RUBase, widget: *const RUBase),
 }
@@ -632,6 +652,8 @@ pub struct RUToolWindowManager {
 pub struct RUFramelessWindowFuncs {
     pub destroy: extern "C" fn(self_c: *const RUBase),
     pub show: extern "C" fn(self_c: *const RUBase),
+    pub set_persist_data: extern "C" fn(self_c: *const RUBase, text: *const ::std::os::raw::c_char),
+    pub persist_data: extern "C" fn(self_c: *const RUBase) -> *const ::std::os::raw::c_char,
     pub set_fixed_height: extern "C" fn(self_c: *const RUBase, width: i32),
     pub set_fixed_width: extern "C" fn(self_c: *const RUBase, width: i32),
     pub resize: extern "C" fn(self_c: *const RUBase, width: i32, height: i32),
@@ -744,6 +766,8 @@ pub struct RUFont {
 pub struct RUMenuFuncs {
     pub destroy: extern "C" fn(self_c: *const RUBase),
     pub show: extern "C" fn(self_c: *const RUBase),
+    pub set_persist_data: extern "C" fn(self_c: *const RUBase, text: *const ::std::os::raw::c_char),
+    pub persist_data: extern "C" fn(self_c: *const RUBase) -> *const ::std::os::raw::c_char,
     pub set_fixed_height: extern "C" fn(self_c: *const RUBase, width: i32),
     pub set_fixed_width: extern "C" fn(self_c: *const RUBase, width: i32),
     pub resize: extern "C" fn(self_c: *const RUBase, width: i32, height: i32),
@@ -768,6 +792,8 @@ pub struct RUMenu {
 pub struct RUMenuBarFuncs {
     pub destroy: extern "C" fn(self_c: *const RUBase),
     pub show: extern "C" fn(self_c: *const RUBase),
+    pub set_persist_data: extern "C" fn(self_c: *const RUBase, text: *const ::std::os::raw::c_char),
+    pub persist_data: extern "C" fn(self_c: *const RUBase) -> *const ::std::os::raw::c_char,
     pub set_fixed_height: extern "C" fn(self_c: *const RUBase, width: i32),
     pub set_fixed_width: extern "C" fn(self_c: *const RUBase, width: i32),
     pub resize: extern "C" fn(self_c: *const RUBase, width: i32, height: i32),
@@ -904,6 +930,7 @@ pub struct RUPluginUI {
     pub create_v_box_layout: extern "C" fn(priv_data: *const RUBase) -> RUVBoxLayout,
     pub create_h_box_layout: extern "C" fn(priv_data: *const RUBase) -> RUHBoxLayout,
     pub open_files_dialog: extern "C" fn(self_c: *const RUBase) -> RUArray,
+    pub get_parent: extern "C" fn(self_c: *const RUBase) -> RUWidget,
     pub privd: *const RUBase,
 }
 

@@ -252,12 +252,12 @@ public:
   /*!
    * \brief saveState
    */
-  QVariantMap saveState();
+  QString saveState();
 
   /*!
    * \brief restoreState
    */
-  void restoreState(const QVariantMap &data);
+  void restoreState(const QString &data);
 
   typedef std::function<QWidget *(const QString &)> CreateCallback;
 

@@ -38,7 +38,7 @@ impl View for Playlist {
         set_drag_enter_event!(widget, self, Playlist, Playlist::drag_enter);
         set_drop_event!(widget, self, Playlist, Playlist::drop_files);
 
-        widget.resize(500, 500);
+        ui.get_parent().resize(500, 500);
 
         self.ui = Some(ui);
         self.widget = Some(widget)

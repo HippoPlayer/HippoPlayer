@@ -190,6 +190,30 @@ impl Widget {
         }
     }
 
+    pub fn set_persist_data (&self, text: &str) {
+        let str_in_text_1 = CString::new(text).unwrap();
+
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).set_persist_data)(obj.privd, str_in_text_1.as_ptr());
+        
+        }
+    }
+
+    pub fn persist_data (&self) -> String {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            let ret_val = ((*obj.funcs).persist_data)(obj.privd);
+          
+           CStr::from_ptr(ret_val).to_string_lossy().into_owned()
+          
+        
+        }
+    }
+
     pub fn set_fixed_height (&self, width: i32) {
         
         unsafe {
@@ -280,6 +304,30 @@ impl PushButton {
             let obj = self.obj.unwrap();
         
             ((*obj.funcs).show)(obj.privd);
+        
+        }
+    }
+
+    pub fn set_persist_data (&self, text: &str) {
+        let str_in_text_1 = CString::new(text).unwrap();
+
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).set_persist_data)(obj.privd, str_in_text_1.as_ptr());
+        
+        }
+    }
+
+    pub fn persist_data (&self) -> String {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            let ret_val = ((*obj.funcs).persist_data)(obj.privd);
+          
+           CStr::from_ptr(ret_val).to_string_lossy().into_owned()
+          
         
         }
     }
@@ -547,6 +595,30 @@ impl ListWidget {
         }
     }
 
+    pub fn set_persist_data (&self, text: &str) {
+        let str_in_text_1 = CString::new(text).unwrap();
+
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).set_persist_data)(obj.privd, str_in_text_1.as_ptr());
+        
+        }
+    }
+
+    pub fn persist_data (&self) -> String {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            let ret_val = ((*obj.funcs).persist_data)(obj.privd);
+          
+           CStr::from_ptr(ret_val).to_string_lossy().into_owned()
+          
+        
+        }
+    }
+
     pub fn set_fixed_height (&self, width: i32) {
         
         unsafe {
@@ -796,6 +868,30 @@ impl Label {
         }
     }
 
+    pub fn set_persist_data (&self, text: &str) {
+        let str_in_text_1 = CString::new(text).unwrap();
+
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).set_persist_data)(obj.privd, str_in_text_1.as_ptr());
+        
+        }
+    }
+
+    pub fn persist_data (&self) -> String {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            let ret_val = ((*obj.funcs).persist_data)(obj.privd);
+          
+           CStr::from_ptr(ret_val).to_string_lossy().into_owned()
+          
+        
+        }
+    }
+
     pub fn set_fixed_height (&self, width: i32) {
         
         unsafe {
@@ -897,6 +993,30 @@ impl LineEdit {
             let obj = self.obj.unwrap();
         
             ((*obj.funcs).show)(obj.privd);
+        
+        }
+    }
+
+    pub fn set_persist_data (&self, text: &str) {
+        let str_in_text_1 = CString::new(text).unwrap();
+
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).set_persist_data)(obj.privd, str_in_text_1.as_ptr());
+        
+        }
+    }
+
+    pub fn persist_data (&self) -> String {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            let ret_val = ((*obj.funcs).persist_data)(obj.privd);
+          
+           CStr::from_ptr(ret_val).to_string_lossy().into_owned()
+          
         
         }
     }
@@ -1012,6 +1132,30 @@ impl PlainTextEdit {
             let obj = self.obj.unwrap();
         
             ((*obj.funcs).show)(obj.privd);
+        
+        }
+    }
+
+    pub fn set_persist_data (&self, text: &str) {
+        let str_in_text_1 = CString::new(text).unwrap();
+
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).set_persist_data)(obj.privd, str_in_text_1.as_ptr());
+        
+        }
+    }
+
+    pub fn persist_data (&self) -> String {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            let ret_val = ((*obj.funcs).persist_data)(obj.privd);
+          
+           CStr::from_ptr(ret_val).to_string_lossy().into_owned()
+          
         
         }
     }
@@ -1152,6 +1296,30 @@ impl Slider {
         }
     }
 
+    pub fn set_persist_data (&self, text: &str) {
+        let str_in_text_1 = CString::new(text).unwrap();
+
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).set_persist_data)(obj.privd, str_in_text_1.as_ptr());
+        
+        }
+    }
+
+    pub fn persist_data (&self) -> String {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            let ret_val = ((*obj.funcs).persist_data)(obj.privd);
+          
+           CStr::from_ptr(ret_val).to_string_lossy().into_owned()
+          
+        
+        }
+    }
+
     pub fn set_fixed_height (&self, width: i32) {
         
         unsafe {
@@ -1242,6 +1410,30 @@ impl MainWindow {
             let obj = self.obj.unwrap();
         
             ((*obj.funcs).show)(obj.privd);
+        
+        }
+    }
+
+    pub fn set_persist_data (&self, text: &str) {
+        let str_in_text_1 = CString::new(text).unwrap();
+
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).set_persist_data)(obj.privd, str_in_text_1.as_ptr());
+        
+        }
+    }
+
+    pub fn persist_data (&self) -> String {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            let ret_val = ((*obj.funcs).persist_data)(obj.privd);
+          
+           CStr::from_ptr(ret_val).to_string_lossy().into_owned()
+          
         
         }
     }
@@ -1386,6 +1578,30 @@ impl ToolWindowManager {
         }
     }
 
+    pub fn set_persist_data (&self, text: &str) {
+        let str_in_text_1 = CString::new(text).unwrap();
+
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).set_persist_data)(obj.privd, str_in_text_1.as_ptr());
+        
+        }
+    }
+
+    pub fn persist_data (&self) -> String {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            let ret_val = ((*obj.funcs).persist_data)(obj.privd);
+          
+           CStr::from_ptr(ret_val).to_string_lossy().into_owned()
+          
+        
+        }
+    }
+
     pub fn set_fixed_height (&self, width: i32) {
         
         unsafe {
@@ -1446,6 +1662,30 @@ impl ToolWindowManager {
         }
     }
 
+    pub fn save_state (&self) -> String {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            let ret_val = ((*obj.funcs).save_state)(obj.privd);
+          
+           CStr::from_ptr(ret_val).to_string_lossy().into_owned()
+          
+        
+        }
+    }
+
+    pub fn restore_state (&self, state: &str) {
+        let str_in_state_1 = CString::new(state).unwrap();
+
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).restore_state)(obj.privd, str_in_state_1.as_ptr());
+        
+        }
+    }
+
     pub fn add_to_docking (&self, widget: &WidgetType) {
         
         unsafe {
@@ -1496,6 +1736,30 @@ impl FramelessWindow {
             let obj = self.obj.unwrap();
         
             ((*obj.funcs).show)(obj.privd);
+        
+        }
+    }
+
+    pub fn set_persist_data (&self, text: &str) {
+        let str_in_text_1 = CString::new(text).unwrap();
+
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).set_persist_data)(obj.privd, str_in_text_1.as_ptr());
+        
+        }
+    }
+
+    pub fn persist_data (&self) -> String {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            let ret_val = ((*obj.funcs).persist_data)(obj.privd);
+          
+           CStr::from_ptr(ret_val).to_string_lossy().into_owned()
+          
         
         }
     }
@@ -1872,6 +2136,30 @@ impl Menu {
         }
     }
 
+    pub fn set_persist_data (&self, text: &str) {
+        let str_in_text_1 = CString::new(text).unwrap();
+
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).set_persist_data)(obj.privd, str_in_text_1.as_ptr());
+        
+        }
+    }
+
+    pub fn persist_data (&self) -> String {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            let ret_val = ((*obj.funcs).persist_data)(obj.privd);
+          
+           CStr::from_ptr(ret_val).to_string_lossy().into_owned()
+          
+        
+        }
+    }
+
     pub fn set_fixed_height (&self, width: i32) {
         
         unsafe {
@@ -1994,6 +2282,30 @@ impl MenuBar {
             let obj = self.obj.unwrap();
         
             ((*obj.funcs).show)(obj.privd);
+        
+        }
+    }
+
+    pub fn set_persist_data (&self, text: &str) {
+        let str_in_text_1 = CString::new(text).unwrap();
+
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).set_persist_data)(obj.privd, str_in_text_1.as_ptr());
+        
+        }
+    }
+
+    pub fn persist_data (&self) -> String {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            let ret_val = ((*obj.funcs).persist_data)(obj.privd);
+          
+           CStr::from_ptr(ret_val).to_string_lossy().into_owned()
+          
         
         }
     }
@@ -2718,6 +3030,10 @@ impl PluginUi {
 
     pub fn create_h_box_layout(&self) -> HBoxLayout {
         HBoxLayout { obj: Some(unsafe { ((*self.pu).create_h_box_layout)((*self.pu).privd) }) }
+    }
+
+    pub fn get_parent(&self) -> Widget {
+        Widget { obj: Some(unsafe { ((*self.pu).get_parent)((*self.pu).privd) }) }
     }
 
 }

@@ -340,6 +340,7 @@ RustSharedLibrary {
 	Sources = {
 		get_rs_src("src/plugins/view/playlist"),
 		get_rs_src("src/plugin_api/rust/hippo_api"),
+		get_rs_src("src/external/rute"),
 	}
 }
 

@@ -419,6 +419,8 @@ struct RUColor {
 struct RUWidgetFuncs {
     void (*destroy)(struct RUBase* self_c);
     void (*show)(struct RUBase* self_c);
+    void (*set_persist_data)(struct RUBase* self_c, const char* text);
+    const char* (*persist_data)(struct RUBase* self_c);
     void (*set_fixed_height)(struct RUBase* self_c, int width);
     void (*set_fixed_width)(struct RUBase* self_c, int width);
     void (*resize)(struct RUBase* self_c, int width, int height);
@@ -436,6 +438,8 @@ struct RUWidget {
 struct RUPushButtonFuncs {
     void (*destroy)(struct RUBase* self_c);
     void (*show)(struct RUBase* self_c);
+    void (*set_persist_data)(struct RUBase* self_c, const char* text);
+    const char* (*persist_data)(struct RUBase* self_c);
     void (*set_fixed_height)(struct RUBase* self_c, int width);
     void (*set_fixed_width)(struct RUBase* self_c, int width);
     void (*resize)(struct RUBase* self_c, int width, int height);
@@ -485,6 +489,8 @@ struct RUListWidgetItem {
 struct RUListWidgetFuncs {
     void (*destroy)(struct RUBase* self_c);
     void (*show)(struct RUBase* self_c);
+    void (*set_persist_data)(struct RUBase* self_c, const char* text);
+    const char* (*persist_data)(struct RUBase* self_c);
     void (*set_fixed_height)(struct RUBase* self_c, int width);
     void (*set_fixed_width)(struct RUBase* self_c, int width);
     void (*resize)(struct RUBase* self_c, int width, int height);
@@ -518,6 +524,8 @@ struct RUListWidget {
 struct RULabelFuncs {
     void (*destroy)(struct RUBase* self_c);
     void (*show)(struct RUBase* self_c);
+    void (*set_persist_data)(struct RUBase* self_c, const char* text);
+    const char* (*persist_data)(struct RUBase* self_c);
     void (*set_fixed_height)(struct RUBase* self_c, int width);
     void (*set_fixed_width)(struct RUBase* self_c, int width);
     void (*resize)(struct RUBase* self_c, int width, int height);
@@ -535,6 +543,8 @@ struct RULabel {
 struct RULineEditFuncs {
     void (*destroy)(struct RUBase* self_c);
     void (*show)(struct RUBase* self_c);
+    void (*set_persist_data)(struct RUBase* self_c, const char* text);
+    const char* (*persist_data)(struct RUBase* self_c);
     void (*set_fixed_height)(struct RUBase* self_c, int width);
     void (*set_fixed_width)(struct RUBase* self_c, int width);
     void (*resize)(struct RUBase* self_c, int width, int height);
@@ -553,6 +563,8 @@ struct RULineEdit {
 struct RUPlainTextEditFuncs {
     void (*destroy)(struct RUBase* self_c);
     void (*show)(struct RUBase* self_c);
+    void (*set_persist_data)(struct RUBase* self_c, const char* text);
+    const char* (*persist_data)(struct RUBase* self_c);
     void (*set_fixed_height)(struct RUBase* self_c, int width);
     void (*set_fixed_width)(struct RUBase* self_c, int width);
     void (*resize)(struct RUBase* self_c, int width, int height);
@@ -573,6 +585,8 @@ struct RUPlainTextEdit {
 struct RUSliderFuncs {
     void (*destroy)(struct RUBase* self_c);
     void (*show)(struct RUBase* self_c);
+    void (*set_persist_data)(struct RUBase* self_c, const char* text);
+    const char* (*persist_data)(struct RUBase* self_c);
     void (*set_fixed_height)(struct RUBase* self_c, int width);
     void (*set_fixed_width)(struct RUBase* self_c, int width);
     void (*resize)(struct RUBase* self_c, int width, int height);
@@ -590,6 +604,8 @@ struct RUSlider {
 struct RUMainWindowFuncs {
     void (*destroy)(struct RUBase* self_c);
     void (*show)(struct RUBase* self_c);
+    void (*set_persist_data)(struct RUBase* self_c, const char* text);
+    const char* (*persist_data)(struct RUBase* self_c);
     void (*set_fixed_height)(struct RUBase* self_c, int width);
     void (*set_fixed_width)(struct RUBase* self_c, int width);
     void (*resize)(struct RUBase* self_c, int width, int height);
@@ -609,12 +625,16 @@ struct RUMainWindow {
 struct RUToolWindowManagerFuncs {
     void (*destroy)(struct RUBase* self_c);
     void (*show)(struct RUBase* self_c);
+    void (*set_persist_data)(struct RUBase* self_c, const char* text);
+    const char* (*persist_data)(struct RUBase* self_c);
     void (*set_fixed_height)(struct RUBase* self_c, int width);
     void (*set_fixed_width)(struct RUBase* self_c, int width);
     void (*resize)(struct RUBase* self_c, int width, int height);
     void (*set_parent)(struct RUBase* self_c, struct RUBase* widget);
     void (*set_layout)(struct RUBase* self_c, struct RUBase* layout);
     void (*update)(struct RUBase* self_c);
+    const char* (*save_state)(struct RUBase* self_c);
+    void (*restore_state)(struct RUBase* self_c, const char* state);
     void (*add_to_docking)(struct RUBase* self_c, struct RUBase* widget);
     void (*add_to_docking_floating)(struct RUBase* self_c, struct RUBase* widget);
 };
@@ -627,6 +647,8 @@ struct RUToolWindowManager {
 struct RUFramelessWindowFuncs {
     void (*destroy)(struct RUBase* self_c);
     void (*show)(struct RUBase* self_c);
+    void (*set_persist_data)(struct RUBase* self_c, const char* text);
+    const char* (*persist_data)(struct RUBase* self_c);
     void (*set_fixed_height)(struct RUBase* self_c, int width);
     void (*set_fixed_width)(struct RUBase* self_c, int width);
     void (*resize)(struct RUBase* self_c, int width, int height);
@@ -716,6 +738,8 @@ struct RUFont {
 struct RUMenuFuncs {
     void (*destroy)(struct RUBase* self_c);
     void (*show)(struct RUBase* self_c);
+    void (*set_persist_data)(struct RUBase* self_c, const char* text);
+    const char* (*persist_data)(struct RUBase* self_c);
     void (*set_fixed_height)(struct RUBase* self_c, int width);
     void (*set_fixed_width)(struct RUBase* self_c, int width);
     void (*resize)(struct RUBase* self_c, int width, int height);
@@ -736,6 +760,8 @@ struct RUMenu {
 struct RUMenuBarFuncs {
     void (*destroy)(struct RUBase* self_c);
     void (*show)(struct RUBase* self_c);
+    void (*set_persist_data)(struct RUBase* self_c, const char* text);
+    const char* (*persist_data)(struct RUBase* self_c);
     void (*set_fixed_height)(struct RUBase* self_c, int width);
     void (*set_fixed_width)(struct RUBase* self_c, int width);
     void (*resize)(struct RUBase* self_c, int width, int height);
@@ -846,6 +872,7 @@ typedef struct RUPluginUI {
     struct RUVBoxLayout (*create_v_box_layout)(struct RUBase* self);
     struct RUHBoxLayout (*create_h_box_layout)(struct RUBase* self);
     struct RUArray (*open_files_dialog)(struct RUBase* self_c);
+    struct RUWidget (*get_parent)(struct RUBase* self);
     struct RUBase* priv_data;
 } RUPlugin;
 
@@ -878,6 +905,8 @@ typedef struct RU {
 } RU;
 
 #define RUWidget_show(obj) obj.funcs->show(obj.priv_data)
+#define RUWidget_set_persist_data(obj, text) obj.funcs->set_persist_data(obj.priv_data, text)
+#define RUWidget_persist_data(obj) obj.funcs->persist_data(obj.priv_data)
 #define RUWidget_set_fixed_height(obj, width) obj.funcs->set_fixed_height(obj.priv_data, width)
 #define RUWidget_set_fixed_width(obj, width) obj.funcs->set_fixed_width(obj.priv_data, width)
 #define RUWidget_resize(obj, width, height) obj.funcs->resize(obj.priv_data, width, height)
@@ -886,6 +915,8 @@ typedef struct RU {
 #define RUWidget_update(obj) obj.funcs->update(obj.priv_data)
 
 #define RUPushButton_show(obj) obj.funcs->show(obj.priv_data)
+#define RUPushButton_set_persist_data(obj, text) obj.funcs->set_persist_data(obj.priv_data, text)
+#define RUPushButton_persist_data(obj) obj.funcs->persist_data(obj.priv_data)
 #define RUPushButton_set_fixed_height(obj, width) obj.funcs->set_fixed_height(obj.priv_data, width)
 #define RUPushButton_set_fixed_width(obj, width) obj.funcs->set_fixed_width(obj.priv_data, width)
 #define RUPushButton_resize(obj, width, height) obj.funcs->resize(obj.priv_data, width, height)
@@ -911,6 +942,8 @@ typedef struct RU {
 #define RUListWidgetItem_get_string_data(obj) obj.funcs->get_string_data(obj.priv_data)
 
 #define RUListWidget_show(obj) obj.funcs->show(obj.priv_data)
+#define RUListWidget_set_persist_data(obj, text) obj.funcs->set_persist_data(obj.priv_data, text)
+#define RUListWidget_persist_data(obj) obj.funcs->persist_data(obj.priv_data)
 #define RUListWidget_set_fixed_height(obj, width) obj.funcs->set_fixed_height(obj.priv_data, width)
 #define RUListWidget_set_fixed_width(obj, width) obj.funcs->set_fixed_width(obj.priv_data, width)
 #define RUListWidget_resize(obj, width, height) obj.funcs->resize(obj.priv_data, width, height)
@@ -934,6 +967,8 @@ typedef struct RU {
 #define RUListWidget_set_item_double_clicked_event(obj, user_data, event) obj.funcs->set_item_double_clicked_event(obj.priv_data, user_data, event)
 
 #define RULabel_show(obj) obj.funcs->show(obj.priv_data)
+#define RULabel_set_persist_data(obj, text) obj.funcs->set_persist_data(obj.priv_data, text)
+#define RULabel_persist_data(obj) obj.funcs->persist_data(obj.priv_data)
 #define RULabel_set_fixed_height(obj, width) obj.funcs->set_fixed_height(obj.priv_data, width)
 #define RULabel_set_fixed_width(obj, width) obj.funcs->set_fixed_width(obj.priv_data, width)
 #define RULabel_resize(obj, width, height) obj.funcs->resize(obj.priv_data, width, height)
@@ -943,6 +978,8 @@ typedef struct RU {
 #define RULabel_set_text(obj, text) obj.funcs->set_text(obj.priv_data, text)
 
 #define RULineEdit_show(obj) obj.funcs->show(obj.priv_data)
+#define RULineEdit_set_persist_data(obj, text) obj.funcs->set_persist_data(obj.priv_data, text)
+#define RULineEdit_persist_data(obj) obj.funcs->persist_data(obj.priv_data)
 #define RULineEdit_set_fixed_height(obj, width) obj.funcs->set_fixed_height(obj.priv_data, width)
 #define RULineEdit_set_fixed_width(obj, width) obj.funcs->set_fixed_width(obj.priv_data, width)
 #define RULineEdit_resize(obj, width, height) obj.funcs->resize(obj.priv_data, width, height)
@@ -953,6 +990,8 @@ typedef struct RU {
 #define RULineEdit_set_read_only(obj, value) obj.funcs->set_read_only(obj.priv_data, value)
 
 #define RUPlainTextEdit_show(obj) obj.funcs->show(obj.priv_data)
+#define RUPlainTextEdit_set_persist_data(obj, text) obj.funcs->set_persist_data(obj.priv_data, text)
+#define RUPlainTextEdit_persist_data(obj) obj.funcs->persist_data(obj.priv_data)
 #define RUPlainTextEdit_set_fixed_height(obj, width) obj.funcs->set_fixed_height(obj.priv_data, width)
 #define RUPlainTextEdit_set_fixed_width(obj, width) obj.funcs->set_fixed_width(obj.priv_data, width)
 #define RUPlainTextEdit_resize(obj, width, height) obj.funcs->resize(obj.priv_data, width, height)
@@ -965,6 +1004,8 @@ typedef struct RU {
 #define RUPlainTextEdit_set_read_only(obj, value) obj.funcs->set_read_only(obj.priv_data, value)
 
 #define RUSlider_show(obj) obj.funcs->show(obj.priv_data)
+#define RUSlider_set_persist_data(obj, text) obj.funcs->set_persist_data(obj.priv_data, text)
+#define RUSlider_persist_data(obj) obj.funcs->persist_data(obj.priv_data)
 #define RUSlider_set_fixed_height(obj, width) obj.funcs->set_fixed_height(obj.priv_data, width)
 #define RUSlider_set_fixed_width(obj, width) obj.funcs->set_fixed_width(obj.priv_data, width)
 #define RUSlider_resize(obj, width, height) obj.funcs->resize(obj.priv_data, width, height)
@@ -974,6 +1015,8 @@ typedef struct RU {
 #define RUSlider_set_value_changed_event(obj, user_data, event) obj.funcs->set_value_changed_event(obj.priv_data, user_data, event)
 
 #define RUMainWindow_show(obj) obj.funcs->show(obj.priv_data)
+#define RUMainWindow_set_persist_data(obj, text) obj.funcs->set_persist_data(obj.priv_data, text)
+#define RUMainWindow_persist_data(obj) obj.funcs->persist_data(obj.priv_data)
 #define RUMainWindow_set_fixed_height(obj, width) obj.funcs->set_fixed_height(obj.priv_data, width)
 #define RUMainWindow_set_fixed_width(obj, width) obj.funcs->set_fixed_width(obj.priv_data, width)
 #define RUMainWindow_resize(obj, width, height) obj.funcs->resize(obj.priv_data, width, height)
@@ -985,16 +1028,22 @@ typedef struct RU {
 #define RUMainWindow_set_central_widget(obj, widget) obj.funcs->set_central_widget(obj.priv_data, widget)
 
 #define RUToolWindowManager_show(obj) obj.funcs->show(obj.priv_data)
+#define RUToolWindowManager_set_persist_data(obj, text) obj.funcs->set_persist_data(obj.priv_data, text)
+#define RUToolWindowManager_persist_data(obj) obj.funcs->persist_data(obj.priv_data)
 #define RUToolWindowManager_set_fixed_height(obj, width) obj.funcs->set_fixed_height(obj.priv_data, width)
 #define RUToolWindowManager_set_fixed_width(obj, width) obj.funcs->set_fixed_width(obj.priv_data, width)
 #define RUToolWindowManager_resize(obj, width, height) obj.funcs->resize(obj.priv_data, width, height)
 #define RUToolWindowManager_set_parent(obj, widget) obj.funcs->set_parent(obj.priv_data, widget)
 #define RUToolWindowManager_set_layout(obj, layout) obj.funcs->set_layout(obj.priv_data, layout)
 #define RUToolWindowManager_update(obj) obj.funcs->update(obj.priv_data)
+#define RUToolWindowManager_save_state(obj) obj.funcs->save_state(obj.priv_data)
+#define RUToolWindowManager_restore_state(obj, state) obj.funcs->restore_state(obj.priv_data, state)
 #define RUToolWindowManager_add_to_docking(obj, widget) obj.funcs->add_to_docking(obj.priv_data, widget)
 #define RUToolWindowManager_add_to_docking_floating(obj, widget) obj.funcs->add_to_docking_floating(obj.priv_data, widget)
 
 #define RUFramelessWindow_show(obj) obj.funcs->show(obj.priv_data)
+#define RUFramelessWindow_set_persist_data(obj, text) obj.funcs->set_persist_data(obj.priv_data, text)
+#define RUFramelessWindow_persist_data(obj) obj.funcs->persist_data(obj.priv_data)
 #define RUFramelessWindow_set_fixed_height(obj, width) obj.funcs->set_fixed_height(obj.priv_data, width)
 #define RUFramelessWindow_set_fixed_width(obj, width) obj.funcs->set_fixed_width(obj.priv_data, width)
 #define RUFramelessWindow_resize(obj, width, height) obj.funcs->resize(obj.priv_data, width, height)
@@ -1030,6 +1079,8 @@ typedef struct RU {
 #define RUFont_set_point_size(obj, size) obj.funcs->set_point_size(obj.priv_data, size)
 
 #define RUMenu_show(obj) obj.funcs->show(obj.priv_data)
+#define RUMenu_set_persist_data(obj, text) obj.funcs->set_persist_data(obj.priv_data, text)
+#define RUMenu_persist_data(obj) obj.funcs->persist_data(obj.priv_data)
 #define RUMenu_set_fixed_height(obj, width) obj.funcs->set_fixed_height(obj.priv_data, width)
 #define RUMenu_set_fixed_width(obj, width) obj.funcs->set_fixed_width(obj.priv_data, width)
 #define RUMenu_resize(obj, width, height) obj.funcs->resize(obj.priv_data, width, height)
@@ -1042,6 +1093,8 @@ typedef struct RU {
 #define RUMenu_set_title(obj, title) obj.funcs->set_title(obj.priv_data, title)
 
 #define RUMenuBar_show(obj) obj.funcs->show(obj.priv_data)
+#define RUMenuBar_set_persist_data(obj, text) obj.funcs->set_persist_data(obj.priv_data, text)
+#define RUMenuBar_persist_data(obj) obj.funcs->persist_data(obj.priv_data)
 #define RUMenuBar_set_fixed_height(obj, width) obj.funcs->set_fixed_height(obj.priv_data, width)
 #define RUMenuBar_set_fixed_width(obj, width) obj.funcs->set_fixed_width(obj.priv_data, width)
 #define RUMenuBar_resize(obj, width, height) obj.funcs->resize(obj.priv_data, width, height)

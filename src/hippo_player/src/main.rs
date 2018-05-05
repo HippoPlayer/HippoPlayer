@@ -144,6 +144,8 @@ impl <'a> HippoPlayer<'a> {
     }
 
     fn before_quit(&mut self) {
+        let state = self.tool_window_manager.save_state();
+        println!("tool_window_mangare state {}", state);
         /*
            if let Err(err) = self.playlist.save_playlist("playlist.json") {
            println!("Unable to save playlist {:?}", err);
@@ -167,6 +169,11 @@ impl <'a> HippoPlayer<'a> {
         let _instance = plugin.create_instance(&self.ui, &self.plugin_service, &widget);
 
         self.tool_window_manager.add_to_docking_floating(&widget);
+
+        widget.resize(500, 500);
+        widget.show();
+
+        widget.set_persist_data("pls save me pls!");
 
         println!("Showing plugin {}", plugin_index);
 

@@ -36,6 +36,7 @@
 #include <QSplitter>
 #include <QTabBar>
 #include <QVBoxLayout>
+#include <QJsonObject>
 #include "ToolWindowManagerArea.h"
 #include "ToolWindowManagerSplitter.h"
 #include "ToolWindowManagerWrapper.h"
@@ -581,7 +582,7 @@ void ToolWindowManager::setAllowFloatingWindow(bool allow)
   m_allowFloatingWindow = allow;
 }
 
-QVariantMap ToolWindowManager::saveState()
+QString ToolWindowManager::saveState()
 {
   QVariantMap result;
   result[QStringLiteral("toolWindowManagerStateFormat")] = 1;
@@ -589,7 +590,7 @@ QVariantMap ToolWindowManager::saveState()
   if(!mainWrapper)
   {
     qWarning("can't find main wrapper");
-    return QVariantMap();
+    return QStringLiteral("");
   }
   result[QStringLiteral("mainWrapper")] = mainWrapper->saveState();
   QVariantList floatingWindowsData;
@@ -602,11 +603,24 @@ QVariantMap ToolWindowManager::saveState()
     floatingWindowsData << wrapper->saveState();
   }
   result[QStringLiteral("floatingWindows")] = floatingWindowsData;
-  return result;
+
+  qDebug() << result << "\n";
+
+  QVariant res(result);
+
+  qDebug() << "strings " << res.toJsonObject() << "\n";
+
+  auto str = res.toString();
+
+  qDebug() << "string " << str << "\n";
+
+  return str;
 }
 
-void ToolWindowManager::restoreState(const QVariantMap &dataMap)
+void ToolWindowManager::restoreState(const QString& data)
 {
+  const QVariantMap dataMap = QVariant(data).toMap();
+
   if(dataMap.isEmpty())
   {
     return;
