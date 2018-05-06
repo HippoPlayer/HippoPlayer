@@ -53,7 +53,8 @@ struct HippoPlayer<'a> {
     playlist_view: PlaylistView,
     playlist: Playlist,
     song_info_view: SongInfoView,
-    tool_window_manager: ToolWindowManager,
+    //tool_window_manager: ToolWindowManager,
+    dock_manager: DockManager,
     ui: Ui,
     app: Application,
     current_song_time: f32,
@@ -74,7 +75,8 @@ impl <'a> HippoPlayer<'a> {
            playlist_view: PlaylistView::new(ui),
            playlist: Playlist::new(),
            song_info_view: SongInfoView::new(ui),
-           tool_window_manager: ui.create_tool_window_manager(),
+           dock_manager: ui.create_dock_manager(),
+           //tool_window_manager: ui.create_tool_window_manager(),
            ui: ui,
            current_song_time: -10.0,
            is_playing: false,
@@ -144,8 +146,8 @@ impl <'a> HippoPlayer<'a> {
     }
 
     fn before_quit(&mut self) {
-        let state = self.tool_window_manager.save_state();
-        println!("tool_window_mangare state {}", state);
+        //let state = self.tool_window_manager.save_state();
+        //println!("tool_window_mangare state {}", state);
         /*
            if let Err(err) = self.playlist.save_playlist("playlist.json") {
            println!("Unable to save playlist {:?}", err);
@@ -168,7 +170,9 @@ impl <'a> HippoPlayer<'a> {
 
         let _instance = plugin.create_instance(&self.ui, &self.plugin_service, &widget);
 
-        self.tool_window_manager.add_to_docking_floating(&widget);
+        let dock_widget = self.ui.create_dock_widget();
+        dock_widget.set_widget(&widget);
+        self.dock_manager.add_to_docking(&dock_widget);
 
         widget.resize(500, 500);
         widget.show();
@@ -252,13 +256,18 @@ impl <'a> HippoPlayer<'a> {
         //let player_window = self.ui.create_widget();
         main_window.set_central_widget(&self.main_widget);
 
-        self.tool_window_manager.set_parent(&self.main_widget);
+        self.dock_manager.set_parent(&self.main_widget);
 
-        self.tool_window_manager.add_to_docking(&self.player_view.widget);
-        //self.tool_window_manager.add_to_docking(&self.playlist.widget);
-        self.tool_window_manager.add_to_docking(&self.song_info_view.view);
+        let player_dock = self.ui.create_dock_widget();
+        let info_dock = self.ui.create_dock_widget();
 
-        layout.add_widget(&self.tool_window_manager);
+        player_dock.set_widget(&self.player_view.widget);
+        info_dock.set_widget(&self.song_info_view.view);
+
+        self.dock_manager.add_to_docking(&player_dock);
+        self.dock_manager.add_to_docking(&info_dock);
+
+        layout.add_widget(&self.dock_manager);
 
         //player_window.set_content(&main_window);
         //player_window.set_window_title(&format!("HippoPlayer 0.0.1 {}", build_id()));

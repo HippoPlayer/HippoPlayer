@@ -52,12 +52,24 @@ SharedLibrary {
         gen_moc("src/external/rute_cpp/ToolWindowManager/ToolWindowManagerTabBar.h"),
         gen_moc("src/external/rute_cpp/ToolWindowManager/ToolWindowManagerWrapper.h"),
 
+        gen_moc("src/external/rute_cpp/AdvancedDockingSystem/DockContainerWidget.h"),
+        gen_moc("src/external/rute_cpp/AdvancedDockingSystem/DockManager.h"),
+        gen_moc("src/external/rute_cpp/AdvancedDockingSystem/DockOverlay.h"),
+        gen_moc("src/external/rute_cpp/AdvancedDockingSystem/DockSplitter.h"),
+        gen_moc("src/external/rute_cpp/AdvancedDockingSystem/DockStateSerialization.h"),
+        gen_moc("src/external/rute_cpp/AdvancedDockingSystem/DockAreaWidget.h"),
+        gen_moc("src/external/rute_cpp/AdvancedDockingSystem/DockWidget.h"),
+        gen_moc("src/external/rute_cpp/AdvancedDockingSystem/DockWidgetTitleBar.h"),
+        gen_moc("src/external/rute_cpp/AdvancedDockingSystem/FloatingDockContainer.h"),
+        gen_moc("src/external/rute_cpp/AdvancedDockingSystem/ads_globals.h"),
+
         gen_moc("src/external/rute_cpp/FramlessWindow/framelesswindow/framelesswindow.h"),
         gen_moc("src/external/rute_cpp/FramlessWindow/framelesswindow/windowdragger.h"),
         gen_moc("src/external/rute_cpp/FramlessWindow/DarkStyle.h"),
 
         gen_uic("src/external/rute_cpp/FramlessWindow/framelesswindow/framelesswindow.ui"),
         gen_rcc("src/external/rute_cpp/FramlessWindow/darkstyle.qrc"),
+        -- gen_rcc("src/external/rute_cpp/AdvancedDockingSystem/ads.qrc"),
     },
 
     Env = {
@@ -73,16 +85,19 @@ SharedLibrary {
               "-isystem $(QT5)/include"; Config = "linux-*-*" },
         },
 
+        --[[
         CPPDEFS = {
             "QT_NO_CAST_FROM_ASCII",
             "QT_NO_CAST_TO_ASCII",
         },
+        --]]
 
         CPPPATH = {
             "src/external/rute_cpp/ToolWindowManager/",
             "src/external/rute_cpp/ToolWindowManager/",
 			"src/external/rute_cpp/FramlessWindow/framelesswindow",
 			"src/external/rute_cpp/FramlessWindow",
+			"src/external/rute_cpp/AdvancedDockingSystem",
 
             "$(QT5)/include",
             "$(QT5)/include/QtCore",

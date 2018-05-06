@@ -13,6 +13,8 @@
 #include <QSlider>
 #include <QMainWindow>
 #include <QToolWindowManager>
+#include <QDockWidget>
+#include <QDockManager>
 #include <QFramelessWindow>
 #include <QAction>
 #include <QUrl>
@@ -42,6 +44,8 @@ extern struct RUPlainTextEditFuncs s_plain_text_edit_funcs;
 extern struct RUSliderFuncs s_slider_funcs;
 extern struct RUMainWindowFuncs s_main_window_funcs;
 extern struct RUToolWindowManagerFuncs s_tool_window_manager_funcs;
+extern struct RUDockWidgetFuncs s_dock_widget_funcs;
+extern struct RUDockManagerFuncs s_dock_manager_funcs;
 extern struct RUFramelessWindowFuncs s_frameless_window_funcs;
 extern struct RUActionFuncs s_action_funcs;
 extern struct RUUrlFuncs s_url_funcs;
@@ -157,7 +161,7 @@ public:
     QString persistData() { return m_persistData; }
     QString m_persistData;
 
-    WRWidget(QWidget* widget) : QWidget(widget) {  setObjectName(QStringLiteral("Test")); setPersistData(QStringLiteral("SomeData")); }
+    WRWidget(QWidget* widget) : QWidget(widget) { }
     virtual ~WRWidget() {}
 
 public:
@@ -176,7 +180,7 @@ public:
     QString persistData() { return m_persistData; }
     QString m_persistData;
 
-    WRPushButton(QWidget* widget) : QPushButton(widget) {  setObjectName(QStringLiteral("Test")); setPersistData(QStringLiteral("SomeData")); }
+    WRPushButton(QWidget* widget) : QPushButton(widget) { }
     virtual ~WRPushButton() {}
 
 };
@@ -191,7 +195,7 @@ public:
     QString persistData() { return m_persistData; }
     QString m_persistData;
 
-    WRListWidget(QWidget* widget) : QListWidget(widget) {  setObjectName(QStringLiteral("Test")); setPersistData(QStringLiteral("SomeData")); }
+    WRListWidget(QWidget* widget) : QListWidget(widget) { }
     virtual ~WRListWidget() {}
 
 public:
@@ -214,7 +218,7 @@ public:
     QString persistData() { return m_persistData; }
     QString m_persistData;
 
-    WRLabel(QWidget* widget) : QLabel(widget) {  setObjectName(QStringLiteral("Test")); setPersistData(QStringLiteral("SomeData")); }
+    WRLabel(QWidget* widget) : QLabel(widget) { }
     virtual ~WRLabel() {}
 
 };
@@ -229,7 +233,7 @@ public:
     QString persistData() { return m_persistData; }
     QString m_persistData;
 
-    WRLineEdit(QWidget* widget) : QLineEdit(widget) {  setObjectName(QStringLiteral("Test")); setPersistData(QStringLiteral("SomeData")); }
+    WRLineEdit(QWidget* widget) : QLineEdit(widget) { }
     virtual ~WRLineEdit() {}
 
 };
@@ -244,7 +248,7 @@ public:
     QString persistData() { return m_persistData; }
     QString m_persistData;
 
-    WRPlainTextEdit(QWidget* widget) : QPlainTextEdit(widget) {  setObjectName(QStringLiteral("Test")); setPersistData(QStringLiteral("SomeData")); }
+    WRPlainTextEdit(QWidget* widget) : QPlainTextEdit(widget) { }
     virtual ~WRPlainTextEdit() {}
 
 };
@@ -259,7 +263,7 @@ public:
     QString persistData() { return m_persistData; }
     QString m_persistData;
 
-    WRSlider(QWidget* widget) : QSlider(widget) {  setObjectName(QStringLiteral("Test")); setPersistData(QStringLiteral("SomeData")); }
+    WRSlider(QWidget* widget) : QSlider(widget) { }
     virtual ~WRSlider() {}
 
 };
@@ -274,7 +278,7 @@ public:
     QString persistData() { return m_persistData; }
     QString m_persistData;
 
-    WRMainWindow(QWidget* widget) : QMainWindow(widget) {  setObjectName(QStringLiteral("Test")); setPersistData(QStringLiteral("SomeData")); }
+    WRMainWindow(QWidget* widget) : QMainWindow(widget) { }
     virtual ~WRMainWindow() {}
 
 };
@@ -289,8 +293,23 @@ public:
     QString persistData() { return m_persistData; }
     QString m_persistData;
 
-    WRToolWindowManager(QWidget* widget) : QToolWindowManager(widget) {  setObjectName(QStringLiteral("Test")); setPersistData(QStringLiteral("SomeData")); }
+    WRToolWindowManager(QWidget* widget) : QToolWindowManager(widget) { }
     virtual ~WRToolWindowManager() {}
+
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+class WRDockManager : public QDockManager {
+    Q_OBJECT
+public:
+    Q_PROPERTY(QString persistData READ persistData WRITE setPersistData DESIGNABLE false SCRIPTABLE false)
+    void setPersistData(const QString& data) { m_persistData = data; }
+    QString persistData() { return m_persistData; }
+    QString m_persistData;
+
+    WRDockManager(QWidget* widget) : QDockManager(widget) { }
+    virtual ~WRDockManager() {}
 
 };
 
@@ -304,7 +323,7 @@ public:
     QString persistData() { return m_persistData; }
     QString m_persistData;
 
-    WRFramelessWindow(QWidget* widget) : QFramelessWindow(widget) {  setObjectName(QStringLiteral("Test")); setPersistData(QStringLiteral("SomeData")); }
+    WRFramelessWindow(QWidget* widget) : QFramelessWindow(widget) { }
     virtual ~WRFramelessWindow() {}
 
 };
@@ -319,7 +338,7 @@ public:
     QString persistData() { return m_persistData; }
     QString m_persistData;
 
-    WRMenu(QWidget* widget) : QMenu(widget) {  setObjectName(QStringLiteral("Test")); setPersistData(QStringLiteral("SomeData")); }
+    WRMenu(QWidget* widget) : QMenu(widget) { }
     virtual ~WRMenu() {}
 
 };
@@ -334,7 +353,7 @@ public:
     QString persistData() { return m_persistData; }
     QString m_persistData;
 
-    WRMenuBar(QWidget* widget) : QMenuBar(widget) {  setObjectName(QStringLiteral("Test")); setPersistData(QStringLiteral("SomeData")); }
+    WRMenuBar(QWidget* widget) : QMenuBar(widget) { }
     virtual ~WRMenuBar() {}
 
 };
@@ -349,7 +368,7 @@ public:
     QString persistData() { return m_persistData; }
     QString m_persistData;
 
-    WRVBoxLayout(QWidget* widget) : QVBoxLayout(widget) {  setObjectName(QStringLiteral("Test")); setPersistData(QStringLiteral("SomeData")); }
+    WRVBoxLayout(QWidget* widget) : QVBoxLayout(widget) { }
     virtual ~WRVBoxLayout() {}
 
 };
@@ -364,7 +383,7 @@ public:
     QString persistData() { return m_persistData; }
     QString m_persistData;
 
-    WRHBoxLayout(QWidget* widget) : QHBoxLayout(widget) {  setObjectName(QStringLiteral("Test")); setPersistData(QStringLiteral("SomeData")); }
+    WRHBoxLayout(QWidget* widget) : QHBoxLayout(widget) { }
     virtual ~WRHBoxLayout() {}
 
 };

@@ -12,6 +12,8 @@
 #include <QSlider>
 #include <QMainWindow>
 #include <QToolWindowManager>
+#include <QDockWidget>
+#include <QDockManager>
 #include <QFramelessWindow>
 #include <QAction>
 #include <QUrl>
@@ -1416,6 +1418,86 @@ static void tool_window_manager_restore_state(struct RUBase* self_c, const char*
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void dock_widget_set_widget(struct RUBase* self_c, struct RUBase* widget) { 
+    QDockWidget* qt_data = (QDockWidget*)self_c;
+    qt_data->setWidget((QWidget*)widget);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void dock_manager_show(struct RUBase* self_c) { 
+    WRDockManager* qt_data = (WRDockManager*)self_c;
+    qt_data->show();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void dock_manager_set_persist_data(struct RUBase* self_c, const char* text) { 
+    WRDockManager* qt_data = (WRDockManager*)self_c;
+    qt_data->setPersistData(QString::fromUtf8(text));
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static const char* dock_manager_persist_data(struct RUBase* self_c) { 
+    WRDockManager* qt_data = (WRDockManager*)self_c;
+    auto ret_value = qt_data->persistData();
+    QByteArray ba = ret_value.toUtf8();
+    const char* c_str = ba.data();
+    assert((ba.size() + 1) < sizeof(s_temp_string_buffer));
+    memcpy(s_temp_string_buffer, c_str, ba.size() + 1);
+    printf("temp string buffer %s\n", s_temp_string_buffer);
+    return s_temp_string_buffer;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void dock_manager_set_fixed_height(struct RUBase* self_c, int width) { 
+    WRDockManager* qt_data = (WRDockManager*)self_c;
+    qt_data->setFixedHeight(width);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void dock_manager_set_fixed_width(struct RUBase* self_c, int width) { 
+    WRDockManager* qt_data = (WRDockManager*)self_c;
+    qt_data->setFixedWidth(width);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void dock_manager_resize(struct RUBase* self_c, int width, int height) { 
+    WRDockManager* qt_data = (WRDockManager*)self_c;
+    qt_data->resize(width, height);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void dock_manager_set_parent(struct RUBase* self_c, struct RUBase* widget) { 
+    WRDockManager* qt_data = (WRDockManager*)self_c;
+    qt_data->setParent((QWidget*)widget);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void dock_manager_set_layout(struct RUBase* self_c, struct RUBase* layout) { 
+    WRDockManager* qt_data = (WRDockManager*)self_c;
+    qt_data->setLayout((QLayout*)layout);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void dock_manager_update(struct RUBase* self_c) { 
+    WRDockManager* qt_data = (WRDockManager*)self_c;
+    qt_data->update();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static void frameless_window_show(struct RUBase* self_c) { 
     WRFramelessWindow* qt_data = (WRFramelessWindow*)self_c;
     qt_data->show();
@@ -2089,6 +2171,30 @@ static void destroy_tool_window_manager(struct RUBase* priv_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static struct RUDockWidget create_dock_widget(struct RUBase* priv_data) {
+    return create_generic_func<struct RUDockWidget, struct RUDockWidgetFuncs, QDockWidget>(&s_dock_widget_funcs, priv_data);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void destroy_dock_widget(struct RUBase* priv_data) {
+    destroy_generic<QDockWidget>(priv_data);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static struct RUDockManager create_dock_manager(struct RUBase* priv_data) {
+    return create_widget_func<struct RUDockManager, struct RUDockManagerFuncs, WRDockManager>(&s_dock_manager_funcs, priv_data);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void destroy_dock_manager(struct RUBase* priv_data) {
+    destroy_generic<WRDockManager>(priv_data);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static struct RUFramelessWindow create_frameless_window(struct RUBase* priv_data) {
     return create_widget_func<struct RUFramelessWindow, struct RUFramelessWindowFuncs, WRFramelessWindow>(&s_frameless_window_funcs, priv_data);
 }
@@ -2404,6 +2510,12 @@ static int application_set_style_sheet(struct RUBase* self_c, const char* filena
     return 1;
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void dock_manager_add_to_docking(struct RUBase* self_c, struct RUBase* widget) {
+    WRDockManager* qt_data = (WRDockManager*)self_c;
+    qt_data->addDockWidget(ads::LeftDockWidgetArea, (QDockWidget*)widget);
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2603,6 +2715,29 @@ struct RUToolWindowManagerFuncs s_tool_window_manager_funcs = {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+struct RUDockWidgetFuncs s_dock_widget_funcs = {
+    destroy_dock_widget,
+    dock_widget_set_widget,
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+struct RUDockManagerFuncs s_dock_manager_funcs = {
+    destroy_dock_manager,
+    dock_manager_show,
+    dock_manager_set_persist_data,
+    dock_manager_persist_data,
+    dock_manager_set_fixed_height,
+    dock_manager_set_fixed_width,
+    dock_manager_resize,
+    dock_manager_set_parent,
+    dock_manager_set_layout,
+    dock_manager_update,
+    dock_manager_add_to_docking,
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 struct RUFramelessWindowFuncs s_frameless_window_funcs = {
     destroy_frameless_window,
     frameless_window_show,
@@ -2771,6 +2906,7 @@ static struct RUPluginUI s_plugin_ui = {
     create_plain_text_edit,
     create_slider,
     create_main_window,
+    create_dock_widget,
     create_frameless_window,
     create_action,
     create_timer,
@@ -2818,6 +2954,8 @@ static struct RU s_pu = {
     create_slider,
     create_main_window,
     create_tool_window_manager,
+    create_dock_widget,
+    create_dock_manager,
     create_frameless_window,
     create_action,
     create_timer,

@@ -40,6 +40,10 @@ struct RUMainWindow;
 struct RUMainWindowFuncs;
 struct RUToolWindowManager;
 struct RUToolWindowManagerFuncs;
+struct RUDockWidget;
+struct RUDockWidgetFuncs;
+struct RUDockManager;
+struct RUDockManagerFuncs;
 struct RUFramelessWindow;
 struct RUFramelessWindowFuncs;
 struct RUAction;
@@ -644,6 +648,35 @@ struct RUToolWindowManager {
     struct RUBase* priv_data;
 };
 
+struct RUDockWidgetFuncs {
+    void (*destroy)(struct RUBase* self_c);
+    void (*set_widget)(struct RUBase* self_c, struct RUBase* widget);
+};
+
+struct RUDockWidget {
+    struct RUDockWidgetFuncs* funcs;
+    struct RUBase* priv_data;
+};
+
+struct RUDockManagerFuncs {
+    void (*destroy)(struct RUBase* self_c);
+    void (*show)(struct RUBase* self_c);
+    void (*set_persist_data)(struct RUBase* self_c, const char* text);
+    const char* (*persist_data)(struct RUBase* self_c);
+    void (*set_fixed_height)(struct RUBase* self_c, int width);
+    void (*set_fixed_width)(struct RUBase* self_c, int width);
+    void (*resize)(struct RUBase* self_c, int width, int height);
+    void (*set_parent)(struct RUBase* self_c, struct RUBase* widget);
+    void (*set_layout)(struct RUBase* self_c, struct RUBase* layout);
+    void (*update)(struct RUBase* self_c);
+    void (*add_to_docking)(struct RUBase* self_c, struct RUBase* widget);
+};
+
+struct RUDockManager {
+    struct RUDockManagerFuncs* funcs;
+    struct RUBase* priv_data;
+};
+
 struct RUFramelessWindowFuncs {
     void (*destroy)(struct RUBase* self_c);
     void (*show)(struct RUBase* self_c);
@@ -862,6 +895,7 @@ typedef struct RUPluginUI {
     struct RUPlainTextEdit (*create_plain_text_edit)(struct RUBase* self);
     struct RUSlider (*create_slider)(struct RUBase* self);
     struct RUMainWindow (*create_main_window)(struct RUBase* self);
+    struct RUDockWidget (*create_dock_widget)(struct RUBase* self);
     struct RUFramelessWindow (*create_frameless_window)(struct RUBase* self);
     struct RUAction (*create_action)(struct RUBase* self);
     struct RUTimer (*create_timer)(struct RUBase* self);
@@ -888,6 +922,8 @@ typedef struct RU {
     struct RUSlider (*create_slider)(struct RUBase* self);
     struct RUMainWindow (*create_main_window)(struct RUBase* self);
     struct RUToolWindowManager (*create_tool_window_manager)(struct RUBase* self);
+    struct RUDockWidget (*create_dock_widget)(struct RUBase* self);
+    struct RUDockManager (*create_dock_manager)(struct RUBase* self);
     struct RUFramelessWindow (*create_frameless_window)(struct RUBase* self);
     struct RUAction (*create_action)(struct RUBase* self);
     struct RUTimer (*create_timer)(struct RUBase* self);
@@ -1041,6 +1077,19 @@ typedef struct RU {
 #define RUToolWindowManager_add_to_docking(obj, widget) obj.funcs->add_to_docking(obj.priv_data, widget)
 #define RUToolWindowManager_add_to_docking_floating(obj, widget) obj.funcs->add_to_docking_floating(obj.priv_data, widget)
 
+#define RUDockWidget_set_widget(obj, widget) obj.funcs->set_widget(obj.priv_data, widget)
+
+#define RUDockManager_show(obj) obj.funcs->show(obj.priv_data)
+#define RUDockManager_set_persist_data(obj, text) obj.funcs->set_persist_data(obj.priv_data, text)
+#define RUDockManager_persist_data(obj) obj.funcs->persist_data(obj.priv_data)
+#define RUDockManager_set_fixed_height(obj, width) obj.funcs->set_fixed_height(obj.priv_data, width)
+#define RUDockManager_set_fixed_width(obj, width) obj.funcs->set_fixed_width(obj.priv_data, width)
+#define RUDockManager_resize(obj, width, height) obj.funcs->resize(obj.priv_data, width, height)
+#define RUDockManager_set_parent(obj, widget) obj.funcs->set_parent(obj.priv_data, widget)
+#define RUDockManager_set_layout(obj, layout) obj.funcs->set_layout(obj.priv_data, layout)
+#define RUDockManager_update(obj) obj.funcs->update(obj.priv_data)
+#define RUDockManager_add_to_docking(obj, widget) obj.funcs->add_to_docking(obj.priv_data, widget)
+
 #define RUFramelessWindow_show(obj) obj.funcs->show(obj.priv_data)
 #define RUFramelessWindow_set_persist_data(obj, text) obj.funcs->set_persist_data(obj.priv_data, text)
 #define RUFramelessWindow_persist_data(obj) obj.funcs->persist_data(obj.priv_data)
@@ -1137,6 +1186,8 @@ typedef struct RU {
 #define RU_create_slider(ui) ui->create_slider(ui->priv_data)
 #define RU_create_main_window(ui) ui->create_main_window(ui->priv_data)
 #define RU_create_tool_window_manager(ui) ui->create_tool_window_manager(ui->priv_data)
+#define RU_create_dock_widget(ui) ui->create_dock_widget(ui->priv_data)
+#define RU_create_dock_manager(ui) ui->create_dock_manager(ui->priv_data)
 #define RU_create_frameless_window(ui) ui->create_frameless_window(ui->priv_data)
 #define RU_create_action(ui) ui->create_action(ui->priv_data)
 #define RU_create_timer(ui) ui->create_timer(ui->priv_data)

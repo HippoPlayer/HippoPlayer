@@ -649,6 +649,41 @@ pub struct RUToolWindowManager {
 }
 
 #[repr(C)]
+pub struct RUDockWidgetFuncs {
+    pub destroy: extern "C" fn(self_c: *const RUBase),
+    pub set_widget: extern "C" fn(self_c: *const RUBase, widget: *const RUBase),
+}
+
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct RUDockWidget {
+    pub funcs: *const RUDockWidgetFuncs,
+    pub privd: *const RUBase,
+}
+
+#[repr(C)]
+pub struct RUDockManagerFuncs {
+    pub destroy: extern "C" fn(self_c: *const RUBase),
+    pub show: extern "C" fn(self_c: *const RUBase),
+    pub set_persist_data: extern "C" fn(self_c: *const RUBase, text: *const ::std::os::raw::c_char),
+    pub persist_data: extern "C" fn(self_c: *const RUBase) -> *const ::std::os::raw::c_char,
+    pub set_fixed_height: extern "C" fn(self_c: *const RUBase, width: i32),
+    pub set_fixed_width: extern "C" fn(self_c: *const RUBase, width: i32),
+    pub resize: extern "C" fn(self_c: *const RUBase, width: i32, height: i32),
+    pub set_parent: extern "C" fn(self_c: *const RUBase, widget: *const RUBase),
+    pub set_layout: extern "C" fn(self_c: *const RUBase, layout: *const RUBase),
+    pub update: extern "C" fn(self_c: *const RUBase),
+    pub add_to_docking: extern "C" fn(self_c: *const RUBase, widget: *const RUBase),
+}
+
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct RUDockManager {
+    pub funcs: *const RUDockManagerFuncs,
+    pub privd: *const RUBase,
+}
+
+#[repr(C)]
 pub struct RUFramelessWindowFuncs {
     pub destroy: extern "C" fn(self_c: *const RUBase),
     pub show: extern "C" fn(self_c: *const RUBase),
@@ -920,6 +955,7 @@ pub struct RUPluginUI {
     pub create_plain_text_edit: extern "C" fn(priv_data: *const RUBase) -> RUPlainTextEdit,
     pub create_slider: extern "C" fn(priv_data: *const RUBase) -> RUSlider,
     pub create_main_window: extern "C" fn(priv_data: *const RUBase) -> RUMainWindow,
+    pub create_dock_widget: extern "C" fn(priv_data: *const RUBase) -> RUDockWidget,
     pub create_frameless_window: extern "C" fn(priv_data: *const RUBase) -> RUFramelessWindow,
     pub create_action: extern "C" fn(priv_data: *const RUBase) -> RUAction,
     pub create_timer: extern "C" fn(priv_data: *const RUBase) -> RUTimer,
@@ -947,6 +983,8 @@ pub struct RU {
     pub create_slider: extern "C" fn(priv_data: *const RUBase) -> RUSlider,
     pub create_main_window: extern "C" fn(priv_data: *const RUBase) -> RUMainWindow,
     pub create_tool_window_manager: extern "C" fn(priv_data: *const RUBase) -> RUToolWindowManager,
+    pub create_dock_widget: extern "C" fn(priv_data: *const RUBase) -> RUDockWidget,
+    pub create_dock_manager: extern "C" fn(priv_data: *const RUBase) -> RUDockManager,
     pub create_frameless_window: extern "C" fn(priv_data: *const RUBase) -> RUFramelessWindow,
     pub create_action: extern "C" fn(priv_data: *const RUBase) -> RUAction,
     pub create_timer: extern "C" fn(priv_data: *const RUBase) -> RUTimer,
