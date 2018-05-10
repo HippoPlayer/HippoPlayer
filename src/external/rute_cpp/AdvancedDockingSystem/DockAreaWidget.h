@@ -134,6 +134,11 @@ public:
 	QList<CDockWidget*> openedDockWidgets() const;
 
 	/**
+	 * Returns a list of dock widgets that are not closed
+	 */
+	QList<CDockWidget*> dockAreas() const;
+
+	/**
 	 * Returns the number of dock widgets in this area
 	 */
 	int count() const;

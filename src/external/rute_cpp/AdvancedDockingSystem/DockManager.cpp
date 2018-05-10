@@ -1,17 +1,17 @@
 /*******************************************************************************
 ** Qt Advanced Docking System
 ** Copyright (C) 2017 Uwe Kindler
-** 
+**
 ** This library is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU Lesser General Public
 ** License as published by the Free Software Foundation; either
 ** version 2.1 of the License, or (at your option) any later version.
-** 
+**
 ** This library is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ** Lesser General Public License for more details.
-** 
+**
 ** You should have received a copy of the GNU Lesser General Public
 ** License along with this library; If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************/
@@ -76,12 +76,12 @@ struct DockManagerPrivate
 	 * Checks if the given data stream is a valid docking system state
 	 * file.
 	 */
-	bool checkFormat(const QByteArray &state, int version);
+	bool checkFormat(const QString& state, int version);
 
 	/**
 	 * Restores the state
 	 */
-	bool restoreState(const QByteArray &state, int version, bool Testing = internal::Restore);
+	bool restoreState(const QString& state, int version, bool Testing = internal::Restore);
 
 	/**
 	 * Restores the container with the given index
@@ -138,14 +138,14 @@ bool DockManagerPrivate::restoreContainer(int Index, QXmlStreamReader& stream, b
 
 
 //============================================================================
-bool DockManagerPrivate::checkFormat(const QByteArray &state, int version)
+bool DockManagerPrivate::checkFormat(const QString &state, int version)
 {
     return restoreState(state, version, internal::RestoreTesting);
 }
 
 
 //============================================================================
-bool DockManagerPrivate::restoreState(const QByteArray &state,  int version,
+bool DockManagerPrivate::restoreState(const QString& state,  int version,
 	bool Testing)
 {
     if (state.isEmpty())
@@ -295,30 +295,35 @@ unsigned int CDockManager::zOrderIndex() const
 
 
 //============================================================================
-QByteArray CDockManager::saveState(int version) const
+
+QString CDockManager::saveState(int version) const
 {
-    QByteArray xmldata;
+    QString xmldata;
     QXmlStreamWriter s(&xmldata);
 	s.setAutoFormatting(true);
     s.writeStartDocument();
-		s.writeStartElement("QtAdvancedDockingSystem");
-		s.writeAttribute("Version", QString::number(version));
-		s.writeAttribute("DockContainers", QString::number(d->Containers.count()));
-		for (auto Container : d->Containers)
-		{
-			Container->saveState(s);
-		}
 
-		s.writeEndElement();
+    s.writeStartElement("QtAdvancedDockingSystem");
+    s.writeAttribute("Version", QString::number(version));
+    s.writeAttribute("DockContainers", QString::number(d->Containers.count()));
+    for (auto Container : d->Containers)
+    {
+        Container->saveState(s);
+    }
+
+    s.writeEndElement();
     s.writeEndDocument();
 
-    std::cout << xmldata.toStdString() << std::endl;
+    //QString data = xmldata.toString();
+
+    //std::cout << data << std::endl;
+
     return xmldata;
 }
 
 
 //============================================================================
-bool CDockManager::restoreState(const QByteArray &state, int version)
+bool CDockManager::restoreState(const QString& state, int version)
 {
     if (!d->checkFormat(state, version))
     {
@@ -392,8 +397,10 @@ CDockWidget* CDockManager::findDockWidget(const QString& ObjectName)
 //============================================================================
 void CDockManager::addPerspective(const QString& UniquePrespectiveName)
 {
+/*
 	d->Perspectives.insert(UniquePrespectiveName, saveState());
 	emit perspectiveListChanged();
+*/
 }
 
 
@@ -422,6 +429,7 @@ void CDockManager::openPerspective(const QString& PerspectiveName)
 //============================================================================
 void CDockManager::savePerspectives(QSettings& Settings) const
 {
+/*
 	Settings.beginWriteArray("Perspectives", d->Perspectives.size());
 	int i = 0;
 	for (auto it = d->Perspectives.constBegin(); it != d->Perspectives.constEnd(); ++it)
@@ -432,12 +440,14 @@ void CDockManager::savePerspectives(QSettings& Settings) const
 		++i;
 	}
 	Settings.endArray();
+*/
 }
 
 
 //============================================================================
 void CDockManager::loadPerspectives(QSettings& Settings)
 {
+/*
 	d->Perspectives.clear();
 	int Size = Settings.beginReadArray("Perspectives");
 	if (!Size)
@@ -460,6 +470,7 @@ void CDockManager::loadPerspectives(QSettings& Settings)
 	}
 
 	Settings.endArray();
+*/
 }
 } // namespace ads
 

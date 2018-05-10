@@ -138,7 +138,7 @@ public:
 	 * Saves the current state of the dockmanger and all its dock widgets
 	 * into the returned QByteArray
 	 */
-	QByteArray saveState(int version = 0) const;
+	QString saveState(int version = 0) const;
 
 	/**
 	 * Restores the state of this dockmanagers dockwidgets.
@@ -147,7 +147,7 @@ public:
 	 * returns false; otherwise, the state is restored, and this function
 	 * returns true.
 	 */
-	bool restoreState(const QByteArray &state, int version = 0);
+	bool restoreState(const QString& state, int version = 0);
 
 	/**
 	 * Saves the current perspective to the internal list of perspectives.

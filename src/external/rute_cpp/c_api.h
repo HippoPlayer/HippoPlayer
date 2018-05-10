@@ -651,6 +651,7 @@ struct RUToolWindowManager {
 struct RUDockWidgetFuncs {
     void (*destroy)(struct RUBase* self_c);
     void (*set_object_name)(struct RUBase* self_c, const char* name);
+    const char* (*object_name)(struct RUBase* self_c);
     void (*set_widget)(struct RUBase* self_c, struct RUBase* widget);
 };
 
@@ -670,8 +671,10 @@ struct RUDockManagerFuncs {
     void (*set_parent)(struct RUBase* self_c, struct RUBase* widget);
     void (*set_layout)(struct RUBase* self_c, struct RUBase* layout);
     void (*update)(struct RUBase* self_c);
-    void (*save)(struct RUBase* self_c);
+    const char* (*save_state)(struct RUBase* self_c);
+    bool (*restore_state)(struct RUBase* self_c, const char* state);
     void (*add_to_docking)(struct RUBase* self_c, struct RUBase* widget);
+    struct RUArray (*get_dock_widgets)(struct RUBase* self_c);
 };
 
 struct RUDockManager {
@@ -1081,6 +1084,7 @@ typedef struct RU {
 #define RUToolWindowManager_add_to_docking_floating(obj, widget) obj.funcs->add_to_docking_floating(obj.priv_data, widget)
 
 #define RUDockWidget_set_object_name(obj, name) obj.funcs->set_object_name(obj.priv_data, name)
+#define RUDockWidget_object_name(obj) obj.funcs->object_name(obj.priv_data)
 #define RUDockWidget_set_widget(obj, widget) obj.funcs->set_widget(obj.priv_data, widget)
 
 #define RUDockManager_show(obj) obj.funcs->show(obj.priv_data)
@@ -1092,8 +1096,10 @@ typedef struct RU {
 #define RUDockManager_set_parent(obj, widget) obj.funcs->set_parent(obj.priv_data, widget)
 #define RUDockManager_set_layout(obj, layout) obj.funcs->set_layout(obj.priv_data, layout)
 #define RUDockManager_update(obj) obj.funcs->update(obj.priv_data)
-#define RUDockManager_save(obj) obj.funcs->save(obj.priv_data)
+#define RUDockManager_save_state(obj) obj.funcs->save_state(obj.priv_data)
+#define RUDockManager_restore_state(obj, state) obj.funcs->restore_state(obj.priv_data, state)
 #define RUDockManager_add_to_docking(obj, widget) obj.funcs->add_to_docking(obj.priv_data, widget)
+#define RUDockManager_get_dock_widgets(obj) obj.funcs->get_dock_widgets(obj.priv_data)
 
 #define RUFramelessWindow_show(obj) obj.funcs->show(obj.priv_data)
 #define RUFramelessWindow_set_persist_data(obj, text) obj.funcs->set_persist_data(obj.priv_data, text)

@@ -375,7 +375,7 @@ static void create_enum_mappings() {
 }
 
 
-static char s_temp_string_buffer[8192];
+static char s_temp_string_buffer[1024*1024];
 
 struct PrivData {
     QWidget* parent;
@@ -476,7 +476,6 @@ static const char* widget_persist_data(struct RUBase* self_c) {
     const char* c_str = ba.data();
     assert((ba.size() + 1) < sizeof(s_temp_string_buffer));
     memcpy(s_temp_string_buffer, c_str, ba.size() + 1);
-    printf("temp string buffer %s\n", s_temp_string_buffer);
     return s_temp_string_buffer;
 }
 
@@ -547,7 +546,6 @@ static const char* push_button_persist_data(struct RUBase* self_c) {
     const char* c_str = ba.data();
     assert((ba.size() + 1) < sizeof(s_temp_string_buffer));
     memcpy(s_temp_string_buffer, c_str, ba.size() + 1);
-    printf("temp string buffer %s\n", s_temp_string_buffer);
     return s_temp_string_buffer;
 }
 
@@ -685,7 +683,6 @@ static const char* list_widget_item_text(struct RUBase* self_c) {
     const char* c_str = ba.data();
     assert((ba.size() + 1) < sizeof(s_temp_string_buffer));
     memcpy(s_temp_string_buffer, c_str, ba.size() + 1);
-    printf("temp string buffer %s\n", s_temp_string_buffer);
     return s_temp_string_buffer;
 }
 
@@ -716,7 +713,6 @@ static const char* list_widget_persist_data(struct RUBase* self_c) {
     const char* c_str = ba.data();
     assert((ba.size() + 1) < sizeof(s_temp_string_buffer));
     memcpy(s_temp_string_buffer, c_str, ba.size() + 1);
-    printf("temp string buffer %s\n", s_temp_string_buffer);
     return s_temp_string_buffer;
 }
 
@@ -906,7 +902,6 @@ static const char* label_persist_data(struct RUBase* self_c) {
     const char* c_str = ba.data();
     assert((ba.size() + 1) < sizeof(s_temp_string_buffer));
     memcpy(s_temp_string_buffer, c_str, ba.size() + 1);
-    printf("temp string buffer %s\n", s_temp_string_buffer);
     return s_temp_string_buffer;
 }
 
@@ -984,7 +979,6 @@ static const char* line_edit_persist_data(struct RUBase* self_c) {
     const char* c_str = ba.data();
     assert((ba.size() + 1) < sizeof(s_temp_string_buffer));
     memcpy(s_temp_string_buffer, c_str, ba.size() + 1);
-    printf("temp string buffer %s\n", s_temp_string_buffer);
     return s_temp_string_buffer;
 }
 
@@ -1069,7 +1063,6 @@ static const char* plain_text_edit_persist_data(struct RUBase* self_c) {
     const char* c_str = ba.data();
     assert((ba.size() + 1) < sizeof(s_temp_string_buffer));
     memcpy(s_temp_string_buffer, c_str, ba.size() + 1);
-    printf("temp string buffer %s\n", s_temp_string_buffer);
     return s_temp_string_buffer;
 }
 
@@ -1168,7 +1161,6 @@ static const char* slider_persist_data(struct RUBase* self_c) {
     const char* c_str = ba.data();
     assert((ba.size() + 1) < sizeof(s_temp_string_buffer));
     memcpy(s_temp_string_buffer, c_str, ba.size() + 1);
-    printf("temp string buffer %s\n", s_temp_string_buffer);
     return s_temp_string_buffer;
 }
 
@@ -1247,7 +1239,6 @@ static const char* main_window_persist_data(struct RUBase* self_c) {
     const char* c_str = ba.data();
     assert((ba.size() + 1) < sizeof(s_temp_string_buffer));
     memcpy(s_temp_string_buffer, c_str, ba.size() + 1);
-    printf("temp string buffer %s\n", s_temp_string_buffer);
     return s_temp_string_buffer;
 }
 
@@ -1344,7 +1335,6 @@ static const char* tool_window_manager_persist_data(struct RUBase* self_c) {
     const char* c_str = ba.data();
     assert((ba.size() + 1) < sizeof(s_temp_string_buffer));
     memcpy(s_temp_string_buffer, c_str, ba.size() + 1);
-    printf("temp string buffer %s\n", s_temp_string_buffer);
     return s_temp_string_buffer;
 }
 
@@ -1401,7 +1391,6 @@ static const char* tool_window_manager_save_state(struct RUBase* self_c) {
     const char* c_str = ba.data();
     assert((ba.size() + 1) < sizeof(s_temp_string_buffer));
     memcpy(s_temp_string_buffer, c_str, ba.size() + 1);
-    printf("temp string buffer %s\n", s_temp_string_buffer);
     return s_temp_string_buffer;
 }
 
@@ -1421,6 +1410,18 @@ static void tool_window_manager_restore_state(struct RUBase* self_c, const char*
 static void dock_widget_set_object_name(struct RUBase* self_c, const char* name) { 
     QDockWidget* qt_data = (QDockWidget*)self_c;
     qt_data->setObjectName(QString::fromUtf8(name));
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static const char* dock_widget_object_name(struct RUBase* self_c) { 
+    QDockWidget* qt_data = (QDockWidget*)self_c;
+    auto ret_value = qt_data->objectName();
+    QByteArray ba = ret_value.toUtf8();
+    const char* c_str = ba.data();
+    assert((ba.size() + 1) < sizeof(s_temp_string_buffer));
+    memcpy(s_temp_string_buffer, c_str, ba.size() + 1);
+    return s_temp_string_buffer;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1453,7 +1454,6 @@ static const char* dock_manager_persist_data(struct RUBase* self_c) {
     const char* c_str = ba.data();
     assert((ba.size() + 1) < sizeof(s_temp_string_buffer));
     memcpy(s_temp_string_buffer, c_str, ba.size() + 1);
-    printf("temp string buffer %s\n", s_temp_string_buffer);
     return s_temp_string_buffer;
 }
 
@@ -1503,6 +1503,26 @@ static void dock_manager_update(struct RUBase* self_c) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static const char* dock_manager_save_state(struct RUBase* self_c) { 
+    WRDockManager* qt_data = (WRDockManager*)self_c;
+    auto ret_value = qt_data->saveState();
+    QByteArray ba = ret_value.toUtf8();
+    const char* c_str = ba.data();
+    assert((ba.size() + 1) < sizeof(s_temp_string_buffer));
+    memcpy(s_temp_string_buffer, c_str, ba.size() + 1);
+    return s_temp_string_buffer;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static bool dock_manager_restore_state(struct RUBase* self_c, const char* state) { 
+    WRDockManager* qt_data = (WRDockManager*)self_c;
+    auto ret_value = qt_data->restoreState(QString::fromUtf8(state));
+    return ret_value;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1528,7 +1548,6 @@ static const char* frameless_window_persist_data(struct RUBase* self_c) {
     const char* c_str = ba.data();
     assert((ba.size() + 1) < sizeof(s_temp_string_buffer));
     memcpy(s_temp_string_buffer, c_str, ba.size() + 1);
-    printf("temp string buffer %s\n", s_temp_string_buffer);
     return s_temp_string_buffer;
 }
 
@@ -1614,7 +1633,6 @@ static const char* action_text(struct RUBase* self_c) {
     const char* c_str = ba.data();
     assert((ba.size() + 1) < sizeof(s_temp_string_buffer));
     memcpy(s_temp_string_buffer, c_str, ba.size() + 1);
-    printf("temp string buffer %s\n", s_temp_string_buffer);
     return s_temp_string_buffer;
 }
 
@@ -1651,7 +1669,6 @@ static const char* url_to_local_file(struct RUBase* self_c) {
     const char* c_str = ba.data();
     assert((ba.size() + 1) < sizeof(s_temp_string_buffer));
     memcpy(s_temp_string_buffer, c_str, ba.size() + 1);
-    printf("temp string buffer %s\n", s_temp_string_buffer);
     return s_temp_string_buffer;
 }
 
@@ -1766,7 +1783,6 @@ static const char* menu_persist_data(struct RUBase* self_c) {
     const char* c_str = ba.data();
     assert((ba.size() + 1) < sizeof(s_temp_string_buffer));
     memcpy(s_temp_string_buffer, c_str, ba.size() + 1);
-    printf("temp string buffer %s\n", s_temp_string_buffer);
     return s_temp_string_buffer;
 }
 
@@ -1861,7 +1877,6 @@ static const char* menu_bar_persist_data(struct RUBase* self_c) {
     const char* c_str = ba.data();
     assert((ba.size() + 1) < sizeof(s_temp_string_buffer));
     memcpy(s_temp_string_buffer, c_str, ba.size() + 1);
-    printf("temp string buffer %s\n", s_temp_string_buffer);
     return s_temp_string_buffer;
 }
 
@@ -2328,6 +2343,8 @@ static void destroy_h_box_layout(struct RUBase* priv_data) {
 #include <DarkStyle.h>
 #include <QFileDialog>
 #include <QTextStream>
+#include <DockAreaWidget.h>
+#include <DockContainerWidget.h>
 //#include <QSvgRenderer>
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2438,6 +2455,49 @@ static struct RUArray application_get_files(struct RUBase* self_c) {
    return array;
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static struct RUArray dock_manager_get_dock_widgets(struct RUBase* self_c) {
+    WRDockManager* dm = (WRDockManager*)self_c;
+
+    RUArray array = { 0 };
+
+    int i = 0;
+    int count = 0;
+
+    for (const auto& container : dm->dockContainers()) {
+        printf("contaier...\n");
+        for (const auto& area : container->dockAreas()) {
+            printf("area...\n");
+            for (const auto& dock : area->dockWidgets()) {
+                printf("dock...\n");
+                (void)dock;
+                count++;
+            }
+        }
+    }
+
+    if (count > 0) {
+        RUDockWidget* elements = new RUDockWidget[count];
+
+        for (const auto& container : dm->dockContainers()) {
+            for (const auto& area : container->dockAreas()) {
+                for (const auto& dock : area->dockWidgets()) {
+                    elements[i].funcs = &s_dock_widget_funcs;
+                    elements[i].priv_data = (RUBase*)dock;
+
+                    printf("setting %p %p\n", elements[i].funcs, elements[i].priv_data);
+                    ++i;
+                }
+            }
+        }
+
+        array.elements = (void*)elements;
+        array.count = int(count);
+    }
+
+    return array;
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*
@@ -2538,15 +2598,6 @@ static void dock_manager_add_to_docking(struct RUBase* self_c, struct RUBase* wi
     WRDockManager* qt_data = (WRDockManager*)self_c;
     qt_data->addDockWidget(ads::LeftDockWidgetArea, (QDockWidget*)widget);
 }
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static void dock_manager_save(struct RUBase* self_c) {
-    WRDockManager* qt_data = (WRDockManager*)self_c;
-    qt_data->saveState(0);
-}
-
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -2748,6 +2799,7 @@ struct RUToolWindowManagerFuncs s_tool_window_manager_funcs = {
 struct RUDockWidgetFuncs s_dock_widget_funcs = {
     destroy_dock_widget,
     dock_widget_set_object_name,
+    dock_widget_object_name,
     dock_widget_set_widget,
 };
 
@@ -2764,8 +2816,10 @@ struct RUDockManagerFuncs s_dock_manager_funcs = {
     dock_manager_set_parent,
     dock_manager_set_layout,
     dock_manager_update,
-    dock_manager_save,
+    dock_manager_save_state,
+    dock_manager_restore_state,
     dock_manager_add_to_docking,
+    dock_manager_get_dock_widgets,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

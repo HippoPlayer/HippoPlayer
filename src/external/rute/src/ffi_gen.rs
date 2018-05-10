@@ -652,6 +652,7 @@ pub struct RUToolWindowManager {
 pub struct RUDockWidgetFuncs {
     pub destroy: extern "C" fn(self_c: *const RUBase),
     pub set_object_name: extern "C" fn(self_c: *const RUBase, name: *const ::std::os::raw::c_char),
+    pub object_name: extern "C" fn(self_c: *const RUBase) -> *const ::std::os::raw::c_char,
     pub set_widget: extern "C" fn(self_c: *const RUBase, widget: *const RUBase),
 }
 
@@ -674,8 +675,10 @@ pub struct RUDockManagerFuncs {
     pub set_parent: extern "C" fn(self_c: *const RUBase, widget: *const RUBase),
     pub set_layout: extern "C" fn(self_c: *const RUBase, layout: *const RUBase),
     pub update: extern "C" fn(self_c: *const RUBase),
-    pub save: extern "C" fn(self_c: *const RUBase),
+    pub save_state: extern "C" fn(self_c: *const RUBase) -> *const ::std::os::raw::c_char,
+    pub restore_state: extern "C" fn(self_c: *const RUBase, state: *const ::std::os::raw::c_char) -> bool,
     pub add_to_docking: extern "C" fn(self_c: *const RUBase, widget: *const RUBase),
+    pub get_dock_widgets: extern "C" fn(self_c: *const RUBase) -> RUArray,
 }
 
 #[repr(C)]

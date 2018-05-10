@@ -1,17 +1,17 @@
 /*******************************************************************************
 ** Qt Advanced Docking System
 ** Copyright (C) 2017 Uwe Kindler
-** 
+**
 ** This library is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU Lesser General Public
 ** License as published by the Free Software Foundation; either
 ** version 2.1 of the License, or (at your option) any later version.
-** 
+**
 ** This library is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ** Lesser General Public License for more details.
-** 
+**
 ** You should have received a copy of the GNU Lesser General Public
 ** License along with this library; If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************/
@@ -494,7 +494,9 @@ bool DockContainerWidgetPrivate::restoreDockArea(QXmlStreamReader& s,
 		}
 
 		s.skipCurrentElement();
-		CDockWidget* DockWidget = DockManager->findDockWidget(ObjectName.toString());
+		//CDockWidget* DockWidget =
+		//CDockWidget* DockWidget = DockManager->findDockWidget(ObjectName.toString());
+		CDockWidget* DockWidget = new CDockWidget(nullptr);
 		if (!DockWidget || Testing)
 		{
 			continue;
@@ -951,6 +953,11 @@ QList<CDockAreaWidget*> CDockContainerWidget::openedDockAreas() const
 	return Result;
 }
 
+//============================================================================
+QList<CDockAreaWidget*> CDockContainerWidget::dockAreas() const
+{
+	return d->DockAreas;
+}
 
 //============================================================================
 void CDockContainerWidget::saveState(QXmlStreamWriter& s) const
@@ -993,7 +1000,7 @@ bool CDockContainerWidget::restoreState(QXmlStreamReader& s, bool Testing)
 
 		QByteArray GeometryString = s.readElementText(QXmlStreamReader::ErrorOnUnexpectedElement).toLocal8Bit();
 		QByteArray Geometry = QByteArray::fromHex(GeometryString);
-		std::cout << "Geometry: " << Geometry.toHex(' ').toStdString() << std::endl;
+		//std::cout << "Geometry: " << Geometry.toHex(' ').toStdString() << std::endl;
 		if (Geometry.isEmpty())
 		{
 			return false;

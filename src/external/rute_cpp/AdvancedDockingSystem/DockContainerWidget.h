@@ -133,6 +133,10 @@ public:
 	QList<CDockAreaWidget*> openedDockAreas() const;
 
 	/**
+	 */
+	QList<CDockAreaWidget*> dockAreas() const;
+
+	/**
 	 * Returns the number of dock areas in this container
 	 */
 	int dockAreaCount() const;

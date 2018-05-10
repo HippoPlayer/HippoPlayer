@@ -1751,6 +1751,19 @@ impl DockWidget {
         }
     }
 
+    pub fn object_name (&self) -> String {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            let ret_val = ((*obj.funcs).object_name)(obj.privd);
+          
+           CStr::from_ptr(ret_val).to_string_lossy().into_owned()
+          
+        
+        }
+    }
+
     pub fn set_widget (&self, widget: &WidgetType) {
         
         unsafe {
@@ -1865,12 +1878,29 @@ impl DockManager {
         }
     }
 
-    pub fn save (&self) {
+    pub fn save_state (&self) -> String {
         
         unsafe {
             let obj = self.obj.unwrap();
         
-            ((*obj.funcs).save)(obj.privd);
+            let ret_val = ((*obj.funcs).save_state)(obj.privd);
+          
+           CStr::from_ptr(ret_val).to_string_lossy().into_owned()
+          
+        
+        }
+    }
+
+    pub fn restore_state (&self, state: &str) -> bool {
+        let str_in_state_1 = CString::new(state).unwrap();
+
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            let ret_val = ((*obj.funcs).restore_state)(obj.privd, str_in_state_1.as_ptr());
+          
+            ret_val
+          
         
         }
     }
@@ -1881,6 +1911,30 @@ impl DockManager {
             let obj = self.obj.unwrap();
         
             ((*obj.funcs).add_to_docking)(obj.privd, widget.obj.unwrap().privd);
+        
+        }
+    }
+
+    pub fn get_dock_widgets (&self) -> Vec<DockWidget> {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            let ret_val = ((*obj.funcs).get_dock_widgets)(obj.privd);
+          
+            if ret_val.count == 0 {
+                Vec::new()
+            } else {
+                let mut data = Vec::with_capacity(ret_val.count as usize);
+                let slice = slice::from_raw_parts(ret_val.elements as *const RUDockWidget, ret_val.count as usize);
+
+                for item in slice {
+                    data.push(DockWidget { obj: Some(*item) });
+                }
+
+                data
+            }
+          
         
         }
     }

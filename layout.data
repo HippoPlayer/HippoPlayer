@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<QtAdvancedDockingSystem Version="0" DockContainers="1">
+    <DockContainerWidget Floating="0">
+        <Splitter Orientation="1" Count="2">
+            <DockAreaWidget Tabs="1" CurrentIndex="0">
+                <DockWidget ObjectName="Player" PluginData="pls save me pls!" Closed="0"/>
+            </DockAreaWidget>
+            <DockAreaWidget Tabs="1" CurrentIndex="0">
+                <DockWidget ObjectName="Playlist" PluginData="pls save me pls!" Closed="0"/>
+            </DockAreaWidget>
+            <Sizes>586 585 </Sizes>
+        </Splitter>
+    </DockContainerWidget>
+</QtAdvancedDockingSystem>

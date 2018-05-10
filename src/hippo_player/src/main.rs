@@ -37,6 +37,7 @@ use std::io::prelude::*;
 use std::fs::File;
 use std::path::Path;
 use playlist::Playlist;
+use std::io;
 
 use rute::{SharedLibUi, Ui};
 use rute::rute::*;
@@ -96,9 +97,20 @@ impl <'a> HippoPlayer<'a> {
         self.is_playing = false;
     }
 
+    fn try_save_layout(filename: &str, layout: &str) -> io::Result<()> {
+        let mut file = File::create(filename)?;
+        file.write_all(layout.as_bytes())?;
+        Ok(())
+    }
 
     fn before_quit(&mut self) {
-        self.dock_manager.save();
+        let state = self.dock_manager.save_state();
+
+        println!("state {}", state);
+
+        // TODO: Error handling
+        Self::try_save_layout("layout.data", &state).unwrap();
+
         //let state = self.tool_window_manager.save_state();
         //println!("tool_window_mangare state {}", state);
         /*
@@ -156,6 +168,42 @@ impl <'a> HippoPlayer<'a> {
         plugin_menu
     }
 
+    ///
+    /// This will load a defult layout file and set up plugins for it
+    ///
+    fn load_layout(&mut self, filename: &str) {
+        let mut layout_state = String::new();
+        let mut file = match File::open(filename) {
+            Ok(file) => file,
+            Err(_) => {
+                println!("Unable to open layout {}", filename);
+                return;
+            }
+        };
+
+        file.read_to_string(&mut layout_state).unwrap();
+
+        self.dock_manager.restore_state(&layout_state);
+
+        for dock_widget in self.dock_manager.get_dock_widgets() {
+            let name = dock_widget.object_name();
+
+            for plugin in &self.plugins.view_plugins {
+                if plugin.get_name() == name {
+                    continue;
+                }
+
+                let widget = self.ui.create_widget();
+                let _instance = plugin.create_instance(&self.ui, &self.plugin_service, &widget);
+
+                dock_widget.set_widget(&widget);
+
+                widget.set_persist_data("pls save me pls!");
+                widget.resize(500, 500);
+            }
+        }
+    }
+
     pub fn run(&mut self) {
         self.app.set_style_sheet("bin/player/themes/dark/style.qss");
 
@@ -187,7 +235,6 @@ impl <'a> HippoPlayer<'a> {
         self.main_widget.set_layout(&layout);
         self.main_widget.resize(1200, 1000);
 
-        //let player_window = self.ui.create_widget();
         main_window.set_central_widget(&self.main_widget);
 
         self.dock_manager.set_parent(&self.main_widget);
@@ -198,6 +245,10 @@ impl <'a> HippoPlayer<'a> {
         //player_window.set_window_title(&format!("HippoPlayer 0.0.1 {}", build_id()));
 
         main_window.resize(1200, 1000);
+
+        self.load_layout("layout.data");
+
+
         main_window.show();
 
         self.app.exec();
