@@ -1,0 +1,13 @@
+[package]
+name = "player"
+version = "0.1.0"
+authors = ["Daniel Collin <daniel@collin.com>"]
+
+[lib]
+name = "player"
+crate-type = ["cdylib"]
+
+[dependencies]
+hippo_api = { path = "../../../plugin_api/rust/hippo_api" }
+rute = { path = "../../../external/rute" }
+

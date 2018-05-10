@@ -161,7 +161,7 @@ public:
     QString persistData() { return m_persistData; }
     QString m_persistData;
 
-    WRWidget(QWidget* widget) : QWidget(widget) { }
+    WRWidget(QWidget* widget) : QWidget(widget) {  setObjectName(QStringLiteral("Test")); setPersistData(QStringLiteral("SomeData")); }
     virtual ~WRWidget() {}
 
 public:
@@ -180,7 +180,7 @@ public:
     QString persistData() { return m_persistData; }
     QString m_persistData;
 
-    WRPushButton(QWidget* widget) : QPushButton(widget) { }
+    WRPushButton(QWidget* widget) : QPushButton(widget) {  setObjectName(QStringLiteral("Test")); setPersistData(QStringLiteral("SomeData")); }
     virtual ~WRPushButton() {}
 
 };
@@ -195,7 +195,7 @@ public:
     QString persistData() { return m_persistData; }
     QString m_persistData;
 
-    WRListWidget(QWidget* widget) : QListWidget(widget) { }
+    WRListWidget(QWidget* widget) : QListWidget(widget) {  setObjectName(QStringLiteral("Test")); setPersistData(QStringLiteral("SomeData")); }
     virtual ~WRListWidget() {}
 
 public:
@@ -218,7 +218,7 @@ public:
     QString persistData() { return m_persistData; }
     QString m_persistData;
 
-    WRLabel(QWidget* widget) : QLabel(widget) { }
+    WRLabel(QWidget* widget) : QLabel(widget) {  setObjectName(QStringLiteral("Test")); setPersistData(QStringLiteral("SomeData")); }
     virtual ~WRLabel() {}
 
 };
@@ -233,7 +233,7 @@ public:
     QString persistData() { return m_persistData; }
     QString m_persistData;
 
-    WRLineEdit(QWidget* widget) : QLineEdit(widget) { }
+    WRLineEdit(QWidget* widget) : QLineEdit(widget) {  setObjectName(QStringLiteral("Test")); setPersistData(QStringLiteral("SomeData")); }
     virtual ~WRLineEdit() {}
 
 };
@@ -248,7 +248,7 @@ public:
     QString persistData() { return m_persistData; }
     QString m_persistData;
 
-    WRPlainTextEdit(QWidget* widget) : QPlainTextEdit(widget) { }
+    WRPlainTextEdit(QWidget* widget) : QPlainTextEdit(widget) {  setObjectName(QStringLiteral("Test")); setPersistData(QStringLiteral("SomeData")); }
     virtual ~WRPlainTextEdit() {}
 
 };
@@ -263,7 +263,7 @@ public:
     QString persistData() { return m_persistData; }
     QString m_persistData;
 
-    WRSlider(QWidget* widget) : QSlider(widget) { }
+    WRSlider(QWidget* widget) : QSlider(widget) {  setObjectName(QStringLiteral("Test")); setPersistData(QStringLiteral("SomeData")); }
     virtual ~WRSlider() {}
 
 };
@@ -278,7 +278,7 @@ public:
     QString persistData() { return m_persistData; }
     QString m_persistData;
 
-    WRMainWindow(QWidget* widget) : QMainWindow(widget) { }
+    WRMainWindow(QWidget* widget) : QMainWindow(widget) {  setObjectName(QStringLiteral("Test")); setPersistData(QStringLiteral("SomeData")); }
     virtual ~WRMainWindow() {}
 
 };
@@ -293,7 +293,7 @@ public:
     QString persistData() { return m_persistData; }
     QString m_persistData;
 
-    WRToolWindowManager(QWidget* widget) : QToolWindowManager(widget) { }
+    WRToolWindowManager(QWidget* widget) : QToolWindowManager(widget) {  setObjectName(QStringLiteral("Test")); setPersistData(QStringLiteral("SomeData")); }
     virtual ~WRToolWindowManager() {}
 
 };
@@ -308,7 +308,7 @@ public:
     QString persistData() { return m_persistData; }
     QString m_persistData;
 
-    WRDockManager(QWidget* widget) : QDockManager(widget) { }
+    WRDockManager(QWidget* widget) : QDockManager(widget) {  setObjectName(QStringLiteral("Test")); setPersistData(QStringLiteral("SomeData")); }
     virtual ~WRDockManager() {}
 
 };
@@ -323,7 +323,7 @@ public:
     QString persistData() { return m_persistData; }
     QString m_persistData;
 
-    WRFramelessWindow(QWidget* widget) : QFramelessWindow(widget) { }
+    WRFramelessWindow(QWidget* widget) : QFramelessWindow(widget) {  setObjectName(QStringLiteral("Test")); setPersistData(QStringLiteral("SomeData")); }
     virtual ~WRFramelessWindow() {}
 
 };
@@ -338,7 +338,7 @@ public:
     QString persistData() { return m_persistData; }
     QString m_persistData;
 
-    WRMenu(QWidget* widget) : QMenu(widget) { }
+    WRMenu(QWidget* widget) : QMenu(widget) {  setObjectName(QStringLiteral("Test")); setPersistData(QStringLiteral("SomeData")); }
     virtual ~WRMenu() {}
 
 };
@@ -353,7 +353,7 @@ public:
     QString persistData() { return m_persistData; }
     QString m_persistData;
 
-    WRMenuBar(QWidget* widget) : QMenuBar(widget) { }
+    WRMenuBar(QWidget* widget) : QMenuBar(widget) {  setObjectName(QStringLiteral("Test")); setPersistData(QStringLiteral("SomeData")); }
     virtual ~WRMenuBar() {}
 
 };
@@ -368,7 +368,7 @@ public:
     QString persistData() { return m_persistData; }
     QString m_persistData;
 
-    WRVBoxLayout(QWidget* widget) : QVBoxLayout(widget) { }
+    WRVBoxLayout(QWidget* widget) : QVBoxLayout(widget) {  setObjectName(QStringLiteral("Test")); setPersistData(QStringLiteral("SomeData")); }
     virtual ~WRVBoxLayout() {}
 
 };
@@ -383,7 +383,7 @@ public:
     QString persistData() { return m_persistData; }
     QString m_persistData;
 
-    WRHBoxLayout(QWidget* widget) : QHBoxLayout(widget) { }
+    WRHBoxLayout(QWidget* widget) : QHBoxLayout(widget) {  setObjectName(QStringLiteral("Test")); setPersistData(QStringLiteral("SomeData")); }
     virtual ~WRHBoxLayout() {}
 
 };

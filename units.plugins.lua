@@ -344,6 +344,26 @@ RustSharedLibrary {
 	}
 }
 
+RustSharedLibrary {
+	Name = "player",
+	CargoConfig = "src/plugins/view/player/Cargo.toml",
+	Sources = {
+		get_rs_src("src/plugins/view/player"),
+		get_rs_src("src/plugin_api/rust/hippo_api"),
+		get_rs_src("src/external/rute"),
+	}
+}
+
+RustSharedLibrary {
+	Name = "song_info",
+	CargoConfig = "src/plugins/view/song_info/Cargo.toml",
+	Sources = {
+		get_rs_src("src/plugins/view/song_info"),
+		get_rs_src("src/plugin_api/rust/hippo_api"),
+		get_rs_src("src/external/rute"),
+	}
+}
+
 -----------------------------------------------------------------------------------------------------------------------
 -- Default plugins
 -----------------------------------------------------------------------------------------------------------------------
@@ -361,6 +381,8 @@ Default "SidPlugin"
 -- Views
 
 Default "playlist"
+Default "player"
+Default "song_info"
 Default "TestViewPlugin"
 
 -- Default "FutureComposerPlugin"

@@ -146,6 +146,7 @@ impl <'a> HippoPlayer<'a> {
     }
 
     fn before_quit(&mut self) {
+        self.dock_manager.save();
         //let state = self.tool_window_manager.save_state();
         //println!("tool_window_mangare state {}", state);
         /*

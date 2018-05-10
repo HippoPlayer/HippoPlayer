@@ -669,6 +669,7 @@ struct RUDockManagerFuncs {
     void (*set_parent)(struct RUBase* self_c, struct RUBase* widget);
     void (*set_layout)(struct RUBase* self_c, struct RUBase* layout);
     void (*update)(struct RUBase* self_c);
+    void (*save)(struct RUBase* self_c);
     void (*add_to_docking)(struct RUBase* self_c, struct RUBase* widget);
 };
 
@@ -1088,6 +1089,7 @@ typedef struct RU {
 #define RUDockManager_set_parent(obj, widget) obj.funcs->set_parent(obj.priv_data, widget)
 #define RUDockManager_set_layout(obj, layout) obj.funcs->set_layout(obj.priv_data, layout)
 #define RUDockManager_update(obj) obj.funcs->update(obj.priv_data)
+#define RUDockManager_save(obj) obj.funcs->save(obj.priv_data)
 #define RUDockManager_add_to_docking(obj, widget) obj.funcs->add_to_docking(obj.priv_data, widget)
 
 #define RUFramelessWindow_show(obj) obj.funcs->show(obj.priv_data)

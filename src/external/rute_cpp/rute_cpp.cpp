@@ -1498,6 +1498,8 @@ static void dock_manager_update(struct RUBase* self_c) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static void frameless_window_show(struct RUBase* self_c) { 
     WRFramelessWindow* qt_data = (WRFramelessWindow*)self_c;
     qt_data->show();
@@ -2517,6 +2519,14 @@ static void dock_manager_add_to_docking(struct RUBase* self_c, struct RUBase* wi
     qt_data->addDockWidget(ads::LeftDockWidgetArea, (QDockWidget*)widget);
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void dock_manager_save(struct RUBase* self_c) {
+    WRDockManager* qt_data = (WRDockManager*)self_c;
+    qt_data->saveState(0);
+}
+
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -2733,6 +2743,7 @@ struct RUDockManagerFuncs s_dock_manager_funcs = {
     dock_manager_set_parent,
     dock_manager_set_layout,
     dock_manager_update,
+    dock_manager_save,
     dock_manager_add_to_docking,
 };
 

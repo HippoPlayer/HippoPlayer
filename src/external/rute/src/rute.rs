@@ -1854,6 +1854,16 @@ impl DockManager {
         }
     }
 
+    pub fn save (&self) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).save)(obj.privd);
+        
+        }
+    }
+
     pub fn add_to_docking (&self, widget: &DockWidget) {
         
         unsafe {

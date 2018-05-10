@@ -1,0 +1,13 @@
+[package]
+name = "song_info"
+version = "0.1.0"
+authors = ["Daniel Collin <daniel@collin.com>"]
+
+[lib]
+name = "song_info"
+crate-type = ["cdylib"]
+
+[dependencies]
+hippo_api = { path = "../../../plugin_api/rust/hippo_api" }
+rute = { path = "../../../external/rute" }
+
