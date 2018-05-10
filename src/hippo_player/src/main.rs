@@ -40,20 +40,16 @@ use playlist::Playlist;
 
 use rute::{SharedLibUi, Ui};
 use rute::rute::*;
-use playerview::PlayerView;
-use playlist_view::PlaylistView;
-use song_info::SongInfoView;
+//use playerview::PlayerView;
+//use playlist_view::PlaylistView;
+//use song_info::SongInfoView;
 
 struct HippoPlayer<'a> {
     audio: HippoAudio,
     plugins: Plugins<'a>,
     plugin_service: service_ffi::PluginService,
     main_widget: Widget,
-    player_view: PlayerView,
-    playlist_view: PlaylistView,
     playlist: Playlist,
-    song_info_view: SongInfoView,
-    //tool_window_manager: ToolWindowManager,
     dock_manager: DockManager,
     ui: Ui,
     app: Application,
@@ -71,41 +67,28 @@ impl <'a> HippoPlayer<'a> {
            plugin_service: service_ffi::PluginService::new(),
            app: ui.create_application(),
            main_widget: ui.create_widget(),
-           player_view: PlayerView::new(ui),
-           playlist_view: PlaylistView::new(ui),
            playlist: Playlist::new(),
-           song_info_view: SongInfoView::new(ui),
            dock_manager: ui.create_dock_manager(),
-           //tool_window_manager: ui.create_tool_window_manager(),
            ui: ui,
            current_song_time: -10.0,
            is_playing: false,
         }
     }
 
-    fn select_song(&mut self, item: &ListWidgetItem) {
-        /*
-           let info = self.play_file(&item.get_string_data());
-           self.current_song_time = info.duration as f32;
-           self.is_playing = true;
-
-           self.player_view.set_current_time(self.current_song_time);
-           self.player_view.set_title(&info.title);
-
-           self.playlist.select_song(item, &info);
-           */
-    }
-
     fn per_sec_update(&mut self) {
-        self.player_view.set_current_time(self.current_song_time);
+        //self.player_view.set_current_time(self.current_song_time);
 
+        /*
         if self.is_playing {
             self.current_song_time -= 1.0;
         }
+        */
 
+        /*
         if self.current_song_time < 0.0 && self.current_song_time > -9.0 {
             self.next_song();
         }
+        */
     }
 
     fn stop_song(&mut self) {
@@ -113,37 +96,6 @@ impl <'a> HippoPlayer<'a> {
         self.is_playing = false;
     }
 
-    fn prev_song(&mut self) {
-        /*
-           let next_song = self.playlist.get_prev_song();
-
-           if let Some(next) = next_song {
-           self.select_song(&next);
-           } else {
-           self.is_playing = false;
-           }
-           */
-    }
-
-    fn play_song(&mut self) {
-        /*
-           if let Some(current) = self.playlist.widget.current_item() {
-           self.select_song(&current);
-           }
-           */
-    }
-
-    fn next_song(&mut self) {
-        /*
-           let next_song = self.playlist.get_next_song();
-
-           if let Some(next) = next_song {
-           self.select_song(&next);
-           } else {
-           self.is_playing = false;
-           }
-           */
-    }
 
     fn before_quit(&mut self) {
         self.dock_manager.save();
@@ -172,6 +124,8 @@ impl <'a> HippoPlayer<'a> {
         let _instance = plugin.create_instance(&self.ui, &self.plugin_service, &widget);
 
         let dock_widget = self.ui.create_dock_widget();
+
+        dock_widget.set_object_name(&action.text());
         dock_widget.set_widget(&widget);
         self.dock_manager.add_to_docking(&dock_widget);
 
@@ -181,8 +135,6 @@ impl <'a> HippoPlayer<'a> {
         widget.set_persist_data("pls save me pls!");
 
         println!("Showing plugin {}", plugin_index);
-
-        widget.show();
     }
 
     fn create_plugins_menu(&mut self) -> Menu {
@@ -208,21 +160,9 @@ impl <'a> HippoPlayer<'a> {
         self.app.set_style_sheet("bin/player/themes/dark/style.qss");
 
         let main_window = self.ui.create_main_window();
-
-        self.player_view.setup();
-        //self.playlist.setup();
-
-        /*
-           if let Err(err) = self.playlist.load_playlist("playlist.json") {
-           println!("Unable to load playlist {:?}", err);
-           }
-           */
-
         let timer = self.ui.create_timer();
-        let layout = self.ui.create_v_box_layout();
 
-        //layout.add_widget(&self.player_view.widget);
-        //layout.add_widget(&self.playlist.widget);
+         let layout = self.ui.create_v_box_layout();
 
         let add_files = self.ui.create_action();
         add_files.set_shortcut_mod(Keys::KeyO, MetaKeys::Ctrl);
@@ -238,15 +178,8 @@ impl <'a> HippoPlayer<'a> {
         menu_bar.add_menu(&file_menu);
         menu_bar.add_menu(&plugin_menu);
 
-        set_push_button_pressed_event!(self.player_view.prev_button, self, HippoPlayer, HippoPlayer::prev_song);
-        set_push_button_pressed_event!(self.player_view.play_button, self, HippoPlayer, HippoPlayer::play_song);
-        set_push_button_pressed_event!(self.player_view.stop_button, self, HippoPlayer, HippoPlayer::stop_song);
-        set_push_button_pressed_event!(self.player_view.next_button, self, HippoPlayer, HippoPlayer::next_song);
-
         set_timer_timeout_event!(timer, self, HippoPlayer, HippoPlayer::per_sec_update);
         set_action_triggered_event!(add_files, self, HippoPlayer, HippoPlayer::add_files);
-
-        //set_list_widget_item_double_clicked_event!(self.playlist.widget, self, HippoPlayer, HippoPlayer::select_song);
         set_application_about_to_quit_event!(self.app, self, HippoPlayer, HippoPlayer::before_quit);
 
         timer.start(1000);
@@ -259,15 +192,6 @@ impl <'a> HippoPlayer<'a> {
 
         self.dock_manager.set_parent(&self.main_widget);
 
-        let player_dock = self.ui.create_dock_widget();
-        let info_dock = self.ui.create_dock_widget();
-
-        player_dock.set_widget(&self.player_view.widget);
-        info_dock.set_widget(&self.song_info_view.view);
-
-        self.dock_manager.add_to_docking(&player_dock);
-        self.dock_manager.add_to_docking(&info_dock);
-
         layout.add_widget(&self.dock_manager);
 
         //player_window.set_content(&main_window);
@@ -275,17 +199,6 @@ impl <'a> HippoPlayer<'a> {
 
         main_window.resize(1200, 1000);
         main_window.show();
-
-        // temp create a instance for testing
-
-        /*
-           for plugin in &self.plugins.view_plugins {
-           let _user_data = ((plugin.plugin_funcs).create)(self.plugin_service.get_c_service_api(), self.ui.get_c_api()) as u64;
-           }
-           */
-
-        //main_window.show();
-        //self.song_info_view.show();
 
         self.app.exec();
     }
@@ -314,7 +227,7 @@ impl <'a> HippoPlayer<'a> {
                 self.audio = HippoAudio::new();
                 let info = self.audio.start_with_file(&plugin, &self.plugin_service, filename);
 
-                self.song_info_view.update_data(filename, &self.plugin_service.get_song_db());
+                //self.song_info_view.update_data(filename, &self.plugin_service.get_song_db());
                 return info;
             }
         }

@@ -650,6 +650,7 @@ struct RUToolWindowManager {
 
 struct RUDockWidgetFuncs {
     void (*destroy)(struct RUBase* self_c);
+    void (*set_object_name)(struct RUBase* self_c, const char* name);
     void (*set_widget)(struct RUBase* self_c, struct RUBase* widget);
 };
 
@@ -702,6 +703,7 @@ struct RUActionFuncs {
     void (*destroy)(struct RUBase* self_c);
     bool (*is_enabled)(struct RUBase* self_c);
     void (*set_text)(struct RUBase* self_c, const char* text);
+    const char* (*text)(struct RUBase* self_c);
     void (*set_shortcut)(struct RUBase* self_c, RUKeys key);
     void (*set_shortcut_mod)(struct RUBase* self_c, RUKeys key, RUMetaKeys modifier);
     void (*set_triggered_event)(void* object, void* user_data, void (*event)(void* self_c));
@@ -1078,6 +1080,7 @@ typedef struct RU {
 #define RUToolWindowManager_add_to_docking(obj, widget) obj.funcs->add_to_docking(obj.priv_data, widget)
 #define RUToolWindowManager_add_to_docking_floating(obj, widget) obj.funcs->add_to_docking_floating(obj.priv_data, widget)
 
+#define RUDockWidget_set_object_name(obj, name) obj.funcs->set_object_name(obj.priv_data, name)
 #define RUDockWidget_set_widget(obj, widget) obj.funcs->set_widget(obj.priv_data, widget)
 
 #define RUDockManager_show(obj) obj.funcs->show(obj.priv_data)
@@ -1106,6 +1109,7 @@ typedef struct RU {
 
 #define RUAction_is_enabled(obj) obj.funcs->is_enabled(obj.priv_data)
 #define RUAction_set_text(obj, text) obj.funcs->set_text(obj.priv_data, text)
+#define RUAction_text(obj) obj.funcs->text(obj.priv_data)
 #define RUAction_set_shortcut(obj, key) obj.funcs->set_shortcut(obj.priv_data, key)
 #define RUAction_set_shortcut_mod(obj, key, modifier) obj.funcs->set_shortcut_mod(obj.priv_data, key, modifier)
 #define RUAction_set_triggered_event(obj, user_data, event) obj.funcs->set_triggered_event(obj.priv_data, user_data, event)

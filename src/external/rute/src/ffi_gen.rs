@@ -651,6 +651,7 @@ pub struct RUToolWindowManager {
 #[repr(C)]
 pub struct RUDockWidgetFuncs {
     pub destroy: extern "C" fn(self_c: *const RUBase),
+    pub set_object_name: extern "C" fn(self_c: *const RUBase, name: *const ::std::os::raw::c_char),
     pub set_widget: extern "C" fn(self_c: *const RUBase, widget: *const RUBase),
 }
 
@@ -712,6 +713,7 @@ pub struct RUActionFuncs {
     pub destroy: extern "C" fn(self_c: *const RUBase),
     pub is_enabled: extern "C" fn(self_c: *const RUBase) -> bool,
     pub set_text: extern "C" fn(self_c: *const RUBase, text: *const ::std::os::raw::c_char),
+    pub text: extern "C" fn(self_c: *const RUBase) -> *const ::std::os::raw::c_char,
     pub set_shortcut: extern "C" fn(self_c: *const RUBase, key:  RUKeys),
     pub set_shortcut_mod: extern "C" fn(self_c: *const RUBase, key:  RUKeys, modifier:  RUMetaKeys),
     pub set_triggered_event: extern "C" fn(object: *const RUBase, user_data: *const c_void,

@@ -1418,6 +1418,13 @@ static void tool_window_manager_restore_state(struct RUBase* self_c, const char*
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void dock_widget_set_object_name(struct RUBase* self_c, const char* name) { 
+    QDockWidget* qt_data = (QDockWidget*)self_c;
+    qt_data->setObjectName(QString::fromUtf8(name));
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static void dock_widget_set_widget(struct RUBase* self_c, struct RUBase* widget) { 
     QDockWidget* qt_data = (QDockWidget*)self_c;
     qt_data->setWidget((QWidget*)widget);
@@ -1596,6 +1603,19 @@ static bool action_is_enabled(struct RUBase* self_c) {
 static void action_set_text(struct RUBase* self_c, const char* text) { 
     QAction* qt_data = (QAction*)self_c;
     qt_data->setText(QString::fromUtf8(text));
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static const char* action_text(struct RUBase* self_c) { 
+    QAction* qt_data = (QAction*)self_c;
+    auto ret_value = qt_data->text();
+    QByteArray ba = ret_value.toUtf8();
+    const char* c_str = ba.data();
+    assert((ba.size() + 1) < sizeof(s_temp_string_buffer));
+    memcpy(s_temp_string_buffer, c_str, ba.size() + 1);
+    printf("temp string buffer %s\n", s_temp_string_buffer);
+    return s_temp_string_buffer;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2727,6 +2747,7 @@ struct RUToolWindowManagerFuncs s_tool_window_manager_funcs = {
 
 struct RUDockWidgetFuncs s_dock_widget_funcs = {
     destroy_dock_widget,
+    dock_widget_set_object_name,
     dock_widget_set_widget,
 };
 
@@ -2770,6 +2791,7 @@ struct RUActionFuncs s_action_funcs = {
     destroy_action,
     action_is_enabled,
     action_set_text,
+    action_text,
     action_set_shortcut,
     action_set_shortcut_mod,
     set_action_triggered_event,

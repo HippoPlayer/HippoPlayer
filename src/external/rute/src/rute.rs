@@ -1740,6 +1740,17 @@ impl DockWidget {
        }
     }
 
+    pub fn set_object_name (&self, name: &str) {
+        let str_in_name_1 = CString::new(name).unwrap();
+
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).set_object_name)(obj.privd, str_in_name_1.as_ptr());
+        
+        }
+    }
+
     pub fn set_widget (&self, widget: &WidgetType) {
         
         unsafe {
@@ -2057,6 +2068,19 @@ impl Action {
             let obj = self.obj.unwrap();
         
             ((*obj.funcs).set_text)(obj.privd, str_in_text_1.as_ptr());
+        
+        }
+    }
+
+    pub fn text (&self) -> String {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            let ret_val = ((*obj.funcs).text)(obj.privd);
+          
+           CStr::from_ptr(ret_val).to_string_lossy().into_owned()
+          
         
         }
     }
