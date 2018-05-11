@@ -4,15 +4,13 @@ extern crate hippo_api;
 #[macro_use]
 extern crate rute;
 
-use rute::rute::{PushButton};
+use rute::rute::PushButton;
 use rute::PluginUi;
-
-// TODO: Fix me
-//use std::os::raw::c_void;
 
 use hippo_api::view::View;
 use hippo_api::service::Service;
 
+#[derive(Default)]
 struct Player {
     ui: PluginUi,
     prev_button: PushButton,
@@ -23,13 +21,7 @@ struct Player {
 
 impl View for Player {
     fn new(_service: &Service) -> Player {
-        Player {
-            ui: PluginUi::default(),
-			prev_button: PushButton::default(),
-			stop_button: PushButton::default(),
-			play_button: PushButton::default(),
-			next_button: PushButton::default(),
-        }
+        Player::default()
     }
 
     fn setup_ui(&mut self, ui: PluginUi) {
@@ -63,87 +55,28 @@ impl View for Player {
         ui.get_parent().set_layout(&vbox);
     }
 
-    fn destroy(&mut self) {
-
-    }
+    fn destroy(&mut self) {}
 }
 
 impl Player {
-	fn create_button(ui: &PluginUi, icon_filename: &str) -> PushButton {
+    fn create_button(ui: &PluginUi, icon_filename: &str) -> PushButton {
         let icon = ui.create_icon();
-		let button = ui.create_push_button();
+        let button = ui.create_push_button();
 
         icon.add_file(icon_filename);
-		button.set_icon(&icon);
+        button.set_icon(&icon);
 
-		button
-	}
-
-    fn prev_song(&mut self) {
-
+        button
     }
 
-    fn play_song(&mut self) {
+    fn prev_song(&mut self) {}
 
-	}
+    fn play_song(&mut self) {}
 
-    fn stop_song(&mut self) {
+    fn stop_song(&mut self) {}
 
-	}
-
-    fn next_song(&mut self) {
-
-	}
-
+    fn next_song(&mut self) {}
 }
-
-
-/*
-    fn select_song(&mut self, item: &ListWidgetItem) {
-        /*
-           let info = self.play_file(&item.get_string_data());
-           self.current_song_time = info.duration as f32;
-           self.is_playing = true;
-
-           self.player_view.set_current_time(self.current_song_time);
-           self.player_view.set_title(&info.title);
-
-           self.playlist.select_song(item, &info);
-           */
-    }
-
-    fn prev_song(&mut self) {
-        /*
-           let next_song = self.playlist.get_prev_song();
-
-           if let Some(next) = next_song {
-           self.select_song(&next);
-           } else {
-           self.is_playing = false;
-           }
-           */
-    }
-
-    fn play_song(&mut self) {
-        /*
-           if let Some(current) = self.playlist.widget.current_item() {
-           self.select_song(&current);
-           }
-           */
-    }
-
-    fn next_song(&mut self) {
-        /*
-           let next_song = self.playlist.get_next_song();
-
-           if let Some(next) = next_song {
-           self.select_song(&next);
-           } else {
-           self.is_playing = false;
-           }
-           */
-    }
-*/
 
 #[no_mangle]
 pub fn hippo_view_plugin() -> *const std::os::raw::c_void {
@@ -152,4 +85,3 @@ pub fn hippo_view_plugin() -> *const std::os::raw::c_void {
     let ret: *const std::os::raw::c_void = unsafe { std::mem::transmute(&PLUGIN) };
     ret
 }
-
