@@ -24,7 +24,7 @@ before_script:
       export QT5="`brew --prefix qt5`";
     fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then
-      sudo add-apt-repository ppa:beineri/opt-qt571-trusty --yes;
+      sudo add-apt-repository ppa:beineri/opt-qt510-trusty --yes;
       sudo apt-get update;
       sudo apt-get install qt57base mesa-common-dev;
       sudo apt-get install -y libasound2-dev alsa-utils alsa-oss;
@@ -36,7 +36,7 @@ before_script:
       sudo make install;
       cd ..;
       g++ --version;
-      export QT5=/opt/qt57;
+      export QT5=/opt/qt510;
    fi
 
 script:
