@@ -19,154 +19,149 @@ pub use ffi_gen::RURect as Rect;
 
 pub use ffi_gen::RUColor as Color;
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Widget {
     pub obj: Option<RUWidget>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct PushButton {
     pub obj: Option<RUPushButton>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Painter {
     pub obj: Option<RUPainter>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct ListWidgetItem {
     pub obj: Option<RUListWidgetItem>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct ListWidget {
     pub obj: Option<RUListWidget>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Label {
     pub obj: Option<RULabel>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct LineEdit {
     pub obj: Option<RULineEdit>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct PlainTextEdit {
     pub obj: Option<RUPlainTextEdit>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Slider {
     pub obj: Option<RUSlider>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct MainWindow {
     pub obj: Option<RUMainWindow>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct ToolWindowManager {
     pub obj: Option<RUToolWindowManager>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct DockWidget {
     pub obj: Option<RUDockWidget>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct DockManager {
     pub obj: Option<RUDockManager>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct FramelessWindow {
     pub obj: Option<RUFramelessWindow>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Action {
     pub obj: Option<RUAction>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Url {
     pub obj: Option<RUUrl>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct MimeData {
     pub obj: Option<RUMimeData>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Timer {
     pub obj: Option<RUTimer>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Icon {
     pub obj: Option<RUIcon>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Font {
     pub obj: Option<RUFont>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Menu {
     pub obj: Option<RUMenu>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct MenuBar {
     pub obj: Option<RUMenuBar>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Application {
     pub obj: Option<RUApplication>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct PaintEvent {
     pub obj: Option<RUPaintEvent>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct DragEnterEvent {
     pub obj: Option<RUDragEnterEvent>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct DropEvent {
     pub obj: Option<RUDropEvent>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Layout {
     pub obj: Option<RULayout>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct VBoxLayout {
     pub obj: Option<RUVBoxLayout>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct HBoxLayout {
     pub obj: Option<RUHBoxLayout>,
-}
-
-#[derive(Clone)]
-pub struct PluginUI {
-    pub obj: Option<RUPluginUI>,
 }
 
 pub trait LayoutType {
@@ -2901,8 +2896,8 @@ macro_rules! set_push_button_pressed_event {
               $callback(&mut *app);
           }
       }
-      fn get_data_ptr(val: &$call_type) -> *const c_void {
-         let t: *const c_void = unsafe { ::std::mem::transmute(val) };
+      fn get_data_ptr(val: &$call_type) -> *const ::std::os::raw::c_void {
+         let t: *const ::std::os::raw::c_void = unsafe { ::std::mem::transmute(val) };
          t
       }
 
@@ -2924,8 +2919,8 @@ macro_rules! set_push_button_released_event {
               $callback(&mut *app);
           }
       }
-      fn get_data_ptr(val: &$call_type) -> *const c_void {
-         let t: *const c_void = unsafe { ::std::mem::transmute(val) };
+      fn get_data_ptr(val: &$call_type) -> *const ::std::os::raw::c_void {
+         let t: *const ::std::os::raw::c_void = unsafe { ::std::mem::transmute(val) };
          t
       }
 
@@ -2947,8 +2942,8 @@ macro_rules! set_list_widget_current_row_changed_event {
               $callback(&mut *app, row);
           }
       }
-      fn get_data_ptr(val: &$call_type) -> *const c_void {
-         let t: *const c_void = unsafe { ::std::mem::transmute(val) };
+      fn get_data_ptr(val: &$call_type) -> *const ::std::os::raw::c_void {
+         let t: *const ::std::os::raw::c_void = unsafe { ::std::mem::transmute(val) };
          t
       }
 
@@ -2970,8 +2965,8 @@ macro_rules! set_list_widget_item_clicked_event {
               $callback(&mut *app, &ListWidgetItem { obj: Some(*(item as *const rute::ffi_gen::RUListWidgetItem)) });
           }
       }
-      fn get_data_ptr(val: &$call_type) -> *const c_void {
-         let t: *const c_void = unsafe { ::std::mem::transmute(val) };
+      fn get_data_ptr(val: &$call_type) -> *const ::std::os::raw::c_void {
+         let t: *const ::std::os::raw::c_void = unsafe { ::std::mem::transmute(val) };
          t
       }
 
@@ -2993,8 +2988,8 @@ macro_rules! set_list_widget_item_double_clicked_event {
               $callback(&mut *app, &ListWidgetItem { obj: Some(*(item as *const rute::ffi_gen::RUListWidgetItem)) });
           }
       }
-      fn get_data_ptr(val: &$call_type) -> *const c_void {
-         let t: *const c_void = unsafe { ::std::mem::transmute(val) };
+      fn get_data_ptr(val: &$call_type) -> *const ::std::os::raw::c_void {
+         let t: *const ::std::os::raw::c_void = unsafe { ::std::mem::transmute(val) };
          t
       }
 
@@ -3016,8 +3011,8 @@ macro_rules! set_slider_value_changed_event {
               $callback(&mut *app, value);
           }
       }
-      fn get_data_ptr(val: &$call_type) -> *const c_void {
-         let t: *const c_void = unsafe { ::std::mem::transmute(val) };
+      fn get_data_ptr(val: &$call_type) -> *const ::std::os::raw::c_void {
+         let t: *const ::std::os::raw::c_void = unsafe { ::std::mem::transmute(val) };
          t
       }
 
@@ -3039,8 +3034,8 @@ macro_rules! set_action_triggered_event {
               $callback(&mut *app);
           }
       }
-      fn get_data_ptr(val: &$call_type) -> *const c_void {
-         let t: *const c_void = unsafe { ::std::mem::transmute(val) };
+      fn get_data_ptr(val: &$call_type) -> *const ::std::os::raw::c_void {
+         let t: *const ::std::os::raw::c_void = unsafe { ::std::mem::transmute(val) };
          t
       }
 
@@ -3062,8 +3057,8 @@ macro_rules! set_timer_timeout_event {
               $callback(&mut *app);
           }
       }
-      fn get_data_ptr(val: &$call_type) -> *const c_void {
-         let t: *const c_void = unsafe { ::std::mem::transmute(val) };
+      fn get_data_ptr(val: &$call_type) -> *const ::std::os::raw::c_void {
+         let t: *const ::std::os::raw::c_void = unsafe { ::std::mem::transmute(val) };
          t
       }
 
@@ -3085,8 +3080,8 @@ macro_rules! set_menu_triggered_event {
               $callback(&mut *app, &Action { obj: Some(*(action as *const rute::ffi_gen::RUAction)) });
           }
       }
-      fn get_data_ptr(val: &$call_type) -> *const c_void {
-         let t: *const c_void = unsafe { ::std::mem::transmute(val) };
+      fn get_data_ptr(val: &$call_type) -> *const ::std::os::raw::c_void {
+         let t: *const ::std::os::raw::c_void = unsafe { ::std::mem::transmute(val) };
          t
       }
 
@@ -3108,8 +3103,8 @@ macro_rules! set_application_about_to_quit_event {
               $callback(&mut *app);
           }
       }
-      fn get_data_ptr(val: &$call_type) -> *const c_void {
-         let t: *const c_void = unsafe { ::std::mem::transmute(val) };
+      fn get_data_ptr(val: &$call_type) -> *const ::std::os::raw::c_void {
+         let t: *const ::std::os::raw::c_void = unsafe { ::std::mem::transmute(val) };
          t
       }
 
@@ -3193,205 +3188,205 @@ macro_rules! set_paint_event {
 } }
 
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 pub struct PluginUi {
-    pu: *const RUPluginUI
+    pu: Option<*const RUPluginUI>
 }
 
 impl PluginUi {
-    pub fn new(pu: *const RUPluginUI) -> PluginUi { PluginUi { pu } }
-    pub fn get_c_api(&self) -> *const RUPluginUI { self.pu }
+    pub fn new(pu: *const RUPluginUI) -> PluginUi { PluginUi { pu: Some(pu) } }
+    pub fn get_c_api(&self) -> *const RUPluginUI { self.pu.unwrap() }
 
     pub fn create_widget(&self) -> Widget {
-        Widget { obj: Some(unsafe { ((*self.pu).create_widget)((*self.pu).privd) }) }
+        Widget { obj: Some(unsafe { ((*self.pu.unwrap()).create_widget)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_push_button(&self) -> PushButton {
-        PushButton { obj: Some(unsafe { ((*self.pu).create_push_button)((*self.pu).privd) }) }
+        PushButton { obj: Some(unsafe { ((*self.pu.unwrap()).create_push_button)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_painter(&self) -> Painter {
-        Painter { obj: Some(unsafe { ((*self.pu).create_painter)((*self.pu).privd) }) }
+        Painter { obj: Some(unsafe { ((*self.pu.unwrap()).create_painter)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_list_widget_item(&self) -> ListWidgetItem {
-        ListWidgetItem { obj: Some(unsafe { ((*self.pu).create_list_widget_item)((*self.pu).privd) }) }
+        ListWidgetItem { obj: Some(unsafe { ((*self.pu.unwrap()).create_list_widget_item)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_list_widget(&self) -> ListWidget {
-        ListWidget { obj: Some(unsafe { ((*self.pu).create_list_widget)((*self.pu).privd) }) }
+        ListWidget { obj: Some(unsafe { ((*self.pu.unwrap()).create_list_widget)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_label(&self) -> Label {
-        Label { obj: Some(unsafe { ((*self.pu).create_label)((*self.pu).privd) }) }
+        Label { obj: Some(unsafe { ((*self.pu.unwrap()).create_label)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_line_edit(&self) -> LineEdit {
-        LineEdit { obj: Some(unsafe { ((*self.pu).create_line_edit)((*self.pu).privd) }) }
+        LineEdit { obj: Some(unsafe { ((*self.pu.unwrap()).create_line_edit)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_plain_text_edit(&self) -> PlainTextEdit {
-        PlainTextEdit { obj: Some(unsafe { ((*self.pu).create_plain_text_edit)((*self.pu).privd) }) }
+        PlainTextEdit { obj: Some(unsafe { ((*self.pu.unwrap()).create_plain_text_edit)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_slider(&self) -> Slider {
-        Slider { obj: Some(unsafe { ((*self.pu).create_slider)((*self.pu).privd) }) }
+        Slider { obj: Some(unsafe { ((*self.pu.unwrap()).create_slider)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_main_window(&self) -> MainWindow {
-        MainWindow { obj: Some(unsafe { ((*self.pu).create_main_window)((*self.pu).privd) }) }
+        MainWindow { obj: Some(unsafe { ((*self.pu.unwrap()).create_main_window)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_dock_widget(&self) -> DockWidget {
-        DockWidget { obj: Some(unsafe { ((*self.pu).create_dock_widget)((*self.pu).privd) }) }
+        DockWidget { obj: Some(unsafe { ((*self.pu.unwrap()).create_dock_widget)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_frameless_window(&self) -> FramelessWindow {
-        FramelessWindow { obj: Some(unsafe { ((*self.pu).create_frameless_window)((*self.pu).privd) }) }
+        FramelessWindow { obj: Some(unsafe { ((*self.pu.unwrap()).create_frameless_window)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_action(&self) -> Action {
-        Action { obj: Some(unsafe { ((*self.pu).create_action)((*self.pu).privd) }) }
+        Action { obj: Some(unsafe { ((*self.pu.unwrap()).create_action)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_timer(&self) -> Timer {
-        Timer { obj: Some(unsafe { ((*self.pu).create_timer)((*self.pu).privd) }) }
+        Timer { obj: Some(unsafe { ((*self.pu.unwrap()).create_timer)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_icon(&self) -> Icon {
-        Icon { obj: Some(unsafe { ((*self.pu).create_icon)((*self.pu).privd) }) }
+        Icon { obj: Some(unsafe { ((*self.pu.unwrap()).create_icon)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_font(&self) -> Font {
-        Font { obj: Some(unsafe { ((*self.pu).create_font)((*self.pu).privd) }) }
+        Font { obj: Some(unsafe { ((*self.pu.unwrap()).create_font)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_menu(&self) -> Menu {
-        Menu { obj: Some(unsafe { ((*self.pu).create_menu)((*self.pu).privd) }) }
+        Menu { obj: Some(unsafe { ((*self.pu.unwrap()).create_menu)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_menu_bar(&self) -> MenuBar {
-        MenuBar { obj: Some(unsafe { ((*self.pu).create_menu_bar)((*self.pu).privd) }) }
+        MenuBar { obj: Some(unsafe { ((*self.pu.unwrap()).create_menu_bar)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_v_box_layout(&self) -> VBoxLayout {
-        VBoxLayout { obj: Some(unsafe { ((*self.pu).create_v_box_layout)((*self.pu).privd) }) }
+        VBoxLayout { obj: Some(unsafe { ((*self.pu.unwrap()).create_v_box_layout)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_h_box_layout(&self) -> HBoxLayout {
-        HBoxLayout { obj: Some(unsafe { ((*self.pu).create_h_box_layout)((*self.pu).privd) }) }
+        HBoxLayout { obj: Some(unsafe { ((*self.pu.unwrap()).create_h_box_layout)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn get_parent(&self) -> Widget {
-        Widget { obj: Some(unsafe { ((*self.pu).get_parent)((*self.pu).privd) }) }
+        Widget { obj: Some(unsafe { ((*self.pu.unwrap()).get_parent)((*self.pu.unwrap()).privd) }) }
     }
 
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 pub struct Ui {
-    pu: *const RU
+    pu: Option<*const RU>
 }
 
 impl Ui {
-    pub fn new(pu: *const RU) -> Ui { Ui { pu } }
+    pub fn new(pu: *const RU) -> Ui { Ui { pu: Some(pu) } }
 
-    pub fn get_c_api(&self) -> *const RU { self.pu }
+    pub fn get_c_api(&self) -> *const RU { self.pu.unwrap() }
 
     pub fn create_widget(&self) -> Widget {
-        Widget { obj: Some(unsafe { ((*self.pu).create_widget)((*self.pu).privd) }) }
+        Widget { obj: Some(unsafe { ((*self.pu.unwrap()).create_widget)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_push_button(&self) -> PushButton {
-        PushButton { obj: Some(unsafe { ((*self.pu).create_push_button)((*self.pu).privd) }) }
+        PushButton { obj: Some(unsafe { ((*self.pu.unwrap()).create_push_button)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_painter(&self) -> Painter {
-        Painter { obj: Some(unsafe { ((*self.pu).create_painter)((*self.pu).privd) }) }
+        Painter { obj: Some(unsafe { ((*self.pu.unwrap()).create_painter)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_list_widget_item(&self) -> ListWidgetItem {
-        ListWidgetItem { obj: Some(unsafe { ((*self.pu).create_list_widget_item)((*self.pu).privd) }) }
+        ListWidgetItem { obj: Some(unsafe { ((*self.pu.unwrap()).create_list_widget_item)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_list_widget(&self) -> ListWidget {
-        ListWidget { obj: Some(unsafe { ((*self.pu).create_list_widget)((*self.pu).privd) }) }
+        ListWidget { obj: Some(unsafe { ((*self.pu.unwrap()).create_list_widget)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_label(&self) -> Label {
-        Label { obj: Some(unsafe { ((*self.pu).create_label)((*self.pu).privd) }) }
+        Label { obj: Some(unsafe { ((*self.pu.unwrap()).create_label)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_line_edit(&self) -> LineEdit {
-        LineEdit { obj: Some(unsafe { ((*self.pu).create_line_edit)((*self.pu).privd) }) }
+        LineEdit { obj: Some(unsafe { ((*self.pu.unwrap()).create_line_edit)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_plain_text_edit(&self) -> PlainTextEdit {
-        PlainTextEdit { obj: Some(unsafe { ((*self.pu).create_plain_text_edit)((*self.pu).privd) }) }
+        PlainTextEdit { obj: Some(unsafe { ((*self.pu.unwrap()).create_plain_text_edit)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_slider(&self) -> Slider {
-        Slider { obj: Some(unsafe { ((*self.pu).create_slider)((*self.pu).privd) }) }
+        Slider { obj: Some(unsafe { ((*self.pu.unwrap()).create_slider)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_main_window(&self) -> MainWindow {
-        MainWindow { obj: Some(unsafe { ((*self.pu).create_main_window)((*self.pu).privd) }) }
+        MainWindow { obj: Some(unsafe { ((*self.pu.unwrap()).create_main_window)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_tool_window_manager(&self) -> ToolWindowManager {
-        ToolWindowManager { obj: Some(unsafe { ((*self.pu).create_tool_window_manager)((*self.pu).privd) }) }
+        ToolWindowManager { obj: Some(unsafe { ((*self.pu.unwrap()).create_tool_window_manager)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_dock_widget(&self) -> DockWidget {
-        DockWidget { obj: Some(unsafe { ((*self.pu).create_dock_widget)((*self.pu).privd) }) }
+        DockWidget { obj: Some(unsafe { ((*self.pu.unwrap()).create_dock_widget)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_dock_manager(&self) -> DockManager {
-        DockManager { obj: Some(unsafe { ((*self.pu).create_dock_manager)((*self.pu).privd) }) }
+        DockManager { obj: Some(unsafe { ((*self.pu.unwrap()).create_dock_manager)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_frameless_window(&self) -> FramelessWindow {
-        FramelessWindow { obj: Some(unsafe { ((*self.pu).create_frameless_window)((*self.pu).privd) }) }
+        FramelessWindow { obj: Some(unsafe { ((*self.pu.unwrap()).create_frameless_window)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_action(&self) -> Action {
-        Action { obj: Some(unsafe { ((*self.pu).create_action)((*self.pu).privd) }) }
+        Action { obj: Some(unsafe { ((*self.pu.unwrap()).create_action)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_timer(&self) -> Timer {
-        Timer { obj: Some(unsafe { ((*self.pu).create_timer)((*self.pu).privd) }) }
+        Timer { obj: Some(unsafe { ((*self.pu.unwrap()).create_timer)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_icon(&self) -> Icon {
-        Icon { obj: Some(unsafe { ((*self.pu).create_icon)((*self.pu).privd) }) }
+        Icon { obj: Some(unsafe { ((*self.pu.unwrap()).create_icon)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_font(&self) -> Font {
-        Font { obj: Some(unsafe { ((*self.pu).create_font)((*self.pu).privd) }) }
+        Font { obj: Some(unsafe { ((*self.pu.unwrap()).create_font)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_menu(&self) -> Menu {
-        Menu { obj: Some(unsafe { ((*self.pu).create_menu)((*self.pu).privd) }) }
+        Menu { obj: Some(unsafe { ((*self.pu.unwrap()).create_menu)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_menu_bar(&self) -> MenuBar {
-        MenuBar { obj: Some(unsafe { ((*self.pu).create_menu_bar)((*self.pu).privd) }) }
+        MenuBar { obj: Some(unsafe { ((*self.pu.unwrap()).create_menu_bar)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_application(&self) -> Application {
-        Application { obj: Some(unsafe { ((*self.pu).create_application)((*self.pu).privd) }) }
+        Application { obj: Some(unsafe { ((*self.pu.unwrap()).create_application)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_v_box_layout(&self) -> VBoxLayout {
-        VBoxLayout { obj: Some(unsafe { ((*self.pu).create_v_box_layout)((*self.pu).privd) }) }
+        VBoxLayout { obj: Some(unsafe { ((*self.pu.unwrap()).create_v_box_layout)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_h_box_layout(&self) -> HBoxLayout {
-        HBoxLayout { obj: Some(unsafe { ((*self.pu).create_h_box_layout)((*self.pu).privd) }) }
+        HBoxLayout { obj: Some(unsafe { ((*self.pu.unwrap()).create_h_box_layout)((*self.pu.unwrap()).privd) }) }
     }
 
     pub fn create_plugin_ui(&self, parent: &WidgetType) -> PluginUi {
-        PluginUi { pu: unsafe { ((*self.pu).create_plugin_ui)((*self.pu).privd, parent.get_widget_type_obj()) } }
+        PluginUi { pu: Some(unsafe { ((*self.pu.unwrap()).create_plugin_ui)((*self.pu.unwrap()).privd, parent.get_widget_type_obj()) }) }
     }
 }
 
