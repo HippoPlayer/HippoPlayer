@@ -1,3 +1,6 @@
+extern crate serde;
+extern crate rmp_serde as rmps;
+
 extern crate rute;
 
 pub mod ffi;
