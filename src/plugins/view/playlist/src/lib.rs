@@ -6,29 +6,25 @@ extern crate rute;
 
 use std::path::Path;
 use std::ffi::OsStr;
-use rute::rute::{ListWidget, DragEnterEvent, DropEvent};
+use rute::rute::{DragEnterEvent, DropEvent, ListWidget};
 use rute::PluginUi;
-
-// TODO: Fix me
-use std::os::raw::c_void;
 
 use hippo_api::view::View;
 use hippo_api::service::Service;
 
+#[derive(Default)]
 struct Playlist {
-    widget: Option<ListWidget>,
-    ui: Option<PluginUi>,
+    ui: PluginUi,
+    widget: ListWidget,
 }
 
 impl View for Playlist {
     fn new(_service: &Service) -> Playlist {
-        Playlist {
-            widget: None,
-            ui: None,
-        }
+        Playlist::default()
     }
 
     fn setup_ui(&mut self, ui: PluginUi) {
+        let vbox = ui.create_v_box_layout();
         let widget = ui.create_list_widget();
 
         widget.set_drag_enabled(true);
@@ -38,10 +34,15 @@ impl View for Playlist {
         set_drag_enter_event!(widget, self, Playlist, Playlist::drag_enter);
         set_drop_event!(widget, self, Playlist, Playlist::drop_files);
 
-        ui.get_parent().resize(500, 500);
+        vbox.add_widget(&widget);
 
-        self.ui = Some(ui);
-        self.widget = Some(widget)
+        let parent = ui.get_parent();
+
+        parent.set_layout(&vbox);
+        parent.resize(500, 500);
+
+        self.ui = ui;
+        self.widget = widget;
     }
 
     fn destroy(&mut self) {
@@ -55,7 +56,12 @@ impl Playlist {
     }
 
     fn drop_files(&mut self, event: &DropEvent) {
-        for url in event.mime_data().urls().iter().filter(|u| u.is_local_file()) {
+        for url in event
+            .mime_data()
+            .urls()
+            .iter()
+            .filter(|u| u.is_local_file())
+        {
             self.add_file(&url.to_local_file());
         }
 
@@ -63,7 +69,7 @@ impl Playlist {
     }
 
     fn add_file(&mut self, local_file: &str) {
-        let ui = self.ui.unwrap();
+        let ui = self.ui;
 
         if let Some(filename) = Self::get_filename_only(&local_file) {
             let item = ui.create_list_widget_item();
@@ -73,9 +79,12 @@ impl Playlist {
             item.set_text(filename);
             item.set_string_data(&local_file);
 
-            self.widget.as_ref().unwrap().add_item(&item);
+            self.widget.add_item(&item);
         } else {
-            println!("Skipped adding {} as no proper filename was found", local_file);
+            println!(
+                "Skipped adding {} as no proper filename was found",
+                local_file
+            );
         }
     }
 
