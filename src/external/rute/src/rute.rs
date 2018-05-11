@@ -3127,8 +3127,8 @@ macro_rules! set_drag_enter_event {
               $callback(&mut *app, &event);
           }
       }
-      fn get_data_ptr(val: &$call_type) -> *const c_void {
-         let t: *const c_void = unsafe { ::std::mem::transmute(val) };
+      fn get_data_ptr(val: &$call_type) -> *const ::std::os::raw::c_void {
+         let t: *const ::std::os::raw::c_void = unsafe { ::std::mem::transmute(val) };
          t
       }
 
@@ -3151,8 +3151,8 @@ macro_rules! set_drop_event {
               $callback(&mut *app, &event);
           }
       }
-      fn get_data_ptr(val: &$call_type) -> *const c_void {
-         let t: *const c_void = unsafe { ::std::mem::transmute(val) };
+      fn get_data_ptr(val: &$call_type) -> *const ::std::os::raw::c_void {
+         let t: *const ::std::os::raw::c_void = unsafe { ::std::mem::transmute(val) };
          t
       }
 
@@ -3175,8 +3175,8 @@ macro_rules! set_paint_event {
               $callback(&mut *app, &event);
           }
       }
-      fn get_data_ptr(val: &$call_type) -> *const c_void {
-         let t: *const c_void = unsafe { ::std::mem::transmute(val) };
+      fn get_data_ptr(val: &$call_type) -> *const ::std::os::raw::c_void {
+         let t: *const ::std::os::raw::c_void = unsafe { ::std::mem::transmute(val) };
          t
       }
 
