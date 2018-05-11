@@ -20,12 +20,14 @@ pub struct DecoderPlugin {
 pub struct ViewPlugin {
     pub plugin: Arc<Lib>,
     pub plugin_path: String,
+    pub count: usize,
     pub plugin_funcs: CHippoViewPlugin,
 }
 
 pub struct ViewPluginInstance {
 	pub plugin: ViewPlugin,
 	pub user_data: u64,
+	pub id: usize,
 	pub ui: PluginUi,
 }
 
@@ -73,6 +75,7 @@ impl ViewPlugin {
 		ViewPluginInstance {
 			plugin: self.clone(),
 			user_data: user_data as u64,
+			id: self.count, 
 			ui: plugin_ui,
 		}
 	}
@@ -118,6 +121,7 @@ impl <'a> Plugins<'a> {
             self.view_plugins.push(ViewPlugin {
                 plugin: plugin.clone(),
                 plugin_path: name.to_owned(),
+                count: 0,
                 plugin_funcs: unsafe { (*fun()).clone() },
             });
         }

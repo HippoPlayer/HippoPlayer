@@ -494,9 +494,7 @@ bool DockContainerWidgetPrivate::restoreDockArea(QXmlStreamReader& s,
 		}
 
 		s.skipCurrentElement();
-		//CDockWidget* DockWidget =
-		//CDockWidget* DockWidget = DockManager->findDockWidget(ObjectName.toString());
-		CDockWidget* DockWidget = new CDockWidget(nullptr);
+		CDockWidget* DockWidget = DockManager->findDockWidget(ObjectName.toString());
 		if (!DockWidget || Testing)
 		{
 			continue;

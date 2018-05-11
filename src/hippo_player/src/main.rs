@@ -45,6 +45,19 @@ use rute::rute::*;
 //use playlist_view::PlaylistView;
 //use song_info::SongInfoView;
 
+
+#[derive(Default, Serialize, Deserialize)]
+struct ViewInstanceState {
+	plugin_name: String,
+	instance_id: String,
+}
+
+#[derive(Default, Serialize, Deserialize)]
+struct HippoState {
+	view_instance_states: Vec<ViewInstanceState>,
+	layout: String,
+}
+
 struct HippoPlayer<'a> {
     audio: HippoAudio,
     plugins: Plugins<'a>,
@@ -54,6 +67,7 @@ struct HippoPlayer<'a> {
     dock_manager: DockManager,
     ui: Ui,
     app: Application,
+    state: HippoState,
     current_song_time: f32,
     is_playing: bool,
 }
@@ -70,6 +84,7 @@ impl <'a> HippoPlayer<'a> {
            main_widget: ui.create_widget(),
            playlist: Playlist::new(),
            dock_manager: ui.create_dock_manager(),
+           state: HippoState::default(),
            ui: ui,
            current_song_time: -10.0,
            is_playing: false,
@@ -104,7 +119,9 @@ impl <'a> HippoPlayer<'a> {
     }
 
     fn before_quit(&mut self) {
-        let state = self.dock_manager.save_state();
+		self.state.layout = self.dock_manager.save_state();
+
+        let state = serde_json::to_string_pretty(&self.state).unwrap();
 
         println!("state {}", state);
 
@@ -131,20 +148,42 @@ impl <'a> HippoPlayer<'a> {
     fn show_plugin(&mut self, action: &Action) {
         let plugin_index = action.get_int_data() as usize;
         let widget = self.ui.create_widget();
-        let plugin = &self.plugins.view_plugins[plugin_index];
+        	
+        let instance;
 
-        let _instance = plugin.create_instance(&self.ui, &self.plugin_service, &widget);
+        {
+        	let plugin = &self.plugins.view_plugins[plugin_index];
+        	instance = plugin.create_instance(&self.ui, &self.plugin_service, &widget);
+        }
 
         let dock_widget = self.ui.create_dock_widget();
 
-        dock_widget.set_object_name(&action.text());
+        self.plugins.view_plugins[plugin_index].count += 1;
+
+        // Add instance count to name if > 0
+
+        let object_name = match instance.id {
+        	0 => action.text().to_owned(),
+        	e @ _ => format!("{} {}", action.text(), e),
+        };
+
+        dock_widget.set_object_name(&object_name);
         dock_widget.set_widget(&widget);
+
         self.dock_manager.add_to_docking(&dock_widget);
 
         widget.resize(500, 500);
         widget.show();
 
         widget.set_persist_data("pls save me pls!");
+
+        let view_state = ViewInstanceState {
+        	plugin_name: action.text().to_owned(),
+        	instance_id: object_name.to_owned(),
+        	//plugin_instance: instance.clone(),
+        };
+
+        self.state.view_instance_states.push(view_state);
 
         println!("Showing plugin {}", plugin_index);
     }
@@ -172,7 +211,7 @@ impl <'a> HippoPlayer<'a> {
     /// This will load a defult layout file and set up plugins for it
     ///
     fn load_layout(&mut self, filename: &str) {
-        let mut layout_state = String::new();
+        let mut state = String::new();
         let mut file = match File::open(filename) {
             Ok(file) => file,
             Err(_) => {
@@ -181,27 +220,36 @@ impl <'a> HippoPlayer<'a> {
             }
         };
 
-        file.read_to_string(&mut layout_state).unwrap();
+        file.read_to_string(&mut state).unwrap();
 
-        self.dock_manager.restore_state(&layout_state);
+        // Parse the string of data into serde_json::Value.
+    	let state: HippoState = serde_json::from_str(&state).unwrap();
 
-        for dock_widget in self.dock_manager.get_dock_widgets() {
-            let name = dock_widget.object_name();
-
+		// create the plugins and add them to the docking manager, then then load the layout
+            
+		for view_state in &state.view_instance_states {
             for plugin in &self.plugins.view_plugins {
-                if plugin.get_name() == name {
-                    continue;
-                }
+				if plugin.get_name() != view_state.plugin_name {
+					continue;
+				}
 
-                let widget = self.ui.create_widget();
-                let _instance = plugin.create_instance(&self.ui, &self.plugin_service, &widget);
+        		let dock_widget = self.ui.create_dock_widget();
+				let widget = self.ui.create_widget();
 
-                dock_widget.set_widget(&widget);
+				let _instance = plugin.create_instance(&self.ui, &self.plugin_service, &widget);
 
-                widget.set_persist_data("pls save me pls!");
-                widget.resize(500, 500);
-            }
-        }
+				dock_widget.set_object_name(&view_state.instance_id);
+				dock_widget.set_widget(&widget);
+				self.dock_manager.add_to_docking(&dock_widget);
+
+				dock_widget.set_widget(&widget);
+
+				widget.set_persist_data("pls save me pls!");
+			}
+		}
+		
+        self.dock_manager.restore_state(&state.layout);
+        self.state = state;
     }
 
     pub fn run(&mut self) {
@@ -244,10 +292,9 @@ impl <'a> HippoPlayer<'a> {
         //player_window.set_content(&main_window);
         //player_window.set_window_title(&format!("HippoPlayer 0.0.1 {}", build_id()));
 
-        main_window.resize(1200, 1000);
+        main_window.resize(800, 600);
 
         self.load_layout("layout.data");
-
 
         main_window.show();
 
