@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate hippo_api;
 
-//#[macro_use]
+#[macro_use]
 extern crate rute;
 
 use rute::rute::{PushButton};
@@ -13,7 +13,7 @@ use rute::PluginUi;
 use hippo_api::view::View;
 use hippo_api::service::Service;
 
-struct Playlist {
+struct Player {
     ui: PluginUi,
     prev_button: PushButton,
     stop_button: PushButton,
@@ -21,32 +21,47 @@ struct Playlist {
     next_button: PushButton,
 }
 
-impl View for Playlist {
-    fn new(_service: &Service) -> Playlist {
-        Playlist {
-            ui: PluginUi { obj: None },
-			prev_button: PushButton { obj: None },
-			stop_button: PushButton { obj: None },
-			play_button: PushButton { obj: None },
-			next_button: PushButton { obj: None },
+impl View for Player {
+    fn new(_service: &Service) -> Player {
+        Player {
+            ui: PluginUi::default(),
+			prev_button: PushButton::default(),
+			stop_button: PushButton::default(),
+			play_button: PushButton::default(),
+			next_button: PushButton::default(),
         }
     }
 
     fn setup_ui(&mut self, ui: PluginUi) {
         self.ui = ui;
-		self.prev_button = ui.create_push_button();
-		self.stop_button = ui.create_push_button();
-		self.play_button = ui.create_push_button();
-		self.next_button = ui.create_push_button();
 
-        set_push_button_pressed_event!(self.player_view.prev_button, self, Playlist, HippoPlayer::prev_song);
-        set_push_button_pressed_event!(self.player_view.play_button, self, Playlist, HippoPlayer::play_song);
-        set_push_button_pressed_event!(self.player_view.stop_button, self, Playlist, HippoPlayer::stop_song);
-        set_push_button_pressed_event!(self.player_view.next_button, self, Playlist, HippoPlayer::next_song);
+        let buttons = ui.create_widget();
 
-        ui.get_parent().resize(500, 500);
+        self.prev_button = Self::create_button(&ui, "bin/player/buttons/hip_button_back.png");
+        self.stop_button = Self::create_button(&ui, "bin/player/buttons/hip_button_stop.png");
+        self.play_button = Self::create_button(&ui, "bin/player/buttons/hip_button_play.png");
+        self.next_button = Self::create_button(&ui, "bin/player/buttons/hip_button_next.png");
+
+        set_push_button_pressed_event!(self.prev_button, self, Player, Player::prev_song);
+        set_push_button_pressed_event!(self.play_button, self, Player, Player::play_song);
+        set_push_button_pressed_event!(self.stop_button, self, Player, Player::stop_song);
+        set_push_button_pressed_event!(self.next_button, self, Player, Player::next_song);
+
+        let vbox = ui.create_v_box_layout();
+        let hbox = ui.create_h_box_layout();
+
+        hbox.add_widget(&self.prev_button);
+        hbox.add_widget(&self.stop_button);
+        hbox.add_widget(&self.play_button);
+        hbox.add_widget(&self.next_button);
+
+        buttons.set_layout(&hbox);
+
+        //vbox.add_widget(&self.player_display);
+        vbox.add_widget(&buttons);
+
+        ui.get_parent().set_layout(&vbox);
     }
-
 
     fn destroy(&mut self) {
 
@@ -54,7 +69,7 @@ impl View for Playlist {
 }
 
 impl Player {
-	fn create_button(ui: &PlugiUi, icon_filename: &str) -> PushButton {
+	fn create_button(ui: &PluginUi, icon_filename: &str) -> PushButton {
         let icon = ui.create_icon();
 		let button = ui.create_push_button();
 
@@ -79,8 +94,6 @@ impl Player {
     fn next_song(&mut self) {
 
 	}
-
-
 
 }
 
@@ -134,7 +147,7 @@ impl Player {
 
 #[no_mangle]
 pub fn hippo_view_plugin() -> *const std::os::raw::c_void {
-    define_view_plugin!(PLUGIN, b"Player\0", b"0.0.1\0", Playlist);
+    define_view_plugin!(PLUGIN, b"Player\0", b"0.0.1\0", Player);
     // Would be nice to get rid of this
     let ret: *const std::os::raw::c_void = unsafe { std::mem::transmute(&PLUGIN) };
     ret

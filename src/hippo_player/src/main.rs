@@ -148,7 +148,7 @@ impl <'a> HippoPlayer<'a> {
     fn show_plugin(&mut self, action: &Action) {
         let plugin_index = action.get_int_data() as usize;
         let widget = self.ui.create_widget();
-        	
+
         let instance;
 
         {
@@ -226,7 +226,7 @@ impl <'a> HippoPlayer<'a> {
     	let state: HippoState = serde_json::from_str(&state).unwrap();
 
 		// create the plugins and add them to the docking manager, then then load the layout
-            
+
 		for view_state in &state.view_instance_states {
             for plugin in &self.plugins.view_plugins {
 				if plugin.get_name() != view_state.plugin_name {
@@ -242,12 +242,10 @@ impl <'a> HippoPlayer<'a> {
 				dock_widget.set_widget(&widget);
 				self.dock_manager.add_to_docking(&dock_widget);
 
-				dock_widget.set_widget(&widget);
-
 				widget.set_persist_data("pls save me pls!");
 			}
 		}
-		
+
         self.dock_manager.restore_state(&state.layout);
         self.state = state;
     }
