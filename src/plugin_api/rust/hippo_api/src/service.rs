@@ -5,6 +5,7 @@ use ffi::CHippoServiceAPI;
 use std::ffi::CString;
 use std::os::raw::c_void;
 use ffi::*;
+use std::io;
 
 #[derive(Clone, Copy)]
 pub struct Service {
@@ -52,28 +53,17 @@ impl MessageApi {
     }
 
     pub fn send_request<T: Serialize>(&self, id: &str, data: &T) -> u32 {
-        let mut msgpack_data = Vec::new();
-        let message = self.begin_request(id);
+        //let mut msgpack_data = Vec::new();
+        let mut message = self.begin_request(id);
         let request_id = message.get_id();
 
         // TODO: How to handle errors here?
-        data.serialize(&mut Serializer::new(&mut msgpack_data)).unwrap();
-
-        message.write_blob(&msgpack_data);
+        data.serialize(&mut Serializer::new(&mut message)).unwrap();
 
         self.end_message(message);
 
         request_id
     }
-
-    // helpers, should we have this here?
-
-	pub fn next_song(&self) {
-		println!("Requesting next song");
-		let msg = self.begin_notification("hippo_playlist_next_song");
-		msg.write_uint(0);
-		self.end_message(msg)
-	}
 }
 
 impl Service {
@@ -112,10 +102,27 @@ impl Message {
             ((*api).write_uint)((*api).priv_data, data);
         }
     }
-
-    //pub write_blob: extern "C" fn(priv_data: *const c_void, data: *const c_void, len: u32) -> i32,
-
 }
+
+impl io::Write for Message {
+	///
+	/// Just using the write_blob API to add data to the stream
+	/// TODO: Error handling
+	///
+	fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+		println!("Message::write len {}", buf.len());
+		self.write_blob(buf);
+		Ok(buf.len())
+	}
+
+	///
+	/// No need to flush here
+	///
+	fn flush(&mut self) -> io::Result<()> {
+		Ok(())
+	}
+}
+
 
     /*
 

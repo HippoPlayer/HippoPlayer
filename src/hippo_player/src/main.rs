@@ -14,15 +14,11 @@ extern crate rute;
 
 extern crate dynamic_reload;
 
-use std::os::raw::c_void;
-
 mod audio;
-mod playerview;
 mod playlist;
-mod playlist_view;
 mod plugin_handler;
 mod song_db;
-mod song_info;
+//mod song_info;
 
 mod service;
 pub mod service_ffi;

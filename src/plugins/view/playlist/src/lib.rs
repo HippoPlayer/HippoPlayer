@@ -10,17 +10,22 @@ use rute::rute::{DragEnterEvent, DropEvent, ListWidget};
 use rute::PluginUi;
 
 use hippo_api::view::View;
-use hippo_api::service::Service;
+use hippo_api::{Service, MessageApi};
+use hippo_api::messages::{AddUrls, ListPosition};
 
 #[derive(Default)]
 struct Playlist {
+	message_api: MessageApi,
     ui: PluginUi,
     widget: ListWidget,
 }
 
 impl View for Playlist {
-    fn new(_service: &Service) -> Playlist {
-        Playlist::default()
+    fn new(service: &Service) -> Playlist {
+    	Playlist {
+			message_api: service.message_api(),
+			.. Playlist::default()
+		}
     }
 
     fn setup_ui(&mut self, ui: PluginUi) {
@@ -55,21 +60,44 @@ impl Playlist {
         Path::new(filename).file_name().and_then(OsStr::to_str)
     }
 
+    ///
+    /// This happens when the user has made a drag'n'drop operation
+    /// and added some files/urls to the playlist.
+    ///
+    /// We don't display them directly but instead send a message to the
+    /// host application that will reply back with the files.
+    ///
+    /// Note: if this turns out to be too slow we should just add them
+    ///       as is and update when the updates comes back
+    ///
     fn drop_files(&mut self, event: &DropEvent) {
+    	let mut urls = Vec::new();
+
         for url in event
             .mime_data()
             .urls()
             .iter()
             .filter(|u| u.is_local_file())
         {
-            self.add_file(&url.to_local_file());
+        	// TODO: Can we use ref here instead? Would save some allocs/copies
+        	urls.push(url.to_local_file().to_owned())
         }
+
+        let add_request_id = self.message_api.add_urls(AddUrls {
+        	list_position: ListPosition::End,
+        	urls,
+        });
 
         event.accept_proposed_action();
     }
 
+    /*
     fn add_file(&mut self, local_file: &str) {
         let ui = self.ui;
+
+        let mut add_files_message = AddUrls::new(); 
+
+
 
         if let Some(filename) = Self::get_filename_only(&local_file) {
             let item = ui.create_list_widget_item();
@@ -87,6 +115,7 @@ impl Playlist {
             );
         }
     }
+    */
 
     fn drag_enter(&mut self, event: &DragEnterEvent) {
         event.accept();
