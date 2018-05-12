@@ -82,10 +82,10 @@ typedef struct HippoMetadataAPI {
     // the error code will be updated.
     //
     const char* (*get_key)(
-    	struct HippoMetadataAPIPrivData* priv_data,
-    	const char* buffer,
-    	const char* type,
-    	int* error_code);
+		struct HippoMetadataAPIPrivData* priv_data,
+		const char* buffer,
+		const char* type,
+		int* error_code);
     //
     // Set a key associated with buffer.
     //
@@ -97,11 +97,11 @@ typedef struct HippoMetadataAPI {
     // HippoMetadataResult
     //
     int (*set_key)(
-    	struct HippoMetadataAPIPrivData* priv_data,
-    	const char* buffer,
-    	uint32_t sub_song,
-    	const char* value,
-    	const char* type);
+		struct HippoMetadataAPIPrivData* priv_data,
+		const char* buffer,
+		uint32_t sub_song,
+		const char* value,
+		const char* type);
 
     //
     // Set a key associated with buffer with specific ecoding.
@@ -115,12 +115,12 @@ typedef struct HippoMetadataAPI {
     // type = Key to retrive
     //
     int (*set_key_with_encoding)(
-    	struct HippoMetadataAPIPrivData* priv_data,
-    	const char* buffer,
-    	uint32_t sub_song,
-    	const char* value,
-    	const char* type,
-    	enum HippoMetaEncoding encoding);
+		struct HippoMetadataAPIPrivData* priv_data,
+		const char* buffer,
+		uint32_t sub_song,
+		const char* value,
+		const char* type,
+		enum HippoMetaEncoding encoding);
 
 	struct HippoMetadataAPIPrivData* priv_data;
 } HippoMetadataAPI;
@@ -135,9 +135,11 @@ struct HippoMessagePrivData;
 
 typedef struct HippoMessage {
     struct HippoMessagePrivData* priv_data;
+
 	int (*message_get_id)(struct HippoMessagePrivData* handle);
 	int (*write_formatted_blob)(struct HippoMessagePrivData* handle, void* data, int size);
 	int (*write_array_count)(struct HippoMessagePrivData* handle, int count);
+	int (*write_uint)(struct HippoMessagePrivData* handle, uint64_t value);
 	int (*write_str)(struct HippoMessagePrivData* handle, const char* input);
 
 } HippoMessage;
@@ -152,10 +154,8 @@ typedef struct HippoMessageAPI {
 	// void (*unsubscribe)(struct HippoMessageAPI* priv_data, void* instance_data, const char* type);
 
 	struct HippoMessage* (*begin_request)(struct HippoMessageAPI* priv_data, const char* id);
-	//struct HippoMessage* (*begin_notification)(struct HippoMessageAPI* priv_data, const char* id);
-
-	void (*end_request)(struct HippoMessageAPI* priv_data, HippoMessage* message);
-	//void (*end_notification)(struct HippoMessageAPI* priv_data, HippoMessage* message);
+	struct HippoMessage* (*begin_notification)(struct HippoMessageAPI* priv_data, const char* id);
+	void (*end_message)(struct HippoMessageAPI* priv_data, HippoMessage* message);
 
 } HippoMessageAPI;
 

@@ -85,12 +85,28 @@ impl MessageApi {
         Ok(message)
     }
 
+    pub fn begin_notification(&mut self, name: &str) -> Result<Box<Message>, ValueWriteError> {
+        let mut message = Message::new(self.request_id);
+
+        message.write_array_len(4)?;
+        message.write_uint(NOTIFICATION_MESSAGE)?;
+        message.write_str(name)?;
+
+        // This is to keep track of that the user acutally wrote some data. Otherwise we add
+        // something dummy to make sure that we have a valid message
+        message.header_size = message.data.as_ref().unwrap().len();
+        Ok(message)
+    }
+
+
     // TODO: Remove the copy here by using a linear allocator to fill in the memory
-    pub fn end_request(&mut self, message: &mut Message) {
+    pub fn end_message(&mut self, message: &mut Message) {
         self.request_queue.push(message.data.as_ref().unwrap().clone());
         // Mark the message as retired
         message.data = None;
     }
+
+    // helpers, should we really have this here?
 }
 
 

@@ -164,6 +164,13 @@ extern "C" fn message_write_array_count(priv_data: *const c_void, count: u32) ->
     1
 }
 
+extern "C" fn message_write_uint(priv_data: *const c_void, count: u64) -> i32 {
+    let message: &mut Message = unsafe { &mut *(priv_data as *mut Message) };
+    // TODO: Proper error handling
+    message.write_uint(count).unwrap();
+    1
+}
+
 extern "C" fn message_write_str(priv_data: *const c_void, name: *const i8) -> i32 {
     let message: &mut Message = unsafe { &mut *(priv_data as *mut Message) };
     let name_id = unsafe { CStr::from_ptr(name as *const c_char) };
@@ -187,6 +194,31 @@ extern "C" fn mesage_api_begin_request(priv_data: *const c_void, id: *const i8) 
         priv_data: message_ptr,
         get_id: message_get_id,
         write_blob: message_write_blob,
+        write_array_count: message_write_array_count,
+        write_uint: message_write_uint,
+        write_str: message_write_str,
+    });
+
+    let message_wrap: *const c_void = unsafe { transmute(message_c) };
+    message_wrap
+}
+
+extern "C" fn mesage_api_begin_notification(priv_data: *const c_void, id: *const i8) -> *const c_void {
+    let message_api: &mut MessageApi = unsafe { &mut *(priv_data as *mut MessageApi) };
+    let name_id = unsafe { CStr::from_ptr(id as *const c_char) };
+
+    println!("mesage_api_begin_request");
+
+    // TODO: Proper error handling
+    let message = message_api.begin_notification(&name_id.to_string_lossy()).unwrap();
+
+    let message_ptr: *const c_void = unsafe { transmute(message) };
+
+    let message_c = Box::new(CMessage {
+        priv_data: message_ptr,
+        get_id: message_get_id,
+        write_blob: message_write_blob,
+        write_uint: message_write_uint,
         write_str: message_write_str,
         write_array_count: message_write_array_count,
     });
@@ -195,9 +227,9 @@ extern "C" fn mesage_api_begin_request(priv_data: *const c_void, id: *const i8) 
     message_wrap
 }
 
-extern "C" fn mesage_api_end_request(priv_data: *const c_void, _message: *const c_void) {
+extern "C" fn mesage_api_end_message(priv_data: *const c_void, _message: *const c_void) {
     let _message_api: &mut MessageApi = unsafe { &mut *(priv_data as *mut MessageApi) };
-    println!("mesage_api_end_request")
+    println!("mesage_api_end_message")
 }
 
 pub struct ServiceApi {
@@ -264,7 +296,8 @@ impl ServiceApi {
         let c_message_api = Box::new(CMessageAPI {
            priv_data: message_api,
            begin_request: mesage_api_begin_request,
-           end_request: mesage_api_end_request,
+           begin_notification: mesage_api_begin_request,
+           end_message: mesage_api_end_message,
         });
 
         let c_message_api: *const CMessageAPI = unsafe { transmute(c_message_api) };

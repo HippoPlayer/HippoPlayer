@@ -8,10 +8,11 @@ use rute::rute::PushButton;
 use rute::PluginUi;
 
 use hippo_api::view::View;
-use hippo_api::service::Service;
+use hippo_api::service::{Service, MessageApi};
 
 #[derive(Default)]
 struct Player {
+	message_api: MessageApi,
     ui: PluginUi,
     prev_button: PushButton,
     stop_button: PushButton,
@@ -20,8 +21,11 @@ struct Player {
 }
 
 impl View for Player {
-    fn new(_service: &Service) -> Player {
-        Player::default()
+    fn new(service: &Service) -> Player {
+    	Player {
+    		message_api: service.message_api(),
+        	.. Player::default()
+        }
     }
 
     fn setup_ui(&mut self, ui: PluginUi) {
@@ -75,7 +79,14 @@ impl Player {
 
     fn stop_song(&mut self) {}
 
-    fn next_song(&mut self) {}
+    ///
+    /// Sends a notification that next song should be started.
+    /// Notice that this is not a request as a general "next playing song" will be sent out
+    /// instead as this affects more plugins than just the sender
+    /// 
+    fn next_song(&mut self) {
+    	self.message_api.next_song();
+    }
 }
 
 #[no_mangle]

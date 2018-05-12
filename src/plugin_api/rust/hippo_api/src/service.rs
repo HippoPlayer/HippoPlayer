@@ -11,7 +11,7 @@ pub struct Service {
     api: *const CHippoServiceAPI,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct MessageApi {
     api: Option<*const CMessageAPI>,
 }
@@ -33,10 +33,21 @@ impl MessageApi {
         }
     }
 
-    pub fn end_request(&self, message: Message) {
+    pub fn begin_notification(&self, id: &str) -> Message {
+        let c_id = CString::new(id).unwrap();
+
         unsafe {
             let api = *self.api.as_ref().unwrap();
-            ((*api).end_request)((*api).priv_data, (*message.api.unwrap()).priv_data)
+            Message {
+                api: Some(((*api).begin_notification)((*api).priv_data, c_id.as_ptr()) as *const CMessage),
+            }
+        }
+    }
+
+    pub fn end_message(&self, message: Message) {
+        unsafe {
+            let api = *self.api.as_ref().unwrap();
+            ((*api).end_message)((*api).priv_data, (*message.api.unwrap()).priv_data)
         }
     }
 
@@ -50,10 +61,19 @@ impl MessageApi {
 
         message.write_blob(&msgpack_data);
 
-        self.end_request(message);
+        self.end_message(message);
 
         request_id
     }
+
+    // helpers, should we have this here?
+
+	pub fn next_song(&self) {
+		println!("Requesting next song");
+		let msg = self.begin_notification("hippo_playlist_next_song");
+		msg.write_uint(0);
+		self.end_message(msg)
+	}
 }
 
 impl Service {
@@ -84,7 +104,13 @@ impl Message {
             let api = *self.api.as_ref().unwrap();
             ((*api).write_blob)((*api).priv_data, data.as_ptr() as *const c_void, data.len() as u32);
         }
+    }
 
+    pub fn write_uint(&self, data: u64) {
+        unsafe {
+            let api = *self.api.as_ref().unwrap();
+            ((*api).write_uint)((*api).priv_data, data);
+        }
     }
 
     //pub write_blob: extern "C" fn(priv_data: *const c_void, data: *const c_void, len: u32) -> i32,

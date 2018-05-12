@@ -39,7 +39,7 @@ void test_view_setup_ui(void* user_data, struct RUPluginUI* ui_funcs) {
     message->write_array_count(message->priv_data, 1);
     message->write_str(message->priv_data, "foo.mod");
 
-	g_message_api->end_request(g_message_api->priv_data, message);
+	g_message_api->end_message(g_message_api->priv_data, message);
 
 	RUPushButton_set_text(button, "foobar");
 }
