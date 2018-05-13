@@ -22,7 +22,6 @@ pub struct Playlist {
 
 
 impl Playlist {
-
     ///
     ///
     ///

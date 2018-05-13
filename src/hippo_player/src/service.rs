@@ -55,9 +55,9 @@ pub struct Message {
 pub struct MessageApi {
     request_id: u32,
     //subscriptions: HashMap<u64, PluginSubscribe>,
-    request_queue: Vec<Vec<u8>>,
-    notifaction_queue: Vec<Message>,
-    respones_queue: Vec<Box<Message>>,
+    pub request_queue: Vec<Vec<u8>>,
+    pub notifaction_queue: Vec<Message>,
+    pub respones_queue: Vec<Box<Message>>,
 }
 
 impl MessageApi {
@@ -104,6 +104,10 @@ impl MessageApi {
         self.request_queue.push(message.data.as_ref().unwrap().clone());
         // Mark the message as retired
         message.data = None;
+    }
+
+    pub fn clear_queues(&mut self) {
+    	self.request_queue.clear();
     }
 
     // helpers, should we really have this here?

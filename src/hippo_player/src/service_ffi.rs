@@ -227,8 +227,11 @@ extern "C" fn mesage_api_begin_notification(priv_data: *const c_void, id: *const
     message_wrap
 }
 
-extern "C" fn mesage_api_end_message(priv_data: *const c_void, _message: *const c_void) {
-    let _message_api: &mut MessageApi = unsafe { &mut *(priv_data as *mut MessageApi) };
+extern "C" fn mesage_api_end_message(priv_data: *const c_void, message: *const c_void) {
+    let message_api: &mut MessageApi = unsafe { &mut *(priv_data as *mut MessageApi) };
+    let message: &mut Message = unsafe { &mut *(message as *mut Message) };
+    message_api.end_message(message);
+
     println!("mesage_api_end_message")
 }
 
@@ -255,6 +258,12 @@ impl ServiceApi {
     	let metadata_api = self.get_c_metadatao_api();
     	let song_db: &SongDb = unsafe { &*((*metadata_api).priv_data as *const SongDb) };
     	song_db
+    }
+
+    fn get_message_api<'a>(&'a self) -> &'a MessageApi {
+    	let api = self.get_c_message_api();
+    	let message_api: &MessageApi = unsafe { &*((*api).priv_data as *const MessageApi) };
+    	message_api
     }
 
     fn new() -> ServiceApi {
@@ -339,6 +348,11 @@ impl PluginService {
 
     pub fn get_c_service_api(&self) -> *const CHippoServiceAPI {
         self.c_service_api
+    }
+
+    pub fn get_message_api<'a>(&'a self) -> &'a MessageApi {
+    	let service_api: &ServiceApi = unsafe { &*((*self.c_service_api).priv_data as *const ServiceApi) };
+    	service_api.get_message_api()
     }
 }
 
