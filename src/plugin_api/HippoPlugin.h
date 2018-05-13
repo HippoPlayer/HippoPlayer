@@ -131,18 +131,32 @@ typedef struct HippoMetadataAPI {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct HippoMessagePrivData;
+typedef struct HippoMessageEncode {
+    struct HippoMessageEncode* priv_data;
 
-typedef struct HippoMessage {
-    struct HippoMessagePrivData* priv_data;
+	uint32_t (*get_id)(struct HippoMessageEncode* handle);
 
-	int (*message_get_id)(struct HippoMessagePrivData* handle);
-	int (*write_formatted_blob)(struct HippoMessagePrivData* handle, void* data, int size);
-	int (*write_array_count)(struct HippoMessagePrivData* handle, int count);
-	int (*write_uint)(struct HippoMessagePrivData* handle, uint64_t value);
-	int (*write_str)(struct HippoMessagePrivData* handle, const char* input);
+	int (*write_formatted_blob)(struct HippoMessageEncode* handle, void* data, int size);
+	int (*write_array_count)(struct HippoMessageEncode* handle, int count);
+	int (*write_uint)(struct HippoMessageEncode* handle, uint64_t value);
+	int (*write_str)(struct HippoMessageEncode* handle, const char* input);
 
-} HippoMessage;
+} HippoMessageEncode;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef struct HippoMessageDecode {
+    struct HippoMessageDecode* priv_data;
+
+	uint32_t (*get_id)(struct HippoMessageDecode* handle);
+
+	int (*read_array_count)(struct HippoMessageDecode* handle, int* count);
+	int (*read_uint)(struct HippoMessageDecode* handle, uint64_t* value);
+	int (*read_str_len)(struct HippoMessageDecode* handle, uint64_t* size);
+	int (*read_str)(struct HippoMessageDecode* handle, char* dest);
+	int (*read_get_raw_ptr)(struct HippoMessageDecode* handle, void** ptr, uint64_t* len); 
+
+} HippoMessageDecode;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Plugins can use the MessageAPI to subscribe to events and post data that is being requested
@@ -153,9 +167,9 @@ typedef struct HippoMessageAPI {
 	// void (*subscribe)(struct HippoMessageAPI* priv_data, void* instance_data, const char* type);
 	// void (*unsubscribe)(struct HippoMessageAPI* priv_data, void* instance_data, const char* type);
 
-	struct HippoMessage* (*begin_request)(struct HippoMessageAPI* priv_data, const char* id);
-	struct HippoMessage* (*begin_notification)(struct HippoMessageAPI* priv_data, const char* id);
-	void (*end_message)(struct HippoMessageAPI* priv_data, HippoMessage* message);
+	struct HippoMessageEncode* (*begin_request)(struct HippoMessageAPI* priv_data, const char* id);
+	struct HippoMessageEncode* (*begin_notification)(struct HippoMessageAPI* priv_data, const char* id);
+	void (*end_message)(struct HippoMessageAPI* priv_data, HippoMessageEncode* message);
 
 } HippoMessageAPI;
 

@@ -35,7 +35,7 @@ void test_view_setup_ui(void* user_data, struct RUPluginUI* ui_funcs) {
 
     // Test sending a message
 
-    HippoMessage* message = g_message_api->begin_request(g_message_api->priv_data, "test_request");
+    HippoMessageEncode* message = g_message_api->begin_request(g_message_api->priv_data, "test_request");
     message->write_array_count(message->priv_data, 1);
     message->write_str(message->priv_data, "foo.mod");
 

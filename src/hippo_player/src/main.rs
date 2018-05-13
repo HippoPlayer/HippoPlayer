@@ -34,7 +34,7 @@ use std::fs::File;
 use std::path::Path;
 use playlist::Playlist;
 use std::io;
-use service::MessageApi;
+use service::MessageDecode;
 
 use rute::{SharedLibUi, Ui};
 use rute::rute::*;
@@ -96,30 +96,20 @@ impl <'a> HippoPlayer<'a> {
     /// Loops over all view instances and checks if any of them has posted any messages
     ///
     fn update_ui_messages(&mut self) {
-        for instance in &self.state.view_instance_states {
-            if let Some(ref service) = instance.plugin_service {
-                //let service = instance.plugin_service.as_ref().unwrap();
-                let messages = service.get_message_api();
+        for instance in &mut self.state.view_instance_states {
+            if let Some(ref mut service) = instance.plugin_service {
+                let messages = service.get_message_api_mut();
 
                 println!("request_que len {}", messages.request_queue.len());
+
+                for message in &messages.request_queue {
+                    let message_dec = MessageDecode::new(message.clone()).unwrap();
+                    println!("message_dec {:?}", message_dec);
+                }
+
+                messages.clear_queues();
             }
         }
-    }
-
-    fn per_sec_update(&mut self) {
-        //self.player_view.set_current_time(self.current_song_time);
-
-        /*
-        if self.is_playing {
-            self.current_song_time -= 1.0;
-        }
-        */
-
-        /*
-        if self.current_song_time < 0.0 && self.current_song_time > -9.0 {
-            self.next_song();
-        }
-        */
     }
 
     fn stop_song(&mut self) {

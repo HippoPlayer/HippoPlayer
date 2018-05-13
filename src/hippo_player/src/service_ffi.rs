@@ -6,7 +6,7 @@ use std::slice;
 use std::io::Read;
 use song_db::SongDb;
 use std::collections::HashMap;
-use service::{IoApi, FileWrapper, Message, MessageApi};
+use service::{IoApi, FileWrapper, MessageEncode, MessageApi};
 use hippo_api::ffi::*;
 
 extern "C" fn file_exists_wrapper(priv_data: *const c_void, target: *const u8) -> i32 {
@@ -153,26 +153,27 @@ extern "C" fn message_get_id(_priv_data: *const c_void) -> u32 {
 }
 
 extern "C" fn message_write_blob(priv_data: *const c_void, _data: *const c_void, _len: u32) -> i32 {
-    let _message: &mut Message = unsafe { &mut *(priv_data as *mut Message) };
+    let _message: &mut MessageEncode = unsafe { &mut *(priv_data as *mut MessageEncode) };
+    //message.write_formatted_blob
     0
 }
 
 extern "C" fn message_write_array_count(priv_data: *const c_void, count: u32) -> i32 {
-    let message: &mut Message = unsafe { &mut *(priv_data as *mut Message) };
+    let message: &mut MessageEncode = unsafe { &mut *(priv_data as *mut MessageEncode) };
     // TODO: Proper error handling
     message.write_array_len(count).unwrap();
     1
 }
 
 extern "C" fn message_write_uint(priv_data: *const c_void, count: u64) -> i32 {
-    let message: &mut Message = unsafe { &mut *(priv_data as *mut Message) };
+    let message: &mut MessageEncode = unsafe { &mut *(priv_data as *mut MessageEncode) };
     // TODO: Proper error handling
     message.write_uint(count).unwrap();
     1
 }
 
 extern "C" fn message_write_str(priv_data: *const c_void, name: *const i8) -> i32 {
-    let message: &mut Message = unsafe { &mut *(priv_data as *mut Message) };
+    let message: &mut MessageEncode = unsafe { &mut *(priv_data as *mut MessageEncode) };
     let name_id = unsafe { CStr::from_ptr(name as *const c_char) };
     // TODO: Proper error handling
     message.write_str(&name_id.to_string_lossy()).unwrap();
@@ -190,7 +191,7 @@ extern "C" fn mesage_api_begin_request(priv_data: *const c_void, id: *const i8) 
 
     let message_ptr: *const c_void = unsafe { transmute(message) };
 
-    let message_c = Box::new(CMessage {
+    let message_c = Box::new(CMessageEncode {
         priv_data: message_ptr,
         get_id: message_get_id,
         write_blob: message_write_blob,
@@ -214,7 +215,7 @@ extern "C" fn mesage_api_begin_notification(priv_data: *const c_void, id: *const
 
     let message_ptr: *const c_void = unsafe { transmute(message) };
 
-    let message_c = Box::new(CMessage {
+    let message_c = Box::new(CMessageEncode {
         priv_data: message_ptr,
         get_id: message_get_id,
         write_blob: message_write_blob,
@@ -229,7 +230,7 @@ extern "C" fn mesage_api_begin_notification(priv_data: *const c_void, id: *const
 
 extern "C" fn mesage_api_end_message(priv_data: *const c_void, message: *const c_void) {
     let message_api: &mut MessageApi = unsafe { &mut *(priv_data as *mut MessageApi) };
-    let message: &mut Message = unsafe { &mut *(message as *mut Message) };
+    let message: &mut MessageEncode = unsafe { &mut *(message as *mut MessageEncode) };
     message_api.end_message(message);
 
     println!("mesage_api_end_message")
@@ -263,6 +264,12 @@ impl ServiceApi {
     fn get_message_api<'a>(&'a self) -> &'a MessageApi {
     	let api = self.get_c_message_api();
     	let message_api: &MessageApi = unsafe { &*((*api).priv_data as *const MessageApi) };
+    	message_api
+    }
+
+    fn get_message_api_mut(&mut self) -> &mut MessageApi {
+    	let api = self.get_c_message_api();
+    	let message_api: &mut MessageApi = unsafe { &mut *((*api).priv_data as *mut MessageApi) };
     	message_api
     }
 
@@ -353,6 +360,11 @@ impl PluginService {
     pub fn get_message_api<'a>(&'a self) -> &'a MessageApi {
     	let service_api: &ServiceApi = unsafe { &*((*self.c_service_api).priv_data as *const ServiceApi) };
     	service_api.get_message_api()
+    }
+
+    pub fn get_message_api_mut(&mut self) -> &mut MessageApi {
+    	let service_api: &mut ServiceApi = unsafe { &mut *((*self.c_service_api).priv_data as *mut ServiceApi) };
+    	service_api.get_message_api_mut()
     }
 }
 

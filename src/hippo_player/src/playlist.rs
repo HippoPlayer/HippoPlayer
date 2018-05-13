@@ -1,4 +1,3 @@
-use rmp_rpc::message::{Request, Response};
 use serde_json;
 use std::fs::File;
 use std::io::{BufWriter, BufReader};
@@ -50,20 +49,6 @@ impl Playlist {
         *self = serde_json::from_reader(f)?;
 
         Ok(())
-    }
-
-    pub fn handle_message(request: &Request) -> Option<Response> {
-        /*
-        match request.method {
-            "hippo_playlist_get_urls" => {
-                None
-            }
-
-            _ => None,
-        }
-        */
-
-        None
     }
 
     ///

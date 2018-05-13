@@ -2,12 +2,14 @@ use std::collections::{HashMap};
 use std::fs::File;
 use std::fs;
 use std::io;
-
+use std::io::Cursor;
 
 use std::io::{Read, ErrorKind};
 use msgpack;
 use msgpack::Marker;
 use msgpack::encode::{ValueWriteError, Error};
+use msgpack::decode::{ValueReadError};
+
 
 pub struct IoApi {
     pub saved_allocs: HashMap<*const u8, Box<[u8]>>,
@@ -42,22 +44,33 @@ const REQUEST_MESSAGE: u64 = 0;
 const RESPONSE_MESSAGE: u64 = 1;
 const NOTIFICATION_MESSAGE: u64 = 2;
 
+// Used to tag message as invalid
+const INVALID_MESSAGE: u64 = 3;
+
 //struct PluginSubscribe {
 //   message_types: HashSet<'static str>,
 //}
 
-pub struct Message {
-    data: Option<Vec<u8>>,
+pub struct MessageEncode {
+    data: Vec<u8>,
+    message_type: u64,
     id: u32,
     header_size: usize,
+}
+
+#[derive(Debug)]
+pub struct MessageDecode {
+	notifaction_id: u32,
+	method: String,
+	cursor: Cursor<Vec<u8>>,
 }
 
 pub struct MessageApi {
     request_id: u32,
     //subscriptions: HashMap<u64, PluginSubscribe>,
     pub request_queue: Vec<Vec<u8>>,
-    pub notifaction_queue: Vec<Message>,
-    pub respones_queue: Vec<Box<Message>>,
+    pub notifaction_queue: Vec<MessageEncode>,
+    pub respones_queue: Vec<Box<MessageEncode>>,
 }
 
 impl MessageApi {
@@ -70,83 +83,144 @@ impl MessageApi {
         }
     }
 
-    pub fn begin_request(&mut self, name: &str) -> Result<Box<Message>, ValueWriteError> {
-        let mut message = Message::new(self.request_id);
+    pub fn begin_request(&mut self, name: &str) -> Result<Box<MessageEncode>, ValueWriteError> {
+        let mut message = MessageEncode::new(self.request_id, REQUEST_MESSAGE);
 
         message.write_array_len(4)?;
         message.write_uint(REQUEST_MESSAGE)?;
+        message.write_uint(self.request_id as u64)?;
         message.write_str(name)?;
 
         self.request_id += 1;
 
         // This is to keep track of that the user acutally write some data. Otherwise we add
         // something dummy to make sure that we have a valid message
-        message.header_size = message.data.as_ref().unwrap().len();
+        message.header_size = message.data.len();
         Ok(message)
     }
 
-    pub fn begin_notification(&mut self, name: &str) -> Result<Box<Message>, ValueWriteError> {
-        let mut message = Message::new(self.request_id);
+    pub fn begin_notification(&mut self, name: &str) -> Result<Box<MessageEncode>, ValueWriteError> {
+        let mut message = MessageEncode::new(self.request_id, NOTIFICATION_MESSAGE);
 
         message.write_array_len(4)?;
         message.write_uint(NOTIFICATION_MESSAGE)?;
+        message.write_uint(self.request_id as u64)?;
         message.write_str(name)?;
 
         // This is to keep track of that the user acutally wrote some data. Otherwise we add
         // something dummy to make sure that we have a valid message
-        message.header_size = message.data.as_ref().unwrap().len();
+        message.header_size = message.data.len();
         Ok(message)
     }
 
+    pub fn end_message(&mut self, message: &mut MessageEncode) {
+    	let message_data = message.data.clone();
 
-    // TODO: Remove the copy here by using a linear allocator to fill in the memory
-    pub fn end_message(&mut self, message: &mut Message) {
-        self.request_queue.push(message.data.as_ref().unwrap().clone());
-        // Mark the message as retired
-        message.data = None;
+		match message.message_type {
+			REQUEST_MESSAGE => self.request_queue.push(message_data), 
+			// RESPONSE_MESSAGE => self.respones_queue.push(message_data), 
+			// NOTIFICATION_MESSAGE => self.notifaction_queue.push(message_data), 
+			e @ _ => println!("Tried to push message in unsupported type {}", e),
+		}
+
+        message.message_type = INVALID_MESSAGE;
     }
 
     pub fn clear_queues(&mut self) {
     	self.request_queue.clear();
     }
-
-    // helpers, should we really have this here?
 }
 
 
-impl Message {
-    fn new(id: u32) -> Box<Message> {
-        Box::new(Message {
-            data: Some(Vec::new()),
+impl MessageEncode {
+    fn new(id: u32, message_type: u64) -> Box<MessageEncode> {
+        Box::new(MessageEncode {
+            data: Vec::new(),
             header_size: 0,
+            message_type,
             id,
         })
     }
 
     pub fn write_str(&mut self, data: &str) -> Result<(), ValueWriteError> {
-        if let Some(ref mut dest) = self.data {
-            println!("message:write_str {}", data);
-            msgpack::encode::write_str(dest, data)
+    	if self.message_type != INVALID_MESSAGE {
+            msgpack::encode::write_str(&mut self.data, data)
         } else {
-            Err(ValueWriteError::InvalidDataWrite(Error::new(ErrorKind::Other, "Not possible to write. Message has ended?")))
+            Err(ValueWriteError::InvalidDataWrite(Error::new(ErrorKind::Other, "Not possible to write. MessageEncode has ended?")))
         }
     }
 
     pub fn write_uint(&mut self, data: u64) -> Result<Marker, ValueWriteError> {
-        if let Some(ref mut dest) = self.data {
-            msgpack::encode::write_uint(dest, data)
+    	if self.message_type != INVALID_MESSAGE {
+            msgpack::encode::write_uint(&mut self.data, data)
         } else {
-            Err(ValueWriteError::InvalidDataWrite(Error::new(ErrorKind::Other, "Not possible to write. Message has ended?")))
+            Err(ValueWriteError::InvalidDataWrite(Error::new(ErrorKind::Other, "Not possible to write. MessageEncode has ended?")))
         }
     }
 
     pub fn write_array_len(&mut self, size: u32) -> Result<Marker, ValueWriteError> {
-        if let Some(ref mut dest) = self.data {
-            println!("message:write_array_len {}", size);
-            msgpack::encode::write_array_len(dest, size)
+    	if self.message_type != INVALID_MESSAGE {
+            msgpack::encode::write_array_len(&mut self.data, size)
         } else {
-            Err(ValueWriteError::InvalidDataWrite(Error::new(ErrorKind::Other, "Not possible to write. Message has ended?")))
+            Err(ValueWriteError::InvalidDataWrite(Error::new(ErrorKind::Other, "Not possible to write. MessageEncode has ended?")))
         }
+    }
+}
+
+impl MessageDecode {
+    pub fn new(data: Vec<u8>) -> Result<Box<MessageDecode>, ValueReadError> {
+    	let mut id = 0;
+		let mut cursor = Cursor::new(data);
+
+		//
+		// Parse the message 
+		//
+
+		println!("reading array len");
+
+		let array_len = msgpack::decode::read_array_len(&mut cursor)?;
+
+		if array_len != 4 {
+            return Err(ValueReadError::InvalidDataRead(Error::new(ErrorKind::Other, "Message array count has to be 4")))
+		}
+
+		//
+		// Make sure notification type is valid (can only be 0 -2)
+		//
+		
+		println!("notifaction type");
+
+		// TODO: don't unwrap
+		let notification_type: u64 = msgpack::decode::read_int(&mut cursor).unwrap();
+
+		if notification_type >= INVALID_MESSAGE {
+           return Err(ValueReadError::InvalidDataRead(Error::new(ErrorKind::Other, "Invalid notification type")));
+		}
+
+		println!("request id type");
+
+		//
+		// Get notifcation id 
+		//
+
+		// TODO: don't unwrap
+		let id: u32 = msgpack::decode::read_int(&mut cursor).unwrap();
+
+		//
+		// Decode string id 
+		//
+
+		let mut string_dest = [0; 1024];
+
+		// TODO: Don't unwrap
+		let text_data = msgpack::decode::read_str(&mut cursor, &mut string_dest).unwrap();
+
+		Ok(Box::new(MessageDecode {
+			notifaction_id: id,
+			// TODO: Don't unwrap here.
+			method: text_data.to_owned(),
+			cursor,
+		}))
     }
 }
 

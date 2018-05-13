@@ -17,35 +17,35 @@ pub struct MessageApi {
     api: Option<*const CMessageAPI>,
 }
 
-pub struct Message {
-    api: Option<*const CMessage>,
+pub struct MessageEncode {
+    api: Option<*const CMessageEncode>,
 }
 
 impl MessageApi {
     // TODO: Proper results
-    pub fn begin_request(&self, id: &str) -> Message {
+    pub fn begin_request(&self, id: &str) -> MessageEncode {
         let c_id = CString::new(id).unwrap();
 
         unsafe {
             let api = *self.api.as_ref().unwrap();
-            Message {
-                api: Some(((*api).begin_request)((*api).priv_data, c_id.as_ptr()) as *const CMessage),
+            MessageEncode {
+                api: Some(((*api).begin_request)((*api).priv_data, c_id.as_ptr()) as *const CMessageEncode),
             }
         }
     }
 
-    pub fn begin_notification(&self, id: &str) -> Message {
+    pub fn begin_notification(&self, id: &str) -> MessageEncode {
         let c_id = CString::new(id).unwrap();
 
         unsafe {
             let api = *self.api.as_ref().unwrap();
-            Message {
-                api: Some(((*api).begin_notification)((*api).priv_data, c_id.as_ptr()) as *const CMessage),
+            MessageEncode {
+                api: Some(((*api).begin_notification)((*api).priv_data, c_id.as_ptr()) as *const CMessageEncode),
             }
         }
     }
 
-    pub fn end_message(&self, message: Message) {
+    pub fn end_message(&self, message: MessageEncode) {
         unsafe {
             let api = *self.api.as_ref().unwrap();
             ((*api).end_message)((*api).priv_data, (*message.api.unwrap()).priv_data)
@@ -81,7 +81,7 @@ impl Service {
     }
 }
 
-impl Message {
+impl MessageEncode {
     pub fn get_id(&self) -> u32 {
         unsafe {
             let api = *self.api.as_ref().unwrap();
@@ -104,7 +104,7 @@ impl Message {
     }
 }
 
-impl io::Write for Message {
+impl io::Write for MessageEncode {
 	///
 	/// Just using the write_blob API to add data to the stream
 	/// TODO: Error handling
@@ -123,10 +123,3 @@ impl io::Write for Message {
 	}
 }
 
-
-    /*
-
-    : extern "C" fn(priv_data: *const c_void) -> u32,
-    pub write_array_count: extern "C" fn(priv_data: *const c_void, len: u32) -> i32,
-    pub write_str: extern "C" fn(priv_data: *const c_void, data: *const c_char) -> i32,
-    */
