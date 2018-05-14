@@ -8,7 +8,7 @@ use rute::rute::PushButton;
 use rute::PluginUi;
 
 use hippo_api::view::View;
-use hippo_api::service::{Service, MessageApi};
+use hippo_api::{Service, MessageApi, MessageDecode};
 
 #[derive(Default)]
 struct Player {
@@ -57,6 +57,10 @@ impl View for Player {
         vbox.add_widget(&buttons);
 
         ui.get_parent().set_layout(&vbox);
+    }
+
+    fn event(&mut self, event: &MessageDecode) {
+    	println!("event: {}", event.get_method());
     }
 
     fn destroy(&mut self) {}

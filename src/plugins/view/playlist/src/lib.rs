@@ -10,7 +10,7 @@ use rute::rute::{DragEnterEvent, DropEvent, ListWidget};
 use rute::PluginUi;
 
 use hippo_api::view::View;
-use hippo_api::{Service, MessageApi};
+use hippo_api::{Service, MessageApi, MessageDecode};
 use hippo_api::messages::{AddUrls, ListPosition};
 
 #[derive(Default)]
@@ -26,6 +26,10 @@ impl View for Playlist {
 			message_api: service.message_api(),
 			.. Playlist::default()
 		}
+    }
+
+    fn event(&mut self, msg: &MessageDecode) {
+    	println!("msg decode {}", msg.get_method());
     }
 
     fn setup_ui(&mut self, ui: PluginUi) {

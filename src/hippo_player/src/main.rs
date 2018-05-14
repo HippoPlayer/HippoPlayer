@@ -35,6 +35,7 @@ use std::path::Path;
 use playlist::Playlist;
 use std::io;
 use service::MessageDecode;
+use hippo_api::ffi::CMessageDecode;
 
 use rute::{SharedLibUi, Ui};
 use rute::rute::*;
@@ -105,6 +106,14 @@ impl <'a> HippoPlayer<'a> {
                 for message in &messages.request_queue {
                     let message_dec = MessageDecode::new(message.clone()).unwrap();
                     println!("message_dec {:?}", message_dec);
+
+                    let pb = instance.instance.as_ref().unwrap();
+
+                    unsafe {
+                        let message = service_ffi::get_cmessage_decode(&message_dec);
+                        let ptr: *const CMessageDecode = &message as *const CMessageDecode;
+                        ((pb.plugin.plugin_funcs).event.unwrap())(pb.user_data as *mut ::std::os::raw::c_void, ptr);
+                    }
                 }
 
                 messages.clear_queues();
