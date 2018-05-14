@@ -149,12 +149,13 @@ typedef struct HippoMessageDecode {
     struct HippoMessageDecode* priv_data;
 
 	uint32_t (*get_id)(struct HippoMessageDecode* handle);
+	const char* (*get_method)(struct HippoMessageDecode* handle);
+	int (*get_raw_ptr)(struct HippoMessageDecode* handle, void** ptr, uint64_t* len); 
 
-	int (*read_array_count)(struct HippoMessageDecode* handle, int* count);
-	int (*read_uint)(struct HippoMessageDecode* handle, uint64_t* value);
-	int (*read_str_len)(struct HippoMessageDecode* handle, uint64_t* size);
-	int (*read_str)(struct HippoMessageDecode* handle, char* dest);
-	int (*read_get_raw_ptr)(struct HippoMessageDecode* handle, void** ptr, uint64_t* len); 
+	///int (*read_array_count)(struct HippoMessageDecode* handle, int* count);
+	///int (*read_uint)(struct HippoMessageDecode* handle, uint64_t* value);
+	///int (*read_str_len)(struct HippoMessageDecode* handle, uint64_t* size);
+	///int (*read_str)(struct HippoMessageDecode* handle, char* dest);
 
 } HippoMessageDecode;
 
@@ -289,7 +290,8 @@ typedef struct HippoViewPlugin {
 	void* (*create)(HippoServiceAPI* services);
 	void (*setup_ui)(void* user_data, struct RUPluginUI* ui_funcs);
 	int (*destroy)(void* user_data);
-	void (*event)(int event);
+	void (*event)(void* user_data, struct HippoMessageDecode* message);
+
 	int (*save)(void* user_data, struct HippoSaveAPI* save_api);
 	int (*load)(void* user_data, struct HippoLoadAPI* load_api);
 

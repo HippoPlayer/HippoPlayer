@@ -38,11 +38,8 @@ pub struct CMessageAPI {
 pub struct CMessageDecode {
     pub priv_data: *const c_void,
     pub get_id: extern "C" fn(priv_data: *const c_void) -> u32,
-    pub read_array_count: extern "C" fn(priv_data: *const c_void, len: *mut u64) -> i32,
-    pub read_uint: extern "C" fn(priv_data: *const c_void, len: *mut u64) -> i32,
-    pub read_str_len: extern "C" fn(priv_data: *const c_void, len: *mut u64) -> i32,
-    pub read_str: extern "C" fn(priv_data: *const c_void, dest: *mut i8) -> i32,
-    pub read_get_raw_ptr: extern "C" fn(priv_data: *const c_void, data: *mut *const c_void, len: *mut u64) -> i32,
+    pub get_method: extern "C" fn(priv_data: *const c_void) -> *const i8,
+    pub get_raw_ptr: extern "C" fn(priv_data: *const c_void, data: *mut *const c_void, len: *mut u64) -> i32,
 }
 
 #[repr(C)]
@@ -96,6 +93,6 @@ pub struct CHippoViewPlugin {
     pub create: Option<extern "C" fn(service: *const CHippoServiceAPI) -> *mut c_void>,
     pub setup_ui: Option<extern "C" fn(user_data: *mut c_void, ui: *const RUPluginUI)>,
     pub destroy: Option<extern "C" fn(user_data: *mut c_void)>,
-    pub event: Option<extern "C" fn(event: u32)>,
+    pub event: Option<extern "C" fn(user_data: *mut c_void, message: *const CMessageDecode)>,
 }
 

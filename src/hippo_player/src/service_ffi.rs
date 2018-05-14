@@ -6,7 +6,7 @@ use std::slice;
 use std::io::Read;
 use song_db::SongDb;
 use std::collections::HashMap;
-use service::{IoApi, FileWrapper, MessageEncode, MessageApi};
+use service::{IoApi, FileWrapper, MessageEncode, MessageDecode, MessageApi};
 use hippo_api::ffi::*;
 
 extern "C" fn file_exists_wrapper(priv_data: *const c_void, target: *const u8) -> i32 {
@@ -180,6 +180,33 @@ extern "C" fn message_write_str(priv_data: *const c_void, name: *const i8) -> i3
     1
 }
 
+extern "C" fn message_decode_get_id(priv_data: *const c_void) -> u32 {
+    let message: &MessageDecode = unsafe { &*(priv_data as *mut MessageDecode ) };
+    message.notifaction_id
+}
+
+extern "C" fn message_decode_get_method(priv_data: *const c_void) -> *const i8 {
+    let message: &MessageDecode = unsafe { &*(priv_data as *mut MessageDecode ) };
+    message.method.as_ptr() as *const i8
+}
+
+extern "C" fn message_decode_get_raw_ptr(priv_data: *const c_void, data: *mut *const c_void, len: *mut u64) -> i32 {
+    let message: &MessageDecode = unsafe { &*(priv_data as *mut MessageDecode ) };
+    message.method.as_ptr() as *const i8;
+
+    let data_t = message.cursor.get_ref().as_slice();
+    let pos = message.cursor.position() as usize;
+    let data_range = &data_t[pos..];
+
+    unsafe {
+		let data_ptr: *const c_void = data_range.as_ptr() as *const c_void;
+    	*data = data_ptr; 
+    	*len = data_range.len() as u64;
+    }
+
+    0
+}
+
 extern "C" fn mesage_api_begin_request(priv_data: *const c_void, id: *const i8) -> *const c_void {
     let message_api: &mut MessageApi = unsafe { &mut *(priv_data as *mut MessageApi) };
     let name_id = unsafe { CStr::from_ptr(id as *const c_char) };
@@ -324,6 +351,17 @@ impl ServiceApi {
             c_message_api
         }
     }
+}
+
+pub fn get_cmessage_decode(message: &MessageDecode) -> CMessageDecode {
+	let priv_data: *const c_void = unsafe { transmute(message) };
+
+	CMessageDecode {
+		priv_data,
+		get_id: message_decode_get_id,
+		get_method: message_decode_get_method,
+		get_raw_ptr: message_decode_get_raw_ptr,
+	}
 }
 
 pub struct PluginService {

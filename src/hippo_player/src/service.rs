@@ -60,9 +60,10 @@ pub struct MessageEncode {
 
 #[derive(Debug)]
 pub struct MessageDecode {
-	notifaction_id: u32,
-	method: String,
-	cursor: Cursor<Vec<u8>>,
+	pub notifaction_id: u32,
+	// Really as string but keep this way to allow easy acess on C side 
+	pub method: Vec<u8>,
+	pub cursor: Cursor<Vec<u8>>,
 }
 
 pub struct MessageApi {
@@ -169,7 +170,6 @@ impl MessageEncode {
 
 impl MessageDecode {
     pub fn new(data: Vec<u8>) -> Result<Box<MessageDecode>, ValueReadError> {
-    	let mut id = 0;
 		let mut cursor = Cursor::new(data);
 
 		//
@@ -210,15 +210,17 @@ impl MessageDecode {
 		// Decode string id 
 		//
 
-		let mut string_dest = [0; 1024];
+		let mut string_dest = vec![0; 1024];
 
-		// TODO: Don't unwrap
-		let text_data = msgpack::decode::read_str(&mut cursor, &mut string_dest).unwrap();
+		{	
+			// TODO: Don't unwrap
+			let _text_data = msgpack::decode::read_str(&mut cursor, &mut string_dest).unwrap();
+		}
 
 		Ok(Box::new(MessageDecode {
 			notifaction_id: id,
 			// TODO: Don't unwrap here.
-			method: text_data.to_owned(),
+			method: string_dest,
 			cursor,
 		}))
     }

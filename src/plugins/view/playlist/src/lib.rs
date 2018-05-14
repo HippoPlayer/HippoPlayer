@@ -4,8 +4,8 @@ extern crate hippo_api;
 #[macro_use]
 extern crate rute;
 
-use std::path::Path;
-use std::ffi::OsStr;
+//use std::path::Path;
+//use std::ffi::OsStr;
 use rute::rute::{DragEnterEvent, DropEvent, ListWidget};
 use rute::PluginUi;
 
@@ -56,9 +56,11 @@ impl View for Playlist {
 }
 
 impl Playlist {
+	/*
     fn get_filename_only(filename: &str) -> Option<&str> {
         Path::new(filename).file_name().and_then(OsStr::to_str)
     }
+    */
 
     ///
     /// This happens when the user has made a drag'n'drop operation
@@ -83,7 +85,7 @@ impl Playlist {
         	urls.push(url.to_local_file().to_owned())
         }
 
-        let add_request_id = self.message_api.add_urls(AddUrls {
+        let _add_request_id = self.message_api.add_urls(AddUrls {
         	list_position: ListPosition::End,
         	urls,
         });

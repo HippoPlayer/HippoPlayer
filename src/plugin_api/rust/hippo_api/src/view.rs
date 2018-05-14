@@ -1,13 +1,14 @@
-use service::Service;
+use service::{Service, MessageDecode};
 use rute::ffi_gen::RUPluginUI;
 use rute::rute::PluginUi;
 use std::os::raw::{c_void};
 use std::mem::transmute;
-use ffi::{CHippoServiceAPI};
+use ffi::{CHippoServiceAPI, CMessageDecode};
 
 pub trait View {
     fn new(service: &Service) -> Self;
     fn setup_ui(&mut self, ui: PluginUi);
+    fn event(&mut self, _message: &MessageDecode) { }
     fn destroy(&mut self) {}
 }
 
@@ -21,6 +22,12 @@ pub extern "C" fn setup_ui_view_instance<T: View>(user_data: *mut c_void, ui: *c
     let view: &mut T = unsafe { &mut *(user_data as *mut T) };
     let plugin_ui = PluginUi::new(ui);
     view.setup_ui(plugin_ui)
+}
+
+pub extern "C" fn event_view_instance<T: View>(user_data: *mut c_void, cmessage: *const CMessageDecode) {
+    let view: &mut T = unsafe { &mut *(user_data as *mut T) };
+    let message = MessageDecode { api: Some(cmessage) };
+    view.event(&message)
 }
 
 pub extern "C" fn destroy_view_instance<T: View>(ptr: *mut c_void) {
@@ -40,10 +47,10 @@ macro_rules! define_view_plugin {
             create: Some(hippo_api::view::create_view_instance::<$x>),
             setup_ui: Some(hippo_api::view::setup_ui_view_instance::<$x>),
             destroy: Some(hippo_api::view::destroy_view_instance::<$x>),
-            // event: Some(hippo_api::view::event_view_instance::<$x>),
+            event: Some(hippo_api::view::event_view_instance::<$x>),
             //save: None,
             //load: None,
-            event: None,
+            //event: None,
         };
 
         //let ret: *const std::os::raw::c_void = unsafe { std::mem::transmute(&$p_name) };
