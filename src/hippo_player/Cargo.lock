@@ -196,6 +196,7 @@ dependencies = [
  "hippo_api 0.1.0",
  "rmp 0.8.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "rmp-rpc 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rmp-serde 0.13.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "rodio 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "rute 0.1.0",
  "serde 1.0.27 (registry+https://github.com/rust-lang/crates.io-index)",

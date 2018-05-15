@@ -1,15 +1,24 @@
 use service::MessageApi;
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum ListPosition {
 	Start,
 	End,
 }
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct AddUrls {
 	pub list_position: ListPosition,
 	pub urls: Vec<String>,
+}
+
+impl AddUrls {
+	pub fn new() -> AddUrls {
+		AddUrls {
+			list_position: ListPosition::End,
+			urls: Vec::new(),
+		}
+	}
 }
 
 impl MessageApi {

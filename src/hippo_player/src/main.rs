@@ -9,6 +9,8 @@ extern crate serde_json;
 extern crate rmp_rpc;
 pub extern crate rmp;
 
+extern crate rmp_serde as rmps;
+
 #[macro_use]
 extern crate rute;
 
@@ -96,27 +98,60 @@ impl <'a> HippoPlayer<'a> {
     ///
     /// Loops over all view instances and checks if any of them has posted any messages
     ///
+    /// Currently we only pass all data to the playlist and then back to to the plugins
+    /// 
     fn update_ui_messages(&mut self) {
-        for instance in &mut self.state.view_instance_states {
-            if let Some(ref mut service) = instance.plugin_service {
-                let messages = service.get_message_api_mut();
+        let mut playlist_respones = Vec::new();
+        let mut start_next_song = false;
 
-                println!("request_que len {}", messages.request_queue.len());
+        // Send all the events to the playlist
+
+        for instance in &self.state.view_instance_states {
+            if let Some(ref service) = instance.plugin_service {
+                let messages = service.get_message_api();
 
                 for message in &messages.request_queue {
                     let message_dec = MessageDecode::new(message.clone()).unwrap();
-                    println!("message_dec {:?}", message_dec);
 
-                    let pb = instance.instance.as_ref().unwrap();
+                    //
+                    // Parse messages that affects both player and playlist
+                    // 
 
-                    unsafe {
-                        let message = service_ffi::get_cmessage_decode(&message_dec);
-                        let ptr: *const CMessageDecode = &message as *const CMessageDecode;
-                        ((pb.plugin.plugin_funcs).event.unwrap())(pb.user_data as *mut ::std::os::raw::c_void, ptr);
+                    match message_dec.get_method().as_ref() {
+			            "hippo_playlist_next_song" => {
+			                start_next_song = true;
+                        } 
+
+                        _ => (),
                     }
-                }
 
+                    self.playlist.event(&message_dec)
+                        .map(|reply| playlist_respones.push(reply));
+                }
+            }
+        }
+			                
+		if start_next_song {
+		    self.playlist.get_next_song().map(|song| self.play_file(&song));
+		}
+
+        for instance in &mut self.state.view_instance_states {
+            if let Some(ref mut service) = instance.plugin_service {
+                let messages = service.get_message_api_mut();
                 messages.clear_queues();
+            }
+        }
+
+        // Send back the replies from the playlist
+
+        for msg in playlist_respones {
+            let message_dec = MessageDecode::new(msg.data.clone()).unwrap();
+            let message = service_ffi::get_cmessage_decode(&message_dec);
+
+            for instance in &mut self.state.view_instance_states {
+                let pb = instance.instance.as_ref().unwrap();
+                let ptr: *const CMessageDecode = &message as *const CMessageDecode;
+                ((pb.plugin.plugin_funcs).event.unwrap())(pb.user_data as *mut ::std::os::raw::c_void, ptr);
             }
         }
     }

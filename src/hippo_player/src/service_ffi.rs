@@ -152,9 +152,10 @@ extern "C" fn message_get_id(_priv_data: *const c_void) -> u32 {
     0
 }
 
-extern "C" fn message_write_blob(priv_data: *const c_void, _data: *const c_void, _len: u32) -> i32 {
-    let _message: &mut MessageEncode = unsafe { &mut *(priv_data as *mut MessageEncode) };
-    //message.write_formatted_blob
+extern "C" fn message_write_blob(priv_data: *const c_void, data: *const c_void, len: u32) -> i32 {
+    let message: &mut MessageEncode = unsafe { &mut *(priv_data as *mut MessageEncode) };
+    let data = unsafe { slice::from_raw_parts(data as *const u8, len as usize) };
+    message.write_blob(data);
     0
 }
 

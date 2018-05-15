@@ -9,7 +9,8 @@ use msgpack;
 use msgpack::Marker;
 use msgpack::encode::{ValueWriteError, Error};
 use msgpack::decode::{ValueReadError};
-
+use std::borrow::Cow;
+use std::ffi::{CStr};
 
 pub struct IoApi {
     pub saved_allocs: HashMap<*const u8, Box<[u8]>>,
@@ -40,9 +41,9 @@ pub struct FileWrapper {
     pub file: fs::File,
 }
 
-const REQUEST_MESSAGE: u64 = 0;
-const RESPONSE_MESSAGE: u64 = 1;
-const NOTIFICATION_MESSAGE: u64 = 2;
+pub const REQUEST_MESSAGE: u64 = 0;
+pub const RESPONSE_MESSAGE: u64 = 1;
+pub const NOTIFICATION_MESSAGE: u64 = 2;
 
 // Used to tag message as invalid
 const INVALID_MESSAGE: u64 = 3;
@@ -52,7 +53,7 @@ const INVALID_MESSAGE: u64 = 3;
 //}
 
 pub struct MessageEncode {
-    data: Vec<u8>,
+    pub data: Vec<u8>,
     message_type: u64,
     id: u32,
     header_size: usize,
@@ -97,11 +98,11 @@ impl MessageApi {
         // This is to keep track of that the user acutally write some data. Otherwise we add
         // something dummy to make sure that we have a valid message
         message.header_size = message.data.len();
-        Ok(message)
+        Ok(Box::new(message))
     }
 
     pub fn begin_notification(&mut self, name: &str) -> Result<Box<MessageEncode>, ValueWriteError> {
-        let mut message = MessageEncode::new(self.request_id, NOTIFICATION_MESSAGE);
+        let mut message = Box::new(MessageEncode::new(self.request_id, NOTIFICATION_MESSAGE));
 
         message.write_array_len(4)?;
         message.write_uint(NOTIFICATION_MESSAGE)?;
@@ -134,13 +135,19 @@ impl MessageApi {
 
 
 impl MessageEncode {
-    fn new(id: u32, message_type: u64) -> Box<MessageEncode> {
-        Box::new(MessageEncode {
+    pub fn new(id: u32, message_type: u64) -> MessageEncode {
+        MessageEncode {
             data: Vec::new(),
             header_size: 0,
             message_type,
             id,
-        })
+        }
+    }
+
+    pub fn write_blob(&mut self, data: &[u8]) {
+    	for d in data {
+    		self.data.push(*d);
+    	}
     }
 
     pub fn write_str(&mut self, data: &str) -> Result<(), ValueWriteError> {
@@ -224,6 +231,10 @@ impl MessageDecode {
 			cursor,
 		}))
     }
+
+	pub fn get_method<'a>(&'a self) -> Cow<'a, str> {
+		unsafe { CStr::from_ptr(self.method.as_ptr() as *const i8).to_string_lossy() }
+	}
 }
 
 
