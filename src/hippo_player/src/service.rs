@@ -42,7 +42,7 @@ pub struct FileWrapper {
 }
 
 pub const REQUEST_MESSAGE: u64 = 0;
-pub const RESPONSE_MESSAGE: u64 = 1;
+//pub const RESPONSE_MESSAGE: u64 = 1;
 pub const NOTIFICATION_MESSAGE: u64 = 2;
 
 // Used to tag message as invalid
@@ -55,7 +55,7 @@ const INVALID_MESSAGE: u64 = 3;
 pub struct MessageEncode {
     pub data: Vec<u8>,
     message_type: u64,
-    id: u32,
+    _id: u32,
     header_size: usize,
 }
 
@@ -140,7 +140,7 @@ impl MessageEncode {
             data: Vec::new(),
             header_size: 0,
             message_type,
-            id,
+            _id: id,
         }
     }
 

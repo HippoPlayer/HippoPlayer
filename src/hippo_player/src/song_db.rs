@@ -69,7 +69,9 @@ impl SongDb {
             None => None,
             Some(entry) => {
                 if sub_song > 0 {
-                    entry.sub_songs.get(&sub_song).and_then(|t| t.data.get(key)).and_then(|v| Some((*v).to_string()))
+                    entry.sub_songs.get(&sub_song)
+                        .and_then(|t| t.data.get(key))
+                        .and_then(|v| Some((*v).to_string()))
                 } else {
                     entry.song.data.get(key).and_then(|v| Some((*v).to_string()))
                 }

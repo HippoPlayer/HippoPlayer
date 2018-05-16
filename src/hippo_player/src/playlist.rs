@@ -1,7 +1,7 @@
-use serde_json;
-use std::fs::File;
-use std::io::{BufWriter, BufReader};
-use std::io;
+//use serde_json;
+//use std::fs::File;
+//use std::io::{BufWriter, BufReader};
+//use std::io;
 use service::{MessageDecode, MessageEncode, REQUEST_MESSAGE};
 use hippo_api::messages::AddUrls; 
 use serde::{Serialize, Deserialize};
@@ -35,6 +35,7 @@ impl Playlist {
         }
     }
 
+	/*
     fn new_song_message(incoming_msg: &MessageDecode, filename: &str) -> MessageEncode {
         let mut message = MessageEncode::new(incoming_msg.notifaction_id, REQUEST_MESSAGE);
 
@@ -45,6 +46,7 @@ impl Playlist {
         message.write_str(filename).unwrap();
         message
     }
+    */
 
     ///
     /// Handle incoming events 
@@ -94,20 +96,24 @@ impl Playlist {
     ///
     /// Serialize the playlist and write it to filename
     ///
+    /*
     pub fn save(&mut self, filename: &str) -> io::Result<()> {
         let f = BufWriter::new(File::create(filename)?);
         serde_json::to_writer_pretty(f, self)?;
         Ok(())
     }
+    */
 
     ///
     /// Load the playlist
     ///
+    /*
     pub fn load(&mut self, filename: &str) -> io::Result<()> {
         let f = BufReader::new(File::open(filename)?);
         *self = serde_json::from_reader(f)?;
         Ok(())
     }
+    */
 
     ///
     /// Get the next song to play
@@ -125,8 +131,8 @@ impl Playlist {
         Some(self.entries[current_song].path.to_owned())
     }
 
+	/*
     fn get_prev_song(&mut self) -> Option<&str> {
-        /*
         let count = self.entries.len();
 
         let mut current_item = self.current_item + 1;
@@ -138,10 +144,10 @@ impl Playlist {
         self.current_item = current_item;
 
         Some(&self.entries[current_item].path)
-        */
 
         None
     }
+    */
 }
 
 

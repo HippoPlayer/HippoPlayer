@@ -72,8 +72,8 @@ struct HippoPlayer<'a> {
     ui: Ui,
     app: Application,
     state: HippoState,
-    current_song_time: f32,
-    is_playing: bool,
+    _current_song_time: f32,
+    _is_playing: bool,
 }
 
 include!(concat!(env!("OUT_DIR"), "/build_id.rs"));
@@ -90,8 +90,8 @@ impl <'a> HippoPlayer<'a> {
            dock_manager: ui.create_dock_manager(),
            state: HippoState::default(),
            ui: ui,
-           current_song_time: -10.0,
-           is_playing: false,
+           _current_song_time: -10.0,
+           _is_playing: false,
         }
     }
 
@@ -156,10 +156,12 @@ impl <'a> HippoPlayer<'a> {
         }
     }
 
+    /*
     fn stop_song(&mut self) {
         self.audio.stop();
         self.is_playing = false;
     }
+    */
 
     fn try_save_layout(filename: &str, layout: &str) -> io::Result<()> {
         let mut file = File::create(filename)?;

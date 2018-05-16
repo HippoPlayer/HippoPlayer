@@ -340,7 +340,7 @@ impl ServiceApi {
         let c_message_api = Box::new(CMessageAPI {
            priv_data: message_api,
            begin_request: mesage_api_begin_request,
-           begin_notification: mesage_api_begin_request,
+           begin_notification: mesage_api_begin_notification,
            end_message: mesage_api_end_message,
         });
 
