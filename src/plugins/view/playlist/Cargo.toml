@@ -10,4 +10,6 @@ crate-type = ["cdylib"]
 [dependencies]
 hippo_api = { path = "../../../plugin_api/rust/hippo_api" }
 rute = { path = "../../../external/rute" }
+serde = "1.0"
+rmp-serde = "0.13.7"
 

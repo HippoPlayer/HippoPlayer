@@ -4,8 +4,14 @@ extern crate hippo_api;
 #[macro_use]
 extern crate rute;
 
-//use std::path::Path;
-//use std::ffi::OsStr;
+extern crate serde;
+extern crate rmp_serde as rmps;
+
+use serde::{Deserialize};
+use rmps::{Deserializer};
+
+use std::path::Path;
+use std::ffi::OsStr;
 use rute::rute::{DragEnterEvent, DropEvent, ListWidget};
 use rute::PluginUi;
 
@@ -29,6 +35,11 @@ impl View for Playlist {
     }
 
     fn event(&mut self, msg: &MessageDecode) {
+    	match msg.get_method().as_ref() {
+    		"hippo_playlist_added_files" => self.add_files(&msg),
+    		_ => (),
+    	}
+
     	println!("msg decode {}", msg.get_method());
     }
 
@@ -60,11 +71,29 @@ impl View for Playlist {
 }
 
 impl Playlist {
-	/*
+	// TODO: Correct names should be sent to added_files instead
     fn get_filename_only(filename: &str) -> Option<&str> {
         Path::new(filename).file_name().and_then(OsStr::to_str)
     }
-    */
+
+	///
+	/// Message sent when files needs to be added to the actual view.
+	/// It's usually the playlist that sends this event
+	/// 
+	fn add_files(&mut self, msg: &MessageDecode) {
+		let mut de = Deserializer::new(msg.get_raw_data());
+		let files: AddUrls = Deserialize::deserialize(&mut de).unwrap();
+
+		for file in &files.urls {
+			let item = self.ui.create_list_widget_item();
+        	let name = Self::get_filename_only(&file).unwrap_or(&file);
+
+			item.set_text(name);
+			item.set_string_data(&file);
+
+			self.widget.add_item(&item);
+		}
+	}
 
     ///
     /// This happens when the user has made a drag'n'drop operation
@@ -96,32 +125,6 @@ impl Playlist {
 
         event.accept_proposed_action();
     }
-
-    /*
-    fn add_file(&mut self, local_file: &str) {
-        let ui = self.ui;
-
-        let mut add_files_message = AddUrls::new(); 
-
-
-
-        if let Some(filename) = Self::get_filename_only(&local_file) {
-            let item = ui.create_list_widget_item();
-
-            // Check if we already have this file added then we can use the title again
-            // TODO: Request song name for this file
-            item.set_text(filename);
-            item.set_string_data(&local_file);
-
-            self.widget.add_item(&item);
-        } else {
-            println!(
-                "Skipped adding {} as no proper filename was found",
-                local_file
-            );
-        }
-    }
-    */
 
     fn drag_enter(&mut self, event: &DragEnterEvent) {
         event.accept();

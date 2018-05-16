@@ -175,6 +175,25 @@ impl MessageEncode {
     }
 }
 
+impl io::Write for MessageEncode {
+	///
+	/// Just using the write_blob API to add data to the stream
+	/// TODO: Error handling
+	///
+	fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+		self.write_blob(buf);
+		Ok(buf.len())
+	}
+
+	///
+	/// No need to flush here
+	///
+	fn flush(&mut self) -> io::Result<()> {
+		Ok(())
+	}
+}
+
+
 impl MessageDecode {
     pub fn new(data: Vec<u8>) -> Result<Box<MessageDecode>, ValueReadError> {
 		let mut cursor = Cursor::new(data);

@@ -4,8 +4,8 @@ use std::io::{BufWriter, BufReader};
 use std::io;
 use service::{MessageDecode, MessageEncode, REQUEST_MESSAGE};
 use hippo_api::messages::AddUrls; 
-use serde::{Deserialize};
-use rmps::{Deserializer};
+use serde::{Serialize, Deserialize};
+use rmps::{Serializer, Deserializer};
 
 ///
 /// Metadata for each entry. We will likely stuff more things here later on.
@@ -77,7 +77,14 @@ impl Playlist {
 					self.entries.push(entry);
 				}
 
-				None
+				let mut message = MessageEncode::new(msg.notifaction_id, REQUEST_MESSAGE);
+				message.write_array_len(4).unwrap();
+				message.write_uint(REQUEST_MESSAGE).unwrap();
+				message.write_uint(msg.notifaction_id as u64).unwrap();
+				message.write_str("hippo_playlist_added_files").unwrap();
+				files.serialize(&mut Serializer::new(&mut message)).unwrap();
+
+				Some(message)
 			},
 
 			_ => None,

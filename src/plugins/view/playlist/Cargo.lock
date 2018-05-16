@@ -55,7 +55,9 @@ name = "playlist"
 version = "0.1.0"
 dependencies = [
  "hippo_api 0.1.0",
+ "rmp-serde 0.13.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "rute 0.1.0",
+ "serde 1.0.53 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
