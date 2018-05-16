@@ -20,7 +20,6 @@ mod audio;
 mod playlist;
 mod plugin_handler;
 mod song_db;
-//mod song_info;
 
 mod service;
 pub mod service_ffi;
