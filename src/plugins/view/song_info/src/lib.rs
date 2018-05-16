@@ -6,9 +6,6 @@ extern crate rute;
 
 use rute::PluginUi;
 
-// TODO: Fix me
-//use std::os::raw::c_void;
-
 use rute::rute::{LineEdit, PlainTextEdit, VBoxLayout};
 use hippo_api::view::View;
 use hippo_api::service::Service;
@@ -63,7 +60,6 @@ impl SongInfo {
         let label_text = rute.create_label();
         let line = rute.create_line_edit();
 
-        //line.set_read_only(true);
         label_text.set_text(label_name);
 
         layout.add_widget(&label_text);
@@ -83,7 +79,6 @@ impl SongInfo {
         let label_text = rute.create_label();
         let line = rute.create_plain_text_edit();
 
-        //line.set_read_only(true);
         label_text.set_text(label_name);
 
         layout.add_widget(&label_text);
