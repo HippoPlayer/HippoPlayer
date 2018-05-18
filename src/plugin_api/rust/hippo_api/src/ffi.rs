@@ -31,6 +31,7 @@ pub struct CMessageAPI {
     pub begin_request: extern "C" fn(priv_data: *const c_void, id: *const i8) -> *const c_void,
     pub begin_notification: extern "C" fn(priv_data: *const c_void, id: *const i8) -> *const c_void,
     pub end_message: extern "C" fn(priv_data: *const c_void, message: *const c_void),
+    pub request_new_id: extern "C" fn(priv_data: *const c_void) -> u32,
 }
 
 #[repr(C)]

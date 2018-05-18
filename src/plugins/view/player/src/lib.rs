@@ -59,8 +59,8 @@ impl View for Player {
         ui.get_parent().set_layout(&vbox);
     }
 
-    fn event(&mut self, event: &MessageDecode) {
-    	println!("event: {}", event.get_method());
+    fn event(&mut self, event: &mut MessageDecode) {
+    	println!("event: {}", event.method);
     }
 
     fn destroy(&mut self) {}
@@ -87,9 +87,9 @@ impl Player {
     /// Sends a notification that next song should be started.
     /// Notice that this is not a request as a general "next playing song" will be sent out
     /// instead as this affects more plugins than just the sender
-    /// 
+    ///
     fn next_song(&mut self) {
-    	self.message_api.next_song();
+    	//self.message_api.next_song();
     }
 }
 

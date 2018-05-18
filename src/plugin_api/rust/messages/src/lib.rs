@@ -1,4 +1,15 @@
-use service::MessageApi;
+#[macro_use]
+extern crate serde_derive;
+extern crate serde;
+
+pub extern crate rmp as msgpack;
+extern crate rmp_serde as rmps;
+
+pub enum MsgType {
+    Request,
+    Response,
+    Notification,
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum ListPosition {
@@ -21,6 +32,16 @@ impl AddUrls {
 	}
 }
 
+pub use msgpack::encode::ValueWriteError as ValueWriteError;
+pub use msgpack::decode::NumValueReadError as NumValueReadError;
+
+pub use encode::Message as MessageEncode;
+pub use decode::Message as MessageDecode;
+
+pub mod decode;
+pub mod encode;
+
+/*
 impl MessageApi {
 	pub fn next_song(&self) {
 		println!("Requesting next song");
@@ -33,5 +54,7 @@ impl MessageApi {
 		self.send_request("hippo_playlist_add_urls", &urls_msg)
 	}
 }
+*/
+
 
 

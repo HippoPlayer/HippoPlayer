@@ -34,13 +34,13 @@ impl View for Playlist {
 		}
     }
 
-    fn event(&mut self, msg: &MessageDecode) {
-    	match msg.get_method().as_ref() {
-    		"hippo_playlist_added_files" => self.add_files(&msg),
+    fn event(&mut self, msg: &mut MessageDecode) {
+    	match msg.method {
+    		"hippo_playlist_added_files" => self.add_files(msg),
     		_ => (),
     	}
 
-    	println!("msg decode {}", msg.get_method());
+    	println!("msg decode {}", msg.method);
     }
 
     fn setup_ui(&mut self, ui: PluginUi) {
@@ -79,10 +79,9 @@ impl Playlist {
 	///
 	/// Message sent when files needs to be added to the actual view.
 	/// It's usually the playlist that sends this event
-	/// 
-	fn add_files(&mut self, msg: &MessageDecode) {
-		let mut de = Deserializer::new(msg.get_raw_data());
-		let files: AddUrls = Deserialize::deserialize(&mut de).unwrap();
+	///
+	fn add_files(&mut self, msg: &mut MessageDecode) {
+	    let mut files: AddUrls = msg.deserialize().unwrap();
 
 		for file in &files.urls {
 			let item = self.ui.create_list_widget_item();
@@ -118,10 +117,11 @@ impl Playlist {
         	urls.push(url.to_local_file().to_owned())
         }
 
-        let _add_request_id = self.message_api.add_urls(AddUrls {
-        	list_position: ListPosition::End,
-        	urls,
-        });
+        let mut msg = self.message_api.begin_request("hippo_playlist_add_urls").unwrap();
+
+        msg.serialize(&AddUrls { list_position: ListPosition::End, urls }).unwrap();
+
+        self.message_api.end_message(msg);
 
         event.accept_proposed_action();
     }

@@ -1,6 +1,7 @@
 extern crate rodio;
 extern crate walkdir;
 extern crate hippo_api;
+extern crate messages;
 
 #[macro_use]
 extern crate serde_derive;
@@ -35,7 +36,7 @@ use std::fs::File;
 use std::path::Path;
 use playlist::Playlist;
 use std::io;
-use service::MessageDecode;
+use hippo_api::MessageDecode;
 use hippo_api::ffi::CMessageDecode;
 
 use rute::{SharedLibUi, Ui};
@@ -98,7 +99,7 @@ impl <'a> HippoPlayer<'a> {
     /// Loops over all view instances and checks if any of them has posted any messages
     ///
     /// Currently we only pass all data to the playlist and then back to to the plugins
-    /// 
+    ///
     fn update_ui_messages(&mut self) {
         let mut playlist_respones = Vec::new();
         let mut start_next_song = false;
@@ -110,26 +111,26 @@ impl <'a> HippoPlayer<'a> {
                 let messages = service.get_message_api();
 
                 for message in &messages.request_queue {
-                    let message_dec = MessageDecode::new(message.clone()).unwrap();
+                    let mut message_dec = MessageDecode::new(&message.data).unwrap();
 
                     //
                     // Parse messages that affects both player and playlist
-                    // 
+                    //
 
-                    match message_dec.get_method().as_ref() {
+                    match message_dec.method {
 			            "hippo_playlist_next_song" => {
 			                start_next_song = true;
-                        } 
+                        }
 
                         _ => (),
                     }
 
-                    self.playlist.event(&message_dec)
+                    self.playlist.event(&mut message_dec)
                         .map(|reply| playlist_respones.push(reply));
                 }
             }
         }
-			                
+
 		if start_next_song {
 		    self.playlist.get_next_song().map(|song| self.play_file(&song));
 		}
@@ -144,7 +145,7 @@ impl <'a> HippoPlayer<'a> {
         // Send back the replies from the playlist
 
         for msg in playlist_respones {
-            let message_dec = MessageDecode::new(msg.data.clone()).unwrap();
+            let message_dec = MessageDecode::new(&msg.data).unwrap();
             let message = service_ffi::get_cmessage_decode(&message_dec);
 
             for instance in &mut self.state.view_instance_states {

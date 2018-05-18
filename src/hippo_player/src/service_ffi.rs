@@ -6,7 +6,8 @@ use std::slice;
 use std::io::Read;
 use song_db::SongDb;
 use std::collections::HashMap;
-use service::{IoApi, FileWrapper, MessageEncode, MessageDecode, MessageApi};
+use service::{IoApi, FileWrapper, MessageApi};
+use hippo_api::{MessageEncode, MessageDecode};
 use hippo_api::ffi::*;
 
 extern "C" fn file_exists_wrapper(priv_data: *const c_void, target: *const u8) -> i32 {
@@ -183,7 +184,7 @@ extern "C" fn message_write_str(priv_data: *const c_void, name: *const i8) -> i3
 
 extern "C" fn message_decode_get_id(priv_data: *const c_void) -> u32 {
     let message: &MessageDecode = unsafe { &*(priv_data as *mut MessageDecode ) };
-    message.notifaction_id
+    message.id
 }
 
 extern "C" fn message_decode_get_method(priv_data: *const c_void) -> *const i8 {
@@ -195,13 +196,13 @@ extern "C" fn message_decode_get_raw_ptr(priv_data: *const c_void, data: *mut *c
     let message: &MessageDecode = unsafe { &*(priv_data as *mut MessageDecode ) };
     message.method.as_ptr() as *const i8;
 
-    let data_t = message.cursor.get_ref().as_slice();
-    let pos = message.cursor.position() as usize;
+    let data_t = message.data.get_ref();
+    let pos = message.data.position() as usize;
     let data_range = &data_t[pos..];
 
     unsafe {
 		let data_ptr: *const c_void = data_range.as_ptr() as *const c_void;
-    	*data = data_ptr; 
+    	*data = data_ptr;
     	*len = data_range.len() as u64;
     }
 
@@ -256,10 +257,17 @@ extern "C" fn mesage_api_begin_notification(priv_data: *const c_void, id: *const
     message_wrap
 }
 
+extern "C" fn mesage_api_request_new_id(priv_data: *const c_void) -> u32 {
+    let message_api: &mut MessageApi = unsafe { &mut *(priv_data as *mut MessageApi) };
+    message_api.request_new_id()
+}
+
 extern "C" fn mesage_api_end_message(priv_data: *const c_void, message: *const c_void) {
     let message_api: &mut MessageApi = unsafe { &mut *(priv_data as *mut MessageApi) };
-    let message: &mut MessageEncode = unsafe { &mut *(message as *mut MessageEncode) };
-    message_api.end_message(message);
+    unsafe {
+        let message: *mut MessageEncode = message as *mut MessageEncode;
+        message_api.end_message(Box::from_raw(message));
+    }
 
     println!("mesage_api_end_message")
 }
@@ -342,6 +350,7 @@ impl ServiceApi {
            begin_request: mesage_api_begin_request,
            begin_notification: mesage_api_begin_notification,
            end_message: mesage_api_end_message,
+           request_new_id: mesage_api_request_new_id,
         });
 
         let c_message_api: *const CMessageAPI = unsafe { transmute(c_message_api) };

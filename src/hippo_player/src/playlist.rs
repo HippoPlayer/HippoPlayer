@@ -1,11 +1,4 @@
-//use serde_json;
-//use std::fs::File;
-//use std::io::{BufWriter, BufReader};
-//use std::io;
-use service::{MessageDecode, MessageEncode, REQUEST_MESSAGE};
-use hippo_api::messages::AddUrls; 
-use serde::{Serialize, Deserialize};
-use rmps::{Serializer, Deserializer};
+use messages::{AddUrls, MessageEncode, MessageDecode};
 
 ///
 /// Metadata for each entry. We will likely stuff more things here later on.
@@ -35,24 +28,11 @@ impl Playlist {
         }
     }
 
-	/*
-    fn new_song_message(incoming_msg: &MessageDecode, filename: &str) -> MessageEncode {
-        let mut message = MessageEncode::new(incoming_msg.notifaction_id, REQUEST_MESSAGE);
-
-        message.write_array_len(4).unwrap();
-        message.write_uint(REQUEST_MESSAGE).unwrap();
-        message.write_uint(incoming_msg.notifaction_id as u64).unwrap();
-        message.write_str("hippo_playlist_select_song").unwrap();
-        message.write_str(filename).unwrap();
-        message
-    }
-    */
-
     ///
-    /// Handle incoming events 
-    /// 
-	pub fn event(&mut self, msg: &MessageDecode) -> Option<MessageEncode> {
-		match msg.get_method().as_ref() {
+    /// Handle incoming events
+    ///
+	pub fn event(&mut self, msg: &mut MessageDecode) -> Option<MessageEncode> {
+		match msg.method {
 			/*
 			"hippo_playlist_next_song" => {
 				self.get_next_song().map(|song| Self::new_song_message(msg, song))
@@ -64,10 +44,7 @@ impl Playlist {
 			*/
 
 			"hippo_playlist_add_urls" => {
-				println!("deserialize files {}", msg.cursor.position());
-
-				let mut de = Deserializer::new(msg.cursor.clone());
-				let files: AddUrls = Deserialize::deserialize(&mut de).unwrap();
+				let files: AddUrls = msg.deserialize().unwrap();
 
 				for file in &files.urls {
 					let entry = PlaylistEntry {
@@ -79,12 +56,8 @@ impl Playlist {
 					self.entries.push(entry);
 				}
 
-				let mut message = MessageEncode::new(msg.notifaction_id, REQUEST_MESSAGE);
-				message.write_array_len(4).unwrap();
-				message.write_uint(REQUEST_MESSAGE).unwrap();
-				message.write_uint(msg.notifaction_id as u64).unwrap();
-				message.write_str("hippo_playlist_added_files").unwrap();
-				files.serialize(&mut Serializer::new(&mut message)).unwrap();
+				let mut message = MessageEncode::new_request("hippo_playlist_added_files", msg.id).unwrap();
+				message.serialize(&files).unwrap();
 
 				Some(message)
 			},

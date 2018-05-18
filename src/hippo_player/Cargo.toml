@@ -7,6 +7,7 @@ build = "build.rs"
 [dependencies]
 rute = { path = "../external/rute" }
 hippo_api = { path = "../plugin_api/rust/hippo_api" }
+messages = { path = "../plugin_api/rust/messages" }
 rodio = "0.5.2"
 dynamic_reload = "0.3.0"
 serde = "1.0"

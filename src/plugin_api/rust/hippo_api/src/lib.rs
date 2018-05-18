@@ -1,15 +1,12 @@
-extern crate serde;
-
-#[macro_use]
-extern crate serde_derive;
-
-extern crate rmp_serde as rmps;
-
+pub extern crate messages;
 extern crate rute;
 
-pub mod messages;
 pub mod ffi;
 pub mod service;
 pub mod view;
+
+pub use messages::encode::Message as MessageEncode;
+pub use messages::decode::Message as MessageDecode;
+pub use messages::*;
 
 pub use service::*;
