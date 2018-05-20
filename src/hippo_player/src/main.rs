@@ -1,14 +1,14 @@
-extern crate rodio;
-extern crate walkdir;
 extern crate hippo_api;
 extern crate messages;
+extern crate rodio;
+extern crate walkdir;
 
 #[macro_use]
 extern crate serde_derive;
+pub extern crate rmp;
+extern crate rmp_rpc;
 extern crate serde;
 extern crate serde_json;
-extern crate rmp_rpc;
-pub extern crate rmp;
 
 extern crate rmp_serde as rmps;
 
@@ -27,24 +27,23 @@ pub mod service_ffi;
 
 pub use rmp as msgpack;
 
-use plugin_handler::{Plugins};
 use audio::{HippoAudio, MusicInfo};
+use hippo_api::ffi::CMessageDecode;
+use hippo_api::MessageDecode;
+use playlist::Playlist;
+use plugin_handler::Plugins;
 use std::env;
 use std::fs;
-use std::io::prelude::*;
 use std::fs::File;
-use std::path::Path;
-use playlist::Playlist;
 use std::io;
-use hippo_api::MessageDecode;
-use hippo_api::ffi::CMessageDecode;
+use std::io::prelude::*;
+use std::path::Path;
 
-use rute::{SharedLibUi, Ui};
 use rute::rute::*;
+use rute::{SharedLibUi, Ui};
 //use playerview::PlayerView;
 //use playlist_view::PlaylistView;
 //use song_info::SongInfoView;
-
 
 #[derive(Default, Serialize, Deserialize)]
 struct ViewInstanceState {
@@ -78,20 +77,20 @@ struct HippoPlayer<'a> {
 
 include!(concat!(env!("OUT_DIR"), "/build_id.rs"));
 
-impl <'a> HippoPlayer<'a> {
+impl<'a> HippoPlayer<'a> {
     pub fn new(ui: Ui) -> HippoPlayer<'a> {
         HippoPlayer {
-           audio: HippoAudio::new(),
-           plugins: Plugins::new(),
-           plugin_service: service_ffi::PluginService::new(),
-           app: ui.create_application(),
-           main_widget: ui.create_widget(),
-           playlist: Playlist::new(),
-           dock_manager: ui.create_dock_manager(),
-           state: HippoState::default(),
-           ui: ui,
-           _current_song_time: -10.0,
-           _is_playing: false,
+            audio: HippoAudio::new(),
+            plugins: Plugins::new(),
+            plugin_service: service_ffi::PluginService::new(),
+            app: ui.create_application(),
+            main_widget: ui.create_widget(),
+            playlist: Playlist::new(),
+            dock_manager: ui.create_dock_manager(),
+            state: HippoState::default(),
+            ui: ui,
+            _current_song_time: -10.0,
+            _is_playing: false,
         }
     }
 
@@ -118,22 +117,25 @@ impl <'a> HippoPlayer<'a> {
                     //
 
                     match message_dec.method {
-			            "hippo_playlist_next_song" => {
-			                start_next_song = true;
+                        "hippo_playlist_next_song" => {
+                            start_next_song = true;
                         }
 
                         _ => (),
                     }
 
-                    self.playlist.event(&mut message_dec)
+                    self.playlist
+                        .event(&mut message_dec)
                         .map(|reply| playlist_respones.push(reply));
                 }
             }
         }
 
-		if start_next_song {
-		    self.playlist.get_next_song().map(|song| self.play_file(&song));
-		}
+        if start_next_song {
+            self.playlist
+                .get_next_song()
+                .map(|song| self.play_file(&song));
+        }
 
         for instance in &mut self.state.view_instance_states {
             if let Some(ref mut service) = instance.plugin_service {
@@ -151,7 +153,10 @@ impl <'a> HippoPlayer<'a> {
             for instance in &mut self.state.view_instance_states {
                 let pb = instance.instance.as_ref().unwrap();
                 let ptr: *const CMessageDecode = &message as *const CMessageDecode;
-                ((pb.plugin.plugin_funcs).event.unwrap())(pb.user_data as *mut ::std::os::raw::c_void, ptr);
+                ((pb.plugin.plugin_funcs).event.unwrap())(
+                    pb.user_data as *mut ::std::os::raw::c_void,
+                    ptr,
+                );
             }
         }
     }
@@ -185,8 +190,7 @@ impl <'a> HippoPlayer<'a> {
            if let Err(err) = self.playlist.save_playlist("playlist.json") {
            println!("Unable to save playlist {:?}", err);
            }
-           */
-    }
+           */    }
 
     fn add_files(&mut self) {
         /*
@@ -233,7 +237,7 @@ impl <'a> HippoPlayer<'a> {
             plugin_name: action.text().to_owned(),
             instance_id: object_name.to_owned(),
             instance: Some(instance),
-            plugin_service: Some(plugin_service)
+            plugin_service: Some(plugin_service),
         };
 
         self.state.view_instance_states.push(view_state);
@@ -314,7 +318,7 @@ impl <'a> HippoPlayer<'a> {
         let main_window = self.ui.create_main_window();
         let timer = self.ui.create_timer();
 
-         let layout = self.ui.create_v_box_layout();
+        let layout = self.ui.create_v_box_layout();
 
         let add_files = self.ui.create_action();
         add_files.set_shortcut_mod(Keys::KeyO, MetaKeys::Ctrl);
@@ -379,7 +383,9 @@ impl <'a> HippoPlayer<'a> {
                 // This is a bit hacky right now but will do the trick
                 self.audio.stop();
                 self.audio = HippoAudio::new();
-                let info = self.audio.start_with_file(&plugin, &self.plugin_service, filename);
+                let info = self
+                    .audio
+                    .start_with_file(&plugin, &self.plugin_service, filename);
 
                 //self.song_info_view.update_data(filename, &self.plugin_service.get_song_db());
                 return info;
@@ -397,7 +403,9 @@ impl <'a> HippoPlayer<'a> {
                 // This is a bit hacky right now but will do the trick
                 self.audio.stop();
                 self.audio = HippoAudio::new();
-                let info = self.audio.start_with_file(&plugin, &self.plugin_service, filename);
+                let info = self
+                    .audio
+                    .start_with_file(&plugin, &self.plugin_service, filename);
                 return info;
             }
         }
@@ -444,4 +452,3 @@ fn main() {
     // causes lots of issues because we have the Qt code in a separate dll
     std::process::exit(0);
 }
-

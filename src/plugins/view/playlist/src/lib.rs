@@ -4,43 +4,41 @@ extern crate hippo_api;
 #[macro_use]
 extern crate rute;
 
-extern crate serde;
 extern crate rmp_serde as rmps;
+extern crate serde;
 
-use serde::{Deserialize};
-use rmps::{Deserializer};
+//use serde::{Deserialize};
+//use rmps::{Deserializer};
 
-use std::path::Path;
-use std::ffi::OsStr;
 use rute::rute::{DragEnterEvent, DropEvent, ListWidget};
 use rute::PluginUi;
+use std::ffi::OsStr;
+use std::path::Path;
 
-use hippo_api::view::View;
-use hippo_api::{Service, MessageApi, MessageDecode};
 use hippo_api::messages::{AddUrls, ListPosition};
+use hippo_api::view::View;
+use hippo_api::{MessageApi, MessageDecode, Service};
 
 #[derive(Default)]
 struct Playlist {
-	message_api: MessageApi,
+    message_api: MessageApi,
     ui: PluginUi,
     widget: ListWidget,
 }
 
 impl View for Playlist {
     fn new(service: &Service) -> Playlist {
-    	Playlist {
-			message_api: service.message_api(),
-			.. Playlist::default()
-		}
+        Playlist {
+            message_api: service.message_api(),
+            ..Playlist::default()
+        }
     }
 
     fn event(&mut self, msg: &mut MessageDecode) {
-    	match msg.method {
-    		"hippo_playlist_added_files" => self.add_files(msg),
-    		_ => (),
-    	}
-
-    	println!("msg decode {}", msg.method);
+        match msg.method {
+            "hippo_playlist_added_files" => self.add_files(msg),
+            _ => (),
+        }
     }
 
     fn setup_ui(&mut self, ui: PluginUi) {
@@ -65,34 +63,32 @@ impl View for Playlist {
         self.widget = widget;
     }
 
-    fn destroy(&mut self) {
-        println!("Destroy plugin");
-    }
+    fn destroy(&mut self) {}
 }
 
 impl Playlist {
-	// TODO: Correct names should be sent to added_files instead
+    // TODO: Correct names should be sent to added_files instead
     fn get_filename_only(filename: &str) -> Option<&str> {
         Path::new(filename).file_name().and_then(OsStr::to_str)
     }
 
-	///
-	/// Message sent when files needs to be added to the actual view.
-	/// It's usually the playlist that sends this event
-	///
-	fn add_files(&mut self, msg: &mut MessageDecode) {
-	    let mut files: AddUrls = msg.deserialize().unwrap();
+    ///
+    /// Message sent when files needs to be added to the actual view.
+    /// It's usually the playlist that sends this event
+    ///
+    fn add_files(&mut self, msg: &mut MessageDecode) {
+        let files: AddUrls = msg.deserialize().unwrap();
 
-		for file in &files.urls {
-			let item = self.ui.create_list_widget_item();
-        	let name = Self::get_filename_only(&file).unwrap_or(&file);
+        for file in &files.urls {
+            let item = self.ui.create_list_widget_item();
+            let name = Self::get_filename_only(&file).unwrap_or(&file);
 
-			item.set_text(name);
-			item.set_string_data(&file);
+            item.set_text(name);
+            item.set_string_data(&file);
 
-			self.widget.add_item(&item);
-		}
-	}
+            self.widget.add_item(&item);
+        }
+    }
 
     ///
     /// This happens when the user has made a drag'n'drop operation
@@ -105,7 +101,7 @@ impl Playlist {
     ///       as is and update when the updates comes back
     ///
     fn drop_files(&mut self, event: &DropEvent) {
-    	let mut urls = Vec::new();
+        let mut urls = Vec::new();
 
         for url in event
             .mime_data()
@@ -113,13 +109,19 @@ impl Playlist {
             .iter()
             .filter(|u| u.is_local_file())
         {
-        	// TODO: Can we use ref here instead? Would save some allocs/copies
-        	urls.push(url.to_local_file().to_owned())
+            // TODO: Can we use ref here instead? Would save some allocs/copies
+            urls.push(url.to_local_file().to_owned())
         }
 
-        let mut msg = self.message_api.begin_request("hippo_playlist_add_urls").unwrap();
+        let mut msg = self
+            .message_api
+            .begin_request("hippo_playlist_add_urls")
+            .unwrap();
 
-        msg.serialize(&AddUrls { list_position: ListPosition::End, urls }).unwrap();
+        msg.serialize(&AddUrls {
+            list_position: ListPosition::End,
+            urls,
+        }).unwrap();
 
         self.message_api.end_message(msg);
 

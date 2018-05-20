@@ -1,4 +1,4 @@
-use messages::{AddUrls, MessageEncode, MessageDecode};
+use messages::{AddUrls, MessageDecode, MessageEncode};
 
 ///
 /// Metadata for each entry. We will likely stuff more things here later on.
@@ -16,7 +16,6 @@ pub struct Playlist {
     current_song: usize,
 }
 
-
 impl Playlist {
     ///
     ///
@@ -31,9 +30,9 @@ impl Playlist {
     ///
     /// Handle incoming events
     ///
-	pub fn event(&mut self, msg: &mut MessageDecode) -> Option<MessageEncode> {
-		match msg.method {
-			/*
+    pub fn event(&mut self, msg: &mut MessageDecode) -> Option<MessageEncode> {
+        match msg.method {
+            /*
 			"hippo_playlist_next_song" => {
 				self.get_next_song().map(|song| Self::new_song_message(msg, song))
 			},
@@ -42,29 +41,29 @@ impl Playlist {
 				self.get_prev_song().map(|song| Self::new_song_message(msg, song))
 			},
 			*/
+            "hippo_playlist_add_urls" => {
+                let files: AddUrls = msg.deserialize().unwrap();
 
-			"hippo_playlist_add_urls" => {
-				let files: AddUrls = msg.deserialize().unwrap();
+                for file in &files.urls {
+                    let entry = PlaylistEntry {
+                        path: file.clone(),
+                        title: file.clone(),
+                        duration: -10.0,
+                    };
 
-				for file in &files.urls {
-					let entry = PlaylistEntry {
-						path: file.clone(),
-						title: file.clone(),
-						duration: -10.0,
-					};
+                    self.entries.push(entry);
+                }
 
-					self.entries.push(entry);
-				}
+                let mut message =
+                    MessageEncode::new_request("hippo_playlist_added_files", msg.id).unwrap();
+                message.serialize(&files).unwrap();
 
-				let mut message = MessageEncode::new_request("hippo_playlist_added_files", msg.id).unwrap();
-				message.serialize(&files).unwrap();
+                Some(message)
+            }
 
-				Some(message)
-			},
-
-			_ => None,
-		}
-	}
+            _ => None,
+        }
+    }
 
     ///
     /// Serialize the playlist and write it to filename
@@ -95,7 +94,7 @@ impl Playlist {
         let count = self.entries.len();
 
         if count == 0 {
-        	return None;
+            return None;
         }
 
         let current_song = (self.current_song + 1) % count;
@@ -104,7 +103,7 @@ impl Playlist {
         Some(self.entries[current_song].path.to_owned())
     }
 
-	/*
+    /*
     fn get_prev_song(&mut self) -> Option<&str> {
         let count = self.entries.len();
 
@@ -122,5 +121,3 @@ impl Playlist {
     }
     */
 }
-
-

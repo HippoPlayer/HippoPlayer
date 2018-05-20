@@ -1,10 +1,11 @@
 use msgpack;
-use msgpack::Marker;
 use msgpack::encode::ValueWriteError;
+use msgpack::Marker;
 use rmps::Serializer;
 use serde::Serialize;
 use std::io;
 
+use num_integer::Integer;
 use MsgType;
 
 pub struct Message {
@@ -31,10 +32,7 @@ impl Message {
         // something dummy to make sure that we have a valid message
         let header_size = data.len();
 
-        Ok(Message {
-            data,
-            header_size,
-        })
+        Ok(Message { data, header_size })
     }
 
     pub fn new_request(method: &str, id: u32) -> Result<Message, ValueWriteError> {
@@ -55,6 +53,20 @@ impl Message {
     }
 
     #[inline]
+    pub fn write_value<T: Integer + Into<u64>>(
+        &mut self,
+        data: T,
+    ) -> Result<Marker, ValueWriteError> {
+        msgpack::encode::write_uint(&mut self.data, data.into())
+    }
+
+    #[inline]
+    pub fn write_key_value_str(&mut self, key0: &str, key1: &str) -> Result<(), ValueWriteError> {
+        msgpack::encode::write_str(&mut self.data, key0)?;
+        msgpack::encode::write_str(&mut self.data, key1)
+    }
+
+    #[inline]
     pub fn write_uint(&mut self, data: u64) -> Result<Marker, ValueWriteError> {
         msgpack::encode::write_uint(&mut self.data, data)
     }
@@ -70,9 +82,9 @@ impl Message {
     }
 
     pub fn write_blob(&mut self, data: &[u8]) {
-    	for d in data {
-    		self.data.push(*d);
-    	}
+        for d in data {
+            self.data.push(*d);
+        }
     }
 
     pub fn serialize<T: Serialize>(&mut self, data: &T) -> Result<(), ::rmps::encode::Error> {
@@ -81,20 +93,19 @@ impl Message {
 }
 
 impl io::Write for Message {
-	///
-	/// Just using the write_blob API to add data to the stream
-	/// TODO: Error handling
-	///
-	fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-		self.write_blob(buf);
-		Ok(buf.len())
-	}
+    ///
+    /// Just using the write_blob API to add data to the stream
+    /// TODO: Error handling
+    ///
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        self.write_blob(buf);
+        Ok(buf.len())
+    }
 
-	///
-	/// No need to flush here
-	///
-	fn flush(&mut self) -> io::Result<()> {
-		Ok(())
-	}
+    ///
+    /// No need to flush here
+    ///
+    fn flush(&mut self) -> io::Result<()> {
+        Ok(())
+    }
 }
-
