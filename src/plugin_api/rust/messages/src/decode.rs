@@ -7,6 +7,8 @@ use msgpack::encode::{Error};
 use msgpack::decode::{NumValueReadError};
 use std::str;
 
+use num_traits::cast::FromPrimitive;
+
 use serde::Deserialize;
 use rmps::Deserializer;
 
@@ -77,6 +79,29 @@ impl <'a>Message<'a> {
 		let res: T = Deserialize::deserialize(&mut de)?;
 		Ok(res)
     }
+
+    ///
+    /// read string from the message return a slice into the buffer
+    ///
+    pub fn read_str(&mut self) -> Result<&'a str, NumValueReadError> {
+        let text_len = msgpack::decode::read_str_len(&mut self.data)? as usize;
+
+        let current_pos = self.data.position() as usize;
+        let new_pos = current_pos + text_len;
+
+        let text = str::from_utf8(&self.data.get_ref()[current_pos..new_pos]).map_err(|_|
+           NumValueReadError::InvalidDataRead(Error::new(ErrorKind::Other, "Unable to decode method")))?;
+
+        self.data.set_position(new_pos as u64);
+
+        Ok(text)
+    }
+
+    /*
+    pub fn read_int<T: FromPrimitive>(&mut self) -> Result<T, NumValueReadError> {
+		msgpack::decode::read_int(&mut self.data)
+	}
+	*/
 }
 
 

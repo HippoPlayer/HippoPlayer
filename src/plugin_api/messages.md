@@ -21,10 +21,10 @@ This is used to updated metadata about an resource (filename,url,etc) all fields
       [authoring_tool] - string : Tool used for creating the music
       [date]           - string : Creation date of the music
       [message]        - string : Message
-      [samples]        - bool   : Write this if the song contains samples
+      [samples]        - string : Write this if the song contains samples
         [array_len]    - int    : Number of samples
         [strings..]    - string : List of strings (needs to match written array length)
-      [instruments]    - bool   : Write this if the song contains samples
+      [instruments]    - string : Write this if the song contains instruments
         [array_len]    - int    : Number of samples
         [strings..]    - string : List of strings (needs to match written array length)
 ```
@@ -57,11 +57,11 @@ Selects a song from the playlist and starts playing ito
   [url]     - string (filename/url) name of the url to play
 ```
 
-## hippo_next_song (notifcation)
+## hippo_playlist_next_song (notifcation)
 
 Selects the next song in the playlist (will loop around to first entry if user has settings to allow so)
 
-## hippo_prev_song (notifcation)
+## hippo_playlist_prev_song (notifcation)
 
 Selects the previous song in the playlist (will loop around to first entry if user has settings to allow so)
 

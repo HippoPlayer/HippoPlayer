@@ -10,7 +10,7 @@ extern crate serde;
 //use serde::{Deserialize};
 //use rmps::{Deserializer};
 
-use rute::rute::{DragEnterEvent, DropEvent, ListWidget};
+use rute::rute::{DragEnterEvent, DropEvent, ListWidget, ListWidgetItem};
 use rute::PluginUi;
 use std::ffi::OsStr;
 use std::path::Path;
@@ -37,6 +37,7 @@ impl View for Playlist {
     fn event(&mut self, msg: &mut MessageDecode) {
         match msg.method {
             "hippo_playlist_added_files" => self.add_files(msg),
+            "hippo_playlist_select_song" => self.select_song(msg),
             _ => (),
         }
     }
@@ -51,6 +52,7 @@ impl View for Playlist {
 
         set_drag_enter_event!(widget, self, Playlist, Playlist::drag_enter);
         set_drop_event!(widget, self, Playlist, Playlist::drop_files);
+        //set_list_widget_item_double_clicked_event!(widget, self, Playlist, Playlist::clicked_select_song);
 
         vbox.add_widget(&widget);
 
@@ -88,6 +90,34 @@ impl Playlist {
 
             self.widget.add_item(&item);
         }
+    }
+
+    ///
+    /// This handles the message that gets sent to select an new song. This can be a reply from a
+    /// when doing a double click event or an external call.
+    ///
+    fn select_song(&mut self, msg: &mut MessageDecode) {
+        //let offset = msg.read_int().unwrap();
+        //let url = msg.read_to_string
+
+
+        //self.widget.set_current_row(
+    }
+
+    ///
+    /// User double clicks an item in the playlist. Double click means start playing the selected
+    /// track and a notification will be sent to start doing so.
+    ///
+    fn clicked_select_song(&mut self, item: &ListWidgetItem) {
+        let url_name = item.get_string_data();
+        let row = self.widget.current_row();
+
+        let mut message = self.message_api.begin_request("hippo_playlist_select_song").unwrap();
+
+        //message.write_uint(row);
+        //message.write_str(url_name);
+
+        self.message_api.end_message(message);
     }
 
     ///
