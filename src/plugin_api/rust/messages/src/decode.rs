@@ -55,11 +55,12 @@ impl <'a>Message<'a> {
         let text_len = msgpack::decode::read_str_len(&mut cursor)? as usize;
 
         let current_pos = cursor.position() as usize;
+        let new_pos = current_pos + text_len;
 
-        let method = str::from_utf8(&data[current_pos..text_len]).map_err(|_|
+        let method = str::from_utf8(&data[current_pos..new_pos).map_err(|_|
            NumValueReadError::InvalidDataRead(Error::new(ErrorKind::Other, "Unable to decode method")))?;
 
-        cursor.set_position((current_pos + text_len) as u64);
+        cursor.set_position(new_pos as u64);
 
 		Ok(Message {
 			data: cursor,

@@ -155,6 +155,7 @@ RustProgram {
     Sources = {
         get_rs_src("src/hippo_player/src"),
 		get_rs_src("src/plugin_api/rust/hippo_api"),
+		get_rs_src("src/plugin_api/rust/messages"),
     },
 
     Depends = { "rute", "rute_cpp" },

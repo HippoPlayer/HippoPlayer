@@ -340,6 +340,7 @@ RustSharedLibrary {
 	Sources = {
 		get_rs_src("src/plugins/view/playlist"),
 		get_rs_src("src/plugin_api/rust/hippo_api"),
+		get_rs_src("src/plugin_api/rust/messages"),
 		get_rs_src("src/external/rute"),
 	}
 }
@@ -350,6 +351,7 @@ RustSharedLibrary {
 	Sources = {
 		get_rs_src("src/plugins/view/player"),
 		get_rs_src("src/plugin_api/rust/hippo_api"),
+		get_rs_src("src/plugin_api/rust/messages"),
 		get_rs_src("src/external/rute"),
 	}
 }
@@ -360,6 +362,7 @@ RustSharedLibrary {
 	Sources = {
 		get_rs_src("src/plugins/view/song_info"),
 		get_rs_src("src/plugin_api/rust/hippo_api"),
+		get_rs_src("src/plugin_api/rust/messages"),
 		get_rs_src("src/external/rute"),
 	}
 }
