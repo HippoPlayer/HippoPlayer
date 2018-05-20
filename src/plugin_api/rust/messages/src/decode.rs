@@ -57,7 +57,7 @@ impl <'a>Message<'a> {
         let current_pos = cursor.position() as usize;
         let new_pos = current_pos + text_len;
 
-        let method = str::from_utf8(&data[current_pos..new_pos).map_err(|_|
+        let method = str::from_utf8(&data[current_pos..new_pos]).map_err(|_|
            NumValueReadError::InvalidDataRead(Error::new(ErrorKind::Other, "Unable to decode method")))?;
 
         cursor.set_position(new_pos as u64);
