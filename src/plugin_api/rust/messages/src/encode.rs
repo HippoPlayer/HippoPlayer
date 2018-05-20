@@ -6,6 +6,7 @@ use serde::Serialize;
 use std::io;
 
 use num_integer::Integer;
+use num_traits::cast::FromPrimitive;
 use MsgType;
 
 pub struct Message {
@@ -53,7 +54,15 @@ impl Message {
     }
 
     #[inline]
-    pub fn write_value<T: Integer + Into<u64>>(
+    pub fn write_int<T: FromPrimitive + Into<i64>>(
+        &mut self,
+        data: T,
+    ) -> Result<Marker, ValueWriteError> {
+        msgpack::encode::write_sint(&mut self.data, data.into())
+    }
+
+    #[inline]
+    pub fn write_uint<T: FromPrimitive + Into<u64>>(
         &mut self,
         data: T,
     ) -> Result<Marker, ValueWriteError> {
@@ -64,11 +73,6 @@ impl Message {
     pub fn write_key_value_str(&mut self, key0: &str, key1: &str) -> Result<(), ValueWriteError> {
         msgpack::encode::write_str(&mut self.data, key0)?;
         msgpack::encode::write_str(&mut self.data, key1)
-    }
-
-    #[inline]
-    pub fn write_uint(&mut self, data: u64) -> Result<Marker, ValueWriteError> {
-        msgpack::encode::write_uint(&mut self.data, data)
     }
 
     #[inline]

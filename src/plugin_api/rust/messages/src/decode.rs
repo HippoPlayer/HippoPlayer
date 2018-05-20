@@ -90,18 +90,19 @@ impl <'a>Message<'a> {
         let new_pos = current_pos + text_len;
 
         let text = str::from_utf8(&self.data.get_ref()[current_pos..new_pos]).map_err(|_|
-           NumValueReadError::InvalidDataRead(Error::new(ErrorKind::Other, "Unable to decode method")))?;
+           NumValueReadError::InvalidDataRead(Error::new(ErrorKind::Other, "Unable to decode text")))?;
 
         self.data.set_position(new_pos as u64);
 
         Ok(text)
     }
 
-    /*
-    pub fn read_int<T: FromPrimitive>(&mut self) -> Result<T, NumValueReadError> {
-		msgpack::decode::read_int(&mut self.data)
+    ///
+    /// Read integer from the stream
+    ///
+    pub fn read_int(&mut self) -> Result<i64, NumValueReadError> {
+		 msgpack::decode::read_int(&mut self.data)
 	}
-	*/
 }
 
 

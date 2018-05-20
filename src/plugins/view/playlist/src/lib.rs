@@ -97,8 +97,8 @@ impl Playlist {
     /// when doing a double click event or an external call.
     ///
     fn select_song(&mut self, msg: &mut MessageDecode) {
-        //let offset = msg.read_int().unwrap();
-        //let url = msg.read_to_string
+        let offset = msg.read_int().unwrap() as u32;
+        let url = msg.read_str().unwrap();
 
 
         //self.widget.set_current_row(
@@ -114,8 +114,8 @@ impl Playlist {
 
         let mut message = self.message_api.begin_request("hippo_playlist_select_song").unwrap();
 
-        //message.write_uint(row);
-        //message.write_str(url_name);
+        message.write_int(row);
+        message.write_str(&url_name);
 
         self.message_api.end_message(message);
     }
