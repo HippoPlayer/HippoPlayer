@@ -10,7 +10,7 @@ extern crate serde;
 //use serde::{Deserialize};
 //use rmps::{Deserializer};
 
-use rute::rute::{DragEnterEvent, DropEvent, ListWidget, ListWidgetItem};
+use rute::rute::{RUBase, DragEnterEvent, DropEvent, ListWidget, ListWidgetItem};
 use rute::PluginUi;
 use std::ffi::OsStr;
 use std::path::Path;
@@ -52,7 +52,7 @@ impl View for Playlist {
 
         set_drag_enter_event!(widget, self, Playlist, Playlist::drag_enter);
         set_drop_event!(widget, self, Playlist, Playlist::drop_files);
-        //set_list_widget_item_double_clicked_event!(widget, self, Playlist, Playlist::clicked_select_song);
+        set_list_widget_item_double_clicked_event!(widget, self, Playlist, Playlist::clicked_select_song);
 
         vbox.add_widget(&widget);
 
@@ -98,10 +98,10 @@ impl Playlist {
     ///
     fn select_song(&mut self, msg: &mut MessageDecode) {
         let offset = msg.read_int().unwrap() as u32;
-        let url = msg.read_str().unwrap();
+        let _url = msg.read_str().unwrap();
 
-
-        //self.widget.set_current_row(
+        // TODO: validate that this is actually correct
+        self.widget.set_current_row(offset as i32);
     }
 
     ///
@@ -114,8 +114,8 @@ impl Playlist {
 
         let mut message = self.message_api.begin_request("hippo_playlist_select_song").unwrap();
 
-        message.write_int(row);
-        message.write_str(&url_name);
+        message.write_int(row).unwrap();
+        message.write_str(&url_name).unwrap();
 
         self.message_api.end_message(message);
     }
