@@ -762,6 +762,13 @@ static void list_widget_update(struct RUBase* self_c) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void list_widget_clear(struct RUBase* self_c) { 
+    WRListWidget* qt_data = (WRListWidget*)self_c;
+    qt_data->clear();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static void list_widget_add_item(struct RUBase* self_c, struct RUBase* item) { 
     WRListWidget* qt_data = (WRListWidget*)self_c;
     qt_data->addItem((QListWidgetItem*)item);
@@ -2670,6 +2677,7 @@ struct RUListWidgetFuncs s_list_widget_funcs = {
     list_widget_set_parent,
     list_widget_set_layout,
     list_widget_update,
+    list_widget_clear,
     list_widget_add_item,
     list_widget_add_text_item,
     list_widget_current_item,

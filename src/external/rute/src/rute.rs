@@ -684,6 +684,16 @@ impl ListWidget {
         }
     }
 
+    pub fn clear (&self) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).clear)(obj.privd);
+        
+        }
+    }
+
     pub fn add_item (&self, item: &ListWidgetItem) {
         
         unsafe {

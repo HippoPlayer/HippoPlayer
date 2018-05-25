@@ -475,6 +475,7 @@ pub struct RUListWidgetFuncs {
     pub set_parent: extern "C" fn(self_c: *const RUBase, widget: *const RUBase),
     pub set_layout: extern "C" fn(self_c: *const RUBase, layout: *const RUBase),
     pub update: extern "C" fn(self_c: *const RUBase),
+    pub clear: extern "C" fn(self_c: *const RUBase),
     pub add_item: extern "C" fn(self_c: *const RUBase, item: *const RUBase),
     pub add_text_item: extern "C" fn(self_c: *const RUBase, text: *const ::std::os::raw::c_char),
     pub current_item: extern "C" fn(self_c: *const RUBase) ->  RUListWidgetItem,

@@ -501,6 +501,7 @@ struct RUListWidgetFuncs {
     void (*set_parent)(struct RUBase* self_c, struct RUBase* widget);
     void (*set_layout)(struct RUBase* self_c, struct RUBase* layout);
     void (*update)(struct RUBase* self_c);
+    void (*clear)(struct RUBase* self_c);
     void (*add_item)(struct RUBase* self_c, struct RUBase* item);
     void (*add_text_item)(struct RUBase* self_c, const char* text);
     struct RUListWidgetItem (*current_item)(struct RUBase* self_c);
@@ -992,6 +993,7 @@ typedef struct RU {
 #define RUListWidget_set_parent(obj, widget) obj.funcs->set_parent(obj.priv_data, widget)
 #define RUListWidget_set_layout(obj, layout) obj.funcs->set_layout(obj.priv_data, layout)
 #define RUListWidget_update(obj) obj.funcs->update(obj.priv_data)
+#define RUListWidget_clear(obj) obj.funcs->clear(obj.priv_data)
 #define RUListWidget_add_item(obj, item) obj.funcs->add_item(obj.priv_data, item)
 #define RUListWidget_add_text_item(obj, text) obj.funcs->add_text_item(obj.priv_data, text)
 #define RUListWidget_current_item(obj) obj.funcs->current_item(obj.priv_data)
