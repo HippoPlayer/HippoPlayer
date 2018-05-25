@@ -100,7 +100,7 @@ impl <'a>Message<'a> {
     ///
     /// Read integer from the stream
     ///
-    pub fn read_int(&mut self) -> Result<i64, NumValueReadError> {
+    pub fn read_int<T: FromPrimitive>(&mut self) -> Result<T, NumValueReadError> where T: FromPrimitive {
 		 msgpack::decode::read_int(&mut self.data)
 	}
 }

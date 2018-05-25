@@ -310,8 +310,7 @@ dependencies = [
 name = "messages"
 version = "0.1.0"
 dependencies = [
- "num-integer 0.1.38 (registry+https://github.com/rust-lang/crates.io-index)",
- "num-traits 0.2.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "num-traits 0.1.40 (registry+https://github.com/rust-lang/crates.io-index)",
  "rmp 0.8.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "rmp-serde 0.13.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.27 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -415,21 +414,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "num-integer"
-version = "0.1.38"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-dependencies = [
- "num-traits 0.2.4 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
 name = "num-traits"
 version = "0.1.40"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[[package]]
-name = "num-traits"
-version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
@@ -826,9 +812,7 @@ dependencies = [
 "checksum net2 0.2.31 (registry+https://github.com/rust-lang/crates.io-index)" = "3a80f842784ef6c9a958b68b7516bc7e35883c614004dd94959a4dca1b716c09"
 "checksum nix 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)" = "bfb3ddedaa14746434a02041940495bf11325c22f6d36125d3bdd56090d50a79"
 "checksum notify 2.6.3 (registry+https://github.com/rust-lang/crates.io-index)" = "4e0e7eec936337952c4228b023007528a33b2fa039d96c2e8f32d764221a9c07"
-"checksum num-integer 0.1.38 (registry+https://github.com/rust-lang/crates.io-index)" = "6ac0ea58d64a89d9d6b7688031b3be9358d6c919badcf7fbb0527ccfd891ee45"
 "checksum num-traits 0.1.40 (registry+https://github.com/rust-lang/crates.io-index)" = "99843c856d68d8b4313b03a17e33c4bb42ae8f6610ea81b28abe076ac721b9b0"
-"checksum num-traits 0.2.4 (registry+https://github.com/rust-lang/crates.io-index)" = "775393e285254d2f5004596d69bb8bc1149754570dcc08cf30cabeba67955e28"
 "checksum ogg 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)" = "013b78ceb7fb82555a2f8a95d8e40866fe64a5d15b83c51b3e1fdd40cd903ed3"
 "checksum ole32-sys 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "5d2c49021782e5233cd243168edfa8037574afed4eba4bbaf538b3d8d1789d8c"
 "checksum phf 0.7.21 (registry+https://github.com/rust-lang/crates.io-index)" = "cb325642290f28ee14d8c6201159949a872f220c62af6e110a56ea914fbe42fc"

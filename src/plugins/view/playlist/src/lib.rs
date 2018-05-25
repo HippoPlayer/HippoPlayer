@@ -97,7 +97,7 @@ impl Playlist {
     /// when doing a double click event or an external call.
     ///
     fn select_song(&mut self, msg: &mut MessageDecode) {
-        let offset = msg.read_int().unwrap() as u32;
+        let offset: u32 = msg.read_int().unwrap();
         let _url = msg.read_str().unwrap();
 
         // TODO: validate that this is actually correct

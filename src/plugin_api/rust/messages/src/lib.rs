@@ -2,7 +2,6 @@
 extern crate serde_derive;
 extern crate serde;
 extern crate num_traits;
-extern crate num_integer;
 
 pub extern crate rmp as msgpack;
 extern crate rmp_serde as rmps;

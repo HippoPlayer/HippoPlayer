@@ -5,7 +5,7 @@ use rmps::Serializer;
 use serde::Serialize;
 use std::io;
 
-use num_integer::Integer;
+//use num_integer::Integer;
 use num_traits::cast::FromPrimitive;
 use MsgType;
 
