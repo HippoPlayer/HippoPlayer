@@ -1,10 +1,8 @@
-use messages::{AddUrls, MessageDecode, MessageEncode};
+use messages::{AddUrls, LoadedUrls, MessageDecode, MessageEncode};
 use std::io;
 use std::fs::File;
 use std::io::{BufWriter, BufReader};
 use serde_json;
-
-use std::io::{Read, Write};
 
 ///
 /// Metadata for each entry. We will likely stuff more things here later on.
@@ -83,11 +81,24 @@ impl Playlist {
     ///
     /// Load the playlist
     ///
-    pub fn load(&mut self, filename: &str) -> io::Result<MessageEncode> {
+    pub fn load(&mut self, filename: &str) -> io::Result<()> {
         let f = BufReader::new(File::open(filename)?);
         *self = serde_json::from_reader(f)?;
-		let request = MessageEncode::new_request("hippo_playlist_load", 0).unwrap();
-        Ok(request)
+        Ok(())
+    }
+
+    pub fn get_loaded_urls(&self) -> MessageEncode {
+    	let mut data = LoadedUrls::new();
+		let mut request = MessageEncode::new_request("hippo_playlist_load", 0).unwrap();
+
+		data.urls = Vec::with_capacity(self.entries.len());
+
+		for entry in &self.entries {
+			data.urls.push((entry.path.clone(), entry.title.clone()));
+		}
+
+        request.serialize(&data).unwrap();
+		request  
     }
 
     ///

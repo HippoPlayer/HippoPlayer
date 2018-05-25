@@ -198,12 +198,12 @@ impl<'a> HippoPlayer<'a> {
 	}
 
 	fn load_playlist(&mut self, filename: &str) {
-		let res = match self.playlist.load(filename) {
-			Err(err) => return,
-			Ok(t) => t,
-		};
+		if self.playlist.load(filename).is_err() {
+			return;
+		}
 
-		self.send_message_to_plugins(&res);
+		let data = self.playlist.get_loaded_urls();
+		self.send_message_to_plugins(&data);
 	}
 
     fn add_files(&mut self) {

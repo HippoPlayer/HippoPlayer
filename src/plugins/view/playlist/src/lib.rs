@@ -15,7 +15,7 @@ use rute::PluginUi;
 use std::ffi::OsStr;
 use std::path::Path;
 
-use hippo_api::messages::{AddUrls, ListPosition};
+use hippo_api::messages::{AddUrls, ListPosition, LoadedUrls};
 use hippo_api::view::View;
 use hippo_api::{MessageApi, MessageDecode, Service};
 
@@ -38,6 +38,7 @@ impl View for Playlist {
         match msg.method {
             "hippo_playlist_added_files" => self.add_files(msg),
             "hippo_playlist_select_song" => self.select_song(msg),
+            "hippo_playlist_load" => self.playlist_loaded(msg),
             _ => (),
         }
     }
@@ -102,6 +103,25 @@ impl Playlist {
 
         // TODO: validate that this is actually correct
         self.widget.set_current_row(offset as i32);
+    }
+
+    ///
+    /// Called when a new playlist is loaded. This means that we should clear all old entries 
+    /// and start filling it with the new data
+    ///
+    fn playlist_loaded(&mut self, msg: &mut MessageDecode) {
+    	self.widget.clear();
+
+        let data: LoadedUrls = msg.deserialize().unwrap();
+
+        for url in &data.urls {
+            let item = self.ui.create_list_widget_item();
+
+            item.set_text(&url.1);
+            item.set_string_data(&url.0);
+
+            self.widget.add_item(&item);
+        }
     }
 
     ///

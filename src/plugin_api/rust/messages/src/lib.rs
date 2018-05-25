@@ -24,12 +24,25 @@ pub struct AddUrls {
 	pub urls: Vec<String>,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct LoadedUrls {
+	//#[serde(borrow)]
+	//pub urls: Vec<(&'a str, &'a str)>,
+	pub urls: Vec<(String, String)>,
+}
+
 impl AddUrls {
 	pub fn new() -> AddUrls {
 		AddUrls {
 			list_position: ListPosition::End,
 			urls: Vec::new(),
 		}
+	}
+}
+
+impl LoadedUrls {
+	pub fn new() -> LoadedUrls {
+		LoadedUrls { urls: Vec::new() }
 	}
 }
 
