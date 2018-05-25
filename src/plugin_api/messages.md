@@ -29,6 +29,15 @@ This is used to updated metadata about an resource (filename,url,etc) all fields
         [strings..]    - string : List of strings (needs to match written array length)
 ```
 
+## hippo_playlist_loaded (notification)
+
+New playlist has been loaded
+
+```
+  [array_len]   - int : Number for urls/files
+  [strings..]   - string : List of strings to be added to the playlist
+```
+
 ## hippo_playlist_add_urls (request)
 
 Add files at the end of the playlist

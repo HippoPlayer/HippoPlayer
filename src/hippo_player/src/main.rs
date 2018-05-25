@@ -29,7 +29,7 @@ pub use rmp as msgpack;
 
 use audio::{HippoAudio, MusicInfo};
 use hippo_api::ffi::CMessageDecode;
-use hippo_api::MessageDecode;
+use hippo_api::{MessageDecode, MessageEncode};
 use playlist::Playlist;
 use plugin_handler::Plugins;
 use std::env;
@@ -146,18 +146,26 @@ impl<'a> HippoPlayer<'a> {
 
         // Send back the replies from the playlist
 
-        for msg in playlist_respones {
-            let message_dec = MessageDecode::new(&msg.data).unwrap();
-            let message = service_ffi::get_cmessage_decode(&message_dec);
+		self.send_messages_to_plugins(&playlist_respones);
+    }
 
-            for instance in &mut self.state.view_instance_states {
-                let pb = instance.instance.as_ref().unwrap();
-                let ptr: *const CMessageDecode = &message as *const CMessageDecode;
-                ((pb.plugin.plugin_funcs).event.unwrap())(
-                    pb.user_data as *mut ::std::os::raw::c_void,
-                    ptr,
-                );
-            }
+    fn send_message_to_plugins(&mut self, msg: &MessageEncode) {
+		let message_dec = MessageDecode::new(&msg.data).unwrap();
+		let message = service_ffi::get_cmessage_decode(&message_dec);
+
+		for instance in &mut self.state.view_instance_states {
+			let pb = instance.instance.as_ref().unwrap();
+			let ptr: *const CMessageDecode = &message as *const CMessageDecode;
+			((pb.plugin.plugin_funcs).event.unwrap())(
+				pb.user_data as *mut ::std::os::raw::c_void,
+				ptr,
+			);
+		}
+    }
+
+    fn send_messages_to_plugins(&mut self, messages: &Vec<MessageEncode>) {
+        for msg in messages {
+        	self.send_message_to_plugins(&msg);
         }
     }
 
@@ -184,20 +192,26 @@ impl<'a> HippoPlayer<'a> {
         // TODO: Error handling
         Self::try_save_layout("layout.data", &state).unwrap();
 
-        //let state = self.tool_window_manager.save_state();
-        //println!("tool_window_mangare state {}", state);
-        /*
-           if let Err(err) = self.playlist.save_playlist("playlist.json") {
-           println!("Unable to save playlist {:?}", err);
-           }
-           */    }
+		if let Err(err) = self.playlist.save("playlist.json") {
+			println!("Unable to save playlist {:?}", err);
+		}
+	}
+
+	fn load_playlist(&mut self, filename: &str) {
+		let res = match self.playlist.load(filename) {
+			Err(err) => return,
+			Ok(t) => t,
+		};
+
+		self.send_message_to_plugins(&res);
+	}
 
     fn add_files(&mut self) {
-        /*
-           for url in self.app.get_files().iter().filter(|u| u.is_local_file()) {
-           self.playlist.add_file(&url.to_local_file());
-           }
-           */
+    	/*
+		for url in self.app.get_files().iter().filter(|u| u.is_local_file()) {
+		self.playlist.add_file(&url.to_local_file());
+		}
+		*/
     }
 
     fn show_plugin(&mut self, action: &Action) {
@@ -355,6 +369,7 @@ impl<'a> HippoPlayer<'a> {
         main_window.resize(800, 600);
 
         self.load_layout("layout.data");
+        self.load_playlist("playlist.json");
 
         main_window.show();
 

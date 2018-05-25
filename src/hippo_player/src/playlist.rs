@@ -1,4 +1,10 @@
 use messages::{AddUrls, MessageDecode, MessageEncode};
+use std::io;
+use std::fs::File;
+use std::io::{BufWriter, BufReader};
+use serde_json;
+
+use std::io::{Read, Write};
 
 ///
 /// Metadata for each entry. We will likely stuff more things here later on.
@@ -68,24 +74,21 @@ impl Playlist {
     ///
     /// Serialize the playlist and write it to filename
     ///
-    /*
     pub fn save(&mut self, filename: &str) -> io::Result<()> {
         let f = BufWriter::new(File::create(filename)?);
         serde_json::to_writer_pretty(f, self)?;
         Ok(())
     }
-    */
 
     ///
     /// Load the playlist
     ///
-    /*
-    pub fn load(&mut self, filename: &str) -> io::Result<()> {
+    pub fn load(&mut self, filename: &str) -> io::Result<MessageEncode> {
         let f = BufReader::new(File::open(filename)?);
         *self = serde_json::from_reader(f)?;
-        Ok(())
+		let request = MessageEncode::new_request("hippo_playlist_load", 0).unwrap();
+        Ok(request)
     }
-    */
 
     ///
     /// Get the next song to play
