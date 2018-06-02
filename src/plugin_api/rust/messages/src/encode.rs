@@ -50,7 +50,8 @@ impl Message {
 
     #[inline]
     pub fn write_str(&mut self, data: &str) -> Result<(), ValueWriteError> {
-        msgpack::encode::write_str(&mut self.data, data)
+        let ret = msgpack::encode::write_str(&mut self.data, data);
+        ret
     }
 
     #[inline]
@@ -82,6 +83,7 @@ impl Message {
 
     #[inline]
     pub fn write_map_len(&mut self, size: u32) -> Result<Marker, ValueWriteError> {
+        println!(">>>>>>>>>> write_map_len pos before {}", self.data.len());
         msgpack::encode::write_map_len(&mut self.data, size)
     }
 

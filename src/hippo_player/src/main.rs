@@ -150,10 +150,10 @@ impl<'a> HippoPlayer<'a> {
     }
 
     fn send_message_to_plugins(&mut self, msg: &MessageEncode) {
-		let message_dec = MessageDecode::new(&msg.data).unwrap();
-		let message = service_ffi::get_cmessage_decode(&message_dec);
-
 		for instance in &mut self.state.view_instance_states {
+            let message_dec = MessageDecode::new(&msg.data).unwrap();
+            let message = service_ffi::get_cmessage_decode(&message_dec);
+
 			let pb = instance.instance.as_ref().unwrap();
 			let ptr: *const CMessageDecode = &message as *const CMessageDecode;
 			((pb.plugin.plugin_funcs).event.unwrap())(

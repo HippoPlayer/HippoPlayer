@@ -24,6 +24,7 @@ pub struct AddUrls {
 	pub urls: Vec<String>,
 }
 
+/*
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LoadedUrls {
 	//#[serde(borrow)]
@@ -45,6 +46,7 @@ impl LoadedUrls {
 		LoadedUrls { urls: Vec::new() }
 	}
 }
+*/
 
 pub use msgpack::encode::ValueWriteError as ValueWriteError;
 pub use msgpack::decode::NumValueReadError as NumValueReadError;

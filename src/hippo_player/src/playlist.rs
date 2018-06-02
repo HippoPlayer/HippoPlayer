@@ -1,4 +1,4 @@
-use messages::{AddUrls, LoadedUrls, MessageDecode, MessageEncode};
+use messages::{AddUrls, MessageDecode, MessageEncode};
 use std::io;
 use std::fs::File;
 use std::io::{BufWriter, BufReader};
@@ -88,17 +88,16 @@ impl Playlist {
     }
 
     pub fn get_loaded_urls(&self) -> MessageEncode {
-    	let mut data = LoadedUrls::new();
 		let mut request = MessageEncode::new_request("hippo_playlist_load", 0).unwrap();
 
-		data.urls = Vec::with_capacity(self.entries.len());
+		request.write_map_len(self.entries.len() as u32).unwrap();
 
 		for entry in &self.entries {
-			data.urls.push((entry.path.clone(), entry.title.clone()));
+		    request.write_str(&entry.path);
+		    request.write_str(&entry.title);
 		}
 
-        request.serialize(&data).unwrap();
-		request  
+		request
     }
 
     ///
