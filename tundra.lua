@@ -6,6 +6,7 @@ local mac_opts = {
     "-Wall", "-I.",
     -- "-Weverything", "-Werror",
     { "-O0", "-g"; Config = "*-*-debug" },
+    { "-O0", "-fsanitize=address", "-fno-omit-frame-pointer", "-g"; Config = "*-*-debug-asan" },
     { "-O3", "-g"; Config = "*-*-release" },
 }
 
@@ -27,8 +28,15 @@ local macosx = {
             "-std=c++11",
         },
 
-        SHLIBOPTS = { "-lstdc++" },
-        PROGCOM = { "-lstdc++" },
+        SHLIBOPTS = {
+			"-lstdc++",
+			{ "-fsanitize=address"; Config = "*-*-debug-asan" },
+		},
+
+        PROGCOM = {
+			"-lstdc++",
+			{ "-fsanitize=address"; Config = "*-*-debug-asan" },
+		},
     },
 
     Frameworks = {
@@ -158,7 +166,7 @@ Build {
     },
 
     Variants = { "debug", "release" },
-    SubVariants = { "default", "test" },
+    SubVariants = { "default", "asan" },
 }
 
 -- vim: ts=4:sw=4:sts=4
