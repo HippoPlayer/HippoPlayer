@@ -151,6 +151,11 @@ RustCrate {
 
 RustProgram {
     Name = "hippo_player",
+
+	Env = {
+		RUST_OPTS = "-C prefer-dynamic",
+	},
+
     CargoConfig = "src/hippo_player/Cargo.toml",
     Sources = {
         get_rs_src("src/hippo_player/src"),
