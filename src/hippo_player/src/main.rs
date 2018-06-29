@@ -75,6 +75,11 @@ struct HippoPlayer<'a> {
     _is_playing: bool,
 }
 
+enum PlayerAction {
+    StartNextSong,
+    StartSelectedSong,
+}
+
 include!(concat!(env!("OUT_DIR"), "/build_id.rs"));
 
 impl<'a> HippoPlayer<'a> {
@@ -101,7 +106,7 @@ impl<'a> HippoPlayer<'a> {
     ///
     fn update_ui_messages(&mut self) {
         let mut playlist_respones = Vec::new();
-        let mut start_next_song = false;
+        let mut player_action = None;
 
         // Send all the events to the playlist
 
@@ -117,9 +122,8 @@ impl<'a> HippoPlayer<'a> {
                     //
 
                     match message_dec.method {
-                        "hippo_playlist_next_song" => {
-                            start_next_song = true;
-                        }
+                        "hippo_playlist_next_song" => player_action = Some(PlayerAction::StartNextSong),
+                        "hippo_playlist_select_song" => player_action = Some(PlayerAction::StartSelectedSong),
 
                         _ => (),
                     }
@@ -131,11 +135,25 @@ impl<'a> HippoPlayer<'a> {
             }
         }
 
-        if start_next_song {
-            self.playlist
-                .get_next_song()
-                .map(|song| self.play_file(&song));
-        }
+        // Update actions that affects player and playlists
+
+        player_action.map(|action| {
+            match action {
+                PlayerAction::StartNextSong => {
+                    self.playlist
+                        .get_next_song()
+                        .map(|song| self.play_file(&song));
+                },
+
+                PlayerAction::StartSelectedSong => {
+                    self.playlist
+                        .get_current_song()
+                        .map(|song| self.play_file(&song));
+                },
+            }
+        });
+
+        // Clear the queues for all the messages
 
         for instance in &mut self.state.view_instance_states {
             if let Some(ref mut service) = instance.plugin_service {
@@ -201,6 +219,8 @@ impl<'a> HippoPlayer<'a> {
 		if self.playlist.load(filename).is_err() {
 			return;
 		}
+
+		println!("load playlist");
 
 		let data = self.playlist.get_loaded_urls();
 		self.send_message_to_plugins(&data);

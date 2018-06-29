@@ -93,25 +93,24 @@ impl Source for HippoPlayback {
 }
 
 pub struct HippoAudio {
-    audio_sink: Option<rodio::Sink>,
+    audio_sink: rodio::Sink,
     playbacks: Vec<HippoPlayback>, // audio_endpoint: rodio::Endpoint,
 }
 
 impl HippoAudio {
     pub fn new() -> HippoAudio {
         let endpoint = rodio::get_default_endpoint().unwrap();
-        //let sink = Sink::new(&endpoint);
+        let sink = Sink::new(&endpoint);
 
         HippoAudio {
-            //audio_sink: sink,
-            audio_sink: None,
+            audio_sink: sink,
             playbacks: Vec::new(),
         }
     }
 
     pub fn stop(&mut self) {
-        self.audio_sink.as_mut().unwrap().stop();
-        self.audio_sink.as_mut().unwrap().sleep_until_end();
+        self.audio_sink.stop();
+        self.audio_sink.sleep_until_end();
 
         for pb in self.playbacks.iter_mut() {
             ((pb.plugin.plugin_funcs).close)(pb.plugin_user_data as *mut c_void);
@@ -145,7 +144,7 @@ impl HippoAudio {
 			};
 
 			self.playbacks.push(pb.clone());
-			self.audio_sink.as_mut().unwrap().append(pb);
+			self.audio_sink.append(pb);
 
 			info
         } else {

@@ -104,7 +104,7 @@ impl Playlist {
         let _url = msg.read_str().unwrap();
 
         // TODO: validate that this is actually correct
-        self.widget.set_current_row(offset as i32);
+        //self.widget.set_current_row(offset as i32);
     }
 
     ///

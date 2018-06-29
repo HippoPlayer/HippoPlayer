@@ -58,7 +58,7 @@ Reply that files actually got added with list of added files
 
 ## hippo_playlist_select_song (notifcation)
 
-Selects a song from the playlist and starts playing ito
+Selects a song from the playlist and starts playing
 
 ```
   [index]   - int (The entry in the playlist, this is used as an opimization so that entry is tried first when selecting a track and it must match the name, otherwise the name is searched for)

@@ -36,6 +36,8 @@ impl Playlist {
     ///
     pub fn event(&mut self, msg: &mut MessageDecode) -> Option<MessageEncode> {
         match msg.method {
+            "hippo_playlist_select_song" => { self.select_song(msg) }
+
             /*
 			"hippo_playlist_next_song" => {
 				self.get_next_song().map(|song| Self::new_song_message(msg, song))
@@ -87,6 +89,9 @@ impl Playlist {
         Ok(())
     }
 
+    ///
+    /// Get loaded urls
+    ///
     pub fn get_loaded_urls(&self) -> MessageEncode {
 		let mut request = MessageEncode::new_request("hippo_playlist_load", 0).unwrap();
 
@@ -98,6 +103,37 @@ impl Playlist {
 		}
 
 		request
+    }
+
+    ///
+    /// Get the next song to play
+    ///
+    fn select_song(&mut self, msg: &mut MessageDecode) -> Option<MessageEncode> {
+        let row: u32 = msg.read_int().unwrap();
+        let url_name = msg.read_str().unwrap();
+
+        // TODO: Validate that this index is correct
+
+        self.current_song = row as usize;
+
+        // Write reply
+
+		let mut reply = MessageEncode::new_request("hippo_playlist_select_song", 0).unwrap();
+        reply.write_int(row).unwrap();
+        reply.write_str(&url_name).unwrap();
+
+        Some(reply)
+    }
+
+    ///
+    /// Get the current song
+    ///
+    pub fn get_current_song(&mut self) -> Option<String> {
+        if self.entries.len() == 0 {
+            return None;
+        }
+
+        Some(self.entries[self.current_song].path.to_owned())
     }
 
     ///
@@ -116,21 +152,20 @@ impl Playlist {
         Some(self.entries[current_song].path.to_owned())
     }
 
-    /*
-    fn get_prev_song(&mut self) -> Option<&str> {
+    ///
+    /// Get previous song
+    ///
+    fn get_prev_song(&mut self) -> Option<String> {
         let count = self.entries.len();
 
-        let mut current_item = self.current_item + 1;
+        let mut current_song = self.current_song + 1;
 
-        if current_item >= count  {
-            current_item = 0;
+        if current_song >= count  {
+            current_song = 0;
         }
 
-        self.current_item = current_item;
+        self.current_song = current_song;
 
-        Some(&self.entries[current_item].path)
-
-        None
+        Some(self.entries[current_song].path.to_owned())
     }
-    */
 }
