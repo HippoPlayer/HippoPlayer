@@ -1,3 +1,13 @@
+/*
+#![feature(alloc_system, global_allocator, allocator_api)]
+extern crate alloc_system;
+
+use alloc_system::System;
+
+#[global_allocator]
+static A: System = System;
+*/
+
 extern crate hippo_api;
 extern crate messages;
 extern crate rodio;
@@ -83,9 +93,10 @@ enum PlayerAction {
 include!(concat!(env!("OUT_DIR"), "/build_id.rs"));
 
 impl<'a> HippoPlayer<'a> {
-    pub fn new(ui: Ui) -> HippoPlayer<'a> {
+    pub fn new(ui: Ui, audio: HippoAudio) -> HippoPlayer<'a> {
+
         HippoPlayer {
-            audio: HippoAudio::new(),
+            audio: audio,
             plugins: Plugins::new(),
             plugin_service: service_ffi::PluginService::new(),
             app: ui.create_application(),
@@ -234,6 +245,28 @@ impl<'a> HippoPlayer<'a> {
 		*/
     }
 
+    fn about_to_close_plugin(&mut self, widget: &DockWidget, event: &CloseEvent) {
+        let instance_name = widget.object_name();
+        let mut instance_to_remove = None;
+
+
+        for i in 0..self.state.view_instance_states.len() {
+            let state = &mut self.state.view_instance_states[i];
+
+            if state.instance_id == instance_name {
+                instance_to_remove = Some(i);
+                break;
+            }
+        }
+
+        instance_to_remove.map(|index| {
+            println!("removing {}", instance_name);
+            self.state.view_instance_states.remove(index);
+        });
+
+        event.accept();
+    }
+
     fn show_plugin(&mut self, action: &Action) {
         let plugin_index = action.get_int_data() as usize;
         let widget = self.ui.create_widget();
@@ -259,13 +292,13 @@ impl<'a> HippoPlayer<'a> {
 
         dock_widget.set_object_name(&object_name);
         dock_widget.set_widget(&widget);
-
         self.dock_manager.add_to_docking(&dock_widget);
 
         widget.resize(500, 500);
         widget.show();
-
         widget.set_persist_data("pls save me pls!");
+
+        set_close_event!(dock_widget, self, HippoPlayer, HippoPlayer::about_to_close_plugin);
 
         let view_state = ViewInstanceState {
             plugin_name: action.text().to_owned(),
@@ -298,6 +331,8 @@ impl<'a> HippoPlayer<'a> {
         plugin_menu
     }
 
+
+
     ///
     /// This will load a defult layout file and set up plugins for it
     ///
@@ -326,6 +361,8 @@ impl<'a> HippoPlayer<'a> {
 
                 let dock_widget = self.ui.create_dock_widget();
                 let widget = self.ui.create_widget();
+
+                set_close_event!(dock_widget, self, HippoPlayer, HippoPlayer::about_to_close_plugin);
 
                 let plugin_service = service_ffi::PluginService::new();
                 let instance = plugin.create_instance(&self.ui, &plugin_service, &widget);
@@ -462,10 +499,13 @@ fn main() {
 
     let current_path = std::env::current_dir().unwrap();
 
+    let audio = HippoAudio::new();
+
     let rute_instance = SharedLibUi::new().unwrap();
     let ui = rute_instance.get_ui();
+    //let ui = SharedLibUi::dummy_new();
 
-    let mut app = HippoPlayer::new(ui);
+    let mut app = HippoPlayer::new(ui, audio);
 
     unsafe {
         let service_api = app.plugin_service.get_c_service_api();

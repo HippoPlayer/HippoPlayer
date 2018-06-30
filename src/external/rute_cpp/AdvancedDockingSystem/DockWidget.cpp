@@ -371,6 +371,7 @@ void CDockWidget::toggleView(bool Open)
 	if (!Open)
 	{
 		emit closed();
+		QWidget::close();
 	}
 	emit viewToggled(Open);
 }
@@ -428,6 +429,7 @@ bool CDockWidget::event(QEvent *e)
 	{
 		emit titleChanged(windowTitle());
 	}
+
 	return QFrame::event(e);
 }
 

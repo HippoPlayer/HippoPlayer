@@ -129,6 +129,7 @@ impl Playlist {
         }
     }
 
+
     ///
     /// User double clicks an item in the playlist. Double click means start playing the selected
     /// track and a notification will be sent to start doing so.
@@ -155,7 +156,7 @@ impl Playlist {
     /// Note: if this turns out to be too slow we should just add them
     ///       as is and update when the updates comes back
     ///
-    fn drop_files(&mut self, event: &DropEvent) {
+    fn drop_files(&mut self, _widget: &ListWidget, event: &DropEvent) {
         let mut urls = Vec::new();
 
         for url in event
@@ -183,7 +184,7 @@ impl Playlist {
         event.accept_proposed_action();
     }
 
-    fn drag_enter(&mut self, event: &DragEnterEvent) {
+    fn drag_enter(&mut self, _widget: &ListWidget, event: &DragEnterEvent) {
         event.accept();
     }
 }

@@ -26,6 +26,7 @@
 #include <QMenuBar>
 #include <QApplication>
 #include <QPaintEvent>
+#include <QCloseEvent>
 #include <QDragEnterEvent>
 #include <QDropEvent>
 #include <QLayout>
@@ -57,6 +58,7 @@ extern struct RUMenuFuncs s_menu_funcs;
 extern struct RUMenuBarFuncs s_menu_bar_funcs;
 extern struct RUApplicationFuncs s_application_funcs;
 extern struct RUPaintEventFuncs s_paint_event_funcs;
+extern struct RUCloseEventFuncs s_close_event_funcs;
 extern struct RUDragEnterEventFuncs s_drag_enter_event_funcs;
 extern struct RUDropEventFuncs s_drop_event_funcs;
 extern struct RULayoutFuncs s_layout_funcs;
@@ -166,7 +168,7 @@ public:
 
 public:
     virtual void paintEvent(QPaintEvent* event);
-    void (*m_paint)(void* self_c, struct RUBase* event) = nullptr;
+    void (*m_paint)(RUBase*, void* self_c, struct RUBase* event) = nullptr;
     void* m_paint_user_data = nullptr;
 };
 
@@ -200,11 +202,11 @@ public:
 
 public:
     virtual void dragEnterEvent(QDragEnterEvent* event);
-    void (*m_drag_enter)(void* self_c, struct RUBase* event) = nullptr;
+    void (*m_drag_enter)(RUBase*, void* self_c, struct RUBase* event) = nullptr;
     void* m_drag_enter_user_data = nullptr;
 public:
     virtual void dropEvent(QDropEvent* event);
-    void (*m_drop)(void* self_c, struct RUBase* event) = nullptr;
+    void (*m_drop)(RUBase*, void* self_c, struct RUBase* event) = nullptr;
     void* m_drop_user_data = nullptr;
 };
 
@@ -296,6 +298,25 @@ public:
     WRToolWindowManager(QWidget* widget) : QToolWindowManager(widget) {  setObjectName(QStringLiteral("Test")); setPersistData(QStringLiteral("SomeData")); }
     virtual ~WRToolWindowManager() {}
 
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+class WRDockWidget : public QDockWidget {
+    Q_OBJECT
+public:
+    Q_PROPERTY(QString persistData READ persistData WRITE setPersistData DESIGNABLE false SCRIPTABLE false)
+    void setPersistData(const QString& data) { m_persistData = data; }
+    QString persistData() { return m_persistData; }
+    QString m_persistData;
+
+    WRDockWidget(QWidget* widget) : QDockWidget(widget) {  setObjectName(QStringLiteral("Test")); setPersistData(QStringLiteral("SomeData")); }
+    virtual ~WRDockWidget() {}
+
+public:
+    virtual void closeEvent(QCloseEvent* event);
+    void (*m_close)(RUBase*, void* self_c, struct RUBase* event) = nullptr;
+    void* m_close_user_data = nullptr;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

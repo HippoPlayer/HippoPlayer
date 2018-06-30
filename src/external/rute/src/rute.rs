@@ -140,6 +140,11 @@ pub struct PaintEvent {
 }
 
 #[derive(Clone, Default)]
+pub struct CloseEvent {
+    pub obj: Option<RUCloseEvent>,
+}
+
+#[derive(Clone, Default)]
 pub struct DragEnterEvent {
     pub obj: Option<RUDragEnterEvent>,
 }
@@ -1745,6 +1750,100 @@ impl DockWidget {
        }
     }
 
+    pub fn show (&self) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).show)(obj.privd);
+        
+        }
+    }
+
+    pub fn set_persist_data (&self, text: &str) {
+        let str_in_text_1 = CString::new(text).unwrap();
+
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).set_persist_data)(obj.privd, str_in_text_1.as_ptr());
+        
+        }
+    }
+
+    pub fn persist_data (&self) -> String {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            let ret_val = ((*obj.funcs).persist_data)(obj.privd);
+          
+           CStr::from_ptr(ret_val).to_string_lossy().into_owned()
+          
+        
+        }
+    }
+
+    pub fn set_fixed_height (&self, width: i32) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).set_fixed_height)(obj.privd, width);
+        
+        }
+    }
+
+    pub fn set_fixed_width (&self, width: i32) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).set_fixed_width)(obj.privd, width);
+        
+        }
+    }
+
+    pub fn resize (&self, width: i32, height: i32) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).resize)(obj.privd, width, height);
+        
+        }
+    }
+
+    pub fn set_parent (&self, widget: &WidgetType) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).set_parent)(obj.privd, widget.get_widget_type_obj() as *const RUBase);
+        
+        }
+    }
+
+    pub fn set_layout (&self, layout: &LayoutType) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).set_layout)(obj.privd, layout.get_layout_type_obj() as *const RUBase);
+        
+        }
+    }
+
+    pub fn update (&self) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).update)(obj.privd);
+        
+        }
+    }
+
     pub fn set_object_name (&self, name: &str) {
         let str_in_name_1 = CString::new(name).unwrap();
 
@@ -1777,6 +1876,20 @@ impl DockWidget {
             ((*obj.funcs).set_widget)(obj.privd, widget.get_widget_type_obj() as *const RUBase);
         
         }
+    }
+}
+
+impl PaintDevice for DockWidget {
+    fn get_paint_device_obj(&self) -> *const RUBase {
+       let obj = self.obj.unwrap();
+       obj.privd as *const RUBase
+    }
+}
+
+impl WidgetType for DockWidget {
+    fn get_widget_type_obj(&self) -> *const RUBase {
+       let obj = self.obj.unwrap();
+       obj.privd as *const RUBase
     }
 }
 
@@ -2741,6 +2854,19 @@ impl PaintEvent {
     }
 }
 
+impl CloseEvent {
+
+    pub fn accept (&self) {
+        
+        unsafe {
+            let obj = self.obj.unwrap();
+        
+            ((*obj.funcs).accept)(obj.privd);
+        
+        }
+    }
+}
+
 impl DragEnterEvent {
 
     pub fn accept (&self) {
@@ -3127,14 +3253,40 @@ macro_rules! set_application_about_to_quit_event {
 
 
 #[macro_export]
+macro_rules! set_close_event {
+  ($sender:expr, $data:expr, $call_type:ident, $callback:path) => {
+    {
+      extern "C" fn temp_call(widget: *const ::rute::rute::RUBase, self_c: *const ::std::os::raw::c_void, event: *const ::rute::rute::RUBase) {
+          unsafe {
+              let app = self_c as *mut $call_type;
+              let w = DockWidget { obj: Some(*(widget as *const ::rute::ffi_gen::RUDockWidget)) };
+              let event = CloseEvent { obj: Some(*(event as *const ::rute::ffi_gen::RUCloseEvent)) };
+              $callback(&mut *app, &w, &event);
+          }
+      }
+      fn get_data_ptr(val: &$call_type) -> *const ::std::os::raw::c_void {
+         let t: *const ::std::os::raw::c_void = unsafe { ::std::mem::transmute(val) };
+         t
+      }
+
+      unsafe {
+          let obj = $sender.obj.unwrap();
+         ((*obj.funcs).set_close_event)(obj.privd, get_data_ptr($data), temp_call);
+      }
+    }
+} }
+
+
+#[macro_export]
 macro_rules! set_drag_enter_event {
   ($sender:expr, $data:expr, $call_type:ident, $callback:path) => {
     {
-      extern "C" fn temp_call(self_c: *const ::std::os::raw::c_void, event: *const ::rute::rute::RUBase) {
+      extern "C" fn temp_call(widget: *const ::rute::rute::RUBase, self_c: *const ::std::os::raw::c_void, event: *const ::rute::rute::RUBase) {
           unsafe {
               let app = self_c as *mut $call_type;
+              let w = ListWidget { obj: Some(*(widget as *const ::rute::ffi_gen::RUListWidget)) };
               let event = DragEnterEvent { obj: Some(*(event as *const ::rute::ffi_gen::RUDragEnterEvent)) };
-              $callback(&mut *app, &event);
+              $callback(&mut *app, &w, &event);
           }
       }
       fn get_data_ptr(val: &$call_type) -> *const ::std::os::raw::c_void {
@@ -3154,11 +3306,12 @@ macro_rules! set_drag_enter_event {
 macro_rules! set_drop_event {
   ($sender:expr, $data:expr, $call_type:ident, $callback:path) => {
     {
-      extern "C" fn temp_call(self_c: *const ::std::os::raw::c_void, event: *const ::rute::rute::RUBase) {
+      extern "C" fn temp_call(widget: *const ::rute::rute::RUBase, self_c: *const ::std::os::raw::c_void, event: *const ::rute::rute::RUBase) {
           unsafe {
               let app = self_c as *mut $call_type;
+              let w = ListWidget { obj: Some(*(widget as *const ::rute::ffi_gen::RUListWidget)) };
               let event = DropEvent { obj: Some(*(event as *const ::rute::ffi_gen::RUDropEvent)) };
-              $callback(&mut *app, &event);
+              $callback(&mut *app, &w, &event);
           }
       }
       fn get_data_ptr(val: &$call_type) -> *const ::std::os::raw::c_void {
@@ -3178,11 +3331,12 @@ macro_rules! set_drop_event {
 macro_rules! set_paint_event {
   ($sender:expr, $data:expr, $call_type:ident, $callback:path) => {
     {
-      extern "C" fn temp_call(self_c: *const ::std::os::raw::c_void, event: *const ::rute::rute::RUBase) {
+      extern "C" fn temp_call(widget: *const ::rute::rute::RUBase, self_c: *const ::std::os::raw::c_void, event: *const ::rute::rute::RUBase) {
           unsafe {
               let app = self_c as *mut $call_type;
+              let w = Widget { obj: Some(*(widget as *const ::rute::ffi_gen::RUWidget)) };
               let event = PaintEvent { obj: Some(*(event as *const ::rute::ffi_gen::RUPaintEvent)) };
-              $callback(&mut *app, &event);
+              $callback(&mut *app, &w, &event);
           }
       }
       fn get_data_ptr(val: &$call_type) -> *const ::std::os::raw::c_void {

@@ -391,7 +391,7 @@ pub struct RUWidgetFuncs {
     pub set_layout: extern "C" fn(self_c: *const RUBase, layout: *const RUBase),
     pub update: extern "C" fn(self_c: *const RUBase),
     pub set_paint_event: extern "C" fn(object: *const RUBase, user_data: *const c_void,
-                                        callback: extern "C" fn(self_c: *const c_void, event: *const RUBase)),
+                                            callback: extern "C" fn(widget: *const RUBase,self_c: *const c_void, event: *const RUBase)),
 }
 
 #[repr(C)]
@@ -414,9 +414,9 @@ pub struct RUPushButtonFuncs {
     pub set_layout: extern "C" fn(self_c: *const RUBase, layout: *const RUBase),
     pub update: extern "C" fn(self_c: *const RUBase),
     pub set_pressed_event: extern "C" fn(object: *const RUBase, user_data: *const c_void,
-                                        callback: extern "C" fn(self_c: *const c_void)),
+                                            callback: extern "C" fn(self_c: *const c_void)),
     pub set_released_event: extern "C" fn(object: *const RUBase, user_data: *const c_void,
-                                        callback: extern "C" fn(self_c: *const c_void)),
+                                            callback: extern "C" fn(self_c: *const c_void)),
     pub set_icon: extern "C" fn(self_c: *const RUBase, icon: *const RUBase),
     pub set_text: extern "C" fn(self_c: *const RUBase, text: *const ::std::os::raw::c_char),
     pub set_flat: extern "C" fn(self_c: *const RUBase, flat: bool),
@@ -489,15 +489,15 @@ pub struct RUListWidgetFuncs {
     pub set_accept_drops: extern "C" fn(self_c: *const RUBase, state: bool),
     pub add_widget_item: extern "C" fn(self_c: *const RUBase, item: *const RUBase),
     pub set_current_row_changed_event: extern "C" fn(object: *const RUBase, user_data: *const c_void,
-                                        callback: extern "C" fn(self_c: *const c_void, row: i32)),
+                                            callback: extern "C" fn(self_c: *const c_void, row: i32)),
     pub set_item_clicked_event: extern "C" fn(object: *const RUBase, user_data: *const c_void,
-                                        callback: extern "C" fn(self_c: *const c_void, item: *const RUBase)),
+                                            callback: extern "C" fn(self_c: *const c_void, item: *const RUBase)),
     pub set_item_double_clicked_event: extern "C" fn(object: *const RUBase, user_data: *const c_void,
-                                        callback: extern "C" fn(self_c: *const c_void, item: *const RUBase)),
+                                            callback: extern "C" fn(self_c: *const c_void, item: *const RUBase)),
     pub set_drag_enter_event: extern "C" fn(object: *const RUBase, user_data: *const c_void,
-                                        callback: extern "C" fn(self_c: *const c_void, event: *const RUBase)),
+                                            callback: extern "C" fn(widget: *const RUBase,self_c: *const c_void, event: *const RUBase)),
     pub set_drop_event: extern "C" fn(object: *const RUBase, user_data: *const c_void,
-                                        callback: extern "C" fn(self_c: *const c_void, event: *const RUBase)),
+                                            callback: extern "C" fn(widget: *const RUBase,self_c: *const c_void, event: *const RUBase)),
 }
 
 #[repr(C)]
@@ -590,7 +590,7 @@ pub struct RUSliderFuncs {
     pub set_layout: extern "C" fn(self_c: *const RUBase, layout: *const RUBase),
     pub update: extern "C" fn(self_c: *const RUBase),
     pub set_value_changed_event: extern "C" fn(object: *const RUBase, user_data: *const c_void,
-                                        callback: extern "C" fn(self_c: *const c_void, value: i32)),
+                                            callback: extern "C" fn(self_c: *const c_void, value: i32)),
 }
 
 #[repr(C)]
@@ -652,9 +652,20 @@ pub struct RUToolWindowManager {
 #[repr(C)]
 pub struct RUDockWidgetFuncs {
     pub destroy: extern "C" fn(self_c: *const RUBase),
+    pub show: extern "C" fn(self_c: *const RUBase),
+    pub set_persist_data: extern "C" fn(self_c: *const RUBase, text: *const ::std::os::raw::c_char),
+    pub persist_data: extern "C" fn(self_c: *const RUBase) -> *const ::std::os::raw::c_char,
+    pub set_fixed_height: extern "C" fn(self_c: *const RUBase, width: i32),
+    pub set_fixed_width: extern "C" fn(self_c: *const RUBase, width: i32),
+    pub resize: extern "C" fn(self_c: *const RUBase, width: i32, height: i32),
+    pub set_parent: extern "C" fn(self_c: *const RUBase, widget: *const RUBase),
+    pub set_layout: extern "C" fn(self_c: *const RUBase, layout: *const RUBase),
+    pub update: extern "C" fn(self_c: *const RUBase),
     pub set_object_name: extern "C" fn(self_c: *const RUBase, name: *const ::std::os::raw::c_char),
     pub object_name: extern "C" fn(self_c: *const RUBase) -> *const ::std::os::raw::c_char,
     pub set_widget: extern "C" fn(self_c: *const RUBase, widget: *const RUBase),
+    pub set_close_event: extern "C" fn(object: *const RUBase, user_data: *const c_void,
+                                            callback: extern "C" fn(widget: *const RUBase,self_c: *const c_void, event: *const RUBase)),
 }
 
 #[repr(C)]
@@ -721,7 +732,7 @@ pub struct RUActionFuncs {
     pub set_shortcut: extern "C" fn(self_c: *const RUBase, key:  RUKeys),
     pub set_shortcut_mod: extern "C" fn(self_c: *const RUBase, key:  RUKeys, modifier:  RUMetaKeys),
     pub set_triggered_event: extern "C" fn(object: *const RUBase, user_data: *const c_void,
-                                        callback: extern "C" fn(self_c: *const c_void)),
+                                            callback: extern "C" fn(self_c: *const c_void)),
     pub set_int_data: extern "C" fn(self_c: *const RUBase, data: i32),
     pub get_int_data: extern "C" fn(self_c: *const RUBase) -> i32,
 }
@@ -766,7 +777,7 @@ pub struct RUMimeData {
 pub struct RUTimerFuncs {
     pub destroy: extern "C" fn(self_c: *const RUBase),
     pub set_timeout_event: extern "C" fn(object: *const RUBase, user_data: *const c_void,
-                                        callback: extern "C" fn(self_c: *const c_void)),
+                                            callback: extern "C" fn(self_c: *const c_void)),
     pub start: extern "C" fn(self_c: *const RUBase, time: i32),
 }
 
@@ -818,7 +829,7 @@ pub struct RUMenuFuncs {
     pub update: extern "C" fn(self_c: *const RUBase),
     pub add_action_text: extern "C" fn(self_c: *const RUBase, text: *const ::std::os::raw::c_char),
     pub set_triggered_event: extern "C" fn(object: *const RUBase, user_data: *const c_void,
-                                        callback: extern "C" fn(self_c: *const c_void, action: *const RUBase)),
+                                            callback: extern "C" fn(self_c: *const c_void, action: *const RUBase)),
     pub add_action: extern "C" fn(self_c: *const RUBase, action: *const RUBase),
     pub set_title: extern "C" fn(self_c: *const RUBase, title: *const ::std::os::raw::c_char),
 }
@@ -859,7 +870,7 @@ pub struct RUApplicationFuncs {
     pub set_style_sheet: extern "C" fn(self_c: *const RUBase, filename: *const ::std::os::raw::c_char) -> i32,
     pub exec: extern "C" fn(self_c: *const RUBase),
     pub set_about_to_quit_event: extern "C" fn(object: *const RUBase, user_data: *const c_void,
-                                        callback: extern "C" fn(self_c: *const c_void)),
+                                            callback: extern "C" fn(self_c: *const c_void)),
     pub get_files: extern "C" fn(self_c: *const RUBase) -> RUArray,
 }
 
@@ -879,6 +890,18 @@ pub struct RUPaintEventFuncs {
 #[derive(Copy, Clone)]
 pub struct RUPaintEvent {
     pub funcs: *const RUPaintEventFuncs,
+    pub privd: *const RUBase,
+}
+
+#[repr(C)]
+pub struct RUCloseEventFuncs {
+    pub accept: extern "C" fn(self_c: *const RUBase),
+}
+
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct RUCloseEvent {
+    pub funcs: *const RUCloseEventFuncs,
     pub privd: *const RUBase,
 }
 

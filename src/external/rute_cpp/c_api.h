@@ -66,6 +66,8 @@ struct RUApplication;
 struct RUApplicationFuncs;
 struct RUPaintEvent;
 struct RUPaintEventFuncs;
+struct RUCloseEvent;
+struct RUCloseEventFuncs;
 struct RUDragEnterEvent;
 struct RUDragEnterEventFuncs;
 struct RUDropEvent;
@@ -431,7 +433,7 @@ struct RUWidgetFuncs {
     void (*set_parent)(struct RUBase* self_c, struct RUBase* widget);
     void (*set_layout)(struct RUBase* self_c, struct RUBase* layout);
     void (*update)(struct RUBase* self_c);
-    void (*set_paint_event)(void* object, void* user_data, void (*event)(void* self_c, struct RUBase* event));
+    void (*set_paint_event)(void* object, void* user_data, void (*event)(struct RUBase* widget, void* self_c, struct RUBase* event));
 };
 
 struct RUWidget {
@@ -450,8 +452,8 @@ struct RUPushButtonFuncs {
     void (*set_parent)(struct RUBase* self_c, struct RUBase* widget);
     void (*set_layout)(struct RUBase* self_c, struct RUBase* layout);
     void (*update)(struct RUBase* self_c);
-    void (*set_pressed_event)(void* object, void* user_data, void (*event)(void* self_c));
-    void (*set_released_event)(void* object, void* user_data, void (*event)(void* self_c));
+    void (*set_pressed_event)(void* object, void* user_data, void (*event)(struct RUBase* widget, void* self_c));
+    void (*set_released_event)(void* object, void* user_data, void (*event)(struct RUBase* widget, void* self_c));
     void (*set_icon)(struct RUBase* self_c, struct RUBase* icon);
     void (*set_text)(struct RUBase* self_c, const char* text);
     void (*set_flat)(struct RUBase* self_c, bool flat);
@@ -514,11 +516,11 @@ struct RUListWidgetFuncs {
     void (*set_drop_indicator_shown)(struct RUBase* self_c, bool state);
     void (*set_accept_drops)(struct RUBase* self_c, bool state);
     void (*add_widget_item)(struct RUBase* self_c, struct RUBase* item);
-    void (*set_current_row_changed_event)(void* object, void* user_data, void (*event)(void* self_c, int row));
-    void (*set_item_clicked_event)(void* object, void* user_data, void (*event)(void* self_c, struct RUBase* item));
-    void (*set_item_double_clicked_event)(void* object, void* user_data, void (*event)(void* self_c, struct RUBase* item));
-    void (*set_drag_enter_event)(void* object, void* user_data, void (*event)(void* self_c, struct RUBase* event));
-    void (*set_drop_event)(void* object, void* user_data, void (*event)(void* self_c, struct RUBase* event));
+    void (*set_current_row_changed_event)(void* object, void* user_data, void (*event)(struct RUBase* widget, void* self_c, int row));
+    void (*set_item_clicked_event)(void* object, void* user_data, void (*event)(struct RUBase* widget, void* self_c, struct RUBase* item));
+    void (*set_item_double_clicked_event)(void* object, void* user_data, void (*event)(struct RUBase* widget, void* self_c, struct RUBase* item));
+    void (*set_drag_enter_event)(void* object, void* user_data, void (*event)(struct RUBase* widget, void* self_c, struct RUBase* event));
+    void (*set_drop_event)(void* object, void* user_data, void (*event)(struct RUBase* widget, void* self_c, struct RUBase* event));
 };
 
 struct RUListWidget {
@@ -598,7 +600,7 @@ struct RUSliderFuncs {
     void (*set_parent)(struct RUBase* self_c, struct RUBase* widget);
     void (*set_layout)(struct RUBase* self_c, struct RUBase* layout);
     void (*update)(struct RUBase* self_c);
-    void (*set_value_changed_event)(void* object, void* user_data, void (*event)(void* self_c, int value));
+    void (*set_value_changed_event)(void* object, void* user_data, void (*event)(struct RUBase* widget, void* self_c, int value));
 };
 
 struct RUSlider {
@@ -651,9 +653,19 @@ struct RUToolWindowManager {
 
 struct RUDockWidgetFuncs {
     void (*destroy)(struct RUBase* self_c);
+    void (*show)(struct RUBase* self_c);
+    void (*set_persist_data)(struct RUBase* self_c, const char* text);
+    const char* (*persist_data)(struct RUBase* self_c);
+    void (*set_fixed_height)(struct RUBase* self_c, int width);
+    void (*set_fixed_width)(struct RUBase* self_c, int width);
+    void (*resize)(struct RUBase* self_c, int width, int height);
+    void (*set_parent)(struct RUBase* self_c, struct RUBase* widget);
+    void (*set_layout)(struct RUBase* self_c, struct RUBase* layout);
+    void (*update)(struct RUBase* self_c);
     void (*set_object_name)(struct RUBase* self_c, const char* name);
     const char* (*object_name)(struct RUBase* self_c);
     void (*set_widget)(struct RUBase* self_c, struct RUBase* widget);
+    void (*set_close_event)(void* object, void* user_data, void (*event)(struct RUBase* widget, void* self_c, struct RUBase* event));
 };
 
 struct RUDockWidget {
@@ -710,7 +722,7 @@ struct RUActionFuncs {
     const char* (*text)(struct RUBase* self_c);
     void (*set_shortcut)(struct RUBase* self_c, RUKeys key);
     void (*set_shortcut_mod)(struct RUBase* self_c, RUKeys key, RUMetaKeys modifier);
-    void (*set_triggered_event)(void* object, void* user_data, void (*event)(void* self_c));
+    void (*set_triggered_event)(void* object, void* user_data, void (*event)(struct RUBase* widget, void* self_c));
     void (*set_int_data)(struct RUBase* self_c, int data);
     int (*get_int_data)(struct RUBase* self_c);
 };
@@ -745,7 +757,7 @@ struct RUMimeData {
 
 struct RUTimerFuncs {
     void (*destroy)(struct RUBase* self_c);
-    void (*set_timeout_event)(void* object, void* user_data, void (*event)(void* self_c));
+    void (*set_timeout_event)(void* object, void* user_data, void (*event)(struct RUBase* widget, void* self_c));
     void (*start)(struct RUBase* self_c, int time);
 };
 
@@ -787,7 +799,7 @@ struct RUMenuFuncs {
     void (*set_layout)(struct RUBase* self_c, struct RUBase* layout);
     void (*update)(struct RUBase* self_c);
     void (*add_action_text)(struct RUBase* self_c, const char* text);
-    void (*set_triggered_event)(void* object, void* user_data, void (*event)(void* self_c, struct RUBase* action));
+    void (*set_triggered_event)(void* object, void* user_data, void (*event)(struct RUBase* widget, void* self_c, struct RUBase* action));
     void (*add_action)(struct RUBase* self_c, struct RUBase* action);
     void (*set_title)(struct RUBase* self_c, const char* title);
 };
@@ -821,7 +833,7 @@ struct RUApplicationFuncs {
     void (*set_style)(struct RUBase* self_c, const char* style);
     int (*set_style_sheet)(struct RUBase* self_c, const char* filename);
     void (*exec)(struct RUBase* self_c);
-    void (*set_about_to_quit_event)(void* object, void* user_data, void (*event)(void* self_c));
+    void (*set_about_to_quit_event)(void* object, void* user_data, void (*event)(struct RUBase* widget, void* self_c));
     struct RUArray (*get_files)(struct RUBase* self_c);
 };
 
@@ -836,6 +848,15 @@ struct RUPaintEventFuncs {
 
 struct RUPaintEvent {
     struct RUPaintEventFuncs* funcs;
+    struct RUBase* priv_data;
+};
+
+struct RUCloseEventFuncs {
+    void (*accept)(struct RUBase* self_c);
+};
+
+struct RUCloseEvent {
+    struct RUCloseEventFuncs* funcs;
     struct RUBase* priv_data;
 };
 
@@ -1085,6 +1106,15 @@ typedef struct RU {
 #define RUToolWindowManager_add_to_docking(obj, widget) obj.funcs->add_to_docking(obj.priv_data, widget)
 #define RUToolWindowManager_add_to_docking_floating(obj, widget) obj.funcs->add_to_docking_floating(obj.priv_data, widget)
 
+#define RUDockWidget_show(obj) obj.funcs->show(obj.priv_data)
+#define RUDockWidget_set_persist_data(obj, text) obj.funcs->set_persist_data(obj.priv_data, text)
+#define RUDockWidget_persist_data(obj) obj.funcs->persist_data(obj.priv_data)
+#define RUDockWidget_set_fixed_height(obj, width) obj.funcs->set_fixed_height(obj.priv_data, width)
+#define RUDockWidget_set_fixed_width(obj, width) obj.funcs->set_fixed_width(obj.priv_data, width)
+#define RUDockWidget_resize(obj, width, height) obj.funcs->resize(obj.priv_data, width, height)
+#define RUDockWidget_set_parent(obj, widget) obj.funcs->set_parent(obj.priv_data, widget)
+#define RUDockWidget_set_layout(obj, layout) obj.funcs->set_layout(obj.priv_data, layout)
+#define RUDockWidget_update(obj) obj.funcs->update(obj.priv_data)
 #define RUDockWidget_set_object_name(obj, name) obj.funcs->set_object_name(obj.priv_data, name)
 #define RUDockWidget_object_name(obj) obj.funcs->object_name(obj.priv_data)
 #define RUDockWidget_set_widget(obj, widget) obj.funcs->set_widget(obj.priv_data, widget)
@@ -1173,6 +1203,8 @@ typedef struct RU {
 #define RUApplication_get_files(obj) obj.funcs->get_files(obj.priv_data)
 
 #define RUPaintEvent_rect(obj) obj.funcs->rect(obj.priv_data)
+
+#define RUCloseEvent_accept(obj) obj.funcs->accept(obj.priv_data)
 
 #define RUDragEnterEvent_accept(obj) obj.funcs->accept(obj.priv_data)
 

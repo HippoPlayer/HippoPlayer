@@ -10,6 +10,8 @@ pub use rute::Ui;
 
 pub use rute::*;
 
+use std::ptr;
+
 pub struct SharedLibUi {
     _lib: Rc<libloading::Library>,
     c_api: *const ffi_gen::RU,
@@ -64,5 +66,9 @@ impl SharedLibUi {
 
     pub fn get_ui(&self) -> Ui {
         Ui::new(self.c_api)
+    }
+
+    pub fn dummy_new() -> Ui {
+        Ui::new(ptr::null())
     }
 }
