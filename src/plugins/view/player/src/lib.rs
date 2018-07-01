@@ -77,19 +77,41 @@ impl Player {
         button
     }
 
-    fn prev_song(&mut self) {}
-
-    fn play_song(&mut self) {}
-
-    fn stop_song(&mut self) {}
+    ///
+    /// Request the previous song
+    ///
+    fn prev_song(&mut self) {
+        let message = self.message_api.begin_request("hippo_playlist_prev_song").unwrap();
+        self.message_api.end_message(message);
+    }
 
     ///
-    /// Sends a notification that next song should be started.
-    /// Notice that this is not a request as a general "next playing song" will be sent out
-    /// instead as this affects more plugins than just the sender
+    /// Play song
+    ///
+    fn play_song(&mut self) {
+        let message = self.message_api.begin_request("hippo_playlist_play_song").unwrap();
+        self.message_api.end_message(message);
+    }
+
+    ///
+    /// Stop the current playing song
+    ///
+    fn stop_song(&mut self) {
+        let message = self.message_api.begin_request("hippo_playlist_play_song").unwrap();
+        self.message_api.end_message(message);
+    }
+
+    ///
+    /// Next song
     ///
     fn next_song(&mut self) {
-    	//self.message_api.next_song();
+        println!("next song");
+        let mut message = self.message_api.begin_request("hippo_playlist_next_song").unwrap();
+
+        message.write_str("test").unwrap(); // dummy
+        message.write_str("test").unwrap(); // dummy
+
+        self.message_api.end_message(message);
     }
 }
 
