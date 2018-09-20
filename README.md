@@ -100,3 +100,5 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 ## Exception to the licence
 
 Notice that each plugin may be under a different licence given the origin of the original code. Please check this first if you have concerns regarding this.
+
+
