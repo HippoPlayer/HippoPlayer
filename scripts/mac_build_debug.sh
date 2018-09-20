@@ -8,3 +8,4 @@ libpath=$libpath$"/lib/libstd*";
 libname_full="`ls $libpath`";
 libname_only="${libname_full##*/}"
 install_name_tool -change @rpath/$libname_only $libname_full t2-output/macosx-clang-debug-default/hippo_player
+install_name_tool -change @rpath/$libname_only $libname_full t2-output/macosx-clang-debug-default/hippo_player_terminal

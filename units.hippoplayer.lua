@@ -168,6 +168,23 @@ RustProgram {
 
 -----------------------------------------------------------------------------------------------------------------------
 
+RustProgram {
+    Name = "hippo_player_terminal",
+
+	Env = {
+		RUST_OPTS = "-C prefer-dynamic",
+	},
+
+    CargoConfig = "src/hippo_player_terminal/Cargo.toml",
+    Sources = {
+        get_rs_src("src/hippo_player_terminal/src"),
+		get_rs_src("src/plugin_api/rust/hippo_api"),
+		get_rs_src("src/plugin_api/rust/messages"),
+    },
+}
+
+-----------------------------------------------------------------------------------------------------------------------
+
 local hippoBundle = OsxBundle
 {
     Depends = { "hippo_player" },
@@ -186,8 +203,10 @@ local hippoBundle = OsxBundle
 
 if native.host_platform == "macosx" then
     Default "hippo_player"
+    Default "hippo_player_terminal"
     Default(hippoBundle)
 else
+    Default "hippo_player_terminal"
     Default "hippo_player"
 end
 
