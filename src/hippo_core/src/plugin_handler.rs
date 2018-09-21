@@ -51,8 +51,6 @@ impl <'a, T: Clone> Plugins<'a, T> {
         };
 
         if let Ok(fun) = func {
-            println!("Found playback plugin with callback data {:?}", fun());
-
             self.plugins.push(Plugin {
                 plugin: plugin.clone(),
                 plugin_path: name.to_owned(),
@@ -76,7 +74,6 @@ impl <'a, T: Clone> Plugins<'a, T> {
             if let Ok(t) = entry {
                 if Self::check_file_type(&t) {
                     self.add_plugin(t.path().to_str().unwrap(), entry_name);
-                    println!("{}", t.path().display());
                 }
             }
         }

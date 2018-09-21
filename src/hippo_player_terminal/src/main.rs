@@ -48,6 +48,8 @@ fn main() {
     if !options.song.is_empty() {
         hippo_terminal.core.play_file(&options.song);
 
+        println!("Playing {}", options.song);
+
         loop {
 
         }
