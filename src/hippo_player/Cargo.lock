@@ -190,7 +190,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "hippo_player"
+name = "hippo_core"
 version = "0.1.0"
 dependencies = [
  "dynamic_reload 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -200,6 +200,23 @@ dependencies = [
  "rmp-rpc 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rmp-serde 0.13.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "rodio 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.27 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_derive 1.0.27 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_json 1.0.9 (registry+https://github.com/rust-lang/crates.io-index)",
+ "walkdir 2.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "hippo_player"
+version = "0.1.0"
+dependencies = [
+ "dynamic_reload 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "hippo_api 0.1.0",
+ "hippo_core 0.1.0",
+ "messages 0.1.0",
+ "rmp 0.8.7 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rmp-rpc 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rmp-serde 0.13.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "rute 0.1.0",
  "serde 1.0.27 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.27 (registry+https://github.com/rust-lang/crates.io-index)",

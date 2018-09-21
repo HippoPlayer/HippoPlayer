@@ -7,7 +7,7 @@ use std::borrow::Cow;
 
 use hippo_api::ffi::{CHippoPlaybackPlugin, CHippoViewPlugin};
 use service_ffi::{PluginService};
-use rute::rute::*;
+//use rute::rute::*;
 
 #[derive(Clone)]
 pub struct DecoderPlugin {
@@ -24,12 +24,14 @@ pub struct ViewPlugin {
     pub plugin_funcs: CHippoViewPlugin,
 }
 
+/*
 pub struct ViewPluginInstance {
 	pub plugin: ViewPlugin,
 	pub user_data: u64,
 	pub id: usize,
 	pub ui: PluginUi,
 }
+*/
 
 #[cfg(target_os="macos")]
 pub fn get_plugin_ext() -> &'static str {
@@ -58,6 +60,7 @@ impl DecoderPlugin {
     }
 }
 
+/*
 impl ViewPlugin {
 	pub fn get_name<'a>(&'a self) -> Cow<'a, str> {
         //let res = unsafe { self.plugin_funcs.name };
@@ -75,15 +78,16 @@ impl ViewPlugin {
 		ViewPluginInstance {
 			plugin: self.clone(),
 			user_data: user_data as u64,
-			id: self.count, 
+			id: self.count,
 			ui: plugin_ui,
 		}
 	}
 }
+*/
 
 pub struct Plugins<'a> {
     pub decoder_plugins: Vec<DecoderPlugin>,
-    pub view_plugins: Vec<ViewPlugin>,
+    //pub view_plugins: Vec<ViewPlugin>,
     pub plugin_handler: DynamicReload<'a>,
 }
 
@@ -91,7 +95,7 @@ impl <'a> Plugins<'a> {
     pub fn new() -> Plugins<'a> {
         Plugins {
             decoder_plugins: Vec::new(),
-            view_plugins: Vec::new(),
+            //view_plugins: Vec::new(),
             plugin_handler: DynamicReload::new(Some(vec!["."]), None, Search::Default),
         }
     }
@@ -111,6 +115,7 @@ impl <'a> Plugins<'a> {
             });
         }
 
+        /*
         let func: Result<Symbol<extern "C" fn() -> *const CHippoViewPlugin>, ::std::io::Error> = unsafe {
             plugin.lib.get(b"hippo_view_plugin\0")
         };
@@ -125,9 +130,12 @@ impl <'a> Plugins<'a> {
                 plugin_funcs: unsafe { (*fun()).clone() },
             });
         }
+        */
     }
 
-    fn check_file_type(entry: &DirEntry) -> bool {
+    fn check_file_type(_entry: &DirEntry) -> bool {
+        true
+        /*
         let path = entry.path();
 
         if path.ends_with(::rute::get_rute_name()) {
@@ -137,6 +145,7 @@ impl <'a> Plugins<'a> {
         } else {
             false
         }
+        */
     }
 
     fn internal_add_plugins_from_path(&mut self, path: &str) {

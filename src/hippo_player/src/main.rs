@@ -1,17 +1,8 @@
 /*
-#![feature(alloc_system, global_allocator, allocator_api)]
-extern crate alloc_system;
-
-use alloc_system::System;
-
-#[global_allocator]
-static A: System = System;
-*/
-
-extern crate hippo_api;
+//extern crate hippo_api;
 extern crate messages;
-extern crate rodio;
-extern crate walkdir;
+//extern crate rodio;
+//extern crate walkdir;
 
 #[macro_use]
 extern crate serde_derive;
@@ -26,22 +17,23 @@ extern crate rmp_serde as rmps;
 extern crate rute;
 
 extern crate dynamic_reload;
+extern crate hippo_core;
 
-mod audio;
-mod playlist;
-mod plugin_handler;
-mod song_db;
+//mod audio;
+//mod playlist;
+//mod plugin_handler;
+//mod song_db;
 
-mod service;
-pub mod service_ffi;
+//mod service;
+//pub mod service_ffi;
 
 pub use rmp as msgpack;
 
-use audio::{HippoAudio, MusicInfo};
-use hippo_api::ffi::CMessageDecode;
-use hippo_api::{MessageDecode, MessageEncode};
-use playlist::Playlist;
-use plugin_handler::Plugins;
+use hippo_core::{HippoAudio, MusicInfo};
+use hippo_core::hippo_api::ffi::CMessageDecode;
+use hippo_core::hippo_api::{MessageDecode, MessageEncode};
+use hippo_core::playlist::Playlist;
+use hippo_core::plugin_handler::Plugins;
 use std::env;
 use std::fs;
 use std::fs::File;
@@ -526,4 +518,8 @@ fn main() {
     // we exit directly here because of Qt and the way its static destructors works
     // causes lots of issues because we have the Qt code in a separate dll
     std::process::exit(0);
+}
+*/
+
+fn main() {
 }

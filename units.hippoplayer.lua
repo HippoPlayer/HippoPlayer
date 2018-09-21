@@ -149,6 +149,16 @@ RustCrate {
 
 -----------------------------------------------------------------------------------------------------------------------
 
+RustCrate {
+    Name = "hippo_core",
+    CargoConfig = "src/hippo_core/Cargo.toml",
+    Sources = {
+        get_rs_src("src/hippo_core"),
+    },
+}
+
+-----------------------------------------------------------------------------------------------------------------------
+
 RustProgram {
     Name = "hippo_player",
 
@@ -161,9 +171,10 @@ RustProgram {
         get_rs_src("src/hippo_player/src"),
 		get_rs_src("src/plugin_api/rust/hippo_api"),
 		get_rs_src("src/plugin_api/rust/messages"),
+        get_rs_src("src/hippo_core"),
     },
 
-    Depends = { "rute", "rute_cpp" },
+    Depends = { "hippo_core", "rute", "rute_cpp" },
 }
 
 -----------------------------------------------------------------------------------------------------------------------
@@ -180,7 +191,10 @@ RustProgram {
         get_rs_src("src/hippo_player_terminal/src"),
 		get_rs_src("src/plugin_api/rust/hippo_api"),
 		get_rs_src("src/plugin_api/rust/messages"),
+        get_rs_src("src/hippo_core"),
     },
+
+    Depends = { "hippo_core" },
 }
 
 -----------------------------------------------------------------------------------------------------------------------

@@ -5,3 +5,4 @@ authors = ["Daniel Collin <daniel@collin.com>"]
 
 [dependencies]
 pancurses = "0.16"
+argparse = "0.2.2"

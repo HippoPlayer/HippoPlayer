@@ -1,4 +1,9 @@
 [[package]]
+name = "argparse"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
 name = "cc"
 version = "1.0.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -12,6 +17,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "hippo_player_terminal"
 version = "0.1.0"
 dependencies = [
+ "argparse 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "pancurses 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -92,6 +98,7 @@ dependencies = [
 ]
 
 [metadata]
+"checksum argparse 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "3f8ebf5827e4ac4fd5946560e6a99776ea73b596d80898f357007317a7141e47"
 "checksum cc 1.0.25 (registry+https://github.com/rust-lang/crates.io-index)" = "f159dfd43363c4d08055a07703eb7a3406b0dac4d0584d96965a3262db3c9d16"
 "checksum cfg-if 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)" = "0c4e7bb64a8ebb0d856483e1e682ea3422f883c5f5615a90d51a2c82fe87fdd3"
 "checksum libc 0.2.43 (registry+https://github.com/rust-lang/crates.io-index)" = "76e3a3ef172f1a0b9a9ff0dd1491ae5e6c948b94479a3021819ba7d860c8645d"

@@ -1,12 +1,9 @@
 [package]
-name = "hippo_player"
+name = "hippo_core"
 version = "0.1.0"
 authors = ["Daniel Collin <daniel@collin.com>"]
-build = "build.rs"
 
 [dependencies]
-rute = { path = "../external/rute" }
-hippo_core = { path = "../hippo_core" }
 hippo_api = { path = "../plugin_api/rust/hippo_api" }
 messages = { path = "../plugin_api/rust/messages" }
 dynamic_reload = "0.3.0"
@@ -17,4 +14,5 @@ walkdir = "2"
 rmp-rpc = "0.2.0"
 rmp = "0.8.7"
 rmp-serde = "0.13.7"
+rodio = "0.5.2"
 
