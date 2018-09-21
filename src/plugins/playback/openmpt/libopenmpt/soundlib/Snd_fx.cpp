@@ -57,21 +57,12 @@ public:
 	std::unique_ptr<CSoundFile::PlayState> state;
 	struct ChnSettings
 	{
-		double patLoop;
-		CSoundFile::samplecount_t patLoopSmp;
-		ROWINDEX patLoopStart;
-		uint32 ticksToRender;	// When using sample sync, we still need to render this many ticks
-		bool incChanged;		// When using sample sync, note frequency has changed
-		uint8 vol;
-
-		ChnSettings()
-			: patLoop(0.0)
-			, patLoopSmp(0)
-			, patLoopStart(0)
-			, ticksToRender(0)
-			, incChanged(false)
-			, vol(0xFF)
-		{ }
+		double patLoop = 0.0;
+		CSoundFile::samplecount_t patLoopSmp = 0;
+		ROWINDEX patLoopStart = 0;
+		uint32 ticksToRender = 0;	// When using sample sync, we still need to render this many ticks
+		bool incChanged = false;	// When using sample sync, note frequency has changed
+		uint8 vol = 0xFF;
 	};
 
 #ifndef NO_PLUGINS
@@ -329,9 +320,9 @@ std::vector<GetLengthType> CSoundFile::GetLength(enmGetLengthResetMode adjustMod
 		bool patternBreakOnThisRow = false;
 		bool patternLoopEndedOnThisRow = false, patternLoopStartedOnThisRow = false;
 
-		if(playState.m_nPattern == orderList.GetIgnoreIndex() && target.mode == GetLengthTarget::SeekPosition && playState.m_nCurrentOrder == target.pos.order)
+		if(!Patterns.IsValidPat(playState.m_nPattern) && playState.m_nPattern != orderList.GetInvalidPatIndex() && target.mode == GetLengthTarget::SeekPosition && playState.m_nCurrentOrder == target.pos.order)
 		{
-			// Early test: Target is inside +++ pattern
+			// Early test: Target is inside +++ or non-existing pattern
 			retval.targetReached = true;
 			break;
 		}
@@ -494,7 +485,7 @@ std::vector<GetLengthType> CSoundFile::GetLength(enmGetLengthResetMode adjustMod
 				{
 					// Fine Pattern Delay
 					tickDelay += (p->param & 0x0F);
-				} if((p->param & 0xF0) == 0xE0 && !rowDelay)
+				} else if((p->param & 0xF0) == 0xE0 && !rowDelay)
 				{
 					// Pattern Delay
 					if(!(GetType() & MOD_TYPE_S3M) || (p->param & 0x0F) != 0)
@@ -674,12 +665,18 @@ std::vector<GetLengthType> CSoundFile::GetLength(enmGetLengthResetMode adjustMod
 						patternLoopStartedOnThisRow = true;
 					}
 					break;
+
+				case 0xF0:
+					// Active macro
+					pChn->nActiveMacro = param & 0x0F;
+					break;
 				}
 				break;
 
 			case CMD_MODCMDEX:
-				if ((param & 0xF0) == 0x60)
+				switch(param & 0xF0)
 				{
+				case 0x60:
 					// Pattern Loop
 					if (param & 0x0F)
 					{
@@ -692,6 +689,12 @@ std::vector<GetLengthType> CSoundFile::GetLength(enmGetLengthResetMode adjustMod
 						memory.chnSettings[nChn].patLoopSmp = playState.m_lTotalSampleCount;
 						memory.chnSettings[nChn].patLoopStart = playState.m_nRow;
 					}
+					break;
+
+				case 0xF0:
+					// Active macro
+					pChn->nActiveMacro = param & 0x0F;
+					break;
 				}
 				break;
 
@@ -1158,6 +1161,12 @@ std::vector<GetLengthType> CSoundFile::GetLength(enmGetLengthResetMode adjustMod
 					if(memory.chnSettings[nChn].patLoop == i.first)
 					{
 						playState.m_lTotalSampleCount += (playState.m_lTotalSampleCount - memory.chnSettings[nChn].patLoopSmp) * (i.second - 1);
+						if(m_playBehaviour[kITPatternLoopTargetReset] || (GetType() == MOD_TYPE_S3M))
+						{
+							memory.chnSettings[nChn].patLoop = memory.elapsedTime;
+							memory.chnSettings[nChn].patLoopSmp = playState.m_lTotalSampleCount;
+							memory.chnSettings[nChn].patLoopStart = playState.m_nRow + 1;
+						}
 						break;
 					}
 				}
@@ -1165,7 +1174,8 @@ std::vector<GetLengthType> CSoundFile::GetLength(enmGetLengthResetMode adjustMod
 			if(GetType() == MOD_TYPE_IT)
 			{
 				// IT pattern loop start row update - at the end of a pattern loop, set pattern loop start to next row (for upcoming pattern loops with missing SB0)
-				for(CHANNELINDEX nChn = 0; nChn < GetNumChannels(); nChn++)
+				pChn = playState.Chn;
+				for(CHANNELINDEX nChn = 0; nChn < GetNumChannels(); nChn++, pChn++)
 				{
 					if((pChn->rowCommand.command == CMD_S3MCMDEX && pChn->rowCommand.param >= 0xB1 && pChn->rowCommand.param <= 0xBF))
 					{
@@ -1327,7 +1337,7 @@ void CSoundFile::InstrumentChange(ModChannel *pChn, uint32 instr, bool bPorta, b
 	{
 		// IT compatibility: No sample change (also within multi-sample instruments) during portamento when using Compatible Gxx.
 		// Test case: PortaInsNumCompat.it, PortaSampleCompat.it, PortaCutCompat.it
-		if(m_playBehaviour[kITPortamentoInstrument] && m_SongFlags[SONG_ITCOMPATGXX] && pChn->nLength != 0)
+		if(m_playBehaviour[kITPortamentoInstrument] && m_SongFlags[SONG_ITCOMPATGXX] && !pChn->increment.IsZero())
 		{
 			pSmp = pChn->pModSample;
 		}
@@ -1406,7 +1416,7 @@ void CSoundFile::InstrumentChange(ModChannel *pChn, uint32 instr, bool bPorta, b
 	pChn->nNewIns = 0;
 
 	// IT Compatiblity: NNA is reset on every note change, not every instrument change (fixes s7xinsnum.it).
-	if (pIns && ((!m_playBehaviour[kITNNAReset] && pSmp) || pIns->nMixPlug))
+	if (pIns && ((!m_playBehaviour[kITNNAReset] && pSmp) || pIns->nMixPlug || instrumentChanged))
 		pChn->nNNA = pIns->nNNA;
 
 	// Update volume
@@ -2082,13 +2092,11 @@ CHANNELINDEX CSoundFile::CheckNNA(CHANNELINDEX nChn, uint32 instr, int note, boo
 	if (srcChn.dwFlags[CHN_MUTE])
 		return CHANNELINDEX_INVALID;
 
-	bool applyDNAtoPlug;	//rewbs.VSTiNNA
-
 	for(CHANNELINDEX i = nChn; i < MAX_CHANNELS; i++)
 	if(i >= m_nChannels || i == nChn)
 	{
 		ModChannel &chn = m_PlayState.Chn[i];
-		applyDNAtoPlug = false; //rewbs.VSTiNNA
+		bool applyDNAtoPlug = false;
 		if((chn.nMasterChn == nChn + 1 || i == nChn) && chn.pModInstrument != nullptr)
 		{
 			bool bOk = false;
@@ -2098,7 +2106,7 @@ CHANNELINDEX CSoundFile::CheckNNA(CHANNELINDEX nChn, uint32 instr, int note, boo
 			// Note
 			case DCT_NOTE:
 				if(note && chn.nNote == note && pIns == chn.pModInstrument) bOk = true;
-				if(pIns && pIns->nMixPlug) applyDNAtoPlug = true; //rewbs.VSTiNNA
+				if(pIns && pIns->nMixPlug) applyDNAtoPlug = true;
 				break;
 			// Sample
 			case DCT_SAMPLE:
@@ -2107,7 +2115,6 @@ CHANNELINDEX CSoundFile::CheckNNA(CHANNELINDEX nChn, uint32 instr, int note, boo
 			// Instrument
 			case DCT_INSTRUMENT:
 				if(pIns == chn.pModInstrument) bOk = true;
-				//rewbs.VSTiNNA
 				if(pIns && pIns->nMixPlug) applyDNAtoPlug = true;
 				break;
 			// Plugin
@@ -2117,7 +2124,6 @@ CHANNELINDEX CSoundFile::CheckNNA(CHANNELINDEX nChn, uint32 instr, int note, boo
 					applyDNAtoPlug = true;
 					bOk = true;
 				}
-				//end rewbs.VSTiNNA
 				break;
 
 			}
@@ -2171,14 +2177,14 @@ CHANNELINDEX CSoundFile::CheckNNA(CHANNELINDEX nChn, uint32 instr, int note, boo
 	IMixPlugin *pPlugin = nullptr;
 	if(srcChn.HasMIDIOutput() && ModCommand::IsNote(srcChn.nNote)) // instro sends to a midi chan
 	{
-		PLUGINDEX nPlugin = GetBestPlugin(nChn, PrioritiseInstrument, RespectMutes);
+		PLUGINDEX plugin = GetBestPlugin(nChn, PrioritiseInstrument, RespectMutes);
 
-		if(nPlugin > 0 && nPlugin <= MAX_MIXPLUGINS)
+		if(plugin > 0 && plugin <= MAX_MIXPLUGINS)
 		{
-			pPlugin =  m_MixPlugins[nPlugin-1].pMixPlugin;
+			pPlugin =  m_MixPlugins[plugin - 1].pMixPlugin;
 			if(pPlugin)
 			{
-				// apply NNA to this plugin iff it is currently playing a note on this tracking channel
+				// apply NNA to this plugin iff it is currently playing a note on this tracker channel
 				// (and if it is playing a note, we know that would be the last note played on this chan).
 				applyNNAtoPlug = pPlugin->IsNotePlaying(srcChn.GetPluginNote(m_playBehaviour[kITRealNoteMapping]), GetBestMidiChannel(nChn), nChn);
 			}
@@ -2187,8 +2193,7 @@ CHANNELINDEX CSoundFile::CheckNNA(CHANNELINDEX nChn, uint32 instr, int note, boo
 #endif // NO_PLUGINS
 
 	// New Note Action
-	//if ((pChn.nVolume) && (pChn.nLength))
-	if((srcChn.nVolume != 0 && srcChn.nLength != 0) || applyNNAtoPlug) //rewbs.VSTiNNA
+	if(srcChn.IsSamplePlaying() || applyNNAtoPlug)
 	{
 		nnaChn = GetNNAChannel(nChn);
 		if(nnaChn != 0)
@@ -2204,16 +2209,12 @@ CHANNELINDEX CSoundFile::CheckNNA(CHANNELINDEX nChn, uint32 instr, int note, boo
 #ifndef NO_PLUGINS
 			if(applyNNAtoPlug && pPlugin)
 			{
-				//Move note to the NNA channel (odd, but makes sense with DNA stuff).
-				//Actually a bad idea since it then become very hard to kill some notes.
-				//pPlugin->MoveNote(pChn.nNote, pChn.pModInstrument->nMidiChannel, nChn, n);
 				switch(srcChn.nNNA)
 				{
 				case NNA_NOTEOFF:
 				case NNA_NOTECUT:
 				case NNA_NOTEFADE:
-					//switch off note played on this plugin, on this tracker channel and midi channel
-					//pPlugin->MidiCommand(pChn.pModInstrument->nMidiChannel, pChn.pModInstrument->nMidiProgram, pChn.nNote + NOTE_MAX_SPECIAL, 0, n);
+					// Switch off note played on this plugin, on this tracker channel and midi channel
 					SendMIDINote(nChn, NOTE_KEYOFF, 0);
 					srcChn.nArpeggioLastNote = NOTE_NONE;
 					break;
@@ -2295,8 +2296,8 @@ bool CSoundFile::ProcessEffects()
 			const bool isFirstTick = m_SongFlags[SONG_FIRSTTICK];
 			if(isFirstTick)
 				pChn->m_RowPlug = pChn->rowCommand.instr;
-			const PLUGINDEX nPlug = pChn->m_RowPlug;
-			const bool hasValidPlug = (nPlug > 0 && nPlug <= MAX_MIXPLUGINS && m_MixPlugins[nPlug-1].pMixPlugin);
+			const PLUGINDEX plugin = pChn->m_RowPlug;
+			const bool hasValidPlug = (plugin > 0 && plugin <= MAX_MIXPLUGINS && m_MixPlugins[plugin - 1].pMixPlugin);
 			if(hasValidPlug)
 			{
 				if(isFirstTick)
@@ -2306,14 +2307,14 @@ bool CSoundFile::ProcessEffects()
 				{
 					PlugParamValue targetvalue = ModCommand::GetValueEffectCol(pChn->rowCommand.command, pChn->rowCommand.param) / PlugParamValue(ModCommand::maxColumnValue);
 					pChn->m_plugParamTargetValue = targetvalue;
-					pChn->m_plugParamValueStep = (targetvalue - m_MixPlugins[nPlug-1].pMixPlugin->GetParameter(plugparam)) / float(GetNumTicksOnCurrentRow());
+					pChn->m_plugParamValueStep = (targetvalue - m_MixPlugins[plugin-1].pMixPlugin->GetParameter(plugparam)) / float(GetNumTicksOnCurrentRow());
 				}
 				if(m_PlayState.m_nTickCount + 1 == GetNumTicksOnCurrentRow())
 				{	// On last tick, set parameter exactly to target value.
-					m_MixPlugins[nPlug-1].pMixPlugin->SetParameter(plugparam, pChn->m_plugParamTargetValue);
+					m_MixPlugins[plugin - 1].pMixPlugin->SetParameter(plugparam, pChn->m_plugParamTargetValue);
 				}
 				else
-					m_MixPlugins[nPlug-1].pMixPlugin->ModifyParameter(plugparam, pChn->m_plugParamValueStep);
+					m_MixPlugins[plugin - 1].pMixPlugin->ModifyParameter(plugparam, pChn->m_plugParamValueStep);
 			}
 #endif // NO_PLUGINS
 		}
@@ -2773,7 +2774,7 @@ bool CSoundFile::ProcessEffects()
 					InstrumentChange(pChn, pChn->nNewIns, bPorta, false, !(GetType() & (MOD_TYPE_XM|MOD_TYPE_MT2)));
 					pChn->nNewIns = 0;
 				}
-				NoteChange(pChn, note, bPorta, !(GetType() & (MOD_TYPE_XM|MOD_TYPE_MT2)));
+				NoteChange(pChn, note, bPorta, !(GetType() & (MOD_TYPE_XM | MOD_TYPE_MT2)));
 				if ((bPorta) && (GetType() & (MOD_TYPE_XM|MOD_TYPE_MT2)) && (instr))
 				{
 					pChn->dwFlags.set(CHN_FASTVOLRAMP);
@@ -4061,7 +4062,7 @@ void CSoundFile::Panning(ModChannel *pChn, uint32 param, PanningType panBits) co
 		pChn->nPan = param * 4;
 	} else
 	{
-		if(!(GetType() & (MOD_TYPE_S3M | MOD_TYPE_DSM | MOD_TYPE_AMF | MOD_TYPE_MTM)))
+		if(!(GetType() & (MOD_TYPE_S3M | MOD_TYPE_DSM | MOD_TYPE_AMF0 | MOD_TYPE_AMF | MOD_TYPE_MTM)))
 		{
 			// Real 8-bit panning
 			pChn->nPan = param;
@@ -4876,7 +4877,7 @@ uint32 CSoundFile::SendMIDIData(CHANNELINDEX nChn, bool isSmooth, const unsigned
 		return 0;
 	}
 
-	ModChannel *pChn = &m_PlayState.Chn[nChn];
+	ModChannel &chn = m_PlayState.Chn[nChn];
 
 	if(macro[0] == 0xF0 && (macro[1] == 0xF0 || macro[1] == 0xF1))
 	{
@@ -4889,87 +4890,70 @@ uint32 CSoundFile::SendMIDIData(CHANNELINDEX nChn, bool isSmooth, const unsigned
 		const uint8 macroCode = macro[2];
 		const uint8 param = macro[3];
 
-		if(macroCode == 0x00 && !isExtended)
+		if(macroCode == 0x00 && !isExtended && param < 0x80)
 		{
 			// F0.F0.00.xx: Set CutOff
-			int oldcutoff = pChn->nCutOff;
-			if(param < 0x80)
+			if(!isSmooth)
 			{
-				if(!isSmooth)
-				{
-					pChn->nCutOff = param;
-				} else
-				{
-					pChn->nCutOff = (uint8)CalculateSmoothParamChange((float)pChn->nCutOff, (float)param);
-				}
-				pChn->nRestoreCutoffOnNewNote = 0;
+				chn.nCutOff = param;
+			} else
+			{
+				chn.nCutOff = Util::Round<uint8>(CalculateSmoothParamChange(chn.nCutOff, param));
 			}
-
-			oldcutoff -= pChn->nCutOff;
-			if(oldcutoff < 0) oldcutoff = -oldcutoff;
-			if((pChn->nVolume > 0) || (oldcutoff < 0x10)
-				|| !pChn->dwFlags[CHN_FILTER] || (!(pChn->rightVol | pChn->leftVol)))
-				SetupChannelFilter(pChn, !pChn->dwFlags[CHN_FILTER]);
+			chn.nRestoreCutoffOnNewNote = 0;
+			SetupChannelFilter(&chn, !chn.dwFlags[CHN_FILTER]);
 
 			return 4;
-
-		} else if(macroCode == 0x01 && !isExtended)
+		} else if(macroCode == 0x01 && !isExtended && param < 0x80)
 		{
 			// F0.F0.01.xx: Set Resonance
-			if(param < 0x80)
+			if(!isSmooth)
 			{
-				pChn->nRestoreResonanceOnNewNote = 0;
-				if(!isSmooth)
-				{
-					pChn->nResonance = param;
-				} else
-				{
-					pChn->nResonance = (uint8)CalculateSmoothParamChange((float)pChn->nResonance, (float)param);
-				}
+				chn.nResonance = param;
+			} else
+			{
+				chn.nResonance = (uint8)CalculateSmoothParamChange((float)chn.nResonance, (float)param);
 			}
-
-			SetupChannelFilter(pChn, !pChn->dwFlags[CHN_FILTER]);
+			chn.nRestoreResonanceOnNewNote = 0;
+			SetupChannelFilter(&chn, !chn.dwFlags[CHN_FILTER]);
 
 			return 4;
-
 		} else if(macroCode == 0x02 && !isExtended)
 		{
 			// F0.F0.02.xx: Set filter mode (high nibble determines filter mode)
 			if(param < 0x20)
 			{
-				pChn->nFilterMode = (param >> 4);
-				SetupChannelFilter(pChn, !pChn->dwFlags[CHN_FILTER]);
+				chn.nFilterMode = (param >> 4);
+				SetupChannelFilter(&chn, !chn.dwFlags[CHN_FILTER]);
 			}
 
 			return 4;
-
 #ifndef NO_PLUGINS
 		} else if(macroCode == 0x03 && !isExtended)
 		{
 			// F0.F0.03.xx: Set plug dry/wet
-			const PLUGINDEX nPlug = (plugin != 0) ? plugin : GetBestPlugin(nChn, PrioritiseChannel, EvenIfMuted);
-			if ((nPlug) && (nPlug <= MAX_MIXPLUGINS) && param < 0x80)
+			const PLUGINDEX plug = (plugin != 0) ? plugin : GetBestPlugin(nChn, PrioritiseChannel, EvenIfMuted);
+			if(plug > 0 && plug <= MAX_MIXPLUGINS && param < 0x80)
 			{
 				const float newRatio = 1.0f - (static_cast<float>(param & 0x7F) / 127.0f);
 				if(!isSmooth)
 				{
-					m_MixPlugins[nPlug - 1].fDryRatio = newRatio;
+					m_MixPlugins[plug - 1].fDryRatio = newRatio;
 				} else
 				{
-					m_MixPlugins[nPlug - 1].fDryRatio = CalculateSmoothParamChange(m_MixPlugins[nPlug - 1].fDryRatio, newRatio);
+					m_MixPlugins[plug - 1].fDryRatio = CalculateSmoothParamChange(m_MixPlugins[plug - 1].fDryRatio, newRatio);
 				}
 			}
 
 			return 4;
-
 		} else if((macroCode & 0x80) || isExtended)
 		{
 			// F0.F0.{80|n}.xx / F0.F1.n.xx: Set VST effect parameter n to xx
-			const PLUGINDEX nPlug = (plugin != 0) ? plugin : GetBestPlugin(nChn, PrioritiseChannel, EvenIfMuted);
+			const PLUGINDEX plug = (plugin != 0) ? plugin : GetBestPlugin(nChn, PrioritiseChannel, EvenIfMuted);
 			const uint32 plugParam = isExtended ? (0x80 + macroCode) : (macroCode & 0x7F);
-			if((nPlug) && (nPlug <= MAX_MIXPLUGINS))
+			if(plug > 0 && plug <= MAX_MIXPLUGINS)
 			{
-				IMixPlugin *pPlugin = m_MixPlugins[nPlug - 1].pMixPlugin;
+				IMixPlugin *pPlugin = m_MixPlugins[plug - 1].pMixPlugin;
 				if(pPlugin && param < 0x80)
 				{
 					const float fParam = param / 127.0f;
@@ -4985,7 +4969,6 @@ uint32 CSoundFile::SendMIDIData(CHANNELINDEX nChn, bool isSmooth, const unsigned
 
 			return 4;
 #endif // NO_PLUGINS
-
 		}
 
 		// If we reach this point, the internal macro was invalid.
@@ -4994,18 +4977,18 @@ uint32 CSoundFile::SendMIDIData(CHANNELINDEX nChn, bool isSmooth, const unsigned
 	{
 #ifndef NO_PLUGINS
 		// Not an internal device. Pass on to appropriate plugin.
-		const CHANNELINDEX plugChannel = (nChn < GetNumChannels()) ? nChn + 1 : pChn->nMasterChn;
+		const CHANNELINDEX plugChannel = (nChn < GetNumChannels()) ? nChn + 1 : chn.nMasterChn;
 		if(plugChannel > 0 && plugChannel <= GetNumChannels())	// XXX do we need this? I guess it might be relevant for previewing notes in the pattern... Or when using this mechanism for volume/panning!
 		{
-			PLUGINDEX nPlug = 0;
-			if(!pChn->dwFlags[CHN_NOFX])
+			PLUGINDEX plug = 0;
+			if(!chn.dwFlags[CHN_NOFX])
 			{
-				nPlug = (plugin != 0) ? plugin : GetBestPlugin(nChn, PrioritiseChannel, EvenIfMuted);
+				plug = (plugin != 0) ? plugin : GetBestPlugin(nChn, PrioritiseChannel, EvenIfMuted);
 			}
 
-			if(nPlug > 0 && nPlug <= MAX_MIXPLUGINS)
+			if(plug > 0 && plug <= MAX_MIXPLUGINS)
 			{
-				IMixPlugin *pPlugin = m_MixPlugins[nPlug - 1].pMixPlugin;
+				IMixPlugin *pPlugin = m_MixPlugins[plug - 1].pMixPlugin;
 				if (pPlugin != nullptr)
 				{
 					if(macro[0] == 0xF0)
@@ -5046,10 +5029,10 @@ void CSoundFile::SendMIDINote(CHANNELINDEX chn, uint16 note, uint16 volume)
 	// instro sends to a midi chan
 	if (pIns && pIns->HasValidMIDIChannel())
 	{
-		PLUGINDEX nPlug = pIns->nMixPlug;
-		if ((nPlug) && (nPlug <= MAX_MIXPLUGINS))
+		PLUGINDEX plug = pIns->nMixPlug;
+		if(plug > 0 && plug <= MAX_MIXPLUGINS)
 		{
-			IMixPlugin *pPlug = m_MixPlugins[nPlug-1].pMixPlugin;
+			IMixPlugin *pPlug = m_MixPlugins[plug - 1].pMixPlugin;
 			if (pPlug != nullptr)
 			{
 				pPlug->MidiCommand(GetBestMidiChannel(chn), pIns->nMidiProgram, pIns->wMidiBank, note, volume, chn);
@@ -5784,32 +5767,32 @@ PLUGINDEX CSoundFile::GetBestPlugin(CHANNELINDEX nChn, PluginPriority priority, 
 	}
 
 	//Define search source order
-	PLUGINDEX nPlugin = 0;
+	PLUGINDEX plugin = 0;
 	switch (priority)
 	{
 		case ChannelOnly:
-			nPlugin = GetChannelPlugin(nChn, respectMutes);
+			plugin = GetChannelPlugin(nChn, respectMutes);
 			break;
 		case InstrumentOnly:
-			nPlugin  = GetActiveInstrumentPlugin(nChn, respectMutes);
+			plugin  = GetActiveInstrumentPlugin(nChn, respectMutes);
 			break;
 		case PrioritiseInstrument:
-			nPlugin  = GetActiveInstrumentPlugin(nChn, respectMutes);
-			if ((!nPlugin) || (nPlugin > MAX_MIXPLUGINS))
+			plugin  = GetActiveInstrumentPlugin(nChn, respectMutes);
+			if(!plugin || plugin > MAX_MIXPLUGINS)
 			{
-				nPlugin = GetChannelPlugin(nChn, respectMutes);
+				plugin = GetChannelPlugin(nChn, respectMutes);
 			}
 			break;
 		case PrioritiseChannel:
-			nPlugin  = GetChannelPlugin(nChn, respectMutes);
-			if ((!nPlugin) || (nPlugin > MAX_MIXPLUGINS))
+			plugin  = GetChannelPlugin(nChn, respectMutes);
+			if(!plugin || plugin > MAX_MIXPLUGINS)
 			{
-				nPlugin = GetActiveInstrumentPlugin(nChn, respectMutes);
+				plugin = GetActiveInstrumentPlugin(nChn, respectMutes);
 			}
 			break;
 	}
 
-	return nPlugin; // 0 Means no plugin found.
+	return plugin; // 0 Means no plugin found.
 }
 
 
@@ -5817,10 +5800,10 @@ PLUGINDEX CSoundFile::GetChannelPlugin(CHANNELINDEX nChn, PluginMutePriority res
 {
 	const ModChannel &channel = m_PlayState.Chn[nChn];
 
-	PLUGINDEX nPlugin;
+	PLUGINDEX plugin;
 	if((respectMutes == RespectMutes && channel.dwFlags[CHN_MUTE]) || channel.dwFlags[CHN_NOFX])
 	{
-		nPlugin = 0;
+		plugin = 0;
 	} else
 	{
 		// If it looks like this is an NNA channel, we need to find the master channel.
@@ -5833,13 +5816,13 @@ PLUGINDEX CSoundFile::GetChannelPlugin(CHANNELINDEX nChn, PluginMutePriority res
 
 		if(nChn < MAX_BASECHANNELS)
 		{
-			nPlugin = ChnSettings[nChn].nMixPlugin;
+			plugin = ChnSettings[nChn].nMixPlugin;
 		} else
 		{
-			nPlugin = 0;
+			plugin = 0;
 		}
 	}
-	return nPlugin;
+	return plugin;
 }
 
 

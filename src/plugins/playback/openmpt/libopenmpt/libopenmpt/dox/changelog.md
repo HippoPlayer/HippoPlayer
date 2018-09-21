@@ -5,6 +5,74 @@ Changelog {#changelog}
 For fully detailed change log, please see the source repository directly. This
 is just a high-level summary.
 
+### libopenmpt 0.3.11 (2018-07-28)
+
+ *  [**Sec**] Crash with some malformed custom tunings in MPTM files (r10615).
+
+ *  Channels whose volume envelope was playing at volume 0 while being moved to
+    a NNA background channel were cut off completely since libopenmpt 0.3.8.
+ *  AMF (ASYLUM): Convert 7-bit panning to 8-bit panning for playback.
+
+### libopenmpt 0.3.10 (2018-06-17)
+
+ *  [**Bug**] Internal mixer state was not initialized properly when initially
+    rendering in 44100kHz stereo format.
+ *  [**Bug**] AMF: Undefined behaviour in loader code could lead to files
+    playing silent.
+
+ *  Switching between instruments with portamento did not update the NNA
+    settings for the new instrument.
+ *  FAR: Properly import volume commands.
+
+### libopenmpt 0.3.9 (2018-04-29)
+
+ *  [**Sec**] Possible write near address 0 in out-of-memory situations when
+    reading AMS files (r10149).
+
+ *  [**Bug**] openmpt123: Fixed build failure in C++17 due to use of removed
+    feature `std::random_shuffle`.
+
+ *  STM: Having both Bxx and Cxx commands in a pattern imported the Bxx command
+    incorrectly.
+ *  STM: Last character of sample name was missing.
+ *  Speed up reading of truncated ULT files.
+ *  ULT: Portamento import was sometimes broken.
+ *  The resonant filter was sometimes unstable when combining low-volume
+    samples, low cutoff and high mixing rates.
+
+### libopenmpt 0.3.8 (2018-04-08)
+
+ *  [**Sec**] Possible out-of-bounds memory read with IT and MO3 files
+    containing many nested pattern loops (r10028).
+
+ *  Keep track of active SFx macro during seeking.
+ *  The "note cut" duplicate note action did not volume-ramp the previously
+    playing sample.
+ *  A song starting with non-existing patterns could not be played.
+ *  DSM: Support restart position and 16-bit samples.
+ *  DTM: Import global volume.
+
+### libopenmpt 0.3.7 (2018-03-11)
+
+ *  [**Bug**] libopenmpt did not build with NDK r13b on armeabi due to missing
+    `-latomic`.
+ *  [**Bug**] xmp-openmpt: Sample rate and number of output channels were not
+    applied correctly when using per-file settings.
+
+ *  [**Change**] foo_openmpt: foo_openmpt is now packaged as a fb2k-component
+    package for easier installation.
+
+ *  IT: More accurate song length calculation for pattern loops that have no
+    start command and are following another pattern loop.
+ *  IMF: Filter cutoff was upside down and the cutoff range was too small.
+ *  MED: Correctly import patterns with less channels than the maximum used
+    amount. Import "STP" note stop command.
+ *  DBM: Key Off and Set Envelope Position were imported incorrectly.
+    High sample offset (E7x) is now supported.
+ *  DIGI / DBM: Arpeggio should not return to base note at end of row.
+ *  Some filter changes through MIDI macros were not applied if the note volume
+    was set to 0 on the same row.
+
 ### libopenmpt 0.3.6 (2018-02-03)
 
  *  [**Sec**] Possible out-of-bounds memory read with malformed STP files.
@@ -27,7 +95,6 @@ is just a high-level summary.
  *  Tighten M15 and MOD file rejection heuristics.
  *  J2B: Ignore frequency limits from file header. Fixes Medivo.j2b, broken
     since libopenmpt-0.2.6401-beta17.
- *  STM: Last character of sample name was missing.
  *  ParamEq plugin center frequency was not limited correctly.
  *  libopenmpt_ext C API was not included in the documentation.
 
