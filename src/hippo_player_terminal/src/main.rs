@@ -3,7 +3,7 @@ extern crate argparse;
 extern crate hippo_core;
 extern crate hippo_api;
 
-use hippo_core::DecoderPlugins;
+use hippo_core::HippoCore;
 use std::env;
 use std::path::Path;
 use argparse::{ArgumentParser, Store};
@@ -15,7 +15,7 @@ struct Options {
 }
 
 struct HippoTerminal<'a> {
-    decoder_plugins: DecoderPlugins<'a>,
+    core: HippoCore<'a>
 }
 
 fn main() {
@@ -37,11 +37,19 @@ fn main() {
         ap.parse_args_or_exit();
     }
 
-    let hippo_terminal = HippoTerminal {
-        decoder_plugins: DecoderPlugins::new(),
+    let mut hippo_terminal = HippoTerminal {
+        core: HippoCore::new(),
     };
 
     if !Path::new("bin").is_dir() {
         env::set_current_dir(current_path).unwrap();
+    }
+
+    if !options.song.is_empty() {
+        hippo_terminal.core.play_file(&options.song);
+
+        loop {
+
+        }
     }
 }
