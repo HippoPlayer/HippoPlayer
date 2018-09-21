@@ -1,6 +1,14 @@
 extern crate rodio;
 
-use plugin_handler::DecoderPlugin;
+use plugin_handler;
+use decoder_plugins;
+
+use hippo_api::ffi::{CHippoPlaybackPlugin};
+use decoder_plugins::DecoderPlugin;
+
+//type DecoderPlugin = plugin_handler::Plugin<CHippoPlaybackPlugin>;
+
+//use plugin_handler::DecoderPlugin;
 use rodio::{Source, Sink};
 use std::ffi::CString;
 use std::os::raw::c_void;

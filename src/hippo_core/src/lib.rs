@@ -19,6 +19,7 @@ pub mod plugin_handler;
 pub mod song_db;
 pub mod service;
 pub mod service_ffi;
+pub mod decoder_plugins;
 
 pub use audio::*;
 pub use plugin_handler::*;
@@ -26,3 +27,4 @@ pub use playlist::*;
 pub use song_db::*;
 pub use service::*;
 pub use service_ffi::*;
+pub use decoder_plugins::*;
