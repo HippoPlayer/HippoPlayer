@@ -5,6 +5,5 @@ authors = ["Daniel Collin <daniel@collin.com>"]
 
 [dependencies]
 hippo_core = { path = "../hippo_core" }
-hippo_api = { path = "../plugin_api/rust/hippo_api" }
 pancurses = "0.16"
 argparse = "0.2.2"

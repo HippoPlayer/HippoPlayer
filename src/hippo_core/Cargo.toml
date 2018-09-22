@@ -14,5 +14,5 @@ walkdir = "2"
 rmp-rpc = "0.2.0"
 rmp = "0.8.7"
 rmp-serde = "0.13.7"
-rodio = "0.5.2"
+rodio = "0.8.1"
 

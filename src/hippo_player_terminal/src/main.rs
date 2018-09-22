@@ -1,7 +1,7 @@
 extern crate pancurses;
 extern crate argparse;
 extern crate hippo_core;
-extern crate hippo_api;
+//extern crate hippo_api;
 
 use hippo_core::HippoCore;
 use std::env;

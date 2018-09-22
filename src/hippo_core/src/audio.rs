@@ -73,7 +73,7 @@ impl Source for HippoPlayback {
     }
 
     #[inline]
-    fn samples_rate(&self) -> u32 {
+    fn sample_rate(&self) -> u32 {
         48000
     }
 
@@ -90,8 +90,8 @@ pub struct HippoAudio {
 
 impl HippoAudio {
     pub fn new() -> HippoAudio {
-        let endpoint = rodio::get_default_endpoint().unwrap();
-        let sink = Sink::new(&endpoint);
+        let device = rodio::default_output_device().unwrap();
+        let sink = Sink::new(&device);
 
         HippoAudio {
             audio_sink: sink,
