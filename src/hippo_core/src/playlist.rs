@@ -98,8 +98,8 @@ impl Playlist {
 		request.write_map_len(self.entries.len() as u32).unwrap();
 
 		for entry in &self.entries {
-		    request.write_str(&entry.path);
-		    request.write_str(&entry.title);
+		    request.write_str(&entry.path).unwrap();
+		    request.write_str(&entry.title).unwrap();
 		}
 
 		request
@@ -152,9 +152,10 @@ impl Playlist {
         Some(self.entries[current_song].path.to_owned())
     }
 
-    ///
-    /// Get previous song
-    ///
+    //
+    // Get previous song
+    //
+    /*
     fn get_prev_song(&mut self) -> Option<String> {
         let count = self.entries.len();
 
@@ -168,4 +169,5 @@ impl Playlist {
 
         Some(self.entries[current_song].path.to_owned())
     }
+    */
 }

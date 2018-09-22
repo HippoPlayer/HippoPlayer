@@ -1,12 +1,6 @@
 use dynamic_reload::{DynamicReload, Lib, Symbol, Search, PlatformName};
-use walkdir::{WalkDir, DirEntry};
-//use std::os::raw::{c_int, c_void, c_char};
 use std::sync::Arc;
-use std::ffi::{CString, CStr};
-use std::borrow::Cow;
-
-//use hippo_api::ffi::{CHippoPlaybackPlugin, CHippoViewPlugin};
-use service_ffi::{PluginService};
+use walkdir::{WalkDir, DirEntry};
 
 #[derive(Clone)]
 pub struct Plugin<T> {

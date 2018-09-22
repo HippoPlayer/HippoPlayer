@@ -1,33 +1,16 @@
 extern crate rodio;
 
-use plugin_handler;
-use decoder_plugins;
-
-use hippo_api::ffi::{CHippoPlaybackPlugin};
 use decoder_plugins::DecoderPlugin;
-
-//type DecoderPlugin = plugin_handler::Plugin<CHippoPlaybackPlugin>;
-
-//use plugin_handler::DecoderPlugin;
 use rodio::{Source, Sink};
+use service_ffi::PluginService;
 use std::ffi::CString;
 use std::os::raw::c_void;
 use std::time::Duration;
-//use std::ffi::CStr;
-
-use service_ffi::PluginService;
-
-// #[derive(Clone)]
-// pub enum DecodeEvent {
-//    Position(usize),
-//    Data(Vec<u8>),
-// }
 
 #[derive(Clone)]
 pub struct HippoPlayback {
     plugin_user_data: u64,
     plugin: DecoderPlugin,
-    // temp_data: Vec<i16>,
     out_data: Vec<f32>,
     frame_size: usize,
     current_offset: usize, // sender: Sender<DecodeEvent>,

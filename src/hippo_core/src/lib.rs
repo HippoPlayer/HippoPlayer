@@ -31,7 +31,7 @@ pub use decoder_plugins::*;
 
 use std::fs;
 use std::fs::File;
-use std::ffi::{CString, CStr};
+use std::ffi::CString;
 use std::io::Read;
 
 pub struct HippoCore<'a> {
