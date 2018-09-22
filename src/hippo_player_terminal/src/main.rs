@@ -56,7 +56,7 @@ fn main() {
 
         hippo_terminal.core.play_file(&options.song);
 
-        let y_pos = 0;
+        //let y_pos = 0;
 
         loop {
             window.clear();
