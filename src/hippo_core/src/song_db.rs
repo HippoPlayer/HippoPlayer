@@ -48,7 +48,7 @@ impl SongDb {
 
     pub fn set_key(&mut self, resource: &str, sub_song: usize, value: &str, key: &str) {
         // Fix: NLL
-        println!("Set key {} - {} - {} - {}", resource, sub_song, value, key);
+        //println!("Set key {} - {} - {} - {}", resource, sub_song, value, key);
 
         let mut updated_entry = false;
 
@@ -64,7 +64,7 @@ impl SongDb {
         }
     }
 
-    pub fn get_key(&self, resource: &str, sub_song: usize, key: &str) -> Option<String> { 
+    pub fn get_key(&self, resource: &str, sub_song: usize, key: &str) -> Option<String> {
         match self.songs.get(resource) {
             None => None,
             Some(entry) => {

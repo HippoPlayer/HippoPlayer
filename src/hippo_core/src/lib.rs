@@ -37,7 +37,7 @@ use std::io::Read;
 pub struct HippoCore<'a> {
     audio: HippoAudio,
     decoder_plugins: DecoderPlugins<'a>,
-    plugin_service: service_ffi::PluginService,
+    pub plugin_service: service_ffi::PluginService,
 }
 
 

@@ -3,6 +3,9 @@ extern crate argparse;
 extern crate hippo_core;
 //extern crate hippo_api;
 
+mod song_window;
+
+use song_window::SongWindow;
 use argparse::{ArgumentParser, Store};
 use hippo_core::HippoCore;
 use pancurses::{initscr, endwin, Input, curs_set};
@@ -56,12 +59,17 @@ fn main() {
 
         hippo_terminal.core.play_file(&options.song);
 
+        let mut song_window = SongWindow::new();
+
+        song_window.update_meta(&options.song, &hippo_terminal.core.plugin_service.get_song_db());
+
         //let y_pos = 0;
 
         loop {
-            window.clear();
-            window.draw_box('|', '-');
-            window.mvaddstr(2, 2, format!("Playing.....: {}", &options.song));
+            song_window.display(&window);
+            //window.clear();
+            //window.draw_box('|', '-');
+            //window.mvaddstr(2, 2, format!("Playing.....: {}", &options.song));
 
             window.refresh();
             match window.getch() {
