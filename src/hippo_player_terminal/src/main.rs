@@ -3,10 +3,11 @@ extern crate argparse;
 extern crate hippo_core;
 //extern crate hippo_api;
 
+use argparse::{ArgumentParser, Store};
 use hippo_core::HippoCore;
+use pancurses::{initscr, endwin, Input, curs_set};
 use std::env;
 use std::path::Path;
-use argparse::{ArgumentParser, Store};
 
 #[derive(Default)]
 struct Options {
@@ -19,6 +20,7 @@ struct HippoTerminal<'a> {
 }
 
 fn main() {
+
     let current_path = env::current_dir().unwrap();
 
     let current_exe = std::env::current_exe().unwrap();
@@ -46,12 +48,35 @@ fn main() {
     }
 
     if !options.song.is_empty() {
+        let window = initscr();
+
+        //let (width, height) = window.get_max_yx();
+
+        //window.printw("Hello Rust");
+
         hippo_terminal.core.play_file(&options.song);
 
-        println!("Playing {}", options.song);
+        let y_pos = 0;
 
         loop {
+            window.clear();
+            window.draw_box('|', '-');
+            window.mvaddstr(2, 2, format!("Playing.....: {}", &options.song));
 
+            window.refresh();
+            match window.getch() {
+                Some(Input::Character('\x1B')) => {
+                    break;
+                }
+
+                _ => (),
+            }
+
+            // TODO: Calculate sleep time
+            pancurses::napms(1);
         }
+
+        curs_set(1);
+        endwin();
     }
 }
