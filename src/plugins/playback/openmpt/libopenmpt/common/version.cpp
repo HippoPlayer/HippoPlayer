@@ -15,7 +15,7 @@
 #include "mptStringParse.h"
 
 #include "versionNumber.h"
-//#include "svn_version.h"
+#include "svn_version.h"
 
 OPENMPT_NAMESPACE_BEGIN
 

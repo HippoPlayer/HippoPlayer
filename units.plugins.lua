@@ -98,7 +98,8 @@ SharedLibrary {
 	Includes = {
 	    "src/plugin_api",
 		"src/plugins/playback/openmpt/libopenmpt",
-		"src/plugins/playback/openmpt/libopenmpt/common"
+		"src/plugins/playback/openmpt/libopenmpt/common",
+		"src/plugins/playback/openmpt/libopenmpt/build/svn_version"
 	},
 
 	Sources = {
