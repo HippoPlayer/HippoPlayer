@@ -4,7 +4,6 @@ local native = require('tundra.native')
 
 local mac_opts = {
     "-Wall", "-I.",
-    -- "-Weverything", "-Werror",
     { "-O0", "-g"; Config = "*-*-debug" },
     { "-O0", "-fsanitize=address", "-fno-omit-frame-pointer", "-g"; Config = "*-*-debug-asan" },
     { "-O3", "-g"; Config = "*-*-release" },
@@ -14,7 +13,10 @@ local mac_opts = {
 
 local macosx = {
     Env = {
-		QT5 = native.getenv("QT5", ""),
+		QT5_INC = native.getenv("QT5_INC"),
+		QT5_BIN = native.getenv("QT5_BIN"),
+		QT5_LIB = native.getenv("QT5_LIB"),
+
         RUST_CARGO_OPTS = {
             { "test"; Config = "*-*-*-test" },
         },
@@ -47,9 +49,9 @@ local macosx = {
     },
 
     ReplaceEnv = {
-        QTMOC = "$(QT5)/bin/moc",
-        QTUIC = "$(QT5)/bin/uic",
-        QTRCC = "$(QT5)/bin/rcc",
+        QTMOC = "$(QT5_BIN)/moc",
+        QTUIC = "$(QT5_BIN)/uic",
+        QTRCC = "$(QT5_BIN)/rcc",
     },
 }
 
@@ -67,7 +69,10 @@ local gcc_opts = {
 
 local gcc_env = {
     Env = {
-		QT5 = native.getenv("QT5", ""),
+		QT5_INC = native.getenv("QT5_INC"),
+		QT5_BIN = native.getenv("QT5_BIN"),
+		QT5_LIB = native.getenv("QT5_LIB"),
+
         RUST_CARGO_OPTS = {
             { "test"; Config = "*-*-*-test" },
         },
@@ -80,13 +85,12 @@ local gcc_env = {
             gcc_opts,
             "-std=c++11",
         },
-
     },
 
     ReplaceEnv = {
-        QTMOC = "$(QT5)/bin/moc",
-        QTUIC = "$(QT5)/bin/uic",
-        QTRCC = "$(QT5)/bin/rcc",
+        QTMOC = "$(QT5_BIN)/moc",
+        QTUIC = "$(QT5_BIN)/uic",
+        QTRCC = "$(QT5_BIN)/rcc",
     },
 }
 
@@ -101,7 +105,10 @@ local win64_opts = {
 
 local win64 = {
     Env = {
-		QT5 = native.getenv("QT5", ""),
+		QT5_INC = native.getenv("QT5_INC"),
+		QT5_BIN = native.getenv("QT5_BIN"),
+		QT5_LIB = native.getenv("QT5_LIB"),
+
         RUST_CARGO_OPTS = {
             { "test"; Config = "*-*-*-test" },
         },
@@ -119,9 +126,9 @@ local win64 = {
     },
 
     ReplaceEnv = {
-        QTMOC = "$(QT5)\\bin\\moc",
-        QTUIC = "$(QT5)\\bin\\uic",
-        QTRCC = "$(QT5)\\bin\\rcc",
+        QTMOC = "$(QT5_BIN)\\moc",
+        QTUIC = "$(QT5_BIN)\\uic",
+        QTRCC = "$(QT5_BIN)\\rcc",
     },
 }
 
@@ -129,8 +136,8 @@ local win64 = {
 
 Build {
     Passes = {
-        BuildTools = { Name="Build Tools", BuildOrder = 1 },
-        GenerateSources = { Name="Generate sources", BuildOrder = 2 },
+        BuildTools = { Name = "Build Tools", BuildOrder = 1 },
+        GenerateSources = { Name = "Generate sources", BuildOrder = 2 },
     },
 
     Units = {
@@ -141,8 +148,9 @@ Build {
 
     Configs = {
         Config { Name = "macosx-clang", DefaultOnHost = "macosx", Inherit = macosx, Tools = { "clang-osx", "rust", "qt" } },
-        Config { Name = "win64-msvc", DefaultOnHost = { "windows" }, Inherit = win64, Tools = { "msvc", "rust", "qt" } },
+        Config { Name = "win64-msvc", DefaultOnHost = { "windows" }, Inherit = win64, Tools = { "msvc-2017", "rust", "qt" } },
         Config { Name = "linux-gcc", DefaultOnHost = { "linux" }, Inherit = gcc_env, Tools = { "gcc", "rust", "qt" } },
+        Config { Name = "linux-clang", DefaultOnHost = { "linux" }, Inherit = gcc_env, Tools = { "clang", "rust", "qt" } },
     },
 
     IdeGenerationHints = {

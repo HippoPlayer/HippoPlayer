@@ -36,6 +36,7 @@ end
 
 -----------------------------------------------------------------------------------------------------------------------
 
+--[[
 SharedLibrary {
     Name = "rute_cpp",
     Sources = {
@@ -85,13 +86,6 @@ SharedLibrary {
               "-isystem $(QT5)/include"; Config = "linux-*-*" },
         },
 
-        --[[
-        CPPDEFS = {
-            "QT_NO_CAST_FROM_ASCII",
-            "QT_NO_CAST_TO_ASCII",
-        },
-        --]]
-
         CPPPATH = {
             "src/external/rute_cpp/ToolWindowManager/",
             "src/external/rute_cpp/ToolWindowManager/",
@@ -126,6 +120,7 @@ SharedLibrary {
 
     Frameworks = { "Cocoa", "QtWidgets", "QtGui", "QtCore" },
 }
+--]]
 
 -----------------------------------------------------------------------------------------------------------------------
 
@@ -139,16 +134,59 @@ end
 
 -----------------------------------------------------------------------------------------------------------------------
 
+--[[
 RustCrate {
     Name = "rute",
     CargoConfig = "src/external/rute/Cargo.toml",
     Sources = {
         get_rs_src("src/external/rute"),
     },
+
+    Env = {
+       CXXOPTS = {
+            { "-isystem $(QT5_LIB)/QtWidgets.framework/Headers",
+              "-isystem $(QT5_LIB)/QtCore.framework/Headers",
+              "-isystem $(QT5_LIB)/QtGui.framework/Headers",
+              "-F$(QT5_LIB)/lib"; Config = "macosx-*-*" },
+
+            { "-isystem $(QT5_INC)"; Config = "linux-*-*" },
+        },
+
+        CPPDEFS = {
+            "QT_NO_KEYWORDS",
+            "QT_NO_CAST_FROM_ASCII",
+            "QT_NO_CAST_TO_ASCII",
+        },
+
+        CPPPATH = {
+            "$(QT5_INC)",
+            "$(OBJECTROOT)", "$(OBJECTDIR)",
+        },
+
+        LIBPATH = {
+			{ "$(QT5_LIB)"; Config = "win64-*-*" },
+			{ "$(QT5_LIB)"; Config = "linux-*-*" },
+		},
+
+        PROGCOM = {
+            {  "-Wl,-rpath,$(QT5_LIB)/lib", "-F$(QT5_LIB)/lib", "-lstdc++", Config = "macosx-clang-*" },
+            {  "-L$(QT5_LIB)", "-lstdc++", "-lm", Config = "linux-*-*" },
+        },
+    },
+
+	Libs = {
+		{ "wsock32.lib", "kernel32.lib", "user32.lib", "gdi32.lib", "Comdlg32.lib",
+		  "Advapi32.lib", "Qt5Gui.lib", "Qt5Core.lib", "Qt5Widgets.lib"; Config = "win64-*-*" },
+		{ "Qt5Gui", "Qt5Core", "Qt5Widgets"; Config = "linux-*-*" },
+	},
+
+    Frameworks = { "Cocoa", "QtWidgets", "QtGui", "QtCore" },
 }
+--]]
 
 -----------------------------------------------------------------------------------------------------------------------
 
+--[[
 RustProgram {
     Name = "hippo_player",
 
@@ -164,6 +202,59 @@ RustProgram {
     },
 
     Depends = { "rute", "rute_cpp" },
+}
+--]]
+
+Program {
+    Name = "hippo_player",
+
+    Sources = {
+        Glob {
+            Dir = "src/hippo_player_test_main",
+            Extensions = { ".cpp" },
+            Recursive = true,
+        },
+    },
+
+    Env = {
+       CXXOPTS = {
+            { "-isystem $(QT5_LIB)/QtWidgets.framework/Headers",
+              "-isystem $(QT5_LIB)/QtCore.framework/Headers",
+              "-isystem $(QT5_LIB)/QtGui.framework/Headers",
+              "-F$(QT5_LIB)/lib"; Config = "macosx-*-*" },
+
+            { "-isystem $(QT5_INC)"; Config = "linux-*-*" },
+        },
+
+        CPPDEFS = {
+            "QT_NO_KEYWORDS",
+            "QT_NO_CAST_FROM_ASCII",
+            "QT_NO_CAST_TO_ASCII",
+        },
+
+        CPPPATH = {
+            "$(QT5_INC)",
+            "$(OBJECTROOT)", "$(OBJECTDIR)",
+        },
+
+        LIBPATH = {
+			{ "$(QT5_LIB)"; Config = "win64-*-*" },
+			{ "$(QT5_LIB)"; Config = "linux-*-*" },
+		},
+
+        PROGCOM = {
+            {  "-Wl,-rpath,$(QT5_LIB)/lib", "-F$(QT5_LIB)/lib", "-lstdc++", Config = "macosx-clang-*" },
+            {  "-L$(QT5_LIB)", "-lstdc++", "-lm", Config = "linux-*-*" },
+        },
+    },
+
+	Libs = {
+		{ "wsock32.lib", "kernel32.lib", "user32.lib", "gdi32.lib", "Comdlg32.lib",
+		  "Advapi32.lib", "Qt5Gui.lib", "Qt5Core.lib", "Qt5Widgets.lib"; Config = "win64-*-*" },
+		{ "Qt5Gui", "Qt5Core", "Qt5Widgets"; Config = "linux-*-*" },
+	},
+
+    Frameworks = { "Cocoa", "QtWidgets", "QtGui", "QtCore" },
 }
 
 -----------------------------------------------------------------------------------------------------------------------
