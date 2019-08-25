@@ -4,6 +4,7 @@
 
 HippoCoreNew hippo_core_new;
 HippoCoreDrop hippo_core_drop;
+HippoPlayFile hippo_play_file;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Wrap the API calls for Windows here as macOS and Linux uses dlopen/dlclose/etc API so we implement the same
@@ -104,6 +105,7 @@ extern int HippoCore_load() {
 
 	hippo_core_new = (HippoCoreNew)dlsym(core_handle, "hippo_core_new");
 	hippo_core_drop = (HippoCoreDrop)dlsym(core_handle, "hippo_core_drop");
+	hippo_play_file = (HippoPlayFile)dlsym(core_handle, "hippo_play_file");
 
 	return 1;
 }
