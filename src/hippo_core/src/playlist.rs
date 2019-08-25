@@ -1,9 +1,9 @@
 use messages::{AddUrls, MessageDecode, MessageEncode};
-use std::io;
-use std::fs::File;
-use std::io::{BufWriter, BufReader};
+use serde_derive::{Deserialize, Serialize};
 use serde_json;
-use serde_derive::{Serialize, Deserialize};
+use std::fs::File;
+use std::io;
+use std::io::{BufReader, BufWriter};
 
 ///
 /// Metadata for each entry. We will likely stuff more things here later on.
@@ -37,17 +37,17 @@ impl Playlist {
     ///
     pub fn event(&mut self, msg: &mut MessageDecode) -> Option<MessageEncode> {
         match msg.method {
-            "hippo_playlist_select_song" => { self.select_song(msg) }
+            "hippo_playlist_select_song" => self.select_song(msg),
 
             /*
-			"hippo_playlist_next_song" => {
-				self.get_next_song().map(|song| Self::new_song_message(msg, song))
-			},
+            "hippo_playlist_next_song" => {
+                self.get_next_song().map(|song| Self::new_song_message(msg, song))
+            },
 
-			"hippo_playlist_previous_song" => {
-				self.get_prev_song().map(|song| Self::new_song_message(msg, song))
-			},
-			*/
+            "hippo_playlist_previous_song" => {
+                self.get_prev_song().map(|song| Self::new_song_message(msg, song))
+            },
+            */
             "hippo_playlist_add_urls" => {
                 let files: AddUrls = msg.deserialize().unwrap();
 
@@ -94,16 +94,16 @@ impl Playlist {
     /// Get loaded urls
     ///
     pub fn get_loaded_urls(&self) -> MessageEncode {
-		let mut request = MessageEncode::new_request("hippo_playlist_load", 0).unwrap();
+        let mut request = MessageEncode::new_request("hippo_playlist_load", 0).unwrap();
 
-		request.write_map_len(self.entries.len() as u32).unwrap();
+        request.write_map_len(self.entries.len() as u32).unwrap();
 
-		for entry in &self.entries {
-		    request.write_str(&entry.path);
-		    request.write_str(&entry.title);
-		}
+        for entry in &self.entries {
+            request.write_str(&entry.path);
+            request.write_str(&entry.title);
+        }
 
-		request
+        request
     }
 
     ///
@@ -119,7 +119,7 @@ impl Playlist {
 
         // Write reply
 
-		let mut reply = MessageEncode::new_request("hippo_playlist_select_song", 0).unwrap();
+        let mut reply = MessageEncode::new_request("hippo_playlist_select_song", 0).unwrap();
         reply.write_int(row).unwrap();
         reply.write_str(&url_name).unwrap();
 
@@ -161,7 +161,7 @@ impl Playlist {
 
         let mut current_song = self.current_song + 1;
 
-        if current_song >= count  {
+        if current_song >= count {
             current_song = 0;
         }
 

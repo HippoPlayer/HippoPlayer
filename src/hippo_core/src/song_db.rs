@@ -18,7 +18,7 @@ pub struct SongDb {
 impl SongDb {
     pub fn new() -> SongDb {
         SongDb {
-            songs: HashMap::new()
+            songs: HashMap::new(),
         }
     }
 
@@ -64,16 +64,22 @@ impl SongDb {
         }
     }
 
-    pub fn get_key(&self, resource: &str, sub_song: usize, key: &str) -> Option<String> { 
+    pub fn get_key(&self, resource: &str, sub_song: usize, key: &str) -> Option<String> {
         match self.songs.get(resource) {
             None => None,
             Some(entry) => {
                 if sub_song > 0 {
-                    entry.sub_songs.get(&sub_song)
+                    entry
+                        .sub_songs
+                        .get(&sub_song)
                         .and_then(|t| t.data.get(key))
                         .and_then(|v| Some((*v).to_string()))
                 } else {
-                    entry.song.data.get(key).and_then(|v| Some((*v).to_string()))
+                    entry
+                        .song
+                        .data
+                        .get(key)
+                        .and_then(|v| Some((*v).to_string()))
                 }
             }
         }

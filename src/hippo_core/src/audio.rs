@@ -1,7 +1,7 @@
 extern crate rodio;
 
 use crate::plugin_handler::DecoderPlugin;
-use rodio::{Source, Sink};
+use rodio::{Sink, Source};
 use std::ffi::CString;
 use std::os::raw::c_void;
 use std::time::Duration;
@@ -32,7 +32,11 @@ pub struct MusicInfo {
 }
 
 impl HippoPlayback {
-    pub fn start_with_file(plugin: &DecoderPlugin, plugin_service: &PluginService, filename: &str) -> Option<HippoPlayback> {
+    pub fn start_with_file(
+        plugin: &DecoderPlugin,
+        plugin_service: &PluginService,
+        filename: &str,
+    ) -> Option<HippoPlayback> {
         let c_filename = CString::new(filename).unwrap();
         let user_data = ((plugin.plugin_funcs).create)(plugin_service.get_c_service_api()) as u64;
         let ptr_user_data = user_data as *mut c_void;
@@ -59,9 +63,11 @@ impl Iterator for HippoPlayback {
         self.current_offset += 1;
 
         if self.current_offset >= self.frame_size {
-            self.frame_size = ((self.plugin.plugin_funcs)
-                                   .read_data)(self.plugin_user_data as *mut c_void,
-                                               self.out_data.as_slice().as_ptr() as *mut u8, 48000/2) as usize;
+            self.frame_size = ((self.plugin.plugin_funcs).read_data)(
+                self.plugin_user_data as *mut c_void,
+                self.out_data.as_slice().as_ptr() as *mut u8,
+                48000 / 2,
+            ) as usize;
 
             self.current_offset = 0;
         }
@@ -125,28 +131,36 @@ impl HippoAudio {
     //   self.audio_sink.play();
     //}
 
-    pub fn start_with_file(&mut self, plugin: &DecoderPlugin, service: &PluginService, filename: &str) -> MusicInfo {
+    pub fn start_with_file(
+        &mut self,
+        plugin: &DecoderPlugin,
+        service: &PluginService,
+        filename: &str,
+    ) -> MusicInfo {
         // TODO: Do error checking
         let playback = HippoPlayback::start_with_file(plugin, service, filename);
 
         if let Some(pb) = playback {
             // TODO: Wrap this
-			//let title = service.get_song_db().get_key(filename, 0, "title").unwrap();
-			let title = service.get_song_db().get_key(filename, 0, "title").or_else(|| Some("Unknown".to_owned()));
+            //let title = service.get_song_db().get_key(filename, 0, "title").unwrap();
+            let title = service
+                .get_song_db()
+                .get_key(filename, 0, "title")
+                .or_else(|| Some("Unknown".to_owned()));
 
-			//let c_title = ((plugin.plugin_funcs).track_info)(pb.plugin_user_data as *mut c_void);
-			//let length = ((plugin.plugin_funcs).length)(pb.plugin_user_data as *mut c_void);
-			let length = -10;
-			let info = MusicInfo {
-				//title: CStr::from_ptr(c_title).to_string_lossy().into_owned(),
-				title: title.unwrap(),
-				duration: length,
-			};
+            //let c_title = ((plugin.plugin_funcs).track_info)(pb.plugin_user_data as *mut c_void);
+            //let length = ((plugin.plugin_funcs).length)(pb.plugin_user_data as *mut c_void);
+            let length = -10;
+            let info = MusicInfo {
+                //title: CStr::from_ptr(c_title).to_string_lossy().into_owned(),
+                title: title.unwrap(),
+                duration: length,
+            };
 
-			self.playbacks.push(pb.clone());
-			self.audio_sink.append(pb);
+            self.playbacks.push(pb.clone());
+            self.audio_sink.append(pb);
 
-			info
+            info
         } else {
             MusicInfo::default()
         }

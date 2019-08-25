@@ -1,14 +1,14 @@
-use std::os::raw::{c_void, c_char};
-use std::ffi::CStr;
-use std::ptr;
-use std::mem::transmute;
-use std::slice;
-use std::io::Read;
+use crate::service::{FileWrapper, IoApi, MessageApi};
 use crate::song_db::SongDb;
-use std::collections::HashMap;
-use crate::service::{IoApi, FileWrapper, MessageApi};
-use hippo_api::{MessageEncode, MessageDecode};
 use hippo_api::ffi::*;
+use hippo_api::{MessageDecode, MessageEncode};
+use std::collections::HashMap;
+use std::ffi::CStr;
+use std::io::Read;
+use std::mem::transmute;
+use std::os::raw::{c_char, c_void};
+use std::ptr;
+use std::slice;
 
 extern "C" fn file_exists_wrapper(priv_data: *const c_void, target: *const u8) -> i32 {
     let file_api: &mut IoApi = unsafe { &mut *(priv_data as *mut IoApi) };
@@ -16,7 +16,12 @@ extern "C" fn file_exists_wrapper(priv_data: *const c_void, target: *const u8) -
     file_api.exists(&filename.to_string_lossy())
 }
 
-extern "C" fn file_read_to_memory_wrapper(priv_data: *const c_void, filename: *const u8, target: *mut *const c_void, target_size: *mut u64) -> i64 {
+extern "C" fn file_read_to_memory_wrapper(
+    priv_data: *const c_void,
+    filename: *const u8,
+    target: *mut *const c_void,
+    target_size: *mut u64,
+) -> i64 {
     let file_api: &mut IoApi = unsafe { &mut *(priv_data as *mut IoApi) };
     let name = unsafe { CStr::from_ptr(filename as *const c_char) };
     let fname = &name.to_string_lossy();
@@ -50,13 +55,20 @@ extern "C" fn file_read_to_memory_wrapper(priv_data: *const c_void, filename: *c
     }
 }
 
-extern "C" fn file_free_to_memory_wrapper(_priv_data: *const c_void, _handle: *const c_void) -> i64 {
+extern "C" fn file_free_to_memory_wrapper(
+    _priv_data: *const c_void,
+    _handle: *const c_void,
+) -> i64 {
     // implicitly dropped
     //let _: Box<[u8]> = unsafe { transmute(handle) };
     0
 }
 
-extern "C" fn file_open_wrapper(priv_data: *const c_void, target: *const u8, handle: *mut *const c_void) -> i64 {
+extern "C" fn file_open_wrapper(
+    priv_data: *const c_void,
+    target: *const u8,
+    handle: *mut *const c_void,
+) -> i64 {
     let file_api: &mut IoApi = unsafe { &mut *(priv_data as *mut IoApi) };
     let filename = unsafe { CStr::from_ptr(target as *const c_char) };
 
@@ -72,7 +84,8 @@ extern "C" fn file_open_wrapper(priv_data: *const c_void, target: *const u8, han
         }
 
         Ok(f) => {
-            let file_wrapper: *const c_void = unsafe { transmute(Box::new(FileWrapper { file: f })) };
+            let file_wrapper: *const c_void =
+                unsafe { transmute(Box::new(FileWrapper { file: f })) };
             unsafe { *handle = file_wrapper };
             0
         }
@@ -110,42 +123,67 @@ extern "C" fn file_seek_wrapper(handle: *const c_void, _seek_type: i32, _seek_st
     0
 }
 
-extern "C" fn get_io_api_wrapper(priv_data: *const c_void, _version: i32) ->  *const CHippoIoAPI {
+extern "C" fn get_io_api_wrapper(priv_data: *const c_void, _version: i32) -> *const CHippoIoAPI {
     let service_api: &mut ServiceApi = unsafe { &mut *(priv_data as *mut ServiceApi) };
     service_api.get_c_io_api()
 }
 
-extern "C" fn get_metadata_api(priv_data: *const c_void, _version: i32) ->  *const CMetadataAPI {
+extern "C" fn get_metadata_api(priv_data: *const c_void, _version: i32) -> *const CMetadataAPI {
     let service_api: &mut ServiceApi = unsafe { &mut *(priv_data as *mut ServiceApi) };
     service_api.get_c_metadatao_api()
 }
 
-extern "C" fn get_message_api(priv_data: *const c_void, _version: i32) ->  *const CMessageAPI {
+extern "C" fn get_message_api(priv_data: *const c_void, _version: i32) -> *const CMessageAPI {
     let service_api: &mut ServiceApi = unsafe { &mut *(priv_data as *mut ServiceApi) };
     service_api.get_c_message_api()
 }
 
-extern "C" fn metadata_get_key(_priv_data: *const c_void, _resource: *const i8, _key_type: u32, error_code: *mut i32) -> *const c_void {
+extern "C" fn metadata_get_key(
+    _priv_data: *const c_void,
+    _resource: *const i8,
+    _key_type: u32,
+    error_code: *mut i32,
+) -> *const c_void {
     // not implemented yet
-    unsafe { *error_code = -1; }
+    unsafe {
+        *error_code = -1;
+    }
     ptr::null()
     //let res = unsafe { CStr::from_ptr(resource as *const c_char) };
     //file_api.exists(&filename.to_string_lossy())
 }
 
-extern "C" fn metadata_set_key(priv_data: *const c_void, resource: *const i8, sub_song: u32, value: *const i8, key: *const i8) -> i32 {
+extern "C" fn metadata_set_key(
+    priv_data: *const c_void,
+    resource: *const i8,
+    sub_song: u32,
+    value: *const i8,
+    key: *const i8,
+) -> i32 {
     let song_db: &mut SongDb = unsafe { &mut *(priv_data as *mut SongDb) };
     // TODO: Use CFixedString
     let res = unsafe { CStr::from_ptr(resource as *const c_char) };
     let value = unsafe { CStr::from_ptr(value as *const c_char) };
     let key = unsafe { CStr::from_ptr(key as *const c_char) };
 
-    song_db.set_key( &res.to_string_lossy(), sub_song as usize, &value.to_string_lossy(), &key.to_string_lossy());
+    song_db.set_key(
+        &res.to_string_lossy(),
+        sub_song as usize,
+        &value.to_string_lossy(),
+        &key.to_string_lossy(),
+    );
 
     0
 }
 
-extern "C" fn metadata_set_key_with_encoding(_priv_data: *const c_void, _resource: *const i8, _sub_song: u32, _value: *const i8, _key_type: u32, _encoding: u32) -> i32 {
+extern "C" fn metadata_set_key_with_encoding(
+    _priv_data: *const c_void,
+    _resource: *const i8,
+    _sub_song: u32,
+    _value: *const i8,
+    _key_type: u32,
+    _encoding: u32,
+) -> i32 {
     -1
 }
 
@@ -183,17 +221,21 @@ extern "C" fn message_write_str(priv_data: *const c_void, name: *const i8) -> i3
 }
 
 extern "C" fn message_decode_get_id(priv_data: *const c_void) -> u32 {
-    let message: &MessageDecode = unsafe { &*(priv_data as *mut MessageDecode ) };
+    let message: &MessageDecode = unsafe { &*(priv_data as *mut MessageDecode) };
     message.id
 }
 
 extern "C" fn message_decode_get_method(priv_data: *const c_void) -> *const i8 {
-    let message: &MessageDecode = unsafe { &*(priv_data as *mut MessageDecode ) };
+    let message: &MessageDecode = unsafe { &*(priv_data as *mut MessageDecode) };
     message.method.as_ptr() as *const i8
 }
 
-extern "C" fn message_decode_get_raw_ptr(priv_data: *const c_void, data: *mut *const c_void, len: *mut u64) -> i32 {
-    let message: &MessageDecode = unsafe { &*(priv_data as *mut MessageDecode ) };
+extern "C" fn message_decode_get_raw_ptr(
+    priv_data: *const c_void,
+    data: *mut *const c_void,
+    len: *mut u64,
+) -> i32 {
+    let message: &MessageDecode = unsafe { &*(priv_data as *mut MessageDecode) };
     message.method.as_ptr() as *const i8;
 
     let data_t = message.data.get_ref();
@@ -201,9 +243,9 @@ extern "C" fn message_decode_get_raw_ptr(priv_data: *const c_void, data: *mut *c
     let data_range = &data_t[pos..];
 
     unsafe {
-		let data_ptr: *const c_void = data_range.as_ptr() as *const c_void;
-    	*data = data_ptr;
-    	*len = data_range.len() as u64;
+        let data_ptr: *const c_void = data_range.as_ptr() as *const c_void;
+        *data = data_ptr;
+        *len = data_range.len() as u64;
     }
 
     0
@@ -216,7 +258,9 @@ extern "C" fn mesage_api_begin_request(priv_data: *const c_void, id: *const i8) 
     println!("mesage_api_begin_request");
 
     // TODO: Proper error handling
-    let message = message_api.begin_request(&name_id.to_string_lossy()).unwrap();
+    let message = message_api
+        .begin_request(&name_id.to_string_lossy())
+        .unwrap();
 
     let message_ptr: *const c_void = unsafe { transmute(message) };
 
@@ -233,14 +277,19 @@ extern "C" fn mesage_api_begin_request(priv_data: *const c_void, id: *const i8) 
     message_wrap
 }
 
-extern "C" fn mesage_api_begin_notification(priv_data: *const c_void, id: *const i8) -> *const c_void {
+extern "C" fn mesage_api_begin_notification(
+    priv_data: *const c_void,
+    id: *const i8,
+) -> *const c_void {
     let message_api: &mut MessageApi = unsafe { &mut *(priv_data as *mut MessageApi) };
     let name_id = unsafe { CStr::from_ptr(id as *const c_char) };
 
     println!("mesage_api_begin_request");
 
     // TODO: Proper error handling
-    let message = message_api.begin_notification(&name_id.to_string_lossy()).unwrap();
+    let message = message_api
+        .begin_notification(&name_id.to_string_lossy())
+        .unwrap();
 
     let message_ptr: *const c_void = unsafe { transmute(message) };
 
@@ -292,38 +341,42 @@ impl ServiceApi {
     }
 
     fn get_song_db<'a>(&'a self) -> &'a SongDb {
-    	let metadata_api = self.get_c_metadatao_api();
-    	let song_db: &SongDb = unsafe { &*((*metadata_api).priv_data as *const SongDb) };
-    	song_db
+        let metadata_api = self.get_c_metadatao_api();
+        let song_db: &SongDb = unsafe { &*((*metadata_api).priv_data as *const SongDb) };
+        song_db
     }
 
     fn get_message_api<'a>(&'a self) -> &'a MessageApi {
-    	let api = self.get_c_message_api();
-    	let message_api: &MessageApi = unsafe { &*((*api).priv_data as *const MessageApi) };
-    	message_api
+        let api = self.get_c_message_api();
+        let message_api: &MessageApi = unsafe { &*((*api).priv_data as *const MessageApi) };
+        message_api
     }
 
     fn get_message_api_mut(&mut self) -> &mut MessageApi {
-    	let api = self.get_c_message_api();
-    	let message_api: &mut MessageApi = unsafe { &mut *((*api).priv_data as *mut MessageApi) };
-    	message_api
+        let api = self.get_c_message_api();
+        let message_api: &mut MessageApi = unsafe { &mut *((*api).priv_data as *mut MessageApi) };
+        message_api
     }
 
     fn new() -> ServiceApi {
         // setup IO services
 
-        let io_api: *const c_void = unsafe { transmute(Box::new(IoApi { saved_allocs: HashMap::new() })) };
+        let io_api: *const c_void = unsafe {
+            transmute(Box::new(IoApi {
+                saved_allocs: HashMap::new(),
+            }))
+        };
 
         let c_io_api = Box::new(CHippoIoAPI {
-           exists: file_exists_wrapper,
-           read_file_to_memory: file_read_to_memory_wrapper,
-           free_file_to_memory: file_free_to_memory_wrapper,
-           open: file_open_wrapper,
-           close: file_close_wrapper,
-           size: file_size_wrapper,
-           read: file_read_wrapper,
-           seek: file_seek_wrapper,
-           priv_data: io_api,
+            exists: file_exists_wrapper,
+            read_file_to_memory: file_read_to_memory_wrapper,
+            free_file_to_memory: file_free_to_memory_wrapper,
+            open: file_open_wrapper,
+            close: file_close_wrapper,
+            size: file_size_wrapper,
+            read: file_read_wrapper,
+            seek: file_seek_wrapper,
+            priv_data: io_api,
         });
 
         let c_io_api: *const CHippoIoAPI = unsafe { transmute(c_io_api) };
@@ -346,11 +399,11 @@ impl ServiceApi {
         let message_api: *const c_void = unsafe { transmute(Box::new(MessageApi::new())) };
 
         let c_message_api = Box::new(CMessageAPI {
-           priv_data: message_api,
-           begin_request: mesage_api_begin_request,
-           begin_notification: mesage_api_begin_notification,
-           end_message: mesage_api_end_message,
-           request_new_id: mesage_api_request_new_id,
+            priv_data: message_api,
+            begin_request: mesage_api_begin_request,
+            begin_notification: mesage_api_begin_notification,
+            end_message: mesage_api_end_message,
+            request_new_id: mesage_api_request_new_id,
         });
 
         let c_message_api: *const CMessageAPI = unsafe { transmute(c_message_api) };
@@ -358,20 +411,20 @@ impl ServiceApi {
         ServiceApi {
             c_io_api,
             c_metadata_api,
-            c_message_api
+            c_message_api,
         }
     }
 }
 
 pub fn get_cmessage_decode(message: &MessageDecode) -> CMessageDecode {
-	let priv_data: *const c_void = unsafe { transmute(message) };
+    let priv_data: *const c_void = unsafe { transmute(message) };
 
-	CMessageDecode {
-		priv_data,
-		get_id: message_decode_get_id,
-		get_method: message_decode_get_method,
-		get_raw_ptr: message_decode_get_raw_ptr,
-	}
+    CMessageDecode {
+        priv_data,
+        get_id: message_decode_get_id,
+        get_method: message_decode_get_method,
+        get_raw_ptr: message_decode_get_raw_ptr,
+    }
 }
 
 pub struct PluginService {
@@ -391,14 +444,13 @@ impl PluginService {
 
         let t: *const CHippoServiceAPI = unsafe { transmute(c_service_api) };
 
-        PluginService {
-            c_service_api: t
-        }
+        PluginService { c_service_api: t }
     }
 
     pub fn get_song_db<'a>(&'a self) -> &'a SongDb {
-    	let service_api: &ServiceApi = unsafe { &*((*self.c_service_api).priv_data as *const ServiceApi) };
-    	service_api.get_song_db()
+        let service_api: &ServiceApi =
+            unsafe { &*((*self.c_service_api).priv_data as *const ServiceApi) };
+        service_api.get_song_db()
     }
 
     pub fn get_c_service_api(&self) -> *const CHippoServiceAPI {
@@ -406,13 +458,14 @@ impl PluginService {
     }
 
     pub fn get_message_api<'a>(&'a self) -> &'a MessageApi {
-    	let service_api: &ServiceApi = unsafe { &*((*self.c_service_api).priv_data as *const ServiceApi) };
-    	service_api.get_message_api()
+        let service_api: &ServiceApi =
+            unsafe { &*((*self.c_service_api).priv_data as *const ServiceApi) };
+        service_api.get_message_api()
     }
 
     pub fn get_message_api_mut(&mut self) -> &mut MessageApi {
-    	let service_api: &mut ServiceApi = unsafe { &mut *((*self.c_service_api).priv_data as *mut ServiceApi) };
-    	service_api.get_message_api_mut()
+        let service_api: &mut ServiceApi =
+            unsafe { &mut *((*self.c_service_api).priv_data as *mut ServiceApi) };
+        service_api.get_message_api_mut()
     }
 }
-

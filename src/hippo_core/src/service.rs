@@ -1,6 +1,6 @@
-use std::collections::{HashMap};
-use std::fs::File;
+use std::collections::HashMap;
 use std::fs;
+use std::fs::File;
 use std::io;
 
 use std::io::Read;
@@ -16,7 +16,13 @@ impl IoApi {
     pub fn exists(&self, target: &str) -> i32 {
         match fs::metadata(target) {
             Err(_e) => 0,
-            Ok(res) => if res.is_file() { 1 } else { 0 },
+            Ok(res) => {
+                if res.is_file() {
+                    1
+                } else {
+                    0
+                }
+            }
         }
     }
 
@@ -56,7 +62,10 @@ impl MessageApi {
         Ok(Box::new(message))
     }
 
-    pub fn begin_notification(&mut self, name: &str) -> Result<Box<MessageEncode>, ValueWriteError> {
+    pub fn begin_notification(
+        &mut self,
+        name: &str,
+    ) -> Result<Box<MessageEncode>, ValueWriteError> {
         let message = MessageEncode::new_notification(name, self.request_id)?;
         self.request_id += 1;
         Ok(Box::new(message))
@@ -70,11 +79,10 @@ impl MessageApi {
 
     // TODO: Fix me
     pub fn end_message(&mut self, message: Box<MessageEncode>) {
-	    self.request_queue.push(message);
+        self.request_queue.push(message);
     }
 
     pub fn clear_queues(&mut self) {
-    	self.request_queue.clear();
+        self.request_queue.clear();
     }
 }
-

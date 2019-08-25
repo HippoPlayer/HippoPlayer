@@ -1,5 +1,5 @@
-use std::os::raw::c_char;
 use std::collections::HashMap;
+use std::os::raw::c_char;
 
 /*
 use hippo_api;
@@ -32,7 +32,7 @@ pub struct SongDb {
 
 #[no_mangle]
 /// Create new instance of the song db
-pub extern fn hippo_song_db_new() -> *const SongDb {
+pub extern "C" fn hippo_song_db_new() -> *const SongDb {
     std::ptr::null()
     /*
     let mut db = Box::new(SongDb::default());
@@ -43,10 +43,9 @@ pub extern fn hippo_song_db_new() -> *const SongDb {
 
 #[no_mangle]
 /// Update the song db with a new entry
-pub extern fn hippo_song_db_update(_db: *mut SongDb, _name: *const c_char) {
+pub extern "C" fn hippo_song_db_update(_db: *mut SongDb, _name: *const c_char) {
     /*
     let db = unsafe { &mut *_db };
     println!("{:?}", db);
     */
 }
-
