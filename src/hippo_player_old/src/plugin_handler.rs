@@ -75,7 +75,7 @@ impl ViewPlugin {
 		ViewPluginInstance {
 			plugin: self.clone(),
 			user_data: user_data as u64,
-			id: self.count, 
+			id: self.count,
 			ui: plugin_ui,
 		}
 	}
