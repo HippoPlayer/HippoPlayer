@@ -2,8 +2,8 @@
 #include "hippo_core_loader.h"
 #include "../hippo_core/native/hippo_core.h"
 
-HippoSongDbNew hippo_song_db_new;
-HippoSongDbUpdate hippo_song_db_update;
+HippoCoreNew hippo_core_new;
+HippoCoreDrop hippo_core_drop;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Wrap the API calls for Windows here as macOS and Linux uses dlopen/dlclose/etc API so we implement the same
@@ -102,8 +102,8 @@ extern int HippoCore_load() {
 		return 0;
 	}
 
-	hippo_song_db_new = (HippoSongDbNew)dlsym(core_handle, "hippo_song_db_new");
-	hippo_song_db_update = (HippoSongDbUpdate)dlsym(core_handle, "hippo_song_db_update");
+	hippo_core_new = (HippoCoreNew)dlsym(core_handle, "hippo_core_new");
+	hippo_core_drop = (HippoCoreDrop)dlsym(core_handle, "hippo_core_drop");
 
 	return 1;
 }

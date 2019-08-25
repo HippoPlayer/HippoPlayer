@@ -1,9 +1,9 @@
 #pragma once
 
-struct SongDb;
+struct HippoCore;
 
-typedef struct SongDb* (*HippoSongDbNew)();
-typedef void (*HippoSongDbUpdate)(struct SongDb* db, const char* name);
+typedef struct HippoCore* (*HippoCoreNew)();
+typedef void (*HippoCoreDrop)(struct HippoCore* core);
 
-extern HippoSongDbNew hippo_song_db_new;
-extern HippoSongDbUpdate hippo_song_db_update;
+extern HippoCoreNew hippo_core_new;
+extern HippoCoreDrop hippo_core_drop;

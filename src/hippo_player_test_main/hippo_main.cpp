@@ -11,11 +11,8 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    struct SongDb* db = hippo_song_db_new();
-    printf("db %p\n", db);
-
-    hippo_song_db_update(db, "test");
-    hippo_song_db_update(db, "test");
+    HippoCore* hippo_core = hippo_core_new();
+    printf("hippo_core %p\n", hippo_core);
 
     QPushButton button(QStringLiteral("Hello world !"));
     button.show();
