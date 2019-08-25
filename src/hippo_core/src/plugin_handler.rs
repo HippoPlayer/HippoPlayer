@@ -3,7 +3,7 @@ use std::ffi::CString;
 use std::sync::Arc;
 use walkdir::{DirEntry, WalkDir};
 
-use hippo_api::ffi::{CHippoPlaybackPlugin, CHippoViewPlugin};
+use hippo_api::ffi::{CHippoPlaybackPlugin};
 //use crate::service_ffi::{PluginService};
 
 #[derive(Clone)]
@@ -11,20 +11,6 @@ pub struct DecoderPlugin {
     pub plugin: Arc<Lib>,
     pub plugin_path: String,
     pub plugin_funcs: CHippoPlaybackPlugin,
-}
-
-#[derive(Clone)]
-pub struct ViewPlugin {
-    pub plugin: Arc<Lib>,
-    pub plugin_path: String,
-    pub count: usize,
-    pub plugin_funcs: CHippoViewPlugin,
-}
-
-pub struct ViewPluginInstance {
-    pub plugin: ViewPlugin,
-    pub user_data: u64,
-    pub id: usize,
 }
 
 #[cfg(target_os = "macos")]
@@ -65,34 +51,8 @@ impl DecoderPlugin {
     }
 }
 
-/*
-impl ViewPlugin {
-    pub fn get_name<'a>(&'a self) -> Cow<'a, str> {
-        //let res = unsafe { self.plugin_funcs.name };
-        unsafe { CStr::from_ptr(self.plugin_funcs.name as *const i8).to_string_lossy() }
-    }
-
-    pub fn create_instance(&self, ui: &Ui, plugin_service: &PluginService, window: &Widget) -> ViewPluginInstance {
-        let plugin_ui = ui.create_plugin_ui(window);
-
-        let user_data = ((self.plugin_funcs).create).unwrap()(
-            plugin_service.get_c_service_api());
-
-        ((self.plugin_funcs).setup_ui).unwrap()(user_data, plugin_ui.get_c_api());
-
-        ViewPluginInstance {
-            plugin: self.clone(),
-            user_data: user_data as u64,
-            id: self.count,
-            ui: plugin_ui,
-        }
-    }
-}
-*/
-
 pub struct Plugins<'a> {
     pub decoder_plugins: Vec<DecoderPlugin>,
-    //pub view_plugins: Vec<ViewPlugin>,
     pub plugin_handler: DynamicReload<'a>,
 }
 
@@ -100,7 +60,6 @@ impl<'a> Plugins<'a> {
     pub fn new() -> Plugins<'a> {
         Plugins {
             decoder_plugins: Vec::new(),
-            //view_plugins: Vec::new(),
             plugin_handler: DynamicReload::new(Some(vec!["."]), None, Search::Default),
         }
     }
@@ -118,23 +77,6 @@ impl<'a> Plugins<'a> {
                 plugin_funcs: unsafe { (*fun()).clone() },
             });
         }
-
-        /*
-        let func: Result<Symbol<extern "C" fn() -> *const CHippoViewPlugin>, ::std::io::Error> = unsafe {
-            plugin.lib.get(b"hippo_view_plugin\0")
-        };
-
-        if let Ok(fun) = func {
-            println!("Found view plugin with callback data {:?}", fun());
-
-            self.view_plugins.push(ViewPlugin {
-                plugin: plugin.clone(),
-                plugin_path: name.to_owned(),
-                count: 0,
-                plugin_funcs: unsafe { (*fun()).clone() },
-            });
-        }
-        */
     }
 
     fn check_file_type(entry: &DirEntry) -> bool {

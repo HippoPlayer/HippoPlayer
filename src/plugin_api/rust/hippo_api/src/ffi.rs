@@ -1,5 +1,4 @@
 use std::os::raw::{c_int, c_void, c_char};
-use rute::ffi_gen::RUPluginUI;
 
 #[repr(C)]
 #[derive(Debug)]
@@ -83,6 +82,7 @@ pub struct CHippoPlaybackPlugin {
     pub private_data: u64,
 }
 
+/*
 unsafe impl Sync for CHippoViewPlugin {}
 
 #[derive(Clone, Debug)]
@@ -96,4 +96,5 @@ pub struct CHippoViewPlugin {
     pub destroy: Option<extern "C" fn(user_data: *mut c_void)>,
     pub event: Option<extern "C" fn(user_data: *mut c_void, message: *const CMessageDecode)>,
 }
+*/
 

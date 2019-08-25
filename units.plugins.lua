@@ -78,6 +78,7 @@ SharedLibrary {
 
 -----------------------------------------------------------------------------------------------------------------------
 
+--[[
 SharedLibrary {
 	Name = "TestViewPlugin",
 
@@ -89,6 +90,7 @@ SharedLibrary {
 		get_c_cpp_src("src/plugins/view/test_view"),
 	},
 }
+--]]
 
 -----------------------------------------------------------------------------------------------------------------------
 
@@ -334,6 +336,8 @@ SharedLibrary {
 --  View plugins
 -----------------------------------------------------------------------------------------------------------------------
 
+--[[
+
 RustSharedLibrary {
 	Name = "playlist",
 	CargoConfig = "src/plugins/view/playlist/Cargo.toml",
@@ -367,6 +371,8 @@ RustSharedLibrary {
 	}
 }
 
+--]]
+
 -----------------------------------------------------------------------------------------------------------------------
 -- Default plugins
 -----------------------------------------------------------------------------------------------------------------------
@@ -383,10 +389,10 @@ Default "SidPlugin"
 
 -- Views
 
-Default "playlist"
-Default "player"
-Default "song_info"
-Default "TestViewPlugin"
+--Default "playlist"
+--Default "player"
+--Default "song_info"
+--Default "TestViewPlugin"
 
 -- Default "FutureComposerPlugin"
 -- Default "TfmxPlugin"
