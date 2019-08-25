@@ -1,7 +1,0 @@
-[package]
-name = "rute"
-version = "0.1.0"
-authors = ["Daniel Collin <daniel@collin.com>"]
-
-[dependencies]
-libloading = "0.4"
