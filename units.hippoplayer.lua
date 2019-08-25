@@ -36,6 +36,26 @@ end
 
 -----------------------------------------------------------------------------------------------------------------------
 
+local function get_rs_src(dir)
+    return Glob {
+        Dir = dir,
+        Extensions = { ".rs" },
+        Recursive = true,
+}
+end
+
+-----------------------------------------------------------------------------------------------------------------------
+
+local function get_c_cpp_src(dir)
+    return Glob {
+        Dir = dir,
+        Extensions = { ".cpp", ".c", ".h" },
+        Recursive = true,
+}
+end
+
+-----------------------------------------------------------------------------------------------------------------------
+
 --[[
 SharedLibrary {
     Name = "rute_cpp",
@@ -122,67 +142,25 @@ SharedLibrary {
 }
 --]]
 
------------------------------------------------------------------------------------------------------------------------
-
-local function get_rs_src(dir)
-    return Glob {
-        Dir = dir,
-        Extensions = { ".rs" },
-        Recursive = true,
-}
-end
 
 -----------------------------------------------------------------------------------------------------------------------
 
---[[
-RustCrate {
-    Name = "rute",
-    CargoConfig = "src/external/rute/Cargo.toml",
+RustSharedLibrary {
+    Name = "hippo_core",
+    CargoConfig = "src/hippo_core/Cargo.toml",
     Sources = {
-        get_rs_src("src/external/rute"),
+        get_rs_src("src/hippo_core/src"),
     },
-
-    Env = {
-       CXXOPTS = {
-            { "-isystem $(QT5_LIB)/QtWidgets.framework/Headers",
-              "-isystem $(QT5_LIB)/QtCore.framework/Headers",
-              "-isystem $(QT5_LIB)/QtGui.framework/Headers",
-              "-F$(QT5_LIB)/lib"; Config = "macosx-*-*" },
-
-            { "-isystem $(QT5_INC)"; Config = "linux-*-*" },
-        },
-
-        CPPDEFS = {
-            "QT_NO_KEYWORDS",
-            "QT_NO_CAST_FROM_ASCII",
-            "QT_NO_CAST_TO_ASCII",
-        },
-
-        CPPPATH = {
-            "$(QT5_INC)",
-            "$(OBJECTROOT)", "$(OBJECTDIR)",
-        },
-
-        LIBPATH = {
-			{ "$(QT5_LIB)"; Config = "win64-*-*" },
-			{ "$(QT5_LIB)"; Config = "linux-*-*" },
-		},
-
-        PROGCOM = {
-            {  "-Wl,-rpath,$(QT5_LIB)/lib", "-F$(QT5_LIB)/lib", "-lstdc++", Config = "macosx-clang-*" },
-            {  "-L$(QT5_LIB)", "-lstdc++", "-lm", Config = "linux-*-*" },
-        },
-    },
-
-	Libs = {
-		{ "wsock32.lib", "kernel32.lib", "user32.lib", "gdi32.lib", "Comdlg32.lib",
-		  "Advapi32.lib", "Qt5Gui.lib", "Qt5Core.lib", "Qt5Widgets.lib"; Config = "win64-*-*" },
-		{ "Qt5Gui", "Qt5Core", "Qt5Widgets"; Config = "linux-*-*" },
-	},
-
-    Frameworks = { "Cocoa", "QtWidgets", "QtGui", "QtCore" },
 }
---]]
+
+-----------------------------------------------------------------------------------------------------------------------
+
+StaticLibrary {
+    Name = "hippo_core_loader",
+    Sources = {
+        get_c_cpp_src("src/hippo_core_loader"),
+    },
+}
 
 -----------------------------------------------------------------------------------------------------------------------
 
@@ -244,7 +222,7 @@ Program {
 
         PROGCOM = {
             {  "-Wl,-rpath,$(QT5_LIB)/lib", "-F$(QT5_LIB)/lib", "-lstdc++", Config = "macosx-clang-*" },
-            {  "-L$(QT5_LIB)", "-lstdc++", "-lm", Config = "linux-*-*" },
+            {  "-L$(QT5_LIB)", "-lstdc++", "-lm", "-ldl", Config = "linux-*-*" },
         },
     },
 
@@ -255,6 +233,8 @@ Program {
 	},
 
     Frameworks = { "Cocoa", "QtWidgets", "QtGui", "QtCore" },
+
+    Depends = { "hippo_core", "hippo_core_loader" },
 }
 
 -----------------------------------------------------------------------------------------------------------------------
