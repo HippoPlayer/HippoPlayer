@@ -1,5 +1,7 @@
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QPushButton>
+#include <QtCore/QFile>
+#include <QtCore/QTextStream>
 #include "src/hippo_core_loader/hippo_core_loader.h"
 #include "src/hippo_core/native/hippo_core.h"
 
@@ -11,8 +13,6 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    app.setStyleSheet(QStringLiteral("bin/player/themes/dark/style.qss"));
-
     /*
     HippoCore* hippo_core = hippo_core_new();
     printf("hippo_core %p\n", hippo_core);
@@ -20,10 +20,20 @@ int main(int argc, char** argv) {
     hippo_play_file(hippo_core, "/home/emoon/Downloads/musiklinjen.mod");
     */
 
+
+    QFile f(QStringLiteral("bin/player/themes/dark/style.qss"));
+
+    if (!f.exists()) {
+        //printf("Unable to set stylesheet: %s, file not found\n", filename);
+        return 0;
+    } else {
+        f.open(QFile::ReadOnly | QFile::Text);
+        QTextStream ts(&f);
+        app.setStyleSheet(ts.readAll());
+    }
+
     QPushButton button(QStringLiteral("Hello world !"));
     button.show();
-
-
 
     /*
         self.app.set_style_sheet("bin/player/themes/dark/style.qss");
