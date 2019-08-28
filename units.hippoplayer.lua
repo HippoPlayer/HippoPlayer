@@ -56,9 +56,8 @@ end
 
 -----------------------------------------------------------------------------------------------------------------------
 
---[[
-SharedLibrary {
-    Name = "rute_cpp",
+StaticLibrary {
+    Name = "qt_addons",
     Sources = {
         Glob {
             Dir = "src/external/rute_cpp",
@@ -66,7 +65,6 @@ SharedLibrary {
             Recursive = true,
         },
 
-        gen_moc("src/external/rute_cpp/qt_api_gen.h"),
         gen_moc("src/external/rute_cpp/ToolWindowManager/ToolWindowManager.h"),
         gen_moc("src/external/rute_cpp/ToolWindowManager/ToolWindowManagerArea.h"),
         gen_moc("src/external/rute_cpp/ToolWindowManager/ToolWindowManagerSplitter.h"),
@@ -94,6 +92,7 @@ SharedLibrary {
     },
 
     Env = {
+       --[[
        CXXOPTS = {
             { "-isystem $(QT5)/lib/QtWidgets.framework/Headers",
               "-isystem $(QT5)/lib/QtCore.framework/Headers",
@@ -105,6 +104,7 @@ SharedLibrary {
               "-isystem $(QT5)/include/QtGui",
               "-isystem $(QT5)/include"; Config = "linux-*-*" },
         },
+        --]]
 
         CPPPATH = {
             "src/external/rute_cpp/ToolWindowManager/",
@@ -113,35 +113,15 @@ SharedLibrary {
 			"src/external/rute_cpp/FramlessWindow",
 			"src/external/rute_cpp/AdvancedDockingSystem",
 
-            "$(QT5)/include",
-            "$(QT5)/include/QtCore",
-            "$(QT5)/include/QtGui",
-            "$(QT5)/include/QtWidgets",
+            "$(QT5_INC)",
+            "$(QT5_INC)/QtCore",
+            "$(QT5_INC)/QtGui",
+            "$(QT5_INC)/QtWidgets",
 
             "$(OBJECTROOT)", "$(OBJECTDIR)",
         },
-
-        LIBPATH = {
-			{ "$(QT5)\\lib"; Config = "win64-*-*" },
-			{ "$(QT5)/lib"; Config = "linux-*-*" },
-		},
-
-        SHLIBOPTS = {
-            {  "-Wl,-rpath,$(QT5)/lib", "-F$(QT5)/lib", "-lstdc++", Config = "macosx-clang-*" },
-            {  "-Wl,-rpath,$(QT5)/lib", "-lstdc++", "-lm", Config = "linux-*-*" },
-        },
-    },
-
-	Libs = {
-		{ "wsock32.lib", "kernel32.lib", "user32.lib", "gdi32.lib", "Comdlg32.lib",
-		  "Advapi32.lib", "Qt5Gui.lib", "Qt5Core.lib", "Qt5Widgets.lib"; Config = "win64-*-*" },
-		{ "Qt5Gui", "Qt5Core", "Qt5Widgets"; Config = "linux-*-*" },
-	},
-
-    Frameworks = { "Cocoa", "QtWidgets", "QtGui", "QtCore" },
+    }
 }
---]]
-
 
 -----------------------------------------------------------------------------------------------------------------------
 
@@ -164,31 +144,12 @@ StaticLibrary {
 
 -----------------------------------------------------------------------------------------------------------------------
 
---[[
-RustProgram {
-    Name = "hippo_player",
-
-	Env = {
-		RUST_OPTS = "-C prefer-dynamic",
-	},
-
-    CargoConfig = "src/hippo_player/Cargo.toml",
-    Sources = {
-        get_rs_src("src/hippo_player/src"),
-		get_rs_src("src/plugin_api/rust/hippo_api"),
-		get_rs_src("src/plugin_api/rust/messages"),
-    },
-
-    Depends = { "rute", "rute_cpp" },
-}
---]]
-
 Program {
     Name = "hippo_player",
 
     Sources = {
         Glob {
-            Dir = "src/hippo_player_test_main",
+            Dir = "src/hippo_player",
             Extensions = { ".cpp" },
             Recursive = true,
         },
@@ -234,7 +195,7 @@ Program {
 
     Frameworks = { "Cocoa", "QtWidgets", "QtGui", "QtCore" },
 
-    Depends = { "hippo_core", "hippo_core_loader" },
+    Depends = { "hippo_core", "hippo_core_loader", "qt_addons" },
 }
 
 -----------------------------------------------------------------------------------------------------------------------

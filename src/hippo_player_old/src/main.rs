@@ -94,7 +94,6 @@ include!(concat!(env!("OUT_DIR"), "/build_id.rs"));
 
 impl<'a> HippoPlayer<'a> {
     pub fn new(ui: Ui, audio: HippoAudio) -> HippoPlayer<'a> {
-
         HippoPlayer {
             audio: audio,
             plugins: Plugins::new(),
@@ -133,8 +132,12 @@ impl<'a> HippoPlayer<'a> {
                     //
 
                     match message_dec.method {
-                        "hippo_playlist_next_song" => player_action = Some(PlayerAction::StartNextSong),
-                        "hippo_playlist_select_song" => player_action = Some(PlayerAction::StartSelectedSong),
+                        "hippo_playlist_next_song" => {
+                            player_action = Some(PlayerAction::StartNextSong)
+                        }
+                        "hippo_playlist_select_song" => {
+                            player_action = Some(PlayerAction::StartSelectedSong)
+                        }
 
                         _ => (),
                     }
@@ -148,19 +151,17 @@ impl<'a> HippoPlayer<'a> {
 
         // Update actions that affects player and playlists
 
-        player_action.map(|action| {
-            match action {
-                PlayerAction::StartNextSong => {
-                    self.playlist
-                        .get_next_song()
-                        .map(|song| self.play_file(&song));
-                },
+        player_action.map(|action| match action {
+            PlayerAction::StartNextSong => {
+                self.playlist
+                    .get_next_song()
+                    .map(|song| self.play_file(&song));
+            }
 
-                PlayerAction::StartSelectedSong => {
-                    self.playlist
-                        .get_current_song()
-                        .map(|song| self.play_file(&song));
-                },
+            PlayerAction::StartSelectedSong => {
+                self.playlist
+                    .get_current_song()
+                    .map(|song| self.play_file(&song));
             }
         });
 
@@ -175,26 +176,26 @@ impl<'a> HippoPlayer<'a> {
 
         // Send back the replies from the playlist
 
-		self.send_messages_to_plugins(&playlist_respones);
+        self.send_messages_to_plugins(&playlist_respones);
     }
 
     fn send_message_to_plugins(&mut self, msg: &MessageEncode) {
-		for instance in &mut self.state.view_instance_states {
+        for instance in &mut self.state.view_instance_states {
             let message_dec = MessageDecode::new(&msg.data).unwrap();
             let message = service_ffi::get_cmessage_decode(&message_dec);
 
-			let pb = instance.instance.as_ref().unwrap();
-			let ptr: *const CMessageDecode = &message as *const CMessageDecode;
-			((pb.plugin.plugin_funcs).event.unwrap())(
-				pb.user_data as *mut ::std::os::raw::c_void,
-				ptr,
-			);
-		}
+            let pb = instance.instance.as_ref().unwrap();
+            let ptr: *const CMessageDecode = &message as *const CMessageDecode;
+            ((pb.plugin.plugin_funcs).event.unwrap())(
+                pb.user_data as *mut ::std::os::raw::c_void,
+                ptr,
+            );
+        }
     }
 
     fn send_messages_to_plugins(&mut self, messages: &Vec<MessageEncode>) {
         for msg in messages {
-        	self.send_message_to_plugins(&msg);
+            self.send_message_to_plugins(&msg);
         }
     }
 
@@ -221,34 +222,33 @@ impl<'a> HippoPlayer<'a> {
         // TODO: Error handling
         Self::try_save_layout("layout.data", &state).unwrap();
 
-		if let Err(err) = self.playlist.save("playlist.json") {
-			println!("Unable to save playlist {:?}", err);
-		}
-	}
+        if let Err(err) = self.playlist.save("playlist.json") {
+            println!("Unable to save playlist {:?}", err);
+        }
+    }
 
-	fn load_playlist(&mut self, filename: &str) {
-		if self.playlist.load(filename).is_err() {
-			return;
-		}
+    fn load_playlist(&mut self, filename: &str) {
+        if self.playlist.load(filename).is_err() {
+            return;
+        }
 
-		println!("load playlist");
+        println!("load playlist");
 
-		let data = self.playlist.get_loaded_urls();
-		self.send_message_to_plugins(&data);
-	}
+        let data = self.playlist.get_loaded_urls();
+        self.send_message_to_plugins(&data);
+    }
 
     fn add_files(&mut self) {
-    	/*
-		for url in self.app.get_files().iter().filter(|u| u.is_local_file()) {
-		self.playlist.add_file(&url.to_local_file());
-		}
-		*/
+        /*
+        for url in self.app.get_files().iter().filter(|u| u.is_local_file()) {
+        self.playlist.add_file(&url.to_local_file());
+        }
+        */
     }
 
     fn about_to_close_plugin(&mut self, widget: &DockWidget, event: &CloseEvent) {
         let instance_name = widget.object_name();
         let mut instance_to_remove = None;
-
 
         for i in 0..self.state.view_instance_states.len() {
             let state = &mut self.state.view_instance_states[i];
@@ -298,7 +298,12 @@ impl<'a> HippoPlayer<'a> {
         widget.show();
         widget.set_persist_data("pls save me pls!");
 
-        set_close_event!(dock_widget, self, HippoPlayer, HippoPlayer::about_to_close_plugin);
+        set_close_event!(
+            dock_widget,
+            self,
+            HippoPlayer,
+            HippoPlayer::about_to_close_plugin
+        );
 
         let view_state = ViewInstanceState {
             plugin_name: action.text().to_owned(),
@@ -331,8 +336,6 @@ impl<'a> HippoPlayer<'a> {
         plugin_menu
     }
 
-
-
     ///
     /// This will load a defult layout file and set up plugins for it
     ///
@@ -362,7 +365,12 @@ impl<'a> HippoPlayer<'a> {
                 let dock_widget = self.ui.create_dock_widget();
                 let widget = self.ui.create_widget();
 
-                set_close_event!(dock_widget, self, HippoPlayer, HippoPlayer::about_to_close_plugin);
+                set_close_event!(
+                    dock_widget,
+                    self,
+                    HippoPlayer,
+                    HippoPlayer::about_to_close_plugin
+                );
 
                 let plugin_service = service_ffi::PluginService::new();
                 let instance = plugin.create_instance(&self.ui, &plugin_service, &widget);
