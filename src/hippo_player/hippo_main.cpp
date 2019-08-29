@@ -1,5 +1,8 @@
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QPushButton>
+#include <QtWidgets/QMainWindow>
+#include <QtWidgets/QMenu>
+#include <QtWidgets/QMenuBar>
 #include <QtCore/QFile>
 #include <QtCore/QTextStream>
 #include "src/hippo_core_loader/hippo_core_loader.h"
@@ -24,7 +27,7 @@ int main(int argc, char** argv) {
     QFile f(QStringLiteral("bin/player/themes/dark/style.qss"));
 
     if (!f.exists()) {
-        //printf("Unable to set stylesheet: %s, file not found\n", filename);
+        printf("Unable to set stylesheet\n");
         return 0;
     } else {
         f.open(QFile::ReadOnly | QFile::Text);
@@ -32,8 +35,17 @@ int main(int argc, char** argv) {
         app.setStyleSheet(ts.readAll());
     }
 
-    QPushButton button(QStringLiteral("Hello world !"));
-    button.show();
+    //QPushButton button(QStringLiteral("Hello world !"));
+    //button.show();
+
+    QMainWindow* main_window = new QMainWindow();
+
+    QMenu* file_menu = new QMenu();
+    file_menu->setTitle(QStringLiteral("File menu"));
+
+    main_window->menuBar()->addMenu(file_menu);
+
+    main_window->show();
 
     /*
         self.app.set_style_sheet("bin/player/themes/dark/style.qss");
