@@ -106,8 +106,7 @@ QWidget* MainWindow::create_plugin_by_index(int index) {
     QDockWidget* dock_widget = new QDockWidget;
 
     dock_widget->setWidget(plugin_view);
-
-    m_docking_manager->addDockWidget(DockWidgetArea::test, dock_widget);
+    m_docking_manager->addDockWidget(ads::LeftDockWidgetArea, dock_widget);
 
     return nullptr;
 }
