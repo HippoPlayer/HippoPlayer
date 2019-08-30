@@ -1,0 +1,5 @@
+-I$(QT5_INC)
+-I/usr/include/x86_64-linux-gnu/qt5
+-I.
+%h -x
+%h c++-header

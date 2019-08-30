@@ -2,4 +2,5 @@
 .tundra2*
 t2-output
 playlist.json
+.ccls-cache
 
