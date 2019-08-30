@@ -84,6 +84,7 @@ local gcc_env = {
         CXXOPTS = {
             gcc_opts,
             "-std=c++11",
+            "-I$(QT5_INC)",
         },
     },
 

@@ -7,6 +7,15 @@ local native = require('tundra.native')
 
 -----------------------------------------------------------------------------------------------------------------------
 
+local function gen_moc(src)
+    return Moc {
+        Pass = "GenerateSources",
+        Source = src
+    }
+end
+
+-----------------------------------------------------------------------------------------------------------------------
+
 local function get_rs_src(dir)
 	return Glob {
 		Dir = dir,
@@ -373,6 +382,14 @@ RustSharedLibrary {
 
 --]]
 
+SharedLibrary {
+	Name = "player",
+	Sources = {
+	    "src/plugins/view/player/player.cpp",
+        gen_moc("src/plugins/view/player/player.h"),
+	}
+}
+
 -----------------------------------------------------------------------------------------------------------------------
 -- Default plugins
 -----------------------------------------------------------------------------------------------------------------------
@@ -390,7 +407,7 @@ Default "SidPlugin"
 -- Views
 
 --Default "playlist"
---Default "player"
+Default "player"
 --Default "song_info"
 --Default "TestViewPlugin"
 

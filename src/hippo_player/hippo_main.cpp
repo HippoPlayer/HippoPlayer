@@ -1,12 +1,13 @@
+#include <QtCore/QFile>
+#include <QtCore/QTextStream>
 #include <QtWidgets/QApplication>
-#include <QtWidgets/QPushButton>
 #include <QtWidgets/QMainWindow>
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QMenuBar>
-#include <QtCore/QFile>
-#include <QtCore/QTextStream>
-#include "src/hippo_core_loader/hippo_core_loader.h"
+#include <QtWidgets/QPushButton>
+#include "MainWindow.h"
 #include "src/hippo_core/native/hippo_core.h"
+#include "src/hippo_core_loader/hippo_core_loader.h"
 
 int main(int argc, char** argv) {
     QApplication app(argc, argv);
@@ -23,7 +24,6 @@ int main(int argc, char** argv) {
     hippo_play_file(hippo_core, "/home/emoon/Downloads/musiklinjen.mod");
     */
 
-
     QFile f(QStringLiteral("bin/player/themes/dark/style.qss"));
 
     if (!f.exists()) {
@@ -35,16 +35,23 @@ int main(int argc, char** argv) {
         app.setStyleSheet(ts.readAll());
     }
 
-    //QPushButton button(QStringLiteral("Hello world !"));
-    //button.show();
+    // QPushButton button(QStringLiteral("Hello world !"));
+    // button.show();
 
-    QMainWindow* main_window = new QMainWindow();
+    MainWindow* main_window = new MainWindow();
+
+    main_window->load_plugins(app.applicationDirPath());
+
+    QWidget* plugin_view = main_window->create_plugin_by_index(0);
+
+    if (plugin_view) {
+        plugin_view->setParent(main_window);
+    }
 
     QMenu* file_menu = new QMenu();
     file_menu->setTitle(QStringLiteral("File menu"));
 
     main_window->menuBar()->addMenu(file_menu);
-
     main_window->show();
 
     /*
@@ -69,9 +76,11 @@ int main(int argc, char** argv) {
         menu_bar.add_menu(&file_menu);
         menu_bar.add_menu(&plugin_menu);
 
-        set_timer_timeout_event!(timer, self, HippoPlayer, HippoPlayer::update_ui_messages);
-        set_action_triggered_event!(add_files, self, HippoPlayer, HippoPlayer::add_files);
-        set_application_about_to_quit_event!(self.app, self, HippoPlayer, HippoPlayer::before_quit);
+        set_timer_timeout_event!(timer, self, HippoPlayer,
+       HippoPlayer::update_ui_messages); set_action_triggered_event!(add_files,
+       self, HippoPlayer, HippoPlayer::add_files);
+        set_application_about_to_quit_event!(self.app, self, HippoPlayer,
+       HippoPlayer::before_quit);
 
         timer.start(5);
 
@@ -85,7 +94,8 @@ int main(int argc, char** argv) {
         layout.add_widget(&self.dock_manager);
 
         //player_window.set_content(&main_window);
-        //player_window.set_window_title(&format!("HippoPlayer 0.0.1 {}", build_id()));
+        //player_window.set_window_title(&format!("HippoPlayer 0.0.1 {}",
+       build_id()));
 
         main_window.resize(800, 600);
 

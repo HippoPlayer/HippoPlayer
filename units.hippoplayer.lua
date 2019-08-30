@@ -153,6 +153,8 @@ Program {
             Extensions = { ".cpp" },
             Recursive = true,
         },
+
+        gen_moc("src/hippo_player/MainWindow.h"),
     },
 
     Env = {
