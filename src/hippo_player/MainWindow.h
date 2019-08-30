@@ -4,6 +4,8 @@
 #include <QtCore/QVector>
 #include <QtWidgets/QMainWindow>
 
+class QDockManager;
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class MainWindow : public QMainWindow {
@@ -20,5 +22,6 @@ private:
         QString plugin_name;
     };
 
+    QDockManager* m_docking_manager = nullptr;
     QVector<PluginInfo> m_plugin_types;
 };

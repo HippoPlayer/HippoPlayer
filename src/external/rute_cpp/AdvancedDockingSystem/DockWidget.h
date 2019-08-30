@@ -30,7 +30,7 @@
 //============================================================================
 //                                   INCLUDES
 //============================================================================
-#include <QFrame>
+#include <QtWidgets/QFrame>
 
 class QXmlStreamWriter;
 
@@ -219,29 +219,28 @@ public:
 	 */
 	void setIcon(const QIcon& Icon);
 
-public slots:
+public:
 	/**
 	 * This property controls whether the dock widget is open or closed.
 	 * The toogleViewAction triggers this slot
 	 */
-	void toggleView(bool Open = true);
+	Q_SLOT void toggleView(bool Open = true);
 
-signals:
 	/**
 	 * This signal is emitted if the dock widget is opened or closed
 	 */
-	void viewToggled(bool Open);
+	Q_SIGNAL void viewToggled(bool Open);
 
 	/**
 	 * This signal is emitted if the dock widget is closed
 	 */
-	void closed();
+	Q_SIGNAL void closed();
 
 	/**
 	 * This signal is emitted if the window title of this dock widget
 	 * changed
 	 */
-	void titleChanged(const QString& Title);
+	Q_SIGNAL void titleChanged(const QString& Title);
 }; // class DockWidget
 }
  // namespace ads

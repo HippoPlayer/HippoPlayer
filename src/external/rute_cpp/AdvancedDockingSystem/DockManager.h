@@ -174,17 +174,16 @@ public:
 	 */
 	void loadPerspectives(QSettings& Settings);
 
-public slots:
+public:
 	/**
 	 * Opens the perspective with the given name.
 	 */
-	void openPerspective(const QString& PerspectiveName);
+	Q_SLOT void openPerspective(const QString& PerspectiveName);
 
-signals:
 	/**
 	 * This signal is emitted if the list of perspectives changed
 	 */
-	void perspectiveListChanged();
+	Q_SIGNAL void perspectiveListChanged();
 }; // class DockManager
 } // namespace ads
 //-----------------------------------------------------------------------------

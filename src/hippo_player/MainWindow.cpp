@@ -2,11 +2,29 @@
 #include <QtCore/QDir>
 #include <QtCore/QDebug>
 #include <QtCore/QPluginLoader>
+#include <QtWidgets/QBoxLayout>
 #include "../../src/plugin_api/HippoQtView.h"
+#include "src/external/rute_cpp/AdvancedDockingSystem/QDockManager.h"
+#include "src/external/rute_cpp/AdvancedDockingSystem/QDockWidget.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-MainWindow::MainWindow() {}
+MainWindow::MainWindow() {
+    m_docking_manager = new QDockManager();
+
+    QVBoxLayout* layout = new QVBoxLayout;
+    QWidget* main_widget = new QWidget;
+
+    main_widget->setLayout(layout);
+    main_widget->resize(1200, 1000);
+
+    setCentralWidget(main_widget);
+
+    m_docking_manager->setParent(main_widget);
+    layout->addWidget(m_docking_manager);
+
+    resize(800, 600);
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -84,6 +102,13 @@ QWidget* MainWindow::create_plugin_by_index(int index) {
     printf("created plugin");
 
     // TODO: Store instance
-    return view_plugin->create();
+    QWidget* plugin_view = view_plugin->create();
+    QDockWidget* dock_widget = new QDockWidget;
+
+    dock_widget->setWidget(plugin_view);
+
+    m_docking_manager->addDockWidget(DockWidgetArea::test, dock_widget);
+
+    return nullptr;
 }
 

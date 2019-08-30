@@ -30,7 +30,8 @@
 //============================================================================
 //                                   INCLUDES
 //============================================================================
-#include <QFrame>
+#include <QtCore/QObject>
+#include <QtWidgets/QFrame>
 
 #include "ads_globals.h"
 
@@ -169,18 +170,17 @@ public:
 	 */
 	void dumpLayout();
 
-signals:
 	/**
 	 * This signal is emitted if one or multiple dock areas has been added to
 	 * the internal list of dock areas.
 	 * If multiple dock areas are inserted, this signal is emitted only once
 	 */
-	void dockAreasAdded();
+	Q_SIGNAL void dockAreasAdded();
 
 	/**
 	 * This signal is emitted if one or multiple dock areas has been removed
 	 */
-	void dockAreasRemoved();
+	Q_SIGNAL void dockAreasRemoved();
 }; // class DockContainerWidget
 } // namespace ads
 //-----------------------------------------------------------------------------
