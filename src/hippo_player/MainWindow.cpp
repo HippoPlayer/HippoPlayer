@@ -3,27 +3,48 @@
 #include <QtCore/QDebug>
 #include <QtCore/QPluginLoader>
 #include <QtWidgets/QBoxLayout>
+#include <QtWidgets/QLabel>
 #include "../../src/plugin_api/HippoQtView.h"
-#include "src/external/rute_cpp/AdvancedDockingSystem/QDockManager.h"
-#include "src/external/rute_cpp/AdvancedDockingSystem/QDockWidget.h"
+#include "src/external/qt_advanced_docking_system/src/DockManager.h"
+#include "src/external/qt_advanced_docking_system/src/DockWidget.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-MainWindow::MainWindow() {
-    m_docking_manager = new QDockManager();
+MainWindow::MainWindow() : QMainWindow(0) {
+    m_docking_manager = new ads::CDockManager(this);
 
+    /*
+	// Create example content label - this can be any application specific
+	// widget
+	QLabel* l = new QLabel();
+	l->setWordWrap(true);
+	l->setAlignment(Qt::AlignTop | Qt::AlignLeft);
+	l->setText(QStringLiteral("Lorem ipsum dolor sit amet, consectetuer adipiscing elit. "));
+
+	// Create a dock widget with the title Label 1 and set the created label
+	// as the dock widget content
+	ads::CDockWidget* DockWidget = new ads::CDockWidget(QStringLiteral("Label 1"));
+	DockWidget->setWidget(l);
+
+	// Add the toggleViewAction of the dock widget to the menu to give
+	// the user the possibility to show the dock widget if it has been closed
+	//ui->menuView->addAction(DockWidget->toggleViewAction());
+
+	// Add the dock widget to the top dock widget area
+	m_docking_manager->addDockWidget(ads::TopDockWidgetArea, DockWidget);
+	*/
+
+    /*
     QVBoxLayout* layout = new QVBoxLayout;
-    QWidget* main_widget = new QWidget;
 
     main_widget->setLayout(layout);
     main_widget->resize(1200, 1000);
 
-    setCentralWidget(main_widget);
-
     m_docking_manager->setParent(main_widget);
     layout->addWidget(m_docking_manager);
+    */
 
-    resize(800, 600);
+    //resize(800, 600);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -103,7 +124,7 @@ QWidget* MainWindow::create_plugin_by_index(int index) {
 
     // TODO: Store instance
     QWidget* plugin_view = view_plugin->create();
-    QDockWidget* dock_widget = new QDockWidget;
+    auto dock_widget = new ads::CDockWidget(QStringLiteral("Label 1"));
 
     dock_widget->setWidget(plugin_view);
     m_docking_manager->addDockWidget(ads::LeftDockWidgetArea, dock_widget);

@@ -89,9 +89,10 @@ local gcc_env = {
     },
 
     ReplaceEnv = {
-        QTMOC = "$(QT5_BIN)/moc",
+        QTMOC = "$(QT5_BIN)/moc -DQ_OS_LINUX",
         QTUIC = "$(QT5_BIN)/uic",
         QTRCC = "$(QT5_BIN)/rcc",
+        LD = "c++",
     },
 }
 

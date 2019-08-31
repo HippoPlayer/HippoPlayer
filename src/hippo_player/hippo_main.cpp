@@ -21,6 +21,7 @@ int main(int argc, char** argv) {
 
     //hippo_play_file(hippo_core, "/home/emoon/Downloads/musiklinjen.mod");
 
+    /*
     QFile f(QStringLiteral("bin/player/themes/dark/style.qss"));
 
     if (!f.exists()) {
@@ -31,22 +32,24 @@ int main(int argc, char** argv) {
         QTextStream ts(&f);
         app.setStyleSheet(ts.readAll());
     }
-
+    */
     // QPushButton button(QStringLiteral("Hello world !"));
     // button.show();
 
-    MainWindow* main_window = new MainWindow();
+    MainWindow main_window;
 
-    main_window->load_plugins(app.applicationDirPath());
+    main_window.load_plugins(app.applicationDirPath());
 
-    main_window->create_plugin_by_index(0);
-    main_window->create_plugin_by_index(0);
+    main_window.create_plugin_by_index(0);
+    main_window.create_plugin_by_index(0);
 
+    /*
     QMenu* file_menu = new QMenu();
     file_menu->setTitle(QStringLiteral("File menu"));
 
     main_window->menuBar()->addMenu(file_menu);
-    main_window->show();
+    */
+    main_window.show();
 
     return app.exec();
 }

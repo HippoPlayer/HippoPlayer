@@ -59,65 +59,51 @@ end
 StaticLibrary {
     Name = "qt_addons",
     Sources = {
-        Glob {
-            Dir = "src/external/rute_cpp",
-            Extensions = { ".cpp", ".h" },
-            Recursive = true,
-        },
+        "src/external/qt_advanced_docking_system/src/ads_globals.cpp",
+        "src/external/qt_advanced_docking_system/src/DockAreaWidget.cpp",
+        "src/external/qt_advanced_docking_system/src/DockAreaTabBar.cpp",
+        "src/external/qt_advanced_docking_system/src/DockContainerWidget.cpp",
+        "src/external/qt_advanced_docking_system/src/DockManager.cpp",
+        "src/external/qt_advanced_docking_system/src/DockWidget.cpp",
+        "src/external/qt_advanced_docking_system/src/DockWidgetTab.cpp",
+        "src/external/qt_advanced_docking_system/src/FloatingDockContainer.cpp",
+        "src/external/qt_advanced_docking_system/src/DockOverlay.cpp",
+        "src/external/qt_advanced_docking_system/src/DockSplitter.cpp",
+        "src/external/qt_advanced_docking_system/src/DockAreaTitleBar.cpp",
+        "src/external/qt_advanced_docking_system/src/ElidingLabel.cpp",
+        "src/external/qt_advanced_docking_system/src/linux/FloatingWidgetTitleBar.cpp",
 
-        gen_moc("src/external/rute_cpp/ToolWindowManager/ToolWindowManager.h"),
-        gen_moc("src/external/rute_cpp/ToolWindowManager/ToolWindowManagerArea.h"),
-        gen_moc("src/external/rute_cpp/ToolWindowManager/ToolWindowManagerSplitter.h"),
-        gen_moc("src/external/rute_cpp/ToolWindowManager/ToolWindowManagerTabBar.h"),
-        gen_moc("src/external/rute_cpp/ToolWindowManager/ToolWindowManagerWrapper.h"),
+        gen_moc("src/external/qt_advanced_docking_system/src/linux/FloatingWidgetTitleBar.h"),
 
-        gen_moc("src/external/rute_cpp/AdvancedDockingSystem/DockContainerWidget.h"),
-        gen_moc("src/external/rute_cpp/AdvancedDockingSystem/DockManager.h"),
-        gen_moc("src/external/rute_cpp/AdvancedDockingSystem/DockOverlay.h"),
-        gen_moc("src/external/rute_cpp/AdvancedDockingSystem/DockSplitter.h"),
-        gen_moc("src/external/rute_cpp/AdvancedDockingSystem/DockStateSerialization.h"),
-        gen_moc("src/external/rute_cpp/AdvancedDockingSystem/DockAreaWidget.h"),
-        gen_moc("src/external/rute_cpp/AdvancedDockingSystem/DockWidget.h"),
-        gen_moc("src/external/rute_cpp/AdvancedDockingSystem/DockWidgetTitleBar.h"),
-        gen_moc("src/external/rute_cpp/AdvancedDockingSystem/FloatingDockContainer.h"),
-        gen_moc("src/external/rute_cpp/AdvancedDockingSystem/ads_globals.h"),
-
-        gen_moc("src/external/rute_cpp/FramlessWindow/framelesswindow/framelesswindow.h"),
-        gen_moc("src/external/rute_cpp/FramlessWindow/framelesswindow/windowdragger.h"),
-        gen_moc("src/external/rute_cpp/FramlessWindow/DarkStyle.h"),
-
-        gen_uic("src/external/rute_cpp/FramlessWindow/framelesswindow/framelesswindow.ui"),
-        gen_rcc("src/external/rute_cpp/FramlessWindow/darkstyle.qrc"),
-        -- gen_rcc("src/external/rute_cpp/AdvancedDockingSystem/ads.qrc"),
+        gen_moc("src/external/qt_advanced_docking_system/src/DockAreaTabBar.h"),
+        gen_moc("src/external/qt_advanced_docking_system/src/DockAreaTitleBar.h"),
+        gen_moc("src/external/qt_advanced_docking_system/src/DockAreaWidget.h"),
+        gen_moc("src/external/qt_advanced_docking_system/src/DockContainerWidget.h"),
+        gen_moc("src/external/qt_advanced_docking_system/src/DockManager.h"),
+        gen_moc("src/external/qt_advanced_docking_system/src/DockOverlay.h"),
+        gen_moc("src/external/qt_advanced_docking_system/src/DockSplitter.h"),
+        gen_moc("src/external/qt_advanced_docking_system/src/DockWidget.h"),
+        gen_moc("src/external/qt_advanced_docking_system/src/DockWidgetTab.h"),
+        gen_moc("src/external/qt_advanced_docking_system/src/ElidingLabel.h"),
+        gen_moc("src/external/qt_advanced_docking_system/src/FloatingDockContainer.h"),
+        gen_rcc("src/external/qt_advanced_docking_system/src/ads.qrc"),
     },
 
     Env = {
-       --[[
        CXXOPTS = {
             { "-isystem $(QT5)/lib/QtWidgets.framework/Headers",
               "-isystem $(QT5)/lib/QtCore.framework/Headers",
               "-isystem $(QT5)/lib/QtGui.framework/Headers",
               "-F$(QT5)/lib"; Config = "macosx-*-*" },
-
-            { "-isystem $(QT5)/include/QtWidgets",
-              "-isystem $(QT5)/include/QtCore",
-              "-isystem $(QT5)/include/QtGui",
-              "-isystem $(QT5)/include"; Config = "linux-*-*" },
+            { "-DADS_STATIC -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -fPIC -std=c++14", Config = "linux-*-*" },
         },
-        --]]
 
         CPPPATH = {
-            "src/external/rute_cpp/ToolWindowManager/",
-            "src/external/rute_cpp/ToolWindowManager/",
-			"src/external/rute_cpp/FramlessWindow/framelesswindow",
-			"src/external/rute_cpp/FramlessWindow",
-			"src/external/rute_cpp/AdvancedDockingSystem",
-
+            "src/external/qt_advanced_docking_system/src",
             "$(QT5_INC)",
             "$(QT5_INC)/QtCore",
             "$(QT5_INC)/QtGui",
             "$(QT5_INC)/QtWidgets",
-
             "$(OBJECTROOT)", "$(OBJECTDIR)",
         },
     }
@@ -155,6 +141,7 @@ Program {
         },
 
         gen_moc("src/hippo_player/MainWindow.h"),
+        --gen_uic("src/hippo_player/test_main/MainWindow.ui"),
     },
 
     Env = {
@@ -163,18 +150,21 @@ Program {
               "-isystem $(QT5_LIB)/QtCore.framework/Headers",
               "-isystem $(QT5_LIB)/QtGui.framework/Headers",
               "-F$(QT5_LIB)/lib"; Config = "macosx-*-*" },
-
-            { "-isystem $(QT5_INC)"; Config = "linux-*-*" },
+            -- { "-DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB", "-isystem $(QT5_INC)"; Config = "linux-*-*" },
         },
 
         CPPDEFS = {
-            "QT_NO_KEYWORDS",
+            -- "QT_NO_KEYWORDS",
             "QT_NO_CAST_FROM_ASCII",
             "QT_NO_CAST_TO_ASCII",
         },
 
         CPPPATH = {
+            "src/external/qt_advanced_docking_system/src",
             "$(QT5_INC)",
+            "$(QT5_INC)/QtCore",
+            "$(QT5_INC)/QtWidgets",
+            "$(QT5_INC)/QtGui",
             "$(OBJECTROOT)", "$(OBJECTDIR)",
         },
 
@@ -184,15 +174,15 @@ Program {
 		},
 
         PROGCOM = {
-            {  "-Wl,-rpath,$(QT5_LIB)/lib", "-F$(QT5_LIB)/lib", "-lstdc++", Config = "macosx-clang-*" },
-            {  "-L$(QT5_LIB)", "-lstdc++", "-lm", "-ldl", Config = "linux-*-*" },
+            {  "-Wl,-rpath,$(QT5_LIB)", "-F$(QT5_LIB)/lib", "-lstdc++", Config = "macosx-clang-*" },
+            {  "-Wl,-rpath,$(QT5_LIB)", "-ldl"; Config = "linux-*-*" },
         },
     },
 
 	Libs = {
 		{ "wsock32.lib", "kernel32.lib", "user32.lib", "gdi32.lib", "Comdlg32.lib",
 		  "Advapi32.lib", "Qt5Gui.lib", "Qt5Core.lib", "Qt5Widgets.lib"; Config = "win64-*-*" },
-		{ "Qt5Gui", "Qt5Core", "Qt5Widgets"; Config = "linux-*-*" },
+		{ "Qt5Widgets", "Qt5Gui", "Qt5Core"; Config = "linux-*-*" },
 	},
 
     Frameworks = { "Cocoa", "QtWidgets", "QtGui", "QtCore" },
