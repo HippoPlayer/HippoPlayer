@@ -5,13 +5,22 @@
 #include <QtWidgets/QBoxLayout>
 #include <QtWidgets/QLabel>
 #include "../../src/plugin_api/HippoQtView.h"
-#include "src/external/qt_advanced_docking_system/src/DockManager.h"
-#include "src/external/qt_advanced_docking_system/src/DockWidget.h"
+//#include "src/external/qt_advanced_docking_system/src/DockManager.h"
+//#include "src/external/qt_advanced_docking_system/src/DockWidget.h"
+#include "src/external/toolwindowmanager/src/ToolWindowManager.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 MainWindow::MainWindow() : QMainWindow(0) {
-    m_docking_manager = new ads::CDockManager(this);
+    m_docking_manager = new ToolWindowManager;
+
+    QVBoxLayout* layout = new QVBoxLayout;
+    QWidget* main_widget = new QWidget;
+
+    main_widget->setLayout(layout);
+    setCentralWidget(main_widget);
+
+    layout->QLayout::addWidget(m_docking_manager);
 
     /*
 	// Create example content label - this can be any application specific
@@ -124,10 +133,15 @@ QWidget* MainWindow::create_plugin_by_index(int index) {
 
     // TODO: Store instance
     QWidget* plugin_view = view_plugin->create();
-    auto dock_widget = new ads::CDockWidget(QStringLiteral("Label 1"));
 
-    dock_widget->setWidget(plugin_view);
-    m_docking_manager->addDockWidget(ads::LeftDockWidgetArea, dock_widget);
+    static bool first = false;
+
+    if (first) {
+        m_docking_manager->addToolWindow(plugin_view, ToolWindowManager::EmptySpace);
+        first = false;
+    } else {
+        m_docking_manager->addToolWindow(plugin_view, ToolWindowManager::LastUsedArea);
+    }
 
     return nullptr;
 }

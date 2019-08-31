@@ -4,15 +4,7 @@
 #include <QtCore/QVector>
 #include <QtWidgets/QMainWindow>
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-namespace ads {
-    class CDockManager;
-}
-
-namespace Ui {
-    class MainWindow;
-}
+class ToolWindowManager;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -30,7 +22,6 @@ private:
         QString plugin_name;
     };
 
-    Ui::MainWindow* ui;
-    ads::CDockManager* m_docking_manager = nullptr;
+    ToolWindowManager* m_docking_manager = nullptr;
     QVector<PluginInfo> m_plugin_types;
 };

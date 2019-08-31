@@ -21,7 +21,6 @@ int main(int argc, char** argv) {
 
     //hippo_play_file(hippo_core, "/home/emoon/Downloads/musiklinjen.mod");
 
-    /*
     QFile f(QStringLiteral("bin/player/themes/dark/style.qss"));
 
     if (!f.exists()) {
@@ -32,7 +31,7 @@ int main(int argc, char** argv) {
         QTextStream ts(&f);
         app.setStyleSheet(ts.readAll());
     }
-    */
+
     // QPushButton button(QStringLiteral("Hello world !"));
     // button.show();
 

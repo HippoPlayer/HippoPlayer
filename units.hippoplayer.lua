@@ -59,6 +59,19 @@ end
 StaticLibrary {
     Name = "qt_addons",
     Sources = {
+        "src/external/toolwindowmanager/src/ToolWindowManager.cpp",
+        "src/external/toolwindowmanager/src/ToolWindowManagerArea.cpp",
+        "src/external/toolwindowmanager/src/ToolWindowManagerSplitter.cpp",
+        "src/external/toolwindowmanager/src/ToolWindowManagerTabBar.cpp",
+        "src/external/toolwindowmanager/src/ToolWindowManagerWrapper.cpp",
+
+        gen_moc("src/external/toolwindowmanager/src/ToolWindowManager.h"),
+        gen_moc("src/external/toolwindowmanager/src/ToolWindowManagerArea.h"),
+        gen_moc("src/external/toolwindowmanager/src/ToolWindowManagerSplitter.h"),
+        gen_moc("src/external/toolwindowmanager/src/ToolWindowManagerTabBar.h"),
+        gen_moc("src/external/toolwindowmanager/src/ToolWindowManagerWrapper.h"),
+
+    --[[
         "src/external/qt_advanced_docking_system/src/ads_globals.cpp",
         "src/external/qt_advanced_docking_system/src/DockAreaWidget.cpp",
         "src/external/qt_advanced_docking_system/src/DockAreaTabBar.cpp",
@@ -87,6 +100,7 @@ StaticLibrary {
         gen_moc("src/external/qt_advanced_docking_system/src/ElidingLabel.h"),
         gen_moc("src/external/qt_advanced_docking_system/src/FloatingDockContainer.h"),
         gen_rcc("src/external/qt_advanced_docking_system/src/ads.qrc"),
+    --]]
     },
 
     Env = {
@@ -95,11 +109,11 @@ StaticLibrary {
               "-isystem $(QT5)/lib/QtCore.framework/Headers",
               "-isystem $(QT5)/lib/QtGui.framework/Headers",
               "-F$(QT5)/lib"; Config = "macosx-*-*" },
-            { "-DADS_STATIC -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -fPIC -std=c++14", Config = "linux-*-*" },
+            -- { "-DADS_STATIC -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -fPIC -std=c++14", Config = "linux-*-*" },
         },
 
         CPPPATH = {
-            "src/external/qt_advanced_docking_system/src",
+            -- "src/external/qt_advanced_docking_system/src",
             "$(QT5_INC)",
             "$(QT5_INC)/QtCore",
             "$(QT5_INC)/QtGui",
