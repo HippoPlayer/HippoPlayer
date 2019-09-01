@@ -150,7 +150,7 @@ typedef struct HippoMessageDecode {
 
 	uint32_t (*get_id)(struct HippoMessageDecode* handle);
 	const char* (*get_method)(struct HippoMessageDecode* handle);
-	int (*get_raw_ptr)(struct HippoMessageDecode* handle, void** ptr, uint64_t* len); 
+	int (*get_raw_ptr)(struct HippoMessageDecode* handle, void** ptr, uint64_t* len);
 
 	///int (*read_array_count)(struct HippoMessageDecode* handle, int* count);
 	///int (*read_uint)(struct HippoMessageDecode* handle, uint64_t* value);
@@ -158,6 +158,14 @@ typedef struct HippoMessageDecode {
 	///int (*read_str)(struct HippoMessageDecode* handle, char* dest);
 
 } HippoMessageDecode;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Pre-defined messages
+
+#define HIPPO_PLAYLIST_NEXT_SONG "hippo_playlist_next_song"
+#define HIPPO_PLAYLIST_PLAY_SONG "hippo_playlist_play_song"
+#define HIPPO_PLAYLIST_STOP_SONG "hippo_playlist_stop_song"
+#define HIPPO_PLAYLIST_PREV_SONG "hippo_playlist_prev_song"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Plugins can use the MessageAPI to subscribe to events and post data that is being requested
@@ -173,6 +181,11 @@ typedef struct HippoMessageAPI {
 	void (*end_message)(struct HippoMessageAPI* priv_data, HippoMessageEncode* message);
 
 } HippoMessageAPI;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#define HippoMessageAPI_begin_request(api, id) api->begin_request(api->priv_data, id)
+#define HippoMessageAPI_end_message(api, message) api->end_message(api->priv_data, message)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -280,24 +293,7 @@ typedef struct HippoPlaybackPlugin {
 } HippoPlaybackPlugin;
 
 #define HIPPO_PLAYBACK_PLUGIN_API_VERSION 1
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-typedef struct HippoViewPlugin {
-	uint64_t api_version;
-	const char* name;
-	const char* version;
-	void* (*create)(HippoServiceAPI* services);
-	void (*setup_ui)(void* user_data, struct RUPluginUI* ui_funcs);
-	int (*destroy)(void* user_data);
-	void (*event)(void* user_data, struct HippoMessageDecode* message);
-
-	int (*save)(void* user_data, struct HippoSaveAPI* save_api);
-	int (*load)(void* user_data, struct HippoLoadAPI* load_api);
-
-} HippoViewPlugin;
-
-#define HIPPO_VIEW_PLUGIN_API_VERSION 1
+#define HIPPO_MESSAGE_API_VERSION 1
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
