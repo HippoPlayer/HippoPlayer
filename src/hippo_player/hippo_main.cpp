@@ -6,7 +6,6 @@
 #include <QtWidgets/QMenuBar>
 #include <QtWidgets/QPushButton>
 #include "MainWindow.h"
-#include "src/hippo_core/native/hippo_core.h"
 #include "src/hippo_core_loader/hippo_core_loader.h"
 
 int main(int argc, char** argv) {
@@ -16,10 +15,6 @@ int main(int argc, char** argv) {
     if (!HippoCore_load()) {
         return 1;
     }
-
-    HippoCore* hippo_core = hippo_core_new();
-
-    //hippo_play_file(hippo_core, "/home/emoon/Downloads/musiklinjen.mod");
 
     QFile f(QStringLiteral("bin/player/themes/dark/style.qss"));
 
@@ -32,22 +27,12 @@ int main(int argc, char** argv) {
         app.setStyleSheet(ts.readAll());
     }
 
-    // QPushButton button(QStringLiteral("Hello world !"));
-    // button.show();
-
     MainWindow main_window;
-
     main_window.load_plugins(app.applicationDirPath());
 
     main_window.create_plugin_by_index(0);
     main_window.create_plugin_by_index(0);
 
-    /*
-    QMenu* file_menu = new QMenu();
-    file_menu->setTitle(QStringLiteral("File menu"));
-
-    main_window->menuBar()->addMenu(file_menu);
-    */
     main_window.show();
 
     return app.exec();
