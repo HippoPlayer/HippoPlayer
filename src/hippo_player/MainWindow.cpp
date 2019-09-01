@@ -8,11 +8,13 @@
 //#include "src/external/qt_advanced_docking_system/src/DockManager.h"
 //#include "src/external/qt_advanced_docking_system/src/DockWidget.h"
 #include "src/external/toolwindowmanager/src/ToolWindowManager.h"
+#include "src/hippo_core/native/hippo_core.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 MainWindow::MainWindow() : QMainWindow(0) {
     m_docking_manager = new ToolWindowManager;
+    m_core = hippo_core_new();
 
     QVBoxLayout* layout = new QVBoxLayout;
     QWidget* main_widget = new QWidget;
@@ -131,17 +133,22 @@ QWidget* MainWindow::create_plugin_by_index(int index) {
 
     printf("created plugin");
 
-    // TODO: Store instance
-    QWidget* plugin_view = view_plugin->create();
+    HippoServiceAPI* service_api = hippo_service_api_new(m_core);
+
+    QWidget* widget = view_plugin->create(service_api);
 
     static bool first = false;
 
     if (first) {
-        m_docking_manager->addToolWindow(plugin_view, ToolWindowManager::EmptySpace);
+        m_docking_manager->addToolWindow(widget, ToolWindowManager::EmptySpace);
         first = false;
     } else {
-        m_docking_manager->addToolWindow(plugin_view, ToolWindowManager::LastUsedArea);
+        m_docking_manager->addToolWindow(widget, ToolWindowManager::LastUsedArea);
     }
+
+    m_plugin_instances.append({
+        view_plugin, service_api, widget
+    });
 
     return nullptr;
 }

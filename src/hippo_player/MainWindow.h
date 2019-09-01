@@ -5,6 +5,9 @@
 #include <QtWidgets/QMainWindow>
 
 class ToolWindowManager;
+class HippoQtView;
+struct HippoServiceAPI;
+struct HippoCore;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -22,6 +25,14 @@ private:
         QString plugin_name;
     };
 
+    struct PluginInstance {
+        HippoQtView* view_plugin;
+        HippoServiceAPI* service_api;
+        QWidget* widget;
+    };
+
+    HippoCore* m_core = nullptr;
     ToolWindowManager* m_docking_manager = nullptr;
     QVector<PluginInfo> m_plugin_types;
+    QVector<PluginInstance> m_plugin_instances;
 };
