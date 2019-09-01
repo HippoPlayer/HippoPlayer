@@ -30,6 +30,8 @@ pub mod service_ffi;
 use audio::{HippoAudio, MusicInfo};
 use plugin_handler::Plugins;
 use playlist::Playlist;
+use service_ffi::{PluginService};
+use hippo_api::ffi::CHippoServiceAPI;
 
 use std::io::Read;
 
@@ -153,3 +155,8 @@ pub extern "C" fn hippo_play_file(_core: *mut HippoCore, filename: *const c_char
     //println!("filename to play returned: {}", slice.to_str().unwrap());
 }
 
+/// Update the song db with a new entry
+#[no_mangle]
+pub extern "C" fn hippo_service_api_new() -> *const CHippoServiceAPI {
+    PluginService::new_c_api()
+}

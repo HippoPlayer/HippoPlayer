@@ -433,6 +433,10 @@ pub struct PluginService {
 
 impl PluginService {
     pub fn new() -> PluginService {
+        PluginService { c_service_api: Self::new_c_api() }
+    }
+
+    pub fn new_c_api() -> *const CHippoServiceAPI {
         let service_api: *const c_void = unsafe { transmute(Box::new(ServiceApi::new())) };
 
         let c_service_api = Box::new(CHippoServiceAPI {
@@ -442,9 +446,7 @@ impl PluginService {
             priv_data: service_api,
         });
 
-        let t: *const CHippoServiceAPI = unsafe { transmute(c_service_api) };
-
-        PluginService { c_service_api: t }
+        Box::into_raw(c_service_api) as *const CHippoServiceAPI
     }
 
     pub fn get_song_db<'a>(&'a self) -> &'a SongDb {
