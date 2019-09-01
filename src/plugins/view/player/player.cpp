@@ -1,146 +1,70 @@
 #include "player.h"
-#include <QtWidgets/QWidget>
+#include <QtCore/QDebug>
+#include <QtGui/QIcon>
+#include <QtWidgets/QLayout>
 #include <QtWidgets/QPushButton>
+#include <QtWidgets/QWidget>
+#include "../../../plugin_api/HippoPlugin.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-QWidget* PlayerView::create() {
+static QPushButton* create_button(const QString& icon_filename) {
+    const QIcon icon(icon_filename);
+    return new QPushButton(icon, QStringLiteral(""));
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+QWidget* PlayerView::create(struct HippoServiceAPI* service_api) {
+    m_message_api = HippoServiceAPI_get_message_api(service_api, HIPPO_MESSAGE_API_VERSION);
+
     QWidget* widget = new QWidget;
 
-    QPushButton* play_button = new QPushButton(widget);
+    QPushButton* prev_button = create_button("bin/player/buttons/hip_button_back.png");
+    QPushButton* stop_button = create_button("bin/player/buttons/hip_button_stop.png");
+    QPushButton* play_button = create_button("bin/player/buttons/hip_button_play.png");
+    QPushButton* next_button = create_button("bin/player/buttons/hip_button_next.png");
 
-    //
-    play_button->setText(QStringLiteral("PlayerView"));
+    QObject::connect(prev_button, &QPushButton::pressed, this, &PlayerView::prev_song);
+    QObject::connect(next_button, &QPushButton::pressed, this, &PlayerView::next_song);
+    QObject::connect(stop_button, &QPushButton::pressed, this, &PlayerView::stop_song);
+    QObject::connect(play_button, &QPushButton::pressed, this, &PlayerView::play_song);
+
+    QHBoxLayout* hbox = new QHBoxLayout;
+    hbox->addWidget(prev_button);
+    hbox->addWidget(stop_button);
+    hbox->addWidget(play_button);
+    hbox->addWidget(next_button);
+
+    widget->setLayout(hbox);
 
     return widget;
 }
 
-/*
-#[macro_use]
-extern crate hippo_api;
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#[macro_use]
-extern crate rute;
-
-use rute::rute::PushButton;
-use rute::PluginUi;
-
-use hippo_api::view::View;
-use hippo_api::{Service, MessageApi, MessageDecode};
-
-#[derive(Default)]
-struct Player {
-	message_api: MessageApi,
-    ui: PluginUi,
-    prev_button: PushButton,
-    stop_button: PushButton,
-    play_button: PushButton,
-    next_button: PushButton,
+void PlayerView::prev_song() {
+    HippoMessageEncode* message = HippoMessageAPI_begin_request(m_message_api, HIPPO_PLAYLIST_PREV_SONG);
+    HippoMessageAPI_end_message(m_message_api, message);
 }
 
-impl View for Player {
-    fn new(service: &Service) -> Player {
-    	Player {
-    		message_api: service.message_api(),
-        	.. Player::default()
-        }
-    }
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    fn setup_ui(&mut self, ui: PluginUi) {
-        self.ui = ui;
-
-        let buttons = ui.create_widget();
-
-        self.prev_button = Self::create_button(&ui, "bin/player/buttons/hip_button_back.png");
-        self.stop_button = Self::create_button(&ui, "bin/player/buttons/hip_button_stop.png");
-        self.play_button = Self::create_button(&ui, "bin/player/buttons/hip_button_play.png");
-        self.next_button = Self::create_button(&ui, "bin/player/buttons/hip_button_next.png");
-
-        set_push_button_pressed_event!(self.prev_button, self, Player, Player::prev_song);
-        set_push_button_pressed_event!(self.play_button, self, Player, Player::play_song);
-        set_push_button_pressed_event!(self.stop_button, self, Player, Player::stop_song);
-        set_push_button_pressed_event!(self.next_button, self, Player, Player::next_song);
-
-        let vbox = ui.create_v_box_layout();
-        let hbox = ui.create_h_box_layout();
-
-        hbox.add_widget(&self.prev_button);
-        hbox.add_widget(&self.stop_button);
-        hbox.add_widget(&self.play_button);
-        hbox.add_widget(&self.next_button);
-
-        buttons.set_layout(&hbox);
-
-        //vbox.add_widget(&self.player_display);
-        vbox.add_widget(&buttons);
-
-        ui.get_parent().set_layout(&vbox);
-    }
-
-    fn event(&mut self, event: &mut MessageDecode) {
-    	println!("event: {}", event.method);
-    }
-
-    fn destroy(&mut self) {}
+void PlayerView::next_song() {
+    HippoMessageEncode* message = HippoMessageAPI_begin_request(m_message_api, HIPPO_PLAYLIST_NEXT_SONG);
+    HippoMessageAPI_end_message(m_message_api, message);
 }
 
-impl Player {
-    fn create_button(ui: &PluginUi, icon_filename: &str) -> PushButton {
-        let icon = ui.create_icon();
-        let button = ui.create_push_button();
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        icon.add_file(icon_filename);
-        button.set_icon(&icon);
-
-        button
-    }
-
-    ///
-    /// Request the previous song
-    ///
-    fn prev_song(&mut self) {
-        let message = self.message_api.begin_request("hippo_playlist_prev_song").unwrap();
-        self.message_api.end_message(message);
-    }
-
-    ///
-    /// Play song
-    ///
-    fn play_song(&mut self) {
-        let message = self.message_api.begin_request("hippo_playlist_play_song").unwrap();
-        self.message_api.end_message(message);
-    }
-
-    ///
-    /// Stop the current playing song
-    ///
-    fn stop_song(&mut self) {
-        let message = self.message_api.begin_request("hippo_playlist_play_song").unwrap();
-        self.message_api.end_message(message);
-    }
-
-    ///
-    /// Next song
-    ///
-    fn next_song(&mut self) {
-        println!("next song");
-        let mut message = self.message_api.begin_request("hippo_playlist_next_song").unwrap();
-
-        message.write_str("test").unwrap(); // dummy
-        message.write_str("test").unwrap(); // dummy
-
-        self.message_api.end_message(message);
-    }
+void PlayerView::stop_song() {
+    HippoMessageEncode* message = HippoMessageAPI_begin_request(m_message_api, HIPPO_PLAYLIST_STOP_SONG);
+    HippoMessageAPI_end_message(m_message_api, message);
 }
 
-#[no_mangle]
-pub fn hippo_view_plugin() -> *const std::os::raw::c_void {
-    define_view_plugin!(PLUGIN, b"Player\0", b"0.0.1\0", Player);
-    // Would be nice to get rid of this
-    let ret: *const std::os::raw::c_void = unsafe { std::mem::transmute(&PLUGIN) };
-    ret
-}
- *
- *
- */
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void PlayerView::play_song() {
+    HippoMessageEncode* message = HippoMessageAPI_begin_request(m_message_api, HIPPO_PLAYLIST_PLAY_SONG);
+    HippoMessageAPI_end_message(m_message_api, message);
+}
