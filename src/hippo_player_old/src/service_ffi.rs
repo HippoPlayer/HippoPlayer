@@ -251,6 +251,33 @@ extern "C" fn message_decode_get_raw_ptr(
     0
 }
 
+extern "C" fn message_decode_read_array_count(priv_data: *const c_void, count: u64) -> i32 {
+    let message: &mut MessageDecode = unsafe { &mut *(priv_data as *mut MessageDecode) };
+    // TODO: Proper error handling
+    message.write_uint(count).unwrap();
+    1
+}
+
+extern "C" fn message_decode_read_array_count(
+    priv_data: *const c_void,
+    len: *mut u64,
+) -> i32 {
+    let message: &MessageDecode = unsafe { &*(priv_data as *mut MessageDecode) };
+    message.method.as_ptr() as *const i8;
+
+    let data_t = message.data.get_ref();
+    let pos = message.data.position() as usize;
+    let data_range = &data_t[pos..];
+
+    unsafe {
+        let data_ptr: *const c_void = data_range.as_ptr() as *const c_void;
+        *data = data_ptr;
+        *len = data_range.len() as u64;
+    }
+
+    0
+}
+
 extern "C" fn mesage_api_begin_request(priv_data: *const c_void, id: *const i8) -> *const c_void {
     let message_api: &mut MessageApi = unsafe { &mut *(priv_data as *mut MessageApi) };
     let name_id = unsafe { CStr::from_ptr(id as *const c_char) };

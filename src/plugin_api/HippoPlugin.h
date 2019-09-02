@@ -152,10 +152,10 @@ typedef struct HippoMessageDecode {
 	const char* (*get_method)(struct HippoMessageDecode* handle);
 	int (*get_raw_ptr)(struct HippoMessageDecode* handle, void** ptr, uint64_t* len);
 
-	///int (*read_array_count)(struct HippoMessageDecode* handle, int* count);
-	///int (*read_uint)(struct HippoMessageDecode* handle, uint64_t* value);
-	///int (*read_str_len)(struct HippoMessageDecode* handle, uint64_t* size);
-	///int (*read_str)(struct HippoMessageDecode* handle, char* dest);
+	int (*read_array_count)(struct HippoMessageDecode* handle, int* count);
+	int (*read_uint)(struct HippoMessageDecode* handle, uint64_t* value);
+	int (*read_str_len)(struct HippoMessageDecode* handle, uint64_t* size);
+	int (*read_str)(struct HippoMessageDecode* handle, char* dest);
 
 } HippoMessageDecode;
 
