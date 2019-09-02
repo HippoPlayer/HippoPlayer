@@ -280,7 +280,7 @@ typedef struct HippoPlaybackPlugin {
 	const char* version;
 	enum HippoProbeResult (*probe_can_play)(const uint8_t* data, uint32_t data_size, const char* filename, uint64_t total_size);
 	const char* (*supported_extensions)();
-	void* (*create)(HippoServiceAPI* services);
+	void* (*create)(const HippoServiceAPI* services);
 	int (*destroy)(void* user_data);
 	int (*open)(void* user_data, const char* buffer);
 	int (*close)(void* user_data);

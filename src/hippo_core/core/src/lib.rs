@@ -31,27 +31,25 @@ use audio::{HippoAudio, MusicInfo};
 use plugin_handler::Plugins;
 use playlist::Playlist;
 use service_ffi::{PluginService};
-use hippo_api::ffi::CHippoServiceAPI;
+use ffi;
 
 use std::io::Read;
-
-pub use rmp as msgpack;
 
 #[derive(Default, Debug)]
 pub struct SongDb {
     data: HashMap<String, String>,
 }
 
-pub struct HippoCore<'a> {
+pub struct HippoCore {
     audio: HippoAudio,
-    plugins: Plugins<'a>,
+    plugins: Plugins,
     plugin_service: service_ffi::PluginService,
     playlist: Playlist,
     _current_song_time: f32,
     _is_playing: bool,
 }
 
-impl<'a> HippoCore<'a> {
+impl HippoCore {
     pub fn play_file(&mut self, filename: &str) -> MusicInfo {
         let mut buffer = [0; 4096];
         // TODO: Fix error handling here
@@ -109,7 +107,7 @@ impl<'a> HippoCore<'a> {
 
 /// Create new instance of the song db
 #[no_mangle]
-pub extern "C" fn hippo_core_new() -> *const HippoCore<'static> {
+pub extern "C" fn hippo_core_new() -> *const HippoCore {
     let mut core = Box::new(HippoCore {
         audio: HippoAudio::new(),
         plugins: Plugins::new(),
@@ -157,6 +155,6 @@ pub extern "C" fn hippo_play_file(_core: *mut HippoCore, filename: *const c_char
 
 /// Update the song db with a new entry
 #[no_mangle]
-pub extern "C" fn hippo_service_api_new() -> *const CHippoServiceAPI {
+pub extern "C" fn hippo_service_api_new() -> *const ffi::HippoServiceAPI {
     PluginService::new_c_api()
 }

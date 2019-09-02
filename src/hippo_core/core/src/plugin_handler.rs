@@ -2,15 +2,16 @@ use dynamic_reload::{DynamicReload, Lib, PlatformName, Search, Symbol};
 use std::ffi::CString;
 use std::sync::Arc;
 use walkdir::{DirEntry, WalkDir};
+use ffi;
 
-use hippo_api::ffi::{CHippoPlaybackPlugin};
+//use hippo_api::ffi::{CHippoPlaybackPlugin};
 //use crate::service_ffi::{PluginService};
 
 #[derive(Clone)]
 pub struct DecoderPlugin {
     pub plugin: Arc<Lib>,
     pub plugin_path: String,
-    pub plugin_funcs: CHippoPlaybackPlugin,
+    pub plugin_funcs: ffi::HippoPlaybackPlugin,
 }
 
 #[cfg(target_os = "macos")]
@@ -51,13 +52,13 @@ impl DecoderPlugin {
     }
 }
 
-pub struct Plugins<'a> {
+pub struct Plugins {
     pub decoder_plugins: Vec<DecoderPlugin>,
-    pub plugin_handler: DynamicReload<'a>,
+    pub plugin_handler: DynamicReload,
 }
 
-impl<'a> Plugins<'a> {
-    pub fn new() -> Plugins<'a> {
+impl Plugins {
+    pub fn new() -> Plugins{
         Plugins {
             decoder_plugins: Vec::new(),
             plugin_handler: DynamicReload::new(Some(vec!["."]), None, Search::Default),
@@ -65,7 +66,7 @@ impl<'a> Plugins<'a> {
     }
 
     fn add_plugin_lib(&mut self, name: &str, plugin: &Arc<Lib>) {
-        let func: Result<Symbol<extern "C" fn() -> *const CHippoPlaybackPlugin>, ::std::io::Error> =
+        let func: Result<Symbol<extern "C" fn() -> *const ffi::HippoPlaybackPlugin>, ::std::io::Error> =
             unsafe { plugin.lib.get(b"hippo_playback_plugin\0") };
 
         if let Ok(fun) = func {

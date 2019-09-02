@@ -127,9 +127,9 @@ StaticLibrary {
 
 RustSharedLibrary {
     Name = "hippo_core",
-    CargoConfig = "src/hippo_core/Cargo.toml",
+    CargoConfig = "src/hippo_core/core/Cargo.toml",
     Sources = {
-        get_rs_src("src/hippo_core/src"),
+        get_rs_src("src/hippo_core"),
     },
 }
 
