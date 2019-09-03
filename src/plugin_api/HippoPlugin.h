@@ -134,12 +134,21 @@ typedef struct HippoMetadataAPI {
 typedef struct HippoMessageEncode {
     struct HippoMessageEncode* priv_data;
 
+	// Low-level APIs. Should only be used in case of custom commands
 	uint32_t (*get_id)(struct HippoMessageEncode* handle);
-
 	int (*write_formatted_blob)(struct HippoMessageEncode* handle, void* data, int size);
 	int (*write_array_count)(struct HippoMessageEncode* handle, int count);
 	int (*write_uint)(struct HippoMessageEncode* handle, uint64_t value);
 	int (*write_str)(struct HippoMessageEncode* handle, const char* input);
+	
+	// Switch to next song in the playlist
+	void (*playlist_next_song)();
+	// Switch to previous song in the playlist
+	void (*playlist_prev_song)();
+	// Stop playing of the current song
+	void (*stop_song)();
+	// Play the current song
+	void (*pause_song)();
 
 } HippoMessageEncode;
 
