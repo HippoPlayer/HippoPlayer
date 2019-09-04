@@ -63,7 +63,7 @@ impl Iterator for HippoPlayback {
         self.current_offset += 1;
 
         if self.current_offset >= self.frame_size {
-            self.frame_size = ((self.plugin.plugin_funcs).read_data).unwrap()(
+            self.frame_size = ((self.plugin.plugin_funcs).read_data)(
                 self.plugin_user_data as *mut c_void,
                 self.out_data.as_slice().as_ptr() as *mut c_void,
                 48000 / 2,

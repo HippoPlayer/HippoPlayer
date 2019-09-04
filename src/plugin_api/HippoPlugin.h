@@ -9,8 +9,6 @@ extern "C"
 {
 #endif
 
-struct RUPluginUI;
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 enum HippoProbeResult {
@@ -140,7 +138,7 @@ typedef struct HippoMessageEncode {
 	int (*write_array_count)(struct HippoMessageEncode* handle, int count);
 	int (*write_uint)(struct HippoMessageEncode* handle, uint64_t value);
 	int (*write_str)(struct HippoMessageEncode* handle, const char* input);
-	
+
 	// Switch to next song in the playlist
 	void (*playlist_next_song)();
 	// Switch to previous song in the playlist
@@ -295,14 +293,15 @@ typedef struct HippoPlaybackPlugin {
 	int (*close)(void* user_data);
 	int (*read_data)(void* user_data, void* dest, uint32_t max_sample_count);
 	int (*seek)(void* user_data, int ms);
-	int (*configure)(void* user_data, struct RUPluginUI* ui_funcs);
-	int (*save)(void* user_data, struct HippoSaveAPI* save_api);
-	int (*load)(void* user_data, struct HippoLoadAPI* load_api);
-	void* priv;
+	int (*save)(void* user_data, const struct HippoSaveAPI* save_api);
+	int (*load)(void* user_data, const struct HippoLoadAPI* load_api);
 } HippoPlaybackPlugin;
 
 #define HIPPO_PLAYBACK_PLUGIN_API_VERSION 1
 #define HIPPO_MESSAGE_API_VERSION 1
+
+#define HIPPO_NAME(name) (u64)name
+#define HIPPO_VERSION(text) (u64)text
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
