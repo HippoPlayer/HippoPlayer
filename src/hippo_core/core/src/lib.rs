@@ -25,13 +25,13 @@ mod plugin_handler;
 mod song_db;
 
 mod service;
+pub mod ffi;
 pub mod service_ffi;
 
 use audio::{HippoAudio, MusicInfo};
 use plugin_handler::Plugins;
 use playlist::Playlist;
 use service_ffi::{PluginService};
-use ffi;
 
 use std::io::Read;
 

@@ -74,7 +74,7 @@ enum HippoProbeResult mdx_plugin_probe_can_play(const uint8_t* data, uint32_t da
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void* mdx_plugin_create(struct HippoServiceAPI* services) {
+static void* mdx_plugin_create(const struct HippoServiceAPI* services) {
 	MDXPlugin* plugin = malloc(sizeof(MDXPlugin));
 	memset(plugin, 0, sizeof(MDXPlugin));
 
@@ -192,7 +192,6 @@ static HippoPlaybackPlugin g_mdx_plugin = {
 	mdx_plugin_close,
 	mdx_plugin_read_data,
 	mdx_plugin_plugin_seek,
-	NULL,
 	NULL,
 	NULL,
 };

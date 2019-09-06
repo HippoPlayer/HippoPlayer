@@ -23,7 +23,7 @@ enum HippoProbeResult dummy_probe_can_play(const uint8_t* data, uint32_t data_si
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void* dummy_create(struct HippoServiceAPI* services) {
+static void* dummy_create(const struct HippoServiceAPI* services) {
 	DummyPlugin* plugin = malloc(sizeof(DummyPlugin));
 	memset(plugin, 0, sizeof(DummyPlugin));
 
@@ -93,7 +93,6 @@ static HippoPlaybackPlugin g_dummy_plugin = {
 	dummy_close,
 	dummy_read_data,
 	dummy_plugin_seek,
-	NULL,
 	NULL,
 	NULL,
 };

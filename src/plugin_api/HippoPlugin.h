@@ -46,7 +46,7 @@ typedef struct HippoIoAPI {
 	HippoIoErrorCode (*open)(struct HippoApiPrivData* priv_data, const char* target, HippoIoHandle* handle);
 	HippoIoErrorCode (*close)(HippoIoHandle handle);
 	HippoIoErrorCode (*size)(HippoIoHandle handle, uint64_t* res);
-	HippoIoErrorCode (*read)(HippoIoHandle handle, void* dest, int64_t size);
+	HippoIoErrorCode (*read)(HippoIoHandle handle, void* dest, uint64_t size);
 	HippoIoErrorCode (*seek)(HippoIoHandle handle, HippoFileSeek type, int64_t step);
 
 	struct HippoApiPrivData* priv_data;
@@ -134,19 +134,10 @@ typedef struct HippoMessageEncode {
 
 	// Low-level APIs. Should only be used in case of custom commands
 	uint32_t (*get_id)(struct HippoMessageEncode* handle);
-	int (*write_formatted_blob)(struct HippoMessageEncode* handle, void* data, int size);
+	int (*write_formatted_blob)(struct HippoMessageEncode* handle, const void* data, int size);
 	int (*write_array_count)(struct HippoMessageEncode* handle, int count);
 	int (*write_uint)(struct HippoMessageEncode* handle, uint64_t value);
 	int (*write_str)(struct HippoMessageEncode* handle, const char* input);
-
-	// Switch to next song in the playlist
-	void (*playlist_next_song)();
-	// Switch to previous song in the playlist
-	void (*playlist_prev_song)();
-	// Stop playing of the current song
-	void (*stop_song)();
-	// Play the current song
-	void (*pause_song)();
 
 } HippoMessageEncode;
 
@@ -167,14 +158,6 @@ typedef struct HippoMessageDecode {
 } HippoMessageDecode;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Pre-defined messages
-
-#define HIPPO_PLAYLIST_NEXT_SONG "hippo_playlist_next_song"
-#define HIPPO_PLAYLIST_PLAY_SONG "hippo_playlist_play_song"
-#define HIPPO_PLAYLIST_STOP_SONG "hippo_playlist_stop_song"
-#define HIPPO_PLAYLIST_PREV_SONG "hippo_playlist_prev_song"
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Plugins can use the MessageAPI to subscribe to events and post data that is being requested
 
 typedef struct HippoMessageAPI {
@@ -186,6 +169,16 @@ typedef struct HippoMessageAPI {
 	struct HippoMessageEncode* (*begin_request)(struct HippoMessageAPI* priv_data, const char* id);
 	struct HippoMessageEncode* (*begin_notification)(struct HippoMessageAPI* priv_data, const char* id);
 	void (*end_message)(struct HippoMessageAPI* priv_data, HippoMessageEncode* message);
+
+	// High-level functions to make it easier to play songs
+	// Switch to next song in the playlist
+	void (*playlist_next_song)(struct HippoMessageAPI* handle);
+	// Switch to previous song in the playlist
+	void (*playlist_prev_song)(struct HippoMessageAPI* handle);
+	// Stop playing of the current song
+	void (*stop_song)(struct HippoMessageAPI* handle);
+	// Play the current song
+	void (*play_song)(struct HippoMessageAPI* handle);
 
 } HippoMessageAPI;
 
@@ -199,9 +192,9 @@ typedef struct HippoMessageAPI {
 struct HippoServicePrivData;
 
 typedef struct HippoServiceAPI {
-	HippoFileAPI* (*get_io_api)(struct HippoServicePrivData* private_data, int api_version);
-	HippoMetadataAPI* (*get_metadata_api)(struct HippoServicePrivData* private_data, int api_version);
-	HippoMessageAPI* (*get_message_api)(struct HippoServicePrivData* private_data, int api_version);
+	const HippoFileAPI* (*get_io_api)(struct HippoServicePrivData* private_data, int api_version);
+	const HippoMetadataAPI* (*get_metadata_api)(struct HippoServicePrivData* private_data, int api_version);
+	const HippoMessageAPI* (*get_message_api)(struct HippoServicePrivData* private_data, int api_version);
 	struct HippoServicePrivData* private_data;
 } HippoServiceAPI;
 

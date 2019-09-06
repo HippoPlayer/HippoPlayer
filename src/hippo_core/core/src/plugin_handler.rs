@@ -3,7 +3,8 @@ use std::ffi::CString;
 use std::sync::Arc;
 use walkdir::{DirEntry, WalkDir};
 use std::os::raw::{c_char, c_void};
-use ffi;
+use std::ffi::CStr;
+use crate::ffi;
 
 //use hippo_api::ffi::{CHippoPlaybackPlugin};
 //use crate::service_ffi::{PluginService};
@@ -16,14 +17,14 @@ pub struct HippoPlaybackPluginFFI {
     pub version: String,
     pub probe_can_play: unsafe extern "C" fn(data: *const u8, data_size: u32, filename: *const c_char, total_size: u64) -> u32,
     pub supported_extensions: unsafe extern "C" fn() -> *const c_char,
-    pub create: unsafe extern "C" fn(services: *const ffi::HippoServiceAPI) -> *const c_void,
-    pub destroy: unsafe extern "C" fn(user_data: *const c_void) -> i32,
-    pub open: unsafe extern "C" fn(user_data: *const c_void, buffer: *const c_char) -> i32,
-    pub close: unsafe extern "C" fn(user_data: *const c_void) -> i32,
-    pub read_data: unsafe extern "C" fn(user_data: *const c_void, dest: *mut c_void, max_sample_count: u32) -> i32,
-    pub seek: unsafe extern "C" fn(user_data: *const c_void, ms: i32) -> i32,
-    pub save: Option<unsafe extern "C" fn(user_data: *const c_void, save_api: *const ffi::HippoSaveAPI) -> i32>,
-    pub load: Option<unsafe extern "C" fn(user_data: *const c_void, load_api: *const ffi::HippoLoadAPI) -> i32>,
+    pub create: unsafe extern "C" fn(services: *const ffi::HippoServiceAPI) -> *mut c_void,
+    pub destroy: unsafe extern "C" fn(user_data: *mut c_void) -> i32,
+    pub open: unsafe extern "C" fn(user_data: *mut c_void, buffer: *const c_char) -> i32,
+    pub close: unsafe extern "C" fn(user_data: *mut c_void) -> i32,
+    pub read_data: unsafe extern "C" fn(user_data: *mut c_void, dest: *mut c_void, max_sample_count: u32) -> i32,
+    pub seek: unsafe extern "C" fn(user_data: *mut c_void, ms: i32) -> i32,
+    pub save: Option<unsafe extern "C" fn(user_data: *mut c_void, save_api: *const ffi::HippoSaveAPI) -> i32>,
+    pub load: Option<unsafe extern "C" fn(user_data: *mut c_void, load_api: *const ffi::HippoLoadAPI) -> i32>,
 }
 
 #[derive(Clone)]
@@ -57,12 +58,12 @@ impl DecoderPlugin {
         file_size: u64,
     ) -> bool {
         let c_filename = CString::new(filename).unwrap();
-        let res = ((self.plugin_funcs).probe_can_play).unwrap()(
+        let res = unsafe { ((self.plugin_funcs).probe_can_play)(
             data.as_ptr(),
             buffer_len as u32,
             c_filename.as_ptr(),
             file_size,
-        );
+        ) };
 
         match res {
             0 => true,
@@ -91,10 +92,32 @@ impl Plugins {
         if let Ok(fun) = func {
             println!("Found playback plugin with callback data {:?}", fun());
 
+            let native_plugin = unsafe { (*fun()) };
+
+            // To make the plugin code a bit nicer we move over to a separate structure internally.
+            // This also allows us allows us to check functions are correct at one place instead of
+            // having unwraps of function ptrs for every call
+            let plugin_funcs = HippoPlaybackPluginFFI {
+                api_version: native_plugin.api_version,
+                user_data: 0,
+                name: unsafe { CStr::from_ptr(native_plugin.name).to_string_lossy().into_owned() },
+                version: unsafe { CStr::from_ptr(native_plugin.version).to_string_lossy().into_owned() },
+                probe_can_play: native_plugin.probe_can_play.unwrap(),
+                supported_extensions: native_plugin.supported_extensions.unwrap(),
+                create: native_plugin.create.unwrap(),
+                destroy: native_plugin.destroy.unwrap(),
+                open: native_plugin.open.unwrap(),
+                close: native_plugin.close.unwrap(),
+                read_data: native_plugin.read_data.unwrap(),
+                seek: native_plugin.seek.unwrap(),
+                save: native_plugin.save,
+                load: native_plugin.load,
+            };
+
             self.decoder_plugins.push(DecoderPlugin {
                 plugin: plugin.clone(),
                 plugin_path: name.to_owned(),
-                plugin_funcs: unsafe { (*fun()).clone() },
+                plugin_funcs: plugin_funcs,
             });
         }
     }

@@ -9,7 +9,6 @@ crate-type = ["dylib"]
 
 [dependencies]
 messages = { path = "../messages" }
-ffi = { path = "../ffi" }
 rodio = "0.9.0"
 dynamic_reload = "0.4.0"
 walkdir = "2"

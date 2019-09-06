@@ -24,6 +24,6 @@ public:
     Q_SLOT void prev_song();
 
 private:
-    struct HippoMessageAPI* m_message_api = nullptr;
+    const struct HippoMessageAPI* m_message_api = nullptr;
 };
 

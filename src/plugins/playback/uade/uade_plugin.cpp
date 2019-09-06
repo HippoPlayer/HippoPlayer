@@ -119,7 +119,7 @@ enum HippoProbeResult uade_probe_can_play(const uint8_t* data, uint32_t data_siz
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void* uade_create(struct HippoServiceAPI* services) {
+static void* uade_create(const struct HippoServiceAPI* services) {
 	UadePlugin* plugin = new UadePlugin;
 
 	return plugin;
@@ -228,7 +228,6 @@ static HippoPlaybackPlugin g_uade_plugin = {
 	uade_close,
 	uade_read_data,
 	uade_plugin_seek,
-	NULL,
 	NULL,
 	NULL,
 };

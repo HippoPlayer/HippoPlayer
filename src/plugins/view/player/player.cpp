@@ -44,27 +44,27 @@ QWidget* PlayerView::create(struct HippoServiceAPI* service_api) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void PlayerView::prev_song() {
-    HippoMessageEncode* message = HippoMessageAPI_begin_request(m_message_api, HIPPO_PLAYLIST_PREV_SONG);
-    HippoMessageAPI_end_message(m_message_api, message);
+    //HippoMessageEncode* message = HippoMessageAPI_begin_request(m_message_api, HIPPO_PLAYLIST_PREV_SONG);
+    //HippoMessageAPI_end_message(m_message_api, message);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void PlayerView::next_song() {
-    HippoMessageEncode* message = HippoMessageAPI_begin_request(m_message_api, HIPPO_PLAYLIST_NEXT_SONG);
-    HippoMessageAPI_end_message(m_message_api, message);
+    //HippoMessageEncode* message = HippoMessageAPI_begin_request(m_message_api, HIPPO_PLAYLIST_NEXT_SONG);
+    //HippoMessageAPI_end_message(m_message_api, message);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void PlayerView::stop_song() {
-    HippoMessageEncode* message = HippoMessageAPI_begin_request(m_message_api, HIPPO_PLAYLIST_STOP_SONG);
-    HippoMessageAPI_end_message(m_message_api, message);
+    //HippoMessageEncode* message = HippoMessageAPI_begin_request(m_message_api, HIPPO_PLAYLIST_STOP_SONG);
+    //HippoMessageAPI_end_message(m_message_api, message);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void PlayerView::play_song() {
-    HippoMessageEncode* message = HippoMessageAPI_begin_request(m_message_api, HIPPO_PLAYLIST_PLAY_SONG);
-    HippoMessageAPI_end_message(m_message_api, message);
+    //HippoMessageEncode* message = HippoMessageAPI_begin_request(m_message_api, HIPPO_PLAYLIST_PLAY_SONG);
+    //HippoMessageAPI_end_message(m_message_api, message);
 }

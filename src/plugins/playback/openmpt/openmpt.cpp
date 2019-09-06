@@ -8,8 +8,8 @@
 
 const int MAX_EXT_COUNT = 16 * 1024;
 static char s_supported_extensions[MAX_EXT_COUNT];
-static HippoIoAPI* g_io_api = nullptr;
-static HippoMetadataAPI* g_metadata_api = nullptr;
+static const HippoIoAPI* g_io_api = nullptr;
+static const HippoMetadataAPI* g_metadata_api = nullptr;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -54,7 +54,7 @@ static const char* openmpt_supported_extensions() {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void* openmpt_create(HippoServiceAPI* service_api) {
+static void* openmpt_create(const HippoServiceAPI* service_api) {
     OpenMptData* user_data = new OpenMptData;
 
     g_io_api = HippoServiceAPI_get_io_api(service_api, 1);
@@ -194,7 +194,6 @@ static HippoPlaybackPlugin g_openmptPlugin = {
 	openmpt_close,
 	openmpt_read_data,
 	openmpt_seek,
-	NULL,
 	NULL,
 	NULL,
 };

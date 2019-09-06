@@ -9,7 +9,7 @@
 #define FREQ 48000
 #define FRAME_SIZE ((FREQ * 2) / 50)
 
-static struct HippoIoAPI* g_io_api = 0;
+static const struct HippoIoAPI* g_io_api = 0;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -35,7 +35,7 @@ static const char* hively_supported_extensions() {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void* hively_create(HippoServiceAPI* service_api) {
+static void* hively_create(const HippoServiceAPI* service_api) {
 	void* data = malloc(sizeof(struct HivelyReplayerData));
 	memset(data, 0, sizeof(struct HivelyReplayerData));
 
@@ -156,7 +156,6 @@ static HippoPlaybackPlugin g_hively_plugin = {
 	hively_close,
 	hively_read_data,
 	hively_seek,
-	NULL,
 	NULL,
 	NULL,
 };

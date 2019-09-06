@@ -69,7 +69,7 @@ static const char* sid_supported_extensions() {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void* sid_create(struct HippoServiceAPI* service_api) {
+static void* sid_create(const struct HippoServiceAPI* service_api) {
 	SidReplayerData* data = new SidReplayerData();
 
     data->engine.setRoms(nullptr, nullptr, nullptr);
@@ -199,7 +199,6 @@ static HippoPlaybackPlugin g_sid_plugin = {
 	sid_close,
 	sid_read_data,
 	sid_seek,
-	NULL,
 	NULL,
 	NULL,
 };
