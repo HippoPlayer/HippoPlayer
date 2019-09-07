@@ -19,7 +19,7 @@ public:
     void event(const HippoMessageDecode* message);
 
 private:
-    struct HippoMessageAPI* m_message_api = nullptr;
+    const struct HippoMessageAPI* m_message_api = nullptr;
 };
 
 
