@@ -398,7 +398,7 @@ SidTuneBase* SidTuneBase::getFromFiles(const char* fileName, const char **fileNa
                         }
                         else
                         {
-                            std::unique_ptr<SidTuneBase> s2(MUS::load(fileBuf1, true));
+                            std::unique_ptr<SidTuneBase> s2(MUS::load(fileBuf1, fileBuf2, 0, true));
                             if (s2.get() != nullptr)
                             {
                                 s2->acceptSidTune(fileName, fileName2.c_str(), fileBuf1, separatorIsSlash);

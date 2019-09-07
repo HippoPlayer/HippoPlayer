@@ -1,7 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2011-2016 Leandro Nini <drfiemost@users.sourceforge.net>
+ * Copyright 2011-2019 Leandro Nini <drfiemost@users.sourceforge.net>
  * Copyright 2007-2010 Antti Lankila
  * Copyright 2000-2001 Simon White
  *
@@ -62,9 +62,9 @@ const uint8_t* player2 = sidplayer2 + o65headersize;
 const size_t player1size = sizeof(sidplayer1) - o65headersize;
 const size_t player2size = sizeof(sidplayer2) - o65headersize;
 
-bool detect(const uint8_t* buffer, uint_least32_t& voice3Index)
+bool detect(const uint8_t* buffer, size_t bufsize, uint_least32_t& voice3Index)
 {
-    if (buffer == nullptr)
+    if ((buffer == nullptr) || (bufsize < 8))
         return false;
 
     // Skip load address and 3x length entry.
@@ -75,6 +75,9 @@ bool detect(const uint8_t* buffer, uint_least32_t& voice3Index)
     uint_least32_t voice2Index = voice1Index + endian_little16(&buffer[4]);
     // Add length of voice 3 data.
     voice3Index = voice2Index + endian_little16(&buffer[6]);
+
+    if (voice3Index > bufsize)
+        return false;
 
     return ((endian_big16(&buffer[voice1Index - 2]) == SIDTUNE_MUS_HLT_CMD)
             && (endian_big16(&buffer[voice2Index - 2]) == SIDTUNE_MUS_HLT_CMD)
@@ -176,7 +179,7 @@ SidTuneBase* MUS::load(buffer_t& musBuf,
                             bool init)
 {
     uint_least32_t voice3Index;
-    if (!detect(&musBuf[fileOffset], voice3Index))
+    if (!detect(&musBuf[fileOffset], musBuf.size()-fileOffset, voice3Index))
         return nullptr;
 
     std::unique_ptr<MUS> tune(new MUS());
@@ -241,7 +244,7 @@ void MUS::tryLoad(buffer_t& musBuf,
     bool stereo = false;
     if (!strBuf.empty())
     {
-        if (!detect(&strBuf[0], voice3Index))
+        if (!detect(&strBuf[0], strBuf.size(), voice3Index))
             throw loadError(ERR_2ND_INVALID);
         spPet.setBuffer(&strBuf[0], strBuf.size());
         stereo = true;
@@ -252,7 +255,7 @@ void MUS::tryLoad(buffer_t& musBuf,
         if (spPet.good())
         {
             const ulint_smartpt pos = spPet.tellPos();
-            if (detect(&spPet[0], voice3Index))
+            if (detect(&spPet[0], spPet.tellLength()-pos, voice3Index))
             {
                 musDataLen = static_cast<uint_least16_t>(pos);
                 stereo = true;

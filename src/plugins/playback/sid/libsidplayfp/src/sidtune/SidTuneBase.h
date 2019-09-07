@@ -141,6 +141,15 @@ public:  // ----------------------------------------------------------------
     virtual const char *createMD5(char *) { return nullptr; }
 
     /**
+     * Calculates the MD5 hash of the tune.
+     * Not providing an md5 buffer will cause the internal one to be used.
+     * If provided, buffer must be MD5_LENGTH + 1
+     *
+     * @return a pointer to the buffer containing the md5 string.
+     */
+    virtual const char *createMD5New(char *) { return nullptr; }
+
+    /**
      * Get the pointer to the tune data.
      */
     const uint_least8_t* c64Data() const { return &cache[fileOffset]; }

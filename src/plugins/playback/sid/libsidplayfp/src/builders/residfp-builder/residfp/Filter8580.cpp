@@ -1,7 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2011-2016 Leandro Nini <drfiemost@users.sourceforge.net>
+ * Copyright 2011-2019 Leandro Nini <drfiemost@users.sourceforge.net>
  * Copyright 2007-2010 Antti Lankila
  * Copyright 2004,2010 Dag Lem <resid@nimrod.no>
  *
@@ -35,7 +35,7 @@ namespace reSIDfp
  * When no bit are selected a resistance with half
  * W/L ratio is selected.
  */
-const double DAC_WL0 = 0.0615; // FIXME was actually ~0.00615
+const double DAC_WL0 = 0.00615;
 
 Filter8580::~Filter8580() {}
 
@@ -60,8 +60,8 @@ void Filter8580::updatedCenterFrequency()
         wl = dacWL/2.;
     }
 
+    hpIntegrator->setFc(wl);
     bpIntegrator->setFc(wl);
-    lpIntegrator->setFc(wl);
 }
 
 void Filter8580::updatedMixing()
@@ -94,8 +94,8 @@ void Filter8580::setFilterCurve(double curvePosition)
     // 1.2 <= cp <= 1.8
     cp = 1.8 - curvePosition * 3./5.;
 
+    hpIntegrator->setV(cp);
     bpIntegrator->setV(cp);
-    lpIntegrator->setV(cp);
 }
 
 } // namespace reSIDfp

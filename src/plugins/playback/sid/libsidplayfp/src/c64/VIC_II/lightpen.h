@@ -117,7 +117,8 @@ public:
         if (!isTriggered)
         {
             // don't trigger on the last line, except on the first cycle
-            if ((rasterY == lastLine) && (lineCycle > 0)) {
+            if ((rasterY == lastLine) && (lineCycle > 0))
+            {
                 return false;
             }
 

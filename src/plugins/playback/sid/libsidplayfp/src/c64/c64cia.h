@@ -1,7 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2011-2015 Leandro Nini <drfiemost@users.sourceforge.net>
+ * Copyright 2011-2019 Leandro Nini <drfiemost@users.sourceforge.net>
  * Copyright 2007-2010 Antti Lankila
  * Copyright 2001 Simon White
  *
@@ -117,12 +117,12 @@ public:
 
     void poke(uint_least16_t address, uint8_t value) override
     {
-        write(address, value);
+        write(endian_16lo8(address), value);
     }
 
     uint8_t peek(uint_least16_t address) override
     {
-        return read(address);
+        return read(endian_16lo8(address));
     }
 };
 

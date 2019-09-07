@@ -156,13 +156,22 @@ public:  // ----------------------------------------------------------------
     bool placeSidTuneInC64mem(libsidplayfp::sidmemory& mem);
 
     /**
-     * Calculates the MD5 hash of the tune.
+     * Calculates the MD5 hash of the tune, old method.
      * Not providing an md5 buffer will cause the internal one to be used.
      * If provided, buffer must be MD5_LENGTH + 1
      *
      * @return a pointer to the buffer containing the md5 string, 0 if no tune is loaded.
      */
     const char *createMD5(char *md5 = 0);
+
+    /**
+     * Calculates the MD5 hash of the tune, new method, introduced in HVSC#68.
+     * Not providing an md5 buffer will cause the internal one to be used.
+     * If provided, buffer must be MD5_LENGTH + 1
+     *
+     * @return a pointer to the buffer containing the md5 string, 0 if no tune is loaded.
+     */
+    const char *createMD5New(char *md5 = 0);
 
     const uint_least8_t* c64Data() const;
 

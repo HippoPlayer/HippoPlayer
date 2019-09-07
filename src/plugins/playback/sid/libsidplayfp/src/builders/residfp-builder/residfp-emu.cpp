@@ -1,7 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2011-2015 Leandro Nini <drfiemost@users.sourceforge.net>
+ * Copyright 2011-2019 Leandro Nini <drfiemost@users.sourceforge.net>
  * Copyright 2007-2010 Antti Lankila
  * Copyright 2001 Simon White
  *
@@ -38,15 +38,13 @@ namespace libsidplayfp
 
 const char* ReSIDfp::getCredits()
 {
-    static const char* residfp_version_string = "2.0.0beta";
-
     static std::string credits;
 
     if (credits.empty())
     {
         // Setup credits
         std::ostringstream ss;
-        ss << "ReSIDfp V" << "" << " Engine:\n";
+        ss << "ReSIDfp V" << "2.0beta" << " Engine:\n";
         ss << "\t(C) 1999-2002 Simon White\n";
         ss << "MOS6581 (SID) Emulation (ReSIDfp V" << residfp_version_string << "):\n";
         ss << "\t(C) 1999-2002 Dag Lem\n";
@@ -149,7 +147,7 @@ void ReSIDfp::sampling(float systemclock, float freq,
 }
 
 // Set the emulated SID model
-void ReSIDfp::model(SidConfig::sid_model_t model)
+void ReSIDfp::model(SidConfig::sid_model_t model, bool digiboost)
 {
     reSIDfp::ChipModel chipModel;
     switch (model)
@@ -159,6 +157,8 @@ void ReSIDfp::model(SidConfig::sid_model_t model)
             break;
         case SidConfig::MOS8580:
             chipModel = reSIDfp::MOS8580;
+            if (digiboost)
+                m_sid.input(-32768);
             break;
         default:
             m_status = false;

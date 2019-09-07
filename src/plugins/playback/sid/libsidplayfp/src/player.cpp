@@ -1,7 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2011-2017 Leandro Nini <drfiemost@users.sourceforge.net>
+ * Copyright 2011-2019 Leandro Nini <drfiemost@users.sourceforge.net>
  * Copyright 2007-2010 Antti Lankila
  * Copyright 2000-2001 Simon White
  *
@@ -69,12 +69,9 @@ Player::Player() :
     // Set default settings for system
     m_tune(nullptr),
     m_errorString(ERR_NA),
-    m_isPlaying(STOPPED)
+    m_isPlaying(STOPPED),
+    m_rand((unsigned int)::time(0))
 {
-#ifdef PC64_TESTSUITE
-    m_c64.setTestEnv(this);
-#endif
-
     m_c64.setRoms(nullptr, nullptr, nullptr);
     config(m_cfg);
 
@@ -130,7 +127,15 @@ void Player::initialise()
         throw configError(ERR_UNSUPPORTED_SIZE);
     }
 
+    uint_least16_t powerOnDelay = m_cfg.powerOnDelay;
+    // Delays above MAX result in random delays
+    if (powerOnDelay > SidConfig::MAX_POWER_ON_DELAY)
+    {   // Limit the delay to something sensible.
+        powerOnDelay = (uint_least16_t)((m_rand.next() >> 3) & SidConfig::MAX_POWER_ON_DELAY);
+    }
+
     psiddrv driver(m_tune->getInfo());
+    driver.powerOnDelay(powerOnDelay);
     if (!driver.drvReloc())
     {
         throw configError(driver.errorString());
@@ -138,6 +143,7 @@ void Player::initialise()
 
     m_info.m_driverAddr = driver.driverAddr();
     m_info.m_driverLength = driver.driverLength();
+    m_info.m_powerOnDelay = powerOnDelay;
 
     driver.install(m_c64.getMemInterface(), videoSwitch);
 
@@ -302,12 +308,13 @@ bool Player::config(const SidConfig &cfg, bool force)
 
             // SID emulation setup (must be performed before the
             // environment setup call)
-            sidCreate(cfg.sidEmulation, cfg.defaultSidModel, cfg.forceSidModel, addresses);
+            sidCreate(cfg.sidEmulation, cfg.defaultSidModel, cfg.digiBoost, cfg.forceSidModel, addresses);
 
             // Determine clock speed
             const c64::model_t model = c64model(cfg.defaultC64Model, cfg.forceC64Model);
 
             m_c64.setModel(model);
+            m_c64.setCiaModel(cfg.ciaModel);
 
             sidParams(m_c64.getMainCpuSpeed(), cfg.frequency, cfg.samplingMethod, cfg.fastSampling);
 
@@ -371,6 +378,11 @@ c64::model_t Player::c64model(SidConfig::c64_model_t defaultModel, bool forced)
             clockSpeed = SidTuneInfo::CLOCK_NTSC;
             model = c64::OLD_NTSC_M;
             videoSwitch = 0;
+            break;
+        case SidConfig::PAL_M:
+            clockSpeed = SidTuneInfo::CLOCK_NTSC;
+            model = c64::PAL_M;
+            videoSwitch = 0; // TODO verify
             break;
         }
     }
@@ -477,7 +489,7 @@ void Player::sidRelease()
     m_mixer.clearSids();
 }
 
-void Player::sidCreate(sidbuilder *builder, SidConfig::sid_model_t defaultModel,
+void Player::sidCreate(sidbuilder *builder, SidConfig::sid_model_t defaultModel, bool digiboost,
                         bool forced, const std::vector<unsigned int> &extraSidAddresses)
 {
     if (builder != nullptr)
@@ -486,7 +498,7 @@ void Player::sidCreate(sidbuilder *builder, SidConfig::sid_model_t defaultModel,
 
         // Setup base SID
         const SidConfig::sid_model_t userModel = getSidModel(tuneInfo->sidModel(0), defaultModel, forced);
-        sidemu *s = builder->lock(m_c64.getEventScheduler(), userModel);
+        sidemu *s = builder->lock(m_c64.getEventScheduler(), userModel, digiboost);
         if (!builder->getStatus())
         {
             throw configError(builder->error());
@@ -508,7 +520,7 @@ void Player::sidCreate(sidbuilder *builder, SidConfig::sid_model_t defaultModel,
             {
                 const SidConfig::sid_model_t userModel = getSidModel(tuneInfo->sidModel(i+1), defaultModel, forced);
 
-                sidemu *s = builder->lock(m_c64.getEventScheduler(), userModel);
+                sidemu *s = builder->lock(m_c64.getEventScheduler(), userModel, digiboost);
                 if (!builder->getStatus())
                 {
                     throw configError(builder->error());
@@ -535,18 +547,5 @@ void Player::sidParams(double cpuFreq, int frequency,
         s->sampling((float)cpuFreq, frequency, sampling, fastSampling);
     }
 }
-
-#ifdef PC64_TESTSUITE
-    void Player::load(const char *file)
-    {
-        std::string name(PC64_TESTSUITE);
-        name.append(file);
-        name.append(".prg");
-
-        m_tune->load(name.c_str());
-        m_tune->selectSong(0);
-        initialise();
-    }
-#endif
 
 }

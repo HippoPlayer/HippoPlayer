@@ -132,6 +132,12 @@ const char* SidTune::createMD5(char *md5)
 {
     return tune.get() != nullptr ? tune->createMD5(md5) : nullptr;
 }
+
+const char* SidTune::createMD5New(char *md5)
+{
+    return tune.get() != nullptr ? tune->createMD5New(md5) : nullptr;
+}
+
 const uint_least8_t* SidTune::c64Data() const
 {
     return tune.get() != nullptr ? tune->c64Data() : nullptr;

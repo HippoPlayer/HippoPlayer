@@ -1,7 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2011-2017 Leandro Nini <drfiemost@users.sourceforge.net>
+ * Copyright 2011-2019 Leandro Nini <drfiemost@users.sourceforge.net>
  * Copyright 2007-2010 Antti Lankila
  * Copyright 2000 Simon White
  *
@@ -54,7 +54,9 @@ namespace MOS6510Debug
  * This will slow down the emulation a bit with no real benefit
  * for SID playing so we keep it disabled.
  */
-//#define CORRECT_SH_INSTRUCTIONS
+#ifdef VICE_TESTSUITE
+#  define CORRECT_SH_INSTRUCTIONS
+#endif
 
 
 /**
@@ -125,6 +127,8 @@ private:
     /// Address Low summer carry
     bool adl_carry;
 
+    bool d1x1;
+
 #ifdef CORRECT_SH_INSTRUCTIONS
     /// The RDY pin state during last throw away read.
     bool rdyOnThrowAwayRead;
@@ -146,7 +150,7 @@ private:
 
 #ifdef DEBUG
     // Debug info
-    uint_least16_t instrStartPC;
+    int_least32_t instrStartPC;
     uint_least16_t instrOperand;
 
     FILE *m_fdbg;
@@ -206,6 +210,10 @@ private:
     inline void brkPushLowPC();
     inline void WasteCycle();
 
+    inline void Push(uint8_t data);
+    inline uint8_t Pop();
+    inline void compare(uint8_t data);
+
     // Delcare Instruction Operation Routines
     inline void adc_instr();
     inline void alr_instr();
@@ -259,7 +267,6 @@ private:
     inline void ora_instr();
     inline void pha_instr();
     inline void pla_instr();
-    inline void plp_instr();
     inline void rla_instr();
     inline void rol_instr();
     inline void rola_instr();
@@ -296,7 +303,7 @@ private:
     inline void doADC();
     inline void doSBC();
 
-    inline void doJSR();
+    inline bool checkInterrupts() const { return rstFlag || nmiFlag || (irqAssertedOnPin && !flags.getI()); }
 
     inline void buildInstructionTable();
 

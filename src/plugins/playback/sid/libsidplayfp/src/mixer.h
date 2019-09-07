@@ -118,7 +118,7 @@ private:
         int_least32_t res = 0;
         for (int i = 0; i < Chips; i++)
             res += m_iSamples[i];
-        return res /= Chips;
+        return res / Chips;
     }
 
     // Stereo mixing

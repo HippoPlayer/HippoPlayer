@@ -1,7 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2011-2016 Leandro Nini <drfiemost@users.sourceforge.net>
+ * Copyright 2011-2019 Leandro Nini <drfiemost@users.sourceforge.net>
  * Copyright 2007-2010 Antti Lankila
  * Copyright 2000 Simon White
  *
@@ -38,7 +38,6 @@ private:
     bool Z; ///< Zero
     bool I; ///< Interrupt disabled
     bool D; ///< Decimal
-    bool B; ///< Break
     bool V; ///< Overflow
     bool N; ///< Negative
 
@@ -46,7 +45,6 @@ public:
     inline void reset()
     {
         C = Z = I = D = V = N = false;
-        B = true;
     }
 
     /**
@@ -65,13 +63,12 @@ public:
      */
     inline uint8_t get()
     {
-        uint8_t sr = 0x20;
+        uint8_t sr = 0;
 
         if (C) sr |= 0x01;
         if (Z) sr |= 0x02;
         if (I) sr |= 0x04;
         if (D) sr |= 0x08;
-        if (B) sr |= 0x10;
         if (V) sr |= 0x40;
         if (N) sr |= 0x80;
 
@@ -87,7 +84,6 @@ public:
         Z = sr & 0x02;
         I = sr & 0x04;
         D = sr & 0x08;
-        B = sr & 0x10;
         V = sr & 0x40;
         N = sr & 0x80;
     }
@@ -98,7 +94,6 @@ public:
     inline bool getZ() const { return Z; }
     inline bool getV() const { return V; }
     inline bool getI() const { return I; }
-    inline bool getB() const { return B; }
 
     inline void setN(bool f) { N = f; }
     inline void setC(bool f) { C = f; }
@@ -106,7 +101,6 @@ public:
     inline void setZ(bool f) { Z = f; }
     inline void setV(bool f) { V = f; }
     inline void setI(bool f) { I = f; }
-    inline void setB(bool f) { B = f; }
 };
 
 }

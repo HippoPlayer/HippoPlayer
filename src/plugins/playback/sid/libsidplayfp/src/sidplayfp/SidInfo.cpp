@@ -38,6 +38,8 @@ uint_least16_t SidInfo::driverAddr() const { return getDriverAddr(); }
 
 uint_least16_t SidInfo::driverLength() const { return getDriverLength(); }
 
+uint_least16_t SidInfo::powerOnDelay() const { return getPowerOnDelay(); }
+
 const char *SidInfo::speedString() const { return getSpeedString(); }
 
 const char *SidInfo::kernalDesc() const { return getKernalDesc(); }

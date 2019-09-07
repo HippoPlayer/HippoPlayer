@@ -1,7 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2011-2015 Leandro Nini <drfiemost@users.sourceforge.net>
+ * Copyright 2011-2019 Leandro Nini <drfiemost@users.sourceforge.net>
  * Copyright 2007-2010 Antti Lankila
  * Copyright 2001 Simon White
  *
@@ -50,10 +50,6 @@ public:
 
     virtual uint8_t cpuRead(uint_least16_t addr) =0;
     virtual void cpuWrite(uint_least16_t addr, uint8_t data) =0;
-
-#ifdef PC64_TESTSUITE
-    virtual void loadFile(const char *file) =0;
-#endif
 
     virtual void interruptIRQ(bool state) = 0;
     virtual void interruptNMI() = 0;

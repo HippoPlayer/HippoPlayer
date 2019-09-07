@@ -191,6 +191,10 @@ namespace reSIDfp
 RESID_INLINE
 int Integrator::solve(int vi)
 {
+    // Check that transistor is actually in triode mode
+    // VDS < VGS - Vth
+    assert(vi < kVddt);
+
     // "Snake" voltages for triode mode calculation.
     const unsigned int Vgst = kVddt - vx;
     const unsigned int Vgdt = kVddt - vi;

@@ -1,7 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2011-2017 Leandro Nini <drfiemost@users.sourceforge.net>
+ * Copyright 2011-2019 Leandro Nini <drfiemost@users.sourceforge.net>
  * Copyright 2007-2010 Antti Lankila
  * Copyright 2000-2001 Simon White
  *
@@ -32,15 +32,12 @@
 #include "sidplayfp/SidTuneInfo.h"
 
 #include "SidInfoImpl.h"
+#include "sidrandom.h"
 #include "mixer.h"
 #include "c64/c64.h"
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
-#endif
-
-#ifdef PC64_TESTSUITE
-#  include <string>
 #endif
 
 #include <vector>
@@ -54,9 +51,6 @@ namespace libsidplayfp
 {
 
 class Player
-#ifdef PC64_TESTSUITE
-  : public testEnv
-#endif
 {
 private:
     typedef enum
@@ -87,6 +81,8 @@ private:
 
     volatile state_t m_isPlaying;
 
+    sidrandom m_rand;
+
     /// PAL/NTSC switch value
     uint8_t videoSwitch;
 
@@ -116,7 +112,7 @@ private:
      *
      * @throw configError
      */
-    void sidCreate(sidbuilder *builder, SidConfig::sid_model_t defaultModel,
+    void sidCreate(sidbuilder *builder, SidConfig::sid_model_t defaultModel, bool digiboost,
                     bool forced, const std::vector<unsigned int> &extraSidAddresses);
 
     /**
@@ -129,10 +125,6 @@ private:
      */
     void sidParams(double cpuFreq, int frequency,
                     SidConfig::sampling_method_t sampling, bool fastSampling);
-
-#ifdef PC64_TESTSUITE
-    void load(const char *file);
-#endif
 
     inline void run(unsigned int events);
 
@@ -157,6 +149,8 @@ public:
     void stop();
 
     uint_least32_t time() const { return m_c64.getTime(); }
+
+    uint_least32_t timeMs() const { return m_c64.getTimeMs(); }
 
     void debug(const bool enable, FILE *out) { m_c64.debug(enable, out); }
 

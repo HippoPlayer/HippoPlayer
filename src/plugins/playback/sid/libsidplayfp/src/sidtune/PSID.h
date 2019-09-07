@@ -68,6 +68,8 @@ public:
 
     virtual const char *createMD5(char *md5) override;
 
+    virtual const char *createMD5New(char *md5) override;
+
 private:
     // prevent copying
     PSID(const PSID&);

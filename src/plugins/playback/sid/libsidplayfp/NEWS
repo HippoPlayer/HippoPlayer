@@ -1,4 +1,4 @@
-2.0.0 2016-xx-xx
+2.0.0 2019-07-30
 * Cleaned up directory structure
 * Use c++11 features where supported
 * Added exSID USB support
@@ -6,11 +6,20 @@
   - Proper 8580 filter model
   - More accurate envelope generator
   - Other minor fixes
+* Digiboost support
 * Do not use kernal calls in psid driver
 * Support libgcrypt for md5 computation
 * Interrupt playback on invalid opcode execution
-* Drop poweron delay setting
+* Selectable CIA model
 * Do not expose event scheduler
+
+
+
+1.8.8 2018-07-08
+* Fix misspelling in error message (bug #26)
+* Correctly clock oscillators in silent mode
+* CIA timing fixes
+* Allow running VICE tests
 
 
 

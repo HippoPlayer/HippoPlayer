@@ -69,6 +69,8 @@ public:
     uint_least16_t m_driverAddr;
     uint_least16_t m_driverLength;
 
+    uint_least16_t m_powerOnDelay;
+
 private:
     // prevent copying
     SidInfoImpl(const SidInfoImpl&);
@@ -81,7 +83,8 @@ public:
         m_maxsids(libsidplayfp::Mixer::MAX_SIDS),
         m_channels(1),
         m_driverAddr(0),
-        m_driverLength(0)
+        m_driverLength(0),
+        m_powerOnDelay(0)
     {
         m_credits.push_back(PACKAGE_NAME " V" PACKAGE_VERSION " Engine:\n"
             "\tCopyright (C) 2000 Simon White\n"
@@ -102,6 +105,8 @@ public:
 
     uint_least16_t getDriverAddr() const override { return m_driverAddr; }
     uint_least16_t getDriverLength() const override { return m_driverLength; }
+
+    uint_least16_t getPowerOnDelay() const override { return m_powerOnDelay; }
 
     const char *getSpeedString() const override { return m_speedString.c_str(); }
 

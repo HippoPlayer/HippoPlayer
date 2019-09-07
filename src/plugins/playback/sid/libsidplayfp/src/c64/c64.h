@@ -1,7 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2011-2017 Leandro Nini <drfiemost@users.sourceforge.net>
+ * Copyright 2011-2019 Leandro Nini <drfiemost@users.sourceforge.net>
  * Copyright 2007-2010 Antti Lankila
  * Copyright 2000 Simon White
  *
@@ -68,8 +68,8 @@ public:
  *
  * It consists of the following chips:
  * - CPU 6510
- * - VIC-II 6567/6569/6572
- * - CIA 6526
+ * - VIC-II 6567/6569/6572/6573
+ * - CIA 6526/8521
  * - SID 6581/8580
  * - PLA 7700/82S100
  * - Color RAM 2114
@@ -87,6 +87,7 @@ public:
         ,NTSC_M       ///< NTSC C64
         ,OLD_NTSC_M   ///< Old NTSC C64
         ,PAL_N        ///< C64 Drean
+        ,PAL_M        ///< C64 Brasil
     } model_t;
 
 private:
@@ -187,27 +188,10 @@ private:
 
     inline void lightpen(bool state) override;
 
-#ifdef PC64_TESTSUITE
-    testEnv *m_env;
-
-    void loadFile(const char *file) override
-    {
-        m_env->load(file);
-    }
-#endif
-
     void resetIoBank();
 
 public:
     c64();
-    ~c64() {}
-
-#ifdef PC64_TESTSUITE
-    void setTestEnv(testEnv *env)
-    {
-        m_env = env;
-    }
-#endif
 
     /**
      * Get C64's event scheduler
@@ -216,7 +200,9 @@ public:
      */
     EventScheduler *getEventScheduler() { return &eventScheduler; }
 
-    uint_least32_t getTime() const { return static_cast<uint_least32_t>(eventScheduler.getTime(EVENT_CLOCK_PHI1) / cpuFrequency); }
+    uint_least32_t getTime() const { return getTimeMs() / 1000; }
+
+    uint_least32_t getTimeMs() const { return static_cast<uint_least32_t>((eventScheduler.getTime(EVENT_CLOCK_PHI1) * 1000) / cpuFrequency); }
 
     /**
      * Clock the emulation.
@@ -234,6 +220,11 @@ public:
      * Set the c64 model.
      */
     void setModel(model_t model);
+
+    /**
+     * Set the cia model.
+     */
+    void setCiaModel(bool newModel);
 
     void setRoms(const uint8_t* kernal, const uint8_t* basic, const uint8_t* character)
     {

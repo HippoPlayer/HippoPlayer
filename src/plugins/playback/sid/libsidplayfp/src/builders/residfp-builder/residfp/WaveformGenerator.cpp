@@ -1,7 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2011-2017 Leandro Nini <drfiemost@users.sourceforge.net>
+ * Copyright 2011-2019 Leandro Nini <drfiemost@users.sourceforge.net>
  * Copyright 2007-2010 Antti Lankila
  * Copyright 2004 Dag Lem <resid@nimrod.no>
  *
@@ -40,7 +40,8 @@ namespace reSIDfp
  * and /MUSICIANS/P/PVCF/Thomkat_with_Strange_End.sid;
  * see [VICE Bug #290](http://sourceforge.net/p/vice-emu/bugs/290/)
  */
-const int FLOATING_OUTPUT_TTL = 0xF4240;
+const int FLOATING_OUTPUT_TTL_6581 = 200000;  // ~200ms
+const int FLOATING_OUTPUT_TTL_8580 = 5000000; // ~5s;
 
 /**
  * Number of cycles after which the shift register is reset
@@ -50,15 +51,28 @@ const int FLOATING_OUTPUT_TTL = 0xF4240;
  * from chip to chip so the numbers here represents
  * only the big difference between the old and new models.
  */
-int constexpr SHIFT_REGISTER_RESET_6581 = 200000;  // ~200ms
-int constexpr SHIFT_REGISTER_RESET_8580 = 5000000; // ~5s
+const int SHIFT_REGISTER_RESET_6581 = 200000;  // ~200ms
+const int SHIFT_REGISTER_RESET_8580 = 5000000; // ~5s
 
 const int DAC_BITS = 12;
 
+/*
+ * This is what happens when the lfsr is clocked:
+ *
+ * cycle 0: bit 19 of the accumulator goes from low to high, the noise register acts normally,
+ *          the output may overwrite a bit;
+ *
+ * cycle 1: first phase of the shift, the bits are interconnected and the output of each bit
+ *          is latched into the following. The output may overwrite the latched value.
+ *
+ * cycle 2: second phase of the shift, the latched value becomes active in the first
+ *          half of the clock and from the second half the register returns to normal operation.
+ *
+ * When the test or reset lines are active the first phase is executed at every cyle
+ * until the signal is released triggering the second phase.
+ */
 void WaveformGenerator::clock_shift_register(unsigned int bit0)
 {
-    write_shift_register();
-
     shift_register = (shift_register >> 1) | bit0;
 
     // New noise waveform output.
@@ -142,7 +156,7 @@ void WaveformGenerator::setChipModel(ChipModel chipModel)
     Dac dacBuilder(DAC_BITS);
     dacBuilder.kinkedDac(chipModel);
 
-    const float offset = dacBuilder.getOutput(is6581 ? 0x380 : 0x800);
+    const double offset = dacBuilder.getOutput(is6581 ? 0x380 : 0x9c0);
 
     for (unsigned int i = 0; i < (1 << DAC_BITS); i++)
     {
@@ -209,7 +223,7 @@ void WaveformGenerator::writeCONTROL_REG(unsigned char control)
         {
             // Change to floating DAC input.
             // Reset fading time for floating DAC input.
-            floating_output_ttl = FLOATING_OUTPUT_TTL;
+            floating_output_ttl = is6581 ? FLOATING_OUTPUT_TTL_6581 : FLOATING_OUTPUT_TTL_8580;
         }
     }
 

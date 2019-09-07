@@ -1,7 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2011-2015 Leandro Nini <drfiemost@users.sourceforge.net>
+ * Copyright 2011-2019 Leandro Nini <drfiemost@users.sourceforge.net>
  * Copyright 2007-2010 Antti Lankila
  * Copyright 2000-2001 Simon White
  *
@@ -65,8 +65,9 @@ public:
 
     /**
      * Get the length of the current subtune.
+     * The hash is obtained with a specific MD5 calculation (old format).
      *
-     * @param tune
+     * @param tune the SID tune
      * @return tune length in seconds, -1 in case of errors.
      */
     int_least32_t length(SidTune &tune);
@@ -79,6 +80,24 @@ public:
      * @return tune length in seconds, -1 in case of errors.
      */
     int_least32_t length(const char *md5, unsigned int song);
+
+    /**
+     * Get the length of the current subtune.
+     * The hash is based on the full content (new format).
+     *
+     * @param tune the SID tune
+     * @return tune length in milliseconds, -1 in case of errors.
+     */
+    int_least32_t lengthMs(SidTune &tune);
+
+    /**
+     * Get the length of the selected subtune.
+     *
+     * @param md5 the md5 hash of the tune.
+     * @param song the subtune.
+     * @return tune length in milliseconds, -1 in case of errors.
+     */
+    int_least32_t lengthMs(const char *md5, unsigned int song);
 
     /**
      * Get descriptive error message.

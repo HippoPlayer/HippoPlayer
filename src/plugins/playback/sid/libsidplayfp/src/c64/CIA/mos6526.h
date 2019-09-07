@@ -1,7 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2011-2015 Leandro Nini <drfiemost@users.sourceforge.net>
+ * Copyright 2011-2018 Leandro Nini <drfiemost@users.sourceforge.net>
  * Copyright 2009-2014 VICE Project
  * Copyright 2007-2010 Antti Lankila
  * Copyright 2000 Simon White
@@ -107,10 +107,10 @@ public:
 /**
  * InterruptSource that acts like new CIA
  */
-class InterruptSource6526A final : public InterruptSource
+class InterruptSource8521 final : public InterruptSource
 {
 public:
-    InterruptSource6526A(EventScheduler &scheduler, MOS6526 &parent) :
+    InterruptSource8521(EventScheduler &scheduler, MOS6526 &parent) :
         InterruptSource(scheduler, parent)
     {}
 
@@ -120,7 +120,7 @@ public:
 
     void event() override
     {
-        throw "6526A event called unexpectedly";
+        throw "8521 event called unexpectedly";
     }
 };
 
@@ -130,8 +130,14 @@ public:
 class InterruptSource6526 final : public InterruptSource
 {
 private:
+    /// Clock when clear was called last
+    event_clock_t last_clear;
+
     /// Have we already scheduled CIA->CPU interrupt transition?
     bool scheduled;
+
+    /// Timer B bug
+    bool tbBug;
 
 private:
     /**
@@ -148,7 +154,10 @@ private:
 
 public:
     InterruptSource6526(EventScheduler &scheduler, MOS6526 &parent) :
-        InterruptSource(scheduler, parent)
+        InterruptSource(scheduler, parent),
+        last_clear(0),
+        scheduled(false),
+        tbBug(false)
     {}
 
     void trigger(uint8_t interruptMask) override;
@@ -172,7 +181,8 @@ public:
 class MOS6526
 {
     friend class InterruptSource6526;
-    friend class InterruptSource6526A;
+    friend class InterruptSource8521;
+    friend class SerialPort;
     friend class TimerA;
     friend class TimerB;
     friend class Tod;
@@ -207,9 +217,6 @@ protected:
     /// Serial Data Registers
     SerialPort serialPort;
 
-    /// Have we already scheduled CIA->CPU interrupt transition?
-    bool triggerScheduled;
-
     /// Events
     //@{
     EventCallback<MOS6526> bTickEvent;
@@ -220,6 +227,11 @@ private:
      * Trigger an interrupt from TOD.
      */
     void todInterrupt();
+
+    /**
+     * Trigger an interrupt from Serial Port.
+     */
+    void spInterrupt();
 
     /**
      * This event exists solely to break the ambiguity of what scheduling on
@@ -255,7 +267,6 @@ protected:
      * @param context the event context
      */
     MOS6526(EventScheduler &scheduler);
-    ~MOS6526() {}
 
     /**
      * Signal interrupt.
@@ -287,6 +298,13 @@ protected:
     void write(uint_least8_t addr, uint8_t data);
 
 public:
+    /**
+     * Select chip model.
+     * 
+     * @param newModel true for new model 8521, false for old 6526
+     */
+    void setModel(bool newModel);
+
     /**
      * Reset CIA.
      */

@@ -1,7 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2011-2016 Leandro Nini <drfiemost@users.sourceforge.net>
+ * Copyright 2011-2019 Leandro Nini <drfiemost@users.sourceforge.net>
  * Copyright 2007-2010 Antti Lankila
  * Copyright 2010 Dag Lem
  *
@@ -122,14 +122,14 @@ FilterModelConfig8580* FilterModelConfig8580::getInstance()
 }
 
 FilterModelConfig8580::FilterModelConfig8580() :
-    voice_voltage_range(0.3), // FIXME measure
-    voice_DC_voltage(4.76),
+    voice_voltage_range(0.4), // FIXME measure
+    voice_DC_voltage(4.80), // FIXME was 4.76
     C(22e-9),
     Vdd(9.09),
     Vth(0.80),
     Ut(26.0e-3),
     k(1.0),
-    uCox(10e-6),
+    uCox(55e-6), // FIXME measure
     kVddt(k * (Vdd - Vth)),
     vmin(opamp_voltage[0].x),
     vmax(kVddt < opamp_voltage[0].y ? opamp_voltage[0].y : kVddt),
@@ -143,7 +143,7 @@ FilterModelConfig8580::FilterModelConfig8580() :
 
     for (unsigned int i = 0; i < OPAMP_SIZE; i++)
     {
-        scaled_voltage[i].x = (N16 * (opamp_voltage[i].x - opamp_voltage[i].y) + (1 << 16)) / 2.;
+        scaled_voltage[i].x = N16 * (opamp_voltage[i].x - opamp_voltage[i].y + denorm) / 2.;
         scaled_voltage[i].y = N16 * (opamp_voltage[i].x - vmin);
     }
 

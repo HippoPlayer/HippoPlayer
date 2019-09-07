@@ -1,7 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2011-2017 Leandro Nini <drfiemost@users.sourceforge.net>
+ * Copyright 2011-2019 Leandro Nini <drfiemost@users.sourceforge.net>
  * Copyright 2007-2010 Antti Lankila
  * Copyright 2004,2010 Dag Lem <resid@nimrod.no>
  *
@@ -334,7 +334,7 @@ private:
     /// VCR + associated capacitor connected to highpass output.
     std::unique_ptr<Integrator> const hpIntegrator;
 
-    /// VCR + associated capacitor connected to lowpass output.
+    /// VCR + associated capacitor connected to bandpass output.
     std::unique_ptr<Integrator> const bpIntegrator;
 
 protected:
@@ -394,19 +394,15 @@ int Filter6581::clock(int voice1, int voice2, int voice3)
 {
     voice1 = (voice1 * voiceScaleS14 >> 18) + voiceDC;
     voice2 = (voice2 * voiceScaleS14 >> 18) + voiceDC;
-    voice3 = (voice3 * voiceScaleS14 >> 18) + voiceDC;
+    // Voice 3 is silenced by voice3off if it is not routed through the filter.
+    voice3 = filt3 || !voice3off ? (voice3 * voiceScaleS14 >> 18) + voiceDC : 0;
 
     int Vi = 0;
     int Vo = 0;
 
     (filt1 ? Vi : Vo) += voice1;
     (filt2 ? Vi : Vo) += voice2;
-
-    // NB! Voice 3 is not silenced by voice3off if it is routed
-    // through the filter.
-    if (filt3) Vi += voice3;
-    else if (!voice3off) Vo += voice3;
-
+    (filt3 ? Vi : Vo) += voice3;
     (filtE ? Vi : Vo) += ve;
 
     Vhp = currentSummer[currentResonance[Vbp] + Vlp + Vi];

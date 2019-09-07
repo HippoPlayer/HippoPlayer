@@ -1,7 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2011-2015 Leandro Nini <drfiemost@users.sourceforge.net>
+ * Copyright 2011-2018 Leandro Nini <drfiemost@users.sourceforge.net>
  * Copyright 2007-2010 Antti Lankila
  * Copyright 2000 Simon White
  *
@@ -43,13 +43,13 @@ class InterruptSource : protected Event
 public:
     enum
     {
-        INTERRUPT_NONE         = 0,
-        INTERRUPT_UNDERFLOW_A  = 1 << 0,
-        INTERRUPT_UNDERFLOW_B  = 1 << 1,
-        INTERRUPT_ALARM        = 1 << 2,
-        INTERRUPT_SP           = 1 << 3,
-        INTERRUPT_FLAG         = 1 << 4,
-        INTERRUPT_REQUEST      = 1 << 7
+        INTERRUPT_NONE         = 0,      ///< no interrupt
+        INTERRUPT_UNDERFLOW_A  = 1 << 0, ///< underflow Timer A
+        INTERRUPT_UNDERFLOW_B  = 1 << 1, ///< underflow Timer B
+        INTERRUPT_ALARM        = 1 << 2, ///< alarm clock
+        INTERRUPT_SP           = 1 << 3, ///< serial port
+        INTERRUPT_FLAG         = 1 << 4, ///< external flag
+        INTERRUPT_REQUEST      = 1 << 7  ///< control bit
     };
 
 protected:
@@ -69,9 +69,11 @@ private:
 protected:
     bool interruptMasked() const { return icr & idr; }
 
-    bool interruptTriggered() const { return (idr & INTERRUPT_REQUEST) == 0; }
+    bool interruptTriggered() const { return idr & INTERRUPT_REQUEST; }
 
     void triggerInterrupt() { idr |= INTERRUPT_REQUEST; }
+
+    void triggerBug() { idr &= ~INTERRUPT_UNDERFLOW_B; }
 
 protected:
     /**
@@ -89,6 +91,8 @@ protected:
     {}
 
 public:
+    virtual ~InterruptSource() {}
+
     /**
      * Trigger an interrupt.
      * 

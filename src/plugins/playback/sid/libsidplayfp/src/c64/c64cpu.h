@@ -1,7 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- *  Copyright (C) 2012-2016 Leandro Nini
+ *  Copyright (C) 2012-2019 Leandro Nini
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,6 +24,11 @@
 #include "c64/c64env.h"
 #include "CPU/mos6510.h"
 
+#ifdef VICE_TESTSUITE
+#  include <iostream>
+#  include <cstdlib>
+#endif
+
 #include "sidcxx11.h"
 
 #ifdef HAVE_CONFIG_H
@@ -40,16 +45,31 @@ private:
 
 protected:
     uint8_t cpuRead(uint_least16_t addr) override { return m_env.cpuRead(addr); }
-    void cpuWrite(uint_least16_t addr, uint8_t data) override { m_env.cpuWrite(addr, data); }
+
+    void cpuWrite(uint_least16_t addr, uint8_t data) override {
+#ifdef VICE_TESTSUITE
+        // for VICE tests
+        if (addr == 0xd7ff)
+        {
+            if (data == 0)
+            {
+                std::cout << std::endl << "OK" << std::endl;
+                exit(EXIT_SUCCESS);
+            }
+            else if (data == 0xff)
+            {
+                std::cout << std::endl << "KO" << std::endl;
+                exit(EXIT_FAILURE);
+            }
+        }
+#endif
+        m_env.cpuWrite(addr, data);
+    }
 
 public:
     c64cpu (c64env &env) :
         MOS6510(env.scheduler()),
         m_env(env) {}
-
-#ifdef PC64_TESTSUITE
-    void loadFile(const char *file) override { m_env.loadFile(file); }
-#endif
 };
 
 }

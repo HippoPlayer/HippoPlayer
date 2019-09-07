@@ -1,7 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2011-2017 Leandro Nini <drfiemost@users.sourceforge.net>
+ * Copyright 2011-2019 Leandro Nini <drfiemost@users.sourceforge.net>
  * Copyright 2007-2010 Antti Lankila
  * Copyright 2000-2001 Simon White
  *
@@ -74,6 +74,11 @@ const SidInfo &sidplayfp::info() const
 uint_least32_t sidplayfp::time() const
 {
     return sidplayer.time();
+}
+
+uint_least32_t sidplayfp::timeMs() const
+{
+    return sidplayer.timeMs();
 }
 
 const char *sidplayfp::error() const

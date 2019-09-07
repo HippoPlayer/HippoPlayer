@@ -1,7 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2011-2015 Leandro Nini <drfiemost@users.sourceforge.net>
+ * Copyright 2011-2019 Leandro Nini <drfiemost@users.sourceforge.net>
  * Copyright 2007-2010 Antti Lankila
  * Copyright 2001 Simon White
  *
@@ -66,7 +66,7 @@ public:
 
     void voice(unsigned int num, bool mute) override { m_sid.mute(num, mute); }
 
-    void model(SidConfig::sid_model_t model) override;
+    void model(SidConfig::sid_model_t model, bool digiboost) override;
 
     // Specific to resid
     void filter(bool enable);

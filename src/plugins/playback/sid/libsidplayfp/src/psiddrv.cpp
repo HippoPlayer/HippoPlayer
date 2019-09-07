@@ -264,6 +264,9 @@ void psiddrv::install(sidmemory& mem, uint8_t video) const
     mem.writeMemWord(pos, m_tuneInfo->playAddr());
     pos += 2;
 
+    mem.writeMemWord(pos, m_powerOnDelay);
+    pos += 2;
+ 
     // Set init address io bank value
     mem.writeMemByte(pos, iomap(m_tuneInfo->initAddr()));
     pos++;

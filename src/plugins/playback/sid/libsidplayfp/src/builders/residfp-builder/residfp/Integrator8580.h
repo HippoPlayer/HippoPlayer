@@ -1,7 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2011-2016 Leandro Nini <drfiemost@users.sourceforge.net>
+ * Copyright 2011-2018 Leandro Nini <drfiemost@users.sourceforge.net>
  * Copyright 2007-2010 Antti Lankila
  * Copyright 2004, 2010 Dag Lem <resid@nimrod.no>
  *
@@ -57,10 +57,10 @@ private:
     mutable int vx;
     mutable int vc;
 
-    const unsigned short Vth;
     unsigned short kVgt;
-    unsigned short n_snake;
+    unsigned short n_dac;
 
+    const double Vth;
     const double denorm;
     const double C;
     const double k;
@@ -69,7 +69,7 @@ private:
     const double N16;
 
 public:
-    Integrator8580(const unsigned short* opamp_rev, unsigned short Vth, double denorm, double C, double k, double uCox, double vmin, double N16) :
+    Integrator8580(const unsigned short* opamp_rev, double Vth, double denorm, double C, double k, double uCox, double vmin, double N16) :
         opamp_rev(opamp_rev),
         vx(0),
         vc(0),
@@ -90,7 +90,7 @@ public:
         // Fit in 5 bits.
         const double tmp = denorm * (1 << 13) * (uCox / (2. * k) * wl * 1.0e-6 / C);
         assert(tmp > -0.5 && tmp < 65535.5);
-        n_snake = static_cast<unsigned short>(tmp + 0.5);
+        n_dac = static_cast<unsigned short>(tmp + 0.5);
     }
 
     /**
@@ -123,22 +123,18 @@ namespace reSIDfp
 RESID_INLINE
 int Integrator8580::solve(int vi) const
 {
-    // Check that transistor is actually in triode mode
-    // VDS < VGS  Vth
-    assert(vi < kVgt);
-
-    // DAC voltages for triode mode calculation.
+    // DAC voltages
     const unsigned int Vgst = kVgt - vx;
-    const unsigned int Vgdt = kVgt - vi;
+    const unsigned int Vgdt = (vi < kVgt) ? kVgt - vi : 0;  // triode/saturation mode
 
     const unsigned int Vgst_2 = Vgst * Vgst;
     const unsigned int Vgdt_2 = Vgdt * Vgdt;
 
     // DAC current, scaled by (1/m)*2^13*m*2^16*m*2^16*2^-15 = m*2^30
-    const int n_I_snake = n_snake * (static_cast<int>(Vgst_2 - Vgdt_2) >> 15);
+    const int n_I_dac = n_dac * (static_cast<int>(Vgst_2 - Vgdt_2) >> 15);
 
     // Change in capacitor charge.
-    vc += n_I_snake;
+    vc += n_I_dac;
 
     // vx = g(vc)
     const int tmp = (vc >> 15) + (1 << 15);

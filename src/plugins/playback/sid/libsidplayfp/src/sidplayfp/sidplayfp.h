@@ -1,7 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2011-2017 Leandro Nini <drfiemost@users.sourceforge.net>
+ * Copyright 2011-2019 Leandro Nini <drfiemost@users.sourceforge.net>
  * Copyright 2007-2010 Antti Lankila
  * Copyright 2000 Simon White
  *
@@ -147,6 +147,8 @@ public:
      * @return the current playing time measured in seconds.
      */
     uint_least32_t time() const;
+
+    uint_least32_t timeMs() const;
 
     /**
      * Set ROM images.
