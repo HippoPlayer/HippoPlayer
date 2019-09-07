@@ -187,6 +187,11 @@ typedef struct HippoMessageAPI {
 #define HippoMessageAPI_begin_request(api, id) api->begin_request(api->priv_data, id)
 #define HippoMessageAPI_end_message(api, message) api->end_message(api->priv_data, message)
 
+#define HippoMessage_playlist_next_song(api) api->playlist_next_song(api->priv_data)
+#define HippoMessage_playlist_prev_song(api) api->playlist_next_song(api->priv_data)
+#define HippoMessage_stop_song(api) api->stop_song(api->priv_data)
+#define HippoMessage_play_song(api) api->play_song(api->priv_data)
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct HippoServicePrivData;

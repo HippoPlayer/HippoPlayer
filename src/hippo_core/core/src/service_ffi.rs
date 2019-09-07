@@ -245,6 +245,7 @@ extern "C" fn message_write_str(priv_data: *mut ffi::HippoMessageEncode, name: *
 
 fn simple_message(priv_data: *mut ffi::HippoMessageAPI, name: &str) {
     let message_api: &mut MessageApi = unsafe { &mut *(priv_data as *mut MessageApi) };
+    println!("Sending message {}", name);
     let message = message_api.begin_request(name).unwrap();
     message_api.end_message(message);
 }

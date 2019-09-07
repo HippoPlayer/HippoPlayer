@@ -390,6 +390,14 @@ SharedLibrary {
 	}
 }
 
+SharedLibrary {
+	Name = "playlist",
+	Sources = {
+	    "src/plugins/view/playlist/playlist.cpp",
+        gen_moc("src/plugins/view/playlist/playlist.h"),
+	}
+}
+
 -----------------------------------------------------------------------------------------------------------------------
 -- Default plugins
 -----------------------------------------------------------------------------------------------------------------------
@@ -408,6 +416,7 @@ Default "SidPlugin"
 
 --Default "playlist"
 Default "player"
+Default "playlist"
 --Default "song_info"
 --Default "TestViewPlugin"
 

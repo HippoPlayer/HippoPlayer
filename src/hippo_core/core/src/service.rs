@@ -1,3 +1,5 @@
+#![allow(clippy::box_vec)]
+
 use std::collections::HashMap;
 use std::fs;
 use std::fs::File;
