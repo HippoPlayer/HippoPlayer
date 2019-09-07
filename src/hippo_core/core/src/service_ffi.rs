@@ -1,7 +1,7 @@
 use crate::ffi;
 use crate::service::{FileWrapper, IoApi, MessageApi};
 use crate::song_db::SongDb;
-use messages::{MessageDecode, MessageEncode};
+use messages::{MessageEncode};
 use std::collections::HashMap;
 use std::ffi::CStr;
 use std::io::Read;
@@ -116,7 +116,7 @@ extern "C" fn file_read_wrapper(
 
     let dest = unsafe { slice::from_raw_parts_mut(dest_data as *mut u8, size as usize) };
 
-    file_wrapper.file.read(dest).unwrap();
+    file_wrapper.file.read_exact(dest).unwrap();
 
     0
 }
@@ -265,6 +265,7 @@ extern "C" fn play_song(priv_data: *mut ffi::HippoMessageAPI) {
     simple_message(priv_data, "hippo_play_song");
 }
 
+/*
 extern "C" fn message_decode_get_id(priv_data: *const c_void) -> u32 {
     let message: &MessageDecode = unsafe { &*(priv_data as *mut MessageDecode) };
     message.id
@@ -281,7 +282,6 @@ extern "C" fn message_decode_get_raw_ptr(
     len: *mut u64,
 ) -> i32 {
     let message: &MessageDecode = unsafe { &*(priv_data as *mut MessageDecode) };
-    message.method.as_ptr() as *const i8;
 
     let data_t = message.data.get_ref();
     let pos = message.data.position() as usize;
@@ -295,15 +295,16 @@ extern "C" fn message_decode_get_raw_ptr(
 
     0
 }
+*/
 
-extern "C" fn mesage_api_begin_request(
+extern "C" fn message_api_begin_request(
     priv_data: *mut ffi::HippoMessageAPI,
     id: *const i8,
 ) -> *mut ffi::HippoMessageEncode {
     let message_api: &mut MessageApi = unsafe { &mut *(priv_data as *mut MessageApi) };
     let name_id = unsafe { CStr::from_ptr(id as *const c_char) };
 
-    println!("mesage_api_begin_request");
+    println!("message_api_begin_request");
 
     // TODO: Proper error handling
     let message = message_api
@@ -324,14 +325,14 @@ extern "C" fn mesage_api_begin_request(
     Box::into_raw(message_c) as *mut ffi::HippoMessageEncode
 }
 
-extern "C" fn mesage_api_begin_notification(
+extern "C" fn message_api_begin_notification(
     priv_data: *mut ffi::HippoMessageAPI,
     id: *const i8,
 ) -> *mut ffi::HippoMessageEncode {
     let message_api: &mut MessageApi = unsafe { &mut *(priv_data as *mut MessageApi) };
     let name_id = unsafe { CStr::from_ptr(id as *const c_char) };
 
-    println!("mesage_api_begin_request");
+    println!("message_api_begin_notification");
 
     // TODO: Proper error handling
     let message = message_api
@@ -352,12 +353,14 @@ extern "C" fn mesage_api_begin_notification(
     Box::into_raw(message_c) as *mut ffi::HippoMessageEncode
 }
 
-extern "C" fn mesage_api_request_new_id(priv_data: *mut ffi::HippoMessageAPI) -> u32 {
+/*
+extern "C" fn message_api_request_new_id(priv_data: *mut ffi::HippoMessageAPI) -> u32 {
     let message_api: &mut MessageApi = unsafe { &mut *(priv_data as *mut MessageApi) };
     message_api.request_new_id()
 }
+*/
 
-extern "C" fn mesage_api_end_message(
+extern "C" fn message_api_end_message(
     priv_data: *mut ffi::HippoMessageAPI,
     message: *mut ffi::HippoMessageEncode,
 ) {
@@ -367,7 +370,7 @@ extern "C" fn mesage_api_end_message(
         message_api.end_message(Box::from_raw(message));
     }
 
-    println!("mesage_api_end_message")
+    println!("message_api_end_message")
 }
 
 pub struct ServiceApi {
@@ -389,13 +392,13 @@ impl ServiceApi {
         self.c_message_api
     }
 
-    fn get_song_db<'a>(&'a self) -> &'a SongDb {
+    fn get_song_db(&self) -> &SongDb {
         let metadata_api = self.get_c_metadatao_api();
         let song_db: &SongDb = unsafe { &*((*metadata_api).priv_data as *const SongDb) };
         song_db
     }
 
-    fn get_message_api<'a>(&'a self) -> &'a MessageApi {
+    fn get_message_api(&self) -> &MessageApi {
         let api = self.get_c_message_api();
         let message_api: &MessageApi = unsafe { &*((*api).priv_data as *const MessageApi) };
         message_api
@@ -450,10 +453,10 @@ impl ServiceApi {
 
         let c_message_api = Box::new(ffi::HippoMessageAPI {
             priv_data: message_api as *mut ffi::HippoMessageAPI,
-            begin_request: Some(mesage_api_begin_request),
-            begin_notification: Some(mesage_api_begin_notification),
-            end_message: Some(mesage_api_end_message),
-            //request_new_id: Some(mesage_api_request_new_id),
+            begin_request: Some(message_api_begin_request),
+            begin_notification: Some(message_api_begin_notification),
+            end_message: Some(message_api_end_message),
+            //request_new_id: Some(message_api_request_new_id),
             playlist_next_song: Some(playlist_next_song),
             playlist_prev_song: Some(playlist_prev_song),
             stop_song: Some(stop_song),

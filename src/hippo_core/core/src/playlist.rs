@@ -99,8 +99,8 @@ impl Playlist {
         request.write_map_len(self.entries.len() as u32).unwrap();
 
         for entry in &self.entries {
-            request.write_str(&entry.path);
-            request.write_str(&entry.title);
+            request.write_str(&entry.path).unwrap();
+            request.write_str(&entry.title).unwrap();
         }
 
         request
@@ -130,11 +130,11 @@ impl Playlist {
     /// Get the current song
     ///
     pub fn get_current_song(&mut self) -> Option<String> {
-        if self.entries.len() == 0 {
-            return None;
+        if !self.entries.is_empty() {
+            Some(self.entries[self.current_song].path.to_owned())
+        } else {
+            None
         }
-
-        Some(self.entries[self.current_song].path.to_owned())
     }
 
     ///

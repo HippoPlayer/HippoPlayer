@@ -145,9 +145,9 @@ pub extern "C" fn hippo_core_drop(_core: *mut HippoCore) {
 
 /// Update the song db with a new entry
 #[no_mangle]
-pub extern "C" fn hippo_play_file(_core: *mut HippoCore, filename: *const c_char) {
-    let core = unsafe { &mut *_core };
-    let slice = unsafe { CStr::from_ptr(filename) };
+pub unsafe extern "C" fn hippo_play_file(_core: *mut HippoCore, filename: *const c_char) {
+    let core = &mut *_core;
+    let slice = CStr::from_ptr(filename);
 
     core.play_file(slice.to_str().unwrap());
     //println!("filename to play returned: {}", slice.to_str().unwrap());

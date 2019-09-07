@@ -34,7 +34,7 @@ impl IoApi {
         let mut file = File::open(filename)?;
         let size = file.metadata()?.len();
         let mut dest_mem = vec![0; size as usize].into_boxed_slice();
-        file.read(&mut dest_mem)?;
+        file.read_exact(&mut dest_mem)?;
         Ok(dest_mem)
     }
 }

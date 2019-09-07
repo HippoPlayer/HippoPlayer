@@ -98,8 +98,8 @@ impl Playlist {
 		request.write_map_len(self.entries.len() as u32).unwrap();
 
 		for entry in &self.entries {
-		    request.write_str(&entry.path);
-		    request.write_str(&entry.title);
+		    request.write_str(&entry.path).unwrap();
+		    request.write_str(&entry.title).unwrap();
 		}
 
 		request
