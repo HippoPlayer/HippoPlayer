@@ -1,10 +1,10 @@
+use crate::ffi;
 use dynamic_reload::{DynamicReload, Lib, PlatformName, Search, Symbol};
+use std::ffi::CStr;
 use std::ffi::CString;
+use std::os::raw::{c_char, c_void};
 use std::sync::Arc;
 use walkdir::{DirEntry, WalkDir};
-use std::os::raw::{c_char, c_void};
-use std::ffi::CStr;
-use crate::ffi;
 
 //use hippo_api::ffi::{CHippoPlaybackPlugin};
 //use crate::service_ffi::{PluginService};
@@ -15,16 +15,29 @@ pub struct HippoPlaybackPluginFFI {
     pub user_data: u64, // this is really a pointer but Rust gets sad when we use this on another thread so we hack it here a bit.
     pub name: String,
     pub version: String,
-    pub probe_can_play: unsafe extern "C" fn(data: *const u8, data_size: u32, filename: *const c_char, total_size: u64) -> u32,
+    pub probe_can_play: unsafe extern "C" fn(
+        data: *const u8,
+        data_size: u32,
+        filename: *const c_char,
+        total_size: u64,
+    ) -> u32,
     pub supported_extensions: unsafe extern "C" fn() -> *const c_char,
     pub create: unsafe extern "C" fn(services: *const ffi::HippoServiceAPI) -> *mut c_void,
     pub destroy: unsafe extern "C" fn(user_data: *mut c_void) -> i32,
     pub open: unsafe extern "C" fn(user_data: *mut c_void, buffer: *const c_char) -> i32,
     pub close: unsafe extern "C" fn(user_data: *mut c_void) -> i32,
-    pub read_data: unsafe extern "C" fn(user_data: *mut c_void, dest: *mut c_void, max_sample_count: u32) -> i32,
+    pub read_data: unsafe extern "C" fn(
+        user_data: *mut c_void,
+        dest: *mut c_void,
+        max_sample_count: u32,
+    ) -> i32,
     pub seek: unsafe extern "C" fn(user_data: *mut c_void, ms: i32) -> i32,
-    pub save: Option<unsafe extern "C" fn(user_data: *mut c_void, save_api: *const ffi::HippoSaveAPI) -> i32>,
-    pub load: Option<unsafe extern "C" fn(user_data: *mut c_void, load_api: *const ffi::HippoLoadAPI) -> i32>,
+    pub save: Option<
+        unsafe extern "C" fn(user_data: *mut c_void, save_api: *const ffi::HippoSaveAPI) -> i32,
+    >,
+    pub load: Option<
+        unsafe extern "C" fn(user_data: *mut c_void, load_api: *const ffi::HippoLoadAPI) -> i32,
+    >,
 }
 
 #[derive(Clone)]
@@ -58,12 +71,14 @@ impl DecoderPlugin {
         file_size: u64,
     ) -> bool {
         let c_filename = CString::new(filename).unwrap();
-        let res = unsafe { ((self.plugin_funcs).probe_can_play)(
-            data.as_ptr(),
-            buffer_len as u32,
-            c_filename.as_ptr(),
-            file_size,
-        ) };
+        let res = unsafe {
+            ((self.plugin_funcs).probe_can_play)(
+                data.as_ptr(),
+                buffer_len as u32,
+                c_filename.as_ptr(),
+                file_size,
+            )
+        };
 
         match res {
             0 => true,
@@ -78,7 +93,7 @@ pub struct Plugins {
 }
 
 impl Plugins {
-    pub fn new() -> Plugins{
+    pub fn new() -> Plugins {
         Plugins {
             decoder_plugins: Vec::new(),
             plugin_handler: DynamicReload::new(Some(vec!["."]), None, Search::Default),
@@ -86,8 +101,10 @@ impl Plugins {
     }
 
     fn add_plugin_lib(&mut self, name: &str, plugin: &Arc<Lib>) {
-        let func: Result<Symbol<extern "C" fn() -> *const ffi::HippoPlaybackPlugin>, ::std::io::Error> =
-            unsafe { plugin.lib.get(b"hippo_playback_plugin\0") };
+        let func: Result<
+            Symbol<extern "C" fn() -> *const ffi::HippoPlaybackPlugin>,
+            ::std::io::Error,
+        > = unsafe { plugin.lib.get(b"hippo_playback_plugin\0") };
 
         if let Ok(fun) = func {
             println!("Found playback plugin with callback data {:?}", fun());
@@ -100,8 +117,16 @@ impl Plugins {
             let plugin_funcs = HippoPlaybackPluginFFI {
                 api_version: native_plugin.api_version,
                 user_data: 0,
-                name: unsafe { CStr::from_ptr(native_plugin.name).to_string_lossy().into_owned() },
-                version: unsafe { CStr::from_ptr(native_plugin.version).to_string_lossy().into_owned() },
+                name: unsafe {
+                    CStr::from_ptr(native_plugin.name)
+                        .to_string_lossy()
+                        .into_owned()
+                },
+                version: unsafe {
+                    CStr::from_ptr(native_plugin.version)
+                        .to_string_lossy()
+                        .into_owned()
+                },
                 probe_can_play: native_plugin.probe_can_play.unwrap(),
                 supported_extensions: native_plugin.supported_extensions.unwrap(),
                 create: native_plugin.create.unwrap(),

@@ -1,3 +1,4 @@
+use crate::ffi;
 use crate::service::{FileWrapper, IoApi, MessageApi};
 use crate::song_db::SongDb;
 use messages::{MessageDecode, MessageEncode};
@@ -8,7 +9,6 @@ use std::mem::transmute;
 use std::os::raw::{c_char, c_void};
 use std::ptr;
 use std::slice;
-use crate::ffi;
 
 extern "C" fn file_exists_wrapper(priv_data: *mut ffi::HippoApiPrivData, target: *const i8) -> i32 {
     let file_api: &mut IoApi = unsafe { &mut *(priv_data as *mut IoApi) };
@@ -84,8 +84,7 @@ extern "C" fn file_open_wrapper(
         }
 
         Ok(f) => {
-            let file_wrapper: *mut c_void =
-                unsafe { transmute(Box::new(FileWrapper { file: f })) };
+            let file_wrapper: *mut c_void = unsafe { transmute(Box::new(FileWrapper { file: f })) };
             unsafe { *handle = file_wrapper };
             0
         }
@@ -107,7 +106,11 @@ extern "C" fn file_size_wrapper(handle: ffi::HippoIoHandle, size: *mut u64) -> i
     0
 }
 
-extern "C" fn file_read_wrapper(handle: ffi::HippoIoHandle, dest_data: *mut c_void, size: u64) -> i64 {
+extern "C" fn file_read_wrapper(
+    handle: ffi::HippoIoHandle,
+    dest_data: *mut c_void,
+    size: u64,
+) -> i64 {
     let file_wrapper: &mut FileWrapper = unsafe { &mut *(handle as *mut FileWrapper) };
     // TODO: Error handling
 
@@ -118,7 +121,11 @@ extern "C" fn file_read_wrapper(handle: ffi::HippoIoHandle, dest_data: *mut c_vo
     0
 }
 
-extern "C" fn file_seek_wrapper(handle: ffi::HippoIoHandle, _seek_type: u32, _seek_step: i64) -> i64 {
+extern "C" fn file_seek_wrapper(
+    handle: ffi::HippoIoHandle,
+    _seek_type: u32,
+    _seek_step: i64,
+) -> i64 {
     let _file_wrapper: &mut FileWrapper = unsafe { &mut *(handle as *mut FileWrapper) };
     0
 }
@@ -211,7 +218,10 @@ extern "C" fn message_write_blob(
     0
 }
 
-extern "C" fn message_write_array_count(priv_data: *mut ffi::HippoMessageEncode, count: i32) -> i32 {
+extern "C" fn message_write_array_count(
+    priv_data: *mut ffi::HippoMessageEncode,
+    count: i32,
+) -> i32 {
     let message: &mut MessageEncode = unsafe { &mut *(priv_data as *mut MessageEncode) };
     // TODO: Proper error handling
     message.write_array_len(count as u32).unwrap();
@@ -286,8 +296,10 @@ extern "C" fn message_decode_get_raw_ptr(
     0
 }
 
-extern "C" fn mesage_api_begin_request(priv_data: *mut ffi::HippoMessageAPI, id: *const i8) ->
-    *mut ffi::HippoMessageEncode {
+extern "C" fn mesage_api_begin_request(
+    priv_data: *mut ffi::HippoMessageAPI,
+    id: *const i8,
+) -> *mut ffi::HippoMessageEncode {
     let message_api: &mut MessageApi = unsafe { &mut *(priv_data as *mut MessageApi) };
     let name_id = unsafe { CStr::from_ptr(id as *const c_char) };
 
@@ -345,7 +357,10 @@ extern "C" fn mesage_api_request_new_id(priv_data: *mut ffi::HippoMessageAPI) ->
     message_api.request_new_id()
 }
 
-extern "C" fn mesage_api_end_message(priv_data: *mut ffi::HippoMessageAPI, message: *mut ffi::HippoMessageEncode) {
+extern "C" fn mesage_api_end_message(
+    priv_data: *mut ffi::HippoMessageAPI,
+    message: *mut ffi::HippoMessageEncode,
+) {
     let message_api: &mut MessageApi = unsafe { &mut *(priv_data as *mut MessageApi) };
     unsafe {
         let message: *mut MessageEncode = message as *mut MessageEncode;
@@ -417,7 +432,8 @@ impl ServiceApi {
 
         // Metadata service
 
-        let metadata_api = Box::into_raw(Box::new(SongDb::new())) as *mut ffi::HippoMetadataAPIPrivData;
+        let metadata_api =
+            Box::into_raw(Box::new(SongDb::new())) as *mut ffi::HippoMetadataAPIPrivData;
 
         let c_metadata_api = Box::new(ffi::HippoMetadataAPI {
             priv_data: metadata_api,
@@ -490,13 +506,13 @@ impl PluginService {
 
     pub fn get_message_api<'a>(&'a self) -> &'a MessageApi {
         let service_api: &ServiceApi =
-            unsafe { &*((*self.c_service_api).private_data  as *const ServiceApi) };
+            unsafe { &*((*self.c_service_api).private_data as *const ServiceApi) };
         service_api.get_message_api()
     }
 
     pub fn get_message_api_mut(&mut self) -> &mut MessageApi {
         let service_api: &mut ServiceApi =
-            unsafe { &mut *((*self.c_service_api).private_data  as *mut ServiceApi) };
+            unsafe { &mut *((*self.c_service_api).private_data as *mut ServiceApi) };
         service_api.get_message_api_mut()
     }
 }

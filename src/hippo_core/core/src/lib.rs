@@ -1,9 +1,9 @@
 use std::collections::HashMap;
-use std::os::raw::c_char;
-use std::path::Path;
 use std::ffi::CStr;
 use std::fs;
 use std::fs::File;
+use std::os::raw::c_char;
+use std::path::Path;
 
 /*
 use hippo_api;
@@ -24,14 +24,14 @@ mod playlist;
 mod plugin_handler;
 mod song_db;
 
-mod service;
 pub mod ffi;
+mod service;
 pub mod service_ffi;
 
 use audio::{HippoAudio, MusicInfo};
-use plugin_handler::Plugins;
 use playlist::Playlist;
-use service_ffi::{PluginService};
+use plugin_handler::Plugins;
+use service_ffi::PluginService;
 
 use std::io::Read;
 

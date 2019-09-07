@@ -38,12 +38,14 @@ impl HippoPlayback {
         filename: &str,
     ) -> Option<HippoPlayback> {
         let c_filename = CString::new(filename).unwrap();
-        let user_data = unsafe { ((plugin.plugin_funcs).create)(plugin_service.get_c_service_api()) } as u64;
+        let user_data =
+            unsafe { ((plugin.plugin_funcs).create)(plugin_service.get_c_service_api()) } as u64;
         let ptr_user_data = user_data as *mut c_void;
         let frame_size = 48000;
         //let frame_size = (((plugin.plugin_funcs).frame_size)(ptr_user_data)) as usize;
         // TODO: Verify that state is ok
-        let _open_state = unsafe { ((plugin.plugin_funcs).open)(ptr_user_data, c_filename.as_ptr()) };
+        let _open_state =
+            unsafe { ((plugin.plugin_funcs).open)(ptr_user_data, c_filename.as_ptr()) };
 
         Some(HippoPlayback {
             plugin_user_data: user_data,
@@ -63,11 +65,13 @@ impl Iterator for HippoPlayback {
         self.current_offset += 1;
 
         if self.current_offset >= self.frame_size {
-            self.frame_size = unsafe { ((self.plugin.plugin_funcs).read_data)(
-                self.plugin_user_data as *mut c_void,
-                self.out_data.as_slice().as_ptr() as *mut c_void,
-                48000 / 2,
-            ) as usize };
+            self.frame_size = unsafe {
+                ((self.plugin.plugin_funcs).read_data)(
+                    self.plugin_user_data as *mut c_void,
+                    self.out_data.as_slice().as_ptr() as *mut c_void,
+                    48000 / 2,
+                ) as usize
+            };
 
             self.current_offset = 0;
         }
