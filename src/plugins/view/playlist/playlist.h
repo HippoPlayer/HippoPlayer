@@ -5,6 +5,7 @@
 class QWidget;
 struct HippoMessageAPI;
 struct HippoServiceAPI;
+class QListWidget;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -20,6 +21,7 @@ public:
 
 private:
     const struct HippoMessageAPI* m_message_api = nullptr;
+    QListWidget* m_list = nullptr;
 };
 
 

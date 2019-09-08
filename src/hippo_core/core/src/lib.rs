@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::ffi::CStr;
 use std::fs;
 use std::fs::File;
-use std::os::raw::c_char;
+use std::os::raw::{c_char, c_void};
 use std::path::Path;
 
 /*
@@ -153,8 +153,96 @@ pub unsafe extern "C" fn hippo_play_file(_core: *mut HippoCore, filename: *const
     //println!("filename to play returned: {}", slice.to_str().unwrap());
 }
 
-/// Update the song db with a new entry
 #[no_mangle]
 pub extern "C" fn hippo_service_api_new() -> *const ffi::HippoServiceAPI {
     PluginService::new_c_api()
+}
+
+#[no_mangle]
+pub extern "C" fn hippo_message_api_new() -> *const ffi::HippoMessageAPI {
+    service_ffi::new_c_message_api()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn hippo_update_messages(
+    core: *mut HippoCore,
+    user_data: *const c_void,
+    count: u32,
+    get_messages: extern "C" fn(
+        user_data: *const c_void,
+        index: u32,
+    ) -> *const ffi::HippoMessageAPI,
+    send_messages: extern "C" fn(
+        user_data: *const c_void,
+        msg: *const ffi::HippoMessageDecode,
+        index: i32,
+    ),
+) {
+    /*
+    let core = &mut *core;
+    let count = count as usize;
+
+    let mut playlist_respones = Vec::new();
+    let mut player_action = None;
+
+    for msg_index in 0..count {
+        let messages = Service::get_message_api_from_c_api(get_messages(user_data, msg_index as u32));
+
+        for message in &messages.request_queue {
+            let mut message_dec = MessageDecode::new(&message.data).unwrap();
+
+            //
+            // Parse messages that affects both player and playlist
+            //
+            match message_dec.method {
+                "hippo_playlist_next_song" => {
+                    player_action = Some(PlayerAction::StartNextSong)
+                }
+                "hippo_playlist_select_song" => {
+                    player_action = Some(PlayerAction::StartSelectedSong)
+                }
+
+                _ => (),
+            }
+
+            core.playlist
+                .event(&mut message_dec)
+                .map(|reply| playlist_respones.push(reply));
+        }
+    }
+
+    // Update actions that affects player and playlists
+
+    player_action.map(|action| match action {
+        PlayerAction::StartNextSong => {
+            core.playlist
+                .get_next_song()
+                .map(|song| core.play_file(&song));
+        }
+
+        PlayerAction::StartSelectedSong => {
+            core.playlist
+                .get_current_song()
+                .map(|song| core.play_file(&song));
+        }
+    });
+
+    // Clear the queues for all the messages
+
+    for msg_index in 0..count {
+        let messages = Service::get_message_api_from_c_api_mut(get_messages(user_data, msg_index as u32));
+        messages.clear_queues();
+    }
+
+    for instance in &mut self.state.view_instance_states {
+        if let Some(ref mut service) = instance.plugin_service {
+            let messages = service.get_message_api_mut();
+            messages.clear_queues();
+        }
+    }
+
+    // Send back the replies from the playlist
+
+    self.send_messages_to_plugins(&playlist_respones);
+    */
 }

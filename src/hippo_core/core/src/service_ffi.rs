@@ -380,6 +380,24 @@ pub struct ServiceApi {
     pub c_message_api: *const ffi::HippoMessageAPI,
 }
 
+pub fn new_c_message_api() -> *const ffi::HippoMessageAPI {
+    let message_api = Box::into_raw(Box::new(MessageApi::new()));
+
+    let c_message_api = Box::new(ffi::HippoMessageAPI {
+        priv_data: message_api as *mut ffi::HippoMessageAPI,
+        begin_request: Some(message_api_begin_request),
+        begin_notification: Some(message_api_begin_notification),
+        end_message: Some(message_api_end_message),
+        playlist_next_song: Some(playlist_next_song),
+        playlist_prev_song: Some(playlist_prev_song),
+        stop_song: Some(stop_song),
+        play_song: Some(play_song),
+    });
+
+    Box::into_raw(c_message_api) as *const ffi::HippoMessageAPI
+}
+
+
 impl ServiceApi {
     fn get_c_io_api(&self) -> *const ffi::HippoIoAPI {
         self.c_io_api
@@ -399,16 +417,22 @@ impl ServiceApi {
         song_db
     }
 
-    fn get_message_api(&self) -> &MessageApi {
-        let api = self.get_c_message_api();
+    fn get_message_api_from_c_api(api: *const ffi::HippoMessageAPI) -> &'static MessageApi {
         let message_api: &MessageApi = unsafe { &*((*api).priv_data as *const MessageApi) };
         message_api
     }
 
-    fn get_message_api_mut(&mut self) -> &mut MessageApi {
-        let api = self.get_c_message_api();
+    fn get_message_api_from_c_api_mut(api: *const ffi::HippoMessageAPI) -> &'static mut MessageApi {
         let message_api: &mut MessageApi = unsafe { &mut *((*api).priv_data as *mut MessageApi) };
         message_api
+    }
+
+    fn get_message_api(&self) -> &MessageApi {
+        Self::get_message_api_from_c_api_mut(self.c_message_api)
+    }
+
+    fn get_message_api_mut(&mut self) -> &mut MessageApi {
+        Self::get_message_api_from_c_api_mut(self.c_message_api)
     }
 
     fn new() -> ServiceApi {
@@ -448,28 +472,10 @@ impl ServiceApi {
 
         let c_metadata_api: *const ffi::HippoMetadataAPI = unsafe { transmute(c_metadata_api) };
 
-        // Message API
-
-        let message_api = Box::into_raw(Box::new(MessageApi::new()));
-
-        let c_message_api = Box::new(ffi::HippoMessageAPI {
-            priv_data: message_api as *mut ffi::HippoMessageAPI,
-            begin_request: Some(message_api_begin_request),
-            begin_notification: Some(message_api_begin_notification),
-            end_message: Some(message_api_end_message),
-            //request_new_id: Some(message_api_request_new_id),
-            playlist_next_song: Some(playlist_next_song),
-            playlist_prev_song: Some(playlist_prev_song),
-            stop_song: Some(stop_song),
-            play_song: Some(play_song),
-        });
-
-        let c_message_api = Box::into_raw(c_message_api) as *const ffi::HippoMessageAPI;
-
         ServiceApi {
             c_io_api,
             c_metadata_api,
-            c_message_api,
+            c_message_api : new_c_message_api(),
         }
     }
 }

@@ -46,10 +46,10 @@ const char* ReSIDfp::getCredits()
         std::ostringstream ss;
         ss << "ReSIDfp V" << "2.0beta" << " Engine:\n";
         ss << "\t(C) 1999-2002 Simon White\n";
-        ss << "MOS6581 (SID) Emulation (ReSIDfp V" << residfp_version_string << "):\n";
+        ss << "MOS6581 (SID) Emulation (ReSIDfp V" << "2.0" << "):\n";
         ss << "\t(C) 1999-2002 Dag Lem\n";
         ss << "\t(C) 2005-2011 Antti S. Lankila\n";
-        ss << "\t(C) 2010-2015 Leandro Nini\n";
+        ss << "\t(C) 2010-2019 Leandro Nini\n";
         credits = ss.str();
     }
 

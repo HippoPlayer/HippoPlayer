@@ -141,6 +141,14 @@ typedef struct HippoMessageEncode {
 
 } HippoMessageEncode;
 
+// Defines to make it easier to use the HippoMessageEncode API
+
+#define HippoMessageEncode_get_id(msg) msg->get_id(api->priv_data)
+#define HippoMessageEncode_formatted_blob(msg, data, len) msg->write_formatted_blob(msg->priv_data, data, len)
+#define HippoMessageEncode_write_array_count(msg, value) msg->write_array_count(msg->priv_data, value)
+#define HippoMessageEncode_write_uint(msg, value) msg->write_uint(msg->priv_data, value)
+#define HippoMessageEncode_write_string(msg, value) msg->write_str(msg->priv_data, value)
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef struct HippoMessageDecode {

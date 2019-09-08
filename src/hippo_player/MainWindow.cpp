@@ -1,9 +1,13 @@
 #include "MainWindow.h"
-#include <QtCore/QDir>
 #include <QtCore/QDebug>
+#include <QtCore/QDir>
+#include <QtCore/QTimer>
 #include <QtCore/QPluginLoader>
 #include <QtWidgets/QBoxLayout>
+#include <QtWidgets/QFileDialog>
 #include <QtWidgets/QLabel>
+#include <QtWidgets/QMenuBar>
+#include "../../src/plugin_api/HippoPlugin.h"
 #include "../../src/plugin_api/HippoQtView.h"
 //#include "src/external/qt_advanced_docking_system/src/DockManager.h"
 //#include "src/external/qt_advanced_docking_system/src/DockWidget.h"
@@ -14,7 +18,9 @@
 
 MainWindow::MainWindow() : QMainWindow(0) {
     m_docking_manager = new ToolWindowManager;
+
     m_core = hippo_core_new();
+    m_general_messages = HippoServiceAPI_get_message_api(hippo_service_api_new(m_core), HIPPO_MESSAGE_API_VERSION);
 
     QVBoxLayout* layout = new QVBoxLayout;
     QWidget* main_widget = new QWidget;
@@ -24,26 +30,31 @@ MainWindow::MainWindow() : QMainWindow(0) {
 
     layout->QLayout::addWidget(m_docking_manager);
 
+    // Update code for processing the message queue
+    QTimer* timer = new QTimer(this);
+    connect(timer, &QTimer::timeout, this, &MainWindow::update_messages);
+    timer->start(5);
+
     /*
-	// Create example content label - this can be any application specific
-	// widget
-	QLabel* l = new QLabel();
-	l->setWordWrap(true);
-	l->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	l->setText(QStringLiteral("Lorem ipsum dolor sit amet, consectetuer adipiscing elit. "));
+        // Create example content label - this can be any application specific
+        // widget
+        QLabel* l = new QLabel();
+        l->setWordWrap(true);
+        l->setAlignment(Qt::AlignTop | Qt::AlignLeft);
+        l->setText(QStringLiteral("Lorem ipsum dolor sit amet, consectetuer adipiscing elit. "));
 
-	// Create a dock widget with the title Label 1 and set the created label
-	// as the dock widget content
-	ads::CDockWidget* DockWidget = new ads::CDockWidget(QStringLiteral("Label 1"));
-	DockWidget->setWidget(l);
+        // Create a dock widget with the title Label 1 and set the created label
+        // as the dock widget content
+        ads::CDockWidget* DockWidget = new ads::CDockWidget(QStringLiteral("Label 1"));
+        DockWidget->setWidget(l);
 
-	// Add the toggleViewAction of the dock widget to the menu to give
-	// the user the possibility to show the dock widget if it has been closed
-	//ui->menuView->addAction(DockWidget->toggleViewAction());
+        // Add the toggleViewAction of the dock widget to the menu to give
+        // the user the possibility to show the dock widget if it has been closed
+        //ui->menuView->addAction(DockWidget->toggleViewAction());
 
-	// Add the dock widget to the top dock widget area
-	m_docking_manager->addDockWidget(ads::TopDockWidgetArea, DockWidget);
-	*/
+        // Add the dock widget to the top dock widget area
+        m_docking_manager->addDockWidget(ads::TopDockWidgetArea, DockWidget);
+        */
 
     /*
     QVBoxLayout* layout = new QVBoxLayout;
@@ -55,7 +66,83 @@ MainWindow::MainWindow() : QMainWindow(0) {
     layout->addWidget(m_docking_manager);
     */
 
-    //resize(800, 600);
+    // resize(800, 600);
+
+    create_menus();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// This gets the message APIs to send down to the backend to process the messages there. Notice that we have special
+// messages queue at 0 which is sent from "non-plugins" such as adding files, etc. So in order to deal with that
+// we check for 0 and return that queue, otherwise we offset by 1 and return the view plugins
+
+const HippoMessageAPI* MainWindow::get_messages(void* this_, int index) {
+    MainWindow* main_win = (MainWindow*)this_;
+
+    if (index == 0) {
+        return main_win->m_general_messages;
+    } else {
+        return HippoServiceAPI_get_message_api(main_win->m_plugin_instances[index - 1].service_api,
+                                               HIPPO_MESSAGE_API_VERSION);
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void MainWindow::send_messages_to_ui(void* this_, const HippoMessageDecode* msg, int index) {
+    MainWindow* main_win = (MainWindow*)this_;
+
+    // We ignore message to the general queue right now
+    if (index == 0) {
+        return;
+    }
+
+    main_win->m_plugin_instances[index - 1].view_plugin->event(msg);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void MainWindow::update_messages() {
+    hippo_update_messages(m_core, this, m_plugin_instances.count() + 1, get_messages, send_messages_to_ui);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void MainWindow::create_menus() {
+    QMenu* file_menu = menuBar()->addMenu(QStringLiteral("&File"));
+
+    QAction* add_files = new QAction(tr("&Add files.."), this);
+    add_files->setShortcuts(QKeySequence::New);
+    add_files->setStatusTip(tr("Create a new file"));
+
+    file_menu->addAction(add_files);
+
+    // connect the menus
+
+    connect(add_files, &QAction::triggered, this, &MainWindow::add_files);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void MainWindow::add_files() {
+    QStringList filenames = QFileDialog::getOpenFileNames(this, QStringLiteral("Add files files"), QDir::currentPath(),
+                                                          QStringLiteral("All files (*.*)"));
+    if (filenames.isEmpty()) {
+        return;
+    }
+
+    HippoMessageEncode* add_files_msg = HippoMessageAPI_begin_request(m_general_messages, "hippo_playlist_add_urls");
+    HippoMessageEncode_write_array_count(add_files_msg, filenames.count());
+
+    for (auto& filename : filenames) {
+        QByteArray filename_data = filename.toUtf8();
+        const char* filename_utf8 = filename_data.constData();
+        HippoMessageEncode_write_string(add_files_msg, filename_utf8);
+
+        qDebug() << filename_utf8;
+    }
+
+    HippoMessageAPI_end_message(m_general_messages, add_files_msg);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -76,16 +163,14 @@ bool MainWindow::load_plugins(const QString& plugin_dir) {
     const QStringList entries = dir.entryList(QDir::Files);
     for (const QString& filename : entries) {
         // if filename doesn't contain lib extension or is core lib we skip
-        if (!filename.endsWith(&shared_extension, Qt::CaseSensitive) ||
-            filename.contains(&core_name)) {
+        if (!filename.endsWith(&shared_extension, Qt::CaseSensitive) || filename.contains(&core_name)) {
             continue;
         }
 
         QPluginLoader* plugin_loader = new QPluginLoader(dir.absoluteFilePath(filename));
         QJsonObject meta_data = plugin_loader->metaData();
 
-        QJsonValue plugin_name_obj =
-            meta_data.value(QStringLiteral("MetaData"));
+        QJsonValue plugin_name_obj = meta_data.value(QStringLiteral("MetaData"));
 
         if (plugin_name_obj == QJsonValue::Undefined) {
             delete plugin_loader;
@@ -146,10 +231,7 @@ QWidget* MainWindow::create_plugin_by_index(int index) {
         m_docking_manager->addToolWindow(widget, ToolWindowManager::LastUsedArea);
     }
 
-    m_plugin_instances.append({
-        view_plugin, service_api, widget
-    });
+    m_plugin_instances.append({view_plugin, service_api, widget});
 
     return nullptr;
 }
-
