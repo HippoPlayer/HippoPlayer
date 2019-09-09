@@ -1,8 +1,8 @@
 image: Visual Studio 2017
 
 install:
-  - appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
-  - rustup-init -yv --default-toolchain stable --default-host x86_64-pc-windows-msvc
+ - appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
+ - rustup-init -yv --default-toolchain stable --default-host x86_64-pc-windows-msvc
  - set QT5_LIB=C:\Qt\5.12.4\msvc2017_64\lib
  - set QT5_BIN=C:\Qt\5.12.4\msvc2017_64\bin
  - set QT5_INC=C:\Qt\5.12.4\msvc2017_64\include
