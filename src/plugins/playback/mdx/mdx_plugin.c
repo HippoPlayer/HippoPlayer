@@ -180,6 +180,13 @@ static int mdx_plugin_length(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void mdx_plugin_event(void* user_data, const struct HippoMessageDecode* message) {
+    (void)user_data;
+    (void)message;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static HippoPlaybackPlugin g_mdx_plugin = {
 	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
 	"MDX",
@@ -188,6 +195,7 @@ static HippoPlaybackPlugin g_mdx_plugin = {
 	mdx_plugin_supported_extensions,
 	mdx_plugin_create,
 	mdx_plugin_destroy,
+	mdx_plugin_event,
 	mdx_plugin_open,
 	mdx_plugin_close,
 	mdx_plugin_read_data,

@@ -295,6 +295,7 @@ typedef struct HippoPlaybackPlugin {
 	const char* (*supported_extensions)();
 	void* (*create)(const HippoServiceAPI* services);
 	int (*destroy)(void* user_data);
+	void (*event)(void* user_data, const struct HippoMessageDecode* message);
 	int (*open)(void* user_data, const char* buffer);
 	int (*close)(void* user_data);
 	int (*read_data)(void* user_data, void* dest, uint32_t max_sample_count);
@@ -302,6 +303,7 @@ typedef struct HippoPlaybackPlugin {
 	int (*save)(void* user_data, const struct HippoSaveAPI* save_api);
 	int (*load)(void* user_data, const struct HippoLoadAPI* load_api);
 } HippoPlaybackPlugin;
+
 
 #define HIPPO_PLAYBACK_PLUGIN_API_VERSION 1
 #define HIPPO_MESSAGE_API_VERSION 1

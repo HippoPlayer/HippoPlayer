@@ -175,6 +175,13 @@ static int vgm_length(void* userData) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void vgm_event(void* user_data, const struct HippoMessageDecode* message) {
+    (void)user_data;
+    (void)message;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static HippoPlaybackPlugin g_vgm_plugin = {
 	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
 	"VGM",
@@ -183,6 +190,7 @@ static HippoPlaybackPlugin g_vgm_plugin = {
 	vgm_supported_extensions,
 	vgm_create,
 	vgm_destroy,
+	vgm_event,
 	vgm_open,
 	vgm_close,
 	vgm_read_data,

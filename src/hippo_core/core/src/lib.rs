@@ -31,13 +31,19 @@ pub mod service_ffi;
 use audio::{HippoAudio, MusicInfo};
 use playlist::Playlist;
 use plugin_handler::Plugins;
-use service_ffi::PluginService;
+use service_ffi::{PluginService, ServiceApi};
+use messages::MessageDecode;
 
 use std::io::Read;
 
 #[derive(Default, Debug)]
 pub struct SongDb {
     data: HashMap<String, String>,
+}
+
+enum PlayerAction {
+    StartNextSong,
+    StartSelectedSong,
 }
 
 pub struct HippoCore {
@@ -172,13 +178,12 @@ pub unsafe extern "C" fn hippo_update_messages(
         user_data: *const c_void,
         index: u32,
     ) -> *const ffi::HippoMessageAPI,
-    send_messages: extern "C" fn(
+    _send_messages: extern "C" fn(
         user_data: *const c_void,
         msg: *const ffi::HippoMessageDecode,
         index: i32,
     ),
 ) {
-    /*
     let core = &mut *core;
     let count = count as usize;
 
@@ -186,9 +191,35 @@ pub unsafe extern "C" fn hippo_update_messages(
     let mut player_action = None;
 
     for msg_index in 0..count {
-        let messages = Service::get_message_api_from_c_api(get_messages(user_data, msg_index as u32));
+        let mut msgs = ServiceApi::get_message_api_from_c_api(get_messages(user_data, msg_index as u32));
+        let msg_count = msgs.read_stream.len();
 
-        for message in &messages.request_queue {
+        for _ in msg_count {
+            let message = msgs.pop().unwrap();
+            let mut message_dec = MessageDecode::new(&message.data).unwrap();
+
+            //
+            // Parse messages that affects both player and playlist
+            //
+            match message_dec.method {
+                "hippo_playlist_next_song" => {
+                    player_action = Some(PlayerAction::StartNextSong)
+                }
+                "hippo_playlist_select_song" => {
+                    player_action = Some(PlayerAction::StartSelectedSong)
+                }
+
+                _ => (),
+            }
+
+            core.playlist
+                .event(&mut message_dec)
+                .map(|reply| playlist_respones.push(reply));
+        }
+    }
+
+    for msgs in &messages {
+        for message in msgs {
             let mut message_dec = MessageDecode::new(&message.data).unwrap();
 
             //
@@ -227,22 +258,18 @@ pub unsafe extern "C" fn hippo_update_messages(
         }
     });
 
-    // Clear the queues for all the messages
+    // Remove the processed messages.
+    // TODO: Use a linear array/ringbuffer to we don't need this
 
     for msg_index in 0..count {
-        let messages = Service::get_message_api_from_c_api_mut(get_messages(user_data, msg_index as u32));
-        messages.clear_queues();
-    }
-
-    for instance in &mut self.state.view_instance_states {
-        if let Some(ref mut service) = instance.plugin_service {
-            let messages = service.get_message_api_mut();
-            messages.clear_queues();
+        let msgs = ServiceApi::get_message_api_from_c_api(get_messages(user_data, msg_index as u32));
+        for msg_remove in &messages[msg_index] {
+            msgs.remove_message(**msg_remove);
         }
     }
+*/
 
     // Send back the replies from the playlist
 
-    self.send_messages_to_plugins(&playlist_respones);
-    */
+    //self.send_messages_to_plugins(&playlist_respones);
 }

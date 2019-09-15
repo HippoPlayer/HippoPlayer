@@ -216,6 +216,13 @@ static int uade_length(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void uade_event(void* user_data, const struct HippoMessageDecode* message) {
+    (void)user_data;
+    (void)message;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static HippoPlaybackPlugin g_uade_plugin = {
 	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
 	"UADE",
@@ -224,6 +231,7 @@ static HippoPlaybackPlugin g_uade_plugin = {
 	uade_supported_extensions,
 	uade_create,
 	uade_destroy,
+	uade_event,
 	uade_open,
 	uade_close,
 	uade_read_data,

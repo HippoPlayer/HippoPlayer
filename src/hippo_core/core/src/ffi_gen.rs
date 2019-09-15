@@ -447,6 +447,12 @@ pub struct HippoPlaybackPlugin {
     pub destroy: ::std::option::Option<
         unsafe extern "C" fn(user_data: *mut ::std::os::raw::c_void) -> ::std::os::raw::c_int,
     >,
+    pub event: ::std::option::Option<
+        unsafe extern "C" fn(
+            user_data: *mut ::std::os::raw::c_void,
+            message: *const HippoMessageDecode,
+        ),
+    >,
     pub open: ::std::option::Option<
         unsafe extern "C" fn(
             user_data: *mut ::std::os::raw::c_void,

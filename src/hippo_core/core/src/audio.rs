@@ -5,21 +5,15 @@ use rodio::{Sink, Source};
 use std::ffi::CString;
 use std::os::raw::c_void;
 use std::time::Duration;
-//use std::ffi::CStr;
 
 use crate::service_ffi::PluginService;
-
-// #[derive(Clone)]
-// pub enum DecodeEvent {
-//    Position(usize),
-//    Data(Vec<u8>),
-// }
+use crate::service_ffi::MessageApi;
 
 #[derive(Clone)]
 pub struct HippoPlayback {
     plugin_user_data: u64,
     plugin: DecoderPlugin,
-    // temp_data: Vec<i16>,
+    incoming_messages: MessageApi,
     out_data: Vec<f32>,
     frame_size: usize,
     current_offset: usize, // sender: Sender<DecodeEvent>,
@@ -51,6 +45,7 @@ impl HippoPlayback {
             plugin_user_data: user_data,
             plugin: plugin.clone(),
             out_data: vec![0.0; frame_size],
+            incoming_messages: MessageApi::new(),
             frame_size: frame_size,
             current_offset: frame_size + 1, // sender: sender,
         })
@@ -63,6 +58,18 @@ impl Iterator for HippoPlayback {
     #[inline]
     fn next(&mut self) -> Option<f32> {
         self.current_offset += 1;
+        let message_count = self.incoming_messages.read_stream.len();
+
+        for _ in message_count {
+            let message = self.incoming_messages.read_stream.pop().unwrap();
+
+            if let Some(event_callback) = (self.plugin.plugin_funcs).event {
+                event_callback(
+                    self.plugin_user_data as *mut c_void,
+
+
+            }
+        }
 
         if self.current_offset >= self.frame_size {
             self.frame_size = unsafe {
@@ -146,7 +153,6 @@ impl HippoAudio {
 
         if let Some(pb) = playback {
             // TODO: Wrap this
-            //let title = service.get_song_db().get_key(filename, 0, "title").unwrap();
             let title = service
                 .get_song_db()
                 .get_key(filename, 0, "title")

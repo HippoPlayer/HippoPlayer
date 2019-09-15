@@ -155,6 +155,13 @@ static int tfmx_length(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void tfmx_event(void* user_data, const struct HippoMessageDecode* message) {
+    (void)user_data;
+    (void)message;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static HippoPlaybackPlugin g_tfmx_plugin = {
 	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
 	"TFMX",
@@ -163,6 +170,7 @@ static HippoPlaybackPlugin g_tfmx_plugin = {
 	tfmx_supported_extensions,
 	tfmx_create,
 	tfmx_destroy,
+	tfmx_event,
 	tfmx_open,
 	tfmx_close,
 	tfmx_read_data,

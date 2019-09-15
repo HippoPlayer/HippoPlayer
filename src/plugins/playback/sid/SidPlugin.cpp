@@ -187,6 +187,13 @@ static int sid_seek(void* user_data, int ms) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void sid_event(void* user_data, const struct HippoMessageDecode* message) {
+    (void)user_data;
+    (void)message;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static HippoPlaybackPlugin g_sid_plugin = {
 	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
 	"SID",
@@ -195,6 +202,7 @@ static HippoPlaybackPlugin g_sid_plugin = {
 	sid_supported_extensions,
 	sid_create,
 	sid_destroy,
+	sid_event,
 	sid_open,
 	sid_close,
 	sid_read_data,

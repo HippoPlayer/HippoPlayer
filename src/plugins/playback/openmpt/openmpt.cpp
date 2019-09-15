@@ -182,6 +182,13 @@ static int openmpt_length(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void openmpt_event(void* user_data, const struct HippoMessageDecode* message) {
+    (void)user_data;
+    (void)message;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static HippoPlaybackPlugin g_openmptPlugin = {
 	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
 	"libopenmpt",
@@ -190,6 +197,7 @@ static HippoPlaybackPlugin g_openmptPlugin = {
 	openmpt_supported_extensions,
 	openmpt_create,
 	openmpt_destroy,
+	openmpt_event,
 	openmpt_open,
 	openmpt_close,
 	openmpt_read_data,
@@ -197,6 +205,8 @@ static HippoPlaybackPlugin g_openmptPlugin = {
 	NULL,
 	NULL,
 };
+
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

@@ -81,6 +81,13 @@ static int dummy_plugin_seek(void* user_data, int ms) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void dummy_event(void* user_data, const struct HippoMessageDecode* message) {
+    (void)user_data;
+    (void)message;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static HippoPlaybackPlugin g_dummy_plugin = {
 	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
 	"dummy",
@@ -89,6 +96,7 @@ static HippoPlaybackPlugin g_dummy_plugin = {
 	dummy_supported_extensions,
 	dummy_create,
 	dummy_destroy,
+	dummy_event,
 	dummy_open,
 	dummy_close,
 	dummy_read_data,

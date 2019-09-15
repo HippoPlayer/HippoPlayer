@@ -4,11 +4,11 @@ use std::collections::HashMap;
 use std::fs;
 use std::fs::File;
 use std::io;
-
 use std::io::Read;
-
+use ringbuf;
 use messages;
 use messages::{MessageEncode, ValueWriteError};
+use ringbuf::{RingBuffer};
 
 pub struct IoApi {
     pub saved_allocs: HashMap<*const u8, Box<[u8]>>,
@@ -47,14 +47,19 @@ pub struct FileWrapper {
 
 pub struct MessageApi {
     request_id: u32,
-    pub request_queue: Vec<Box<messages::encode::Message>>,
+    pub read_stream: ringbuf::Consumer<Box<MessageEncode>>,
+    pub write_stream: ringbuf::Producer<Box<MessageEncode>>,
 }
 
 impl MessageApi {
     pub fn new() -> MessageApi {
+        let rb = RingBuffer::<Box<MessageEncode>>::new(256);
+        let (prod, cons) = rb.split();
+
         MessageApi {
             request_id: 0,
-            request_queue: Vec::new(),
+            write_stream: prod,
+            read_stream: cons,
         }
     }
 
@@ -79,12 +84,7 @@ impl MessageApi {
         id
     }
 
-    // TODO: Fix me
     pub fn end_message(&mut self, message: Box<MessageEncode>) {
-        self.request_queue.push(message);
-    }
-
-    pub fn clear_queues(&mut self) {
-        self.request_queue.clear();
+        self.write_stream.push(message).unwrap();
     }
 }

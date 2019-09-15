@@ -144,6 +144,13 @@ static int hively_length(void* userData) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void hively_event(void* user_data, const struct HippoMessageDecode* message) {
+    (void)user_data;
+    (void)message;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static HippoPlaybackPlugin g_hively_plugin = {
 	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
 	"Hively",
@@ -152,6 +159,7 @@ static HippoPlaybackPlugin g_hively_plugin = {
 	hively_supported_extensions,
 	hively_create,
 	hively_destroy,
+	hively_event,
 	hively_open,
 	hively_close,
 	hively_read_data,

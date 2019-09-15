@@ -24,6 +24,10 @@ pub struct HippoPlaybackPluginFFI {
     pub supported_extensions: unsafe extern "C" fn() -> *const c_char,
     pub create: unsafe extern "C" fn(services: *const ffi::HippoServiceAPI) -> *mut c_void,
     pub destroy: unsafe extern "C" fn(user_data: *mut c_void) -> i32,
+    pub event: Option<
+        unsafe extern "C" fn(user_data: *mut c_void, msg: *const ffi::HippoMessageDecode),
+    >,
+
     pub open: unsafe extern "C" fn(user_data: *mut c_void, buffer: *const c_char) -> i32,
     pub close: unsafe extern "C" fn(user_data: *mut c_void) -> i32,
     pub read_data: unsafe extern "C" fn(
@@ -130,6 +134,7 @@ impl Plugins {
                 probe_can_play: native_plugin.probe_can_play.unwrap(),
                 supported_extensions: native_plugin.supported_extensions.unwrap(),
                 create: native_plugin.create.unwrap(),
+                event: native_plugin.event,
                 destroy: native_plugin.destroy.unwrap(),
                 open: native_plugin.open.unwrap(),
                 close: native_plugin.close.unwrap(),
