@@ -184,6 +184,7 @@ pub unsafe extern "C" fn hippo_update_messages(
         index: i32,
     ),
 ) {
+    /*
     let core = &mut *core;
     let count = count as usize;
 
