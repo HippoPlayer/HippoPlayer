@@ -6,7 +6,7 @@ install:
  - set QT5_LIB=C:\Qt\5.12.4\msvc2017_64\lib
  - set QT5_BIN=C:\Qt\5.12.4\msvc2017_64\bin
  - set QT5_INC=C:\Qt\5.12.4\msvc2017_64\include
- - SET PATH=%PATH%;C:\Program Files (x86)\Rust\bin
+ - SET PATH=%PATH%;%USERPROFILE%\.cargo\bin
  - git submodule update --init --recursive
 build_script:
 - SET BUILD_DATE_ID=%DATE% %TIME%
