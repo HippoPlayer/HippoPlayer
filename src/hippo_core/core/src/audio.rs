@@ -7,13 +7,13 @@ use std::os::raw::c_void;
 use std::time::Duration;
 
 use crate::service_ffi::PluginService;
-use crate::service_ffi::MessageApi;
+//use crate::service_ffi::MessageApi;
 
 #[derive(Clone)]
 pub struct HippoPlayback {
     plugin_user_data: u64,
     plugin: DecoderPlugin,
-    incoming_messages: MessageApi,
+    //incoming_messages: MessageApi,
     out_data: Vec<f32>,
     frame_size: usize,
     current_offset: usize, // sender: Sender<DecodeEvent>,
@@ -45,7 +45,7 @@ impl HippoPlayback {
             plugin_user_data: user_data,
             plugin: plugin.clone(),
             out_data: vec![0.0; frame_size],
-            incoming_messages: MessageApi::new(),
+            //incoming_messages: MessageApi::new(),
             frame_size: frame_size,
             current_offset: frame_size + 1, // sender: sender,
         })
@@ -58,6 +58,7 @@ impl Iterator for HippoPlayback {
     #[inline]
     fn next(&mut self) -> Option<f32> {
         self.current_offset += 1;
+        /*
         let message_count = self.incoming_messages.read_stream.len();
 
         for _ in message_count {
@@ -70,6 +71,7 @@ impl Iterator for HippoPlayback {
 
             }
         }
+        */
 
         if self.current_offset >= self.frame_size {
             self.frame_size = unsafe {

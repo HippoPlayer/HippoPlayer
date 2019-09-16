@@ -85,6 +85,7 @@ impl MessageApi {
     }
 
     pub fn end_message(&mut self, message: Box<MessageEncode>) {
-        self.write_stream.push(message).unwrap();
+        //self.write_stream.push(message).unwrap();
+        self.write_stream.push(message);
     }
 }
