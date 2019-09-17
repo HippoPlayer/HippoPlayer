@@ -72,6 +72,61 @@ StaticLibrary {
 
 -----------------------------------------------------------------------------------------------------------------------
 
+StaticLibrary {
+	Name = "flatbuffers_lib",
+
+	Pass = "GenerateSources",
+
+	SourceDir = "src/external/flatbuffers",
+
+	Includes = {
+		"src/external/flatbuffers/include",
+	},
+
+	Sources = {
+		"src/code_generators.cpp",
+		"src/idl_parser.cpp",
+		"src/idl_gen_text.cpp",
+		"src/reflection.cpp",
+		"src/util.cpp",
+	},
+}
+
+Program {
+	Name = "flatc",
+
+	Pass = "GenerateSources",
+
+	SourceDir = "src/external/flatbuffers",
+
+	Includes = {
+		"src/external/flatbuffers/include",
+		"src/external/flatbuffers",
+	},
+
+	Sources = {
+		"src/idl_gen_cpp.cpp",
+		"src/idl_gen_dart.cpp",
+		"src/idl_gen_general.cpp",
+		"src/idl_gen_kotlin.cpp",
+		"src/idl_gen_go.cpp",
+		"src/idl_gen_js_ts.cpp",
+		"src/idl_gen_php.cpp",
+		"src/idl_gen_python.cpp",
+		"src/idl_gen_lobster.cpp",
+		"src/idl_gen_lua.cpp",
+		"src/idl_gen_rust.cpp",
+		"src/idl_gen_fbs.cpp",
+		"src/idl_gen_json_schema.cpp",
+		"src/flatc.cpp",
+		"src/flatc_main.cpp",
+	},
+
+	Depends = { "flatbuffers_lib" },
+}
+
+-----------------------------------------------------------------------------------------------------------------------
+
 SharedLibrary {
 	Name = "HivelyPlugin",
 
@@ -401,6 +456,10 @@ SharedLibrary {
 -----------------------------------------------------------------------------------------------------------------------
 -- Default plugins
 -----------------------------------------------------------------------------------------------------------------------
+
+-- Tools
+
+Default "flatc"
 
 -- Decoders
 

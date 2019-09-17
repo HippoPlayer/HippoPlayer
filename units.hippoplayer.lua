@@ -203,7 +203,7 @@ Program {
 
     Frameworks = { "Cocoa", "QtWidgets", "QtGui", "QtCore" },
 
-    Depends = { "hippo_core", "hippo_core_loader", "qt_addons" },
+    Depends = { "hippo_core", "hippo_core_loader", "qt_addons", "flatbuffers_lib" },
 }
 
 -----------------------------------------------------------------------------------------------------------------------
