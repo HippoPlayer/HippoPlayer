@@ -1,3 +1,5 @@
+INVALID don't read
+
 ## Message API description
 
 HippoPlayer uses [msgpack](https://msgpack.org) for internal and external commination. The idea is the external programs can both listen in and send commands to HippoPlayer. Also while this adds a slightly overhead for plugins internally with in the program the flexibility and the extensibility of the feature makes up for it. In general the overhead should be petty small as it's mainly mem-copies internally in the program and should hopefully stay in cache most of the time.

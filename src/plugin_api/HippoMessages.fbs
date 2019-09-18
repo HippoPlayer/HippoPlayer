@@ -1,0 +1,21 @@
+// Messages internal and external messages based on Flatbuffers
+
+table HippoNextSong {
+}
+
+table HippoSelectSong {
+  name: string;
+}
+
+union MessageType {
+  next_song: HippoNextSong,
+  select_song: HippoNextSong,
+}
+
+table HippoMessage {
+  id: byte;
+  message: MessageType;
+  user_data: string;
+}
+
+root_type HippoMessage;
