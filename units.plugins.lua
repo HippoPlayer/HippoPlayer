@@ -138,6 +138,7 @@ SharedLibrary {
 		"src/plugins/playback/hively/HivelyPlugin.c",
 		"src/plugins/playback/hively/replayer/hvl_replay.c"
 	},
+
 }
 
 -----------------------------------------------------------------------------------------------------------------------
@@ -448,6 +449,8 @@ SharedLibrary {
 		{ "wsock32.lib", "kernel32.lib", "user32.lib", "gdi32.lib", "Comdlg32.lib",
 		  "Advapi32.lib", "Qt5Gui.lib", "Qt5Core.lib", "Qt5Widgets.lib"; Config = "win64-*-*" },
 	},
+
+	Depends = { "flatbuffers_lib" },
 }
 
 SharedLibrary {

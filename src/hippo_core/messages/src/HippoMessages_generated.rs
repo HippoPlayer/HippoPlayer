@@ -243,19 +243,13 @@ impl<'a> HippoMessage<'a> {
       if let Some(x) = args.user_data { builder.add_user_data(x); }
       if let Some(x) = args.message { builder.add_message(x); }
       builder.add_message_type(args.message_type);
-      builder.add_id(args.id);
       builder.finish()
     }
 
-    pub const VT_ID: flatbuffers::VOffsetT = 4;
-    pub const VT_MESSAGE_TYPE: flatbuffers::VOffsetT = 6;
-    pub const VT_MESSAGE: flatbuffers::VOffsetT = 8;
-    pub const VT_USER_DATA: flatbuffers::VOffsetT = 10;
+    pub const VT_MESSAGE_TYPE: flatbuffers::VOffsetT = 4;
+    pub const VT_MESSAGE: flatbuffers::VOffsetT = 6;
+    pub const VT_USER_DATA: flatbuffers::VOffsetT = 8;
 
-  #[inline]
-  pub fn id(&self) -> i8 {
-    self._tab.get::<i8>(HippoMessage::VT_ID, Some(0)).unwrap()
-  }
   #[inline]
   pub fn message_type(&self) -> MessageType {
     self._tab.get::<MessageType>(HippoMessage::VT_MESSAGE_TYPE, Some(MessageType::NONE)).unwrap()
@@ -291,7 +285,6 @@ impl<'a> HippoMessage<'a> {
 }
 
 pub struct HippoMessageArgs<'a> {
-    pub id: i8,
     pub message_type: MessageType,
     pub message: Option<flatbuffers::WIPOffset<flatbuffers::UnionWIPOffset>>,
     pub user_data: Option<flatbuffers::WIPOffset<&'a  str>>,
@@ -300,7 +293,6 @@ impl<'a> Default for HippoMessageArgs<'a> {
     #[inline]
     fn default() -> Self {
         HippoMessageArgs {
-            id: 0,
             message_type: MessageType::NONE,
             message: None,
             user_data: None,
@@ -312,10 +304,6 @@ pub struct HippoMessageBuilder<'a: 'b, 'b> {
   start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
 impl<'a: 'b, 'b> HippoMessageBuilder<'a, 'b> {
-  #[inline]
-  pub fn add_id(&mut self, id: i8) {
-    self.fbb_.push_slot::<i8>(HippoMessage::VT_ID, id, 0);
-  }
   #[inline]
   pub fn add_message_type(&mut self, message_type: MessageType) {
     self.fbb_.push_slot::<MessageType>(HippoMessage::VT_MESSAGE_TYPE, message_type, MessageType::NONE);

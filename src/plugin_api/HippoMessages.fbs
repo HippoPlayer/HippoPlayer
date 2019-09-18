@@ -13,7 +13,6 @@ union MessageType {
 }
 
 table HippoMessage {
-  id: byte;
   message: MessageType;
   user_data: string;
 }

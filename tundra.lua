@@ -85,6 +85,7 @@ local gcc_env = {
             gcc_opts,
             "-std=c++11",
             "-I$(QT5_INC)",
+            "-Isrc/external/flatbuffers/include",
         },
     },
 

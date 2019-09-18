@@ -128,14 +128,10 @@ inline flatbuffers::Offset<HippoSelectSong> CreateHippoSelectSongDirect(
 
 struct HippoMessage FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_ID = 4,
-    VT_MESSAGE_TYPE = 6,
-    VT_MESSAGE = 8,
-    VT_USER_DATA = 10
+    VT_MESSAGE_TYPE = 4,
+    VT_MESSAGE = 6,
+    VT_USER_DATA = 8
   };
-  int8_t id() const {
-    return GetField<int8_t>(VT_ID, 0);
-  }
   MessageType message_type() const {
     return static_cast<MessageType>(GetField<uint8_t>(VT_MESSAGE_TYPE, 0));
   }
@@ -153,7 +149,6 @@ struct HippoMessage FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<int8_t>(verifier, VT_ID) &&
            VerifyField<uint8_t>(verifier, VT_MESSAGE_TYPE) &&
            VerifyOffset(verifier, VT_MESSAGE) &&
            VerifyMessageType(verifier, message(), message_type()) &&
@@ -166,9 +161,6 @@ struct HippoMessage FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 struct HippoMessageBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_id(int8_t id) {
-    fbb_.AddElement<int8_t>(HippoMessage::VT_ID, id, 0);
-  }
   void add_message_type(MessageType message_type) {
     fbb_.AddElement<uint8_t>(HippoMessage::VT_MESSAGE_TYPE, static_cast<uint8_t>(message_type), 0);
   }
@@ -192,7 +184,6 @@ struct HippoMessageBuilder {
 
 inline flatbuffers::Offset<HippoMessage> CreateHippoMessage(
     flatbuffers::FlatBufferBuilder &_fbb,
-    int8_t id = 0,
     MessageType message_type = MessageType_NONE,
     flatbuffers::Offset<void> message = 0,
     flatbuffers::Offset<flatbuffers::String> user_data = 0) {
@@ -200,20 +191,17 @@ inline flatbuffers::Offset<HippoMessage> CreateHippoMessage(
   builder_.add_user_data(user_data);
   builder_.add_message(message);
   builder_.add_message_type(message_type);
-  builder_.add_id(id);
   return builder_.Finish();
 }
 
 inline flatbuffers::Offset<HippoMessage> CreateHippoMessageDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    int8_t id = 0,
     MessageType message_type = MessageType_NONE,
     flatbuffers::Offset<void> message = 0,
     const char *user_data = nullptr) {
   auto user_data__ = user_data ? _fbb.CreateString(user_data) : 0;
   return CreateHippoMessage(
       _fbb,
-      id,
       message_type,
       message,
       user_data__);

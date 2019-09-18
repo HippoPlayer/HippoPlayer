@@ -5,6 +5,7 @@
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QWidget>
 #include "../../../plugin_api/HippoPlugin.h"
+#include "../../../plugin_api/HippoMessages.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -44,6 +45,11 @@ QWidget* PlayerView::create(struct HippoServiceAPI* service_api) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void PlayerView::prev_song() {
+    flatbuffers::FlatBufferBuilder builder(1024);
+    auto message = CreateHippoMessageDirect(
+        builder, MessageType_select_song,
+        CreateHippoSelectSongDirect(builder, "test").Union());
+
     HippoMessage_playlist_prev_song(m_message_api);
 }
 
