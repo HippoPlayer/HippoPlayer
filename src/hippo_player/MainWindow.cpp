@@ -12,7 +12,9 @@
 //#include "src/external/qt_advanced_docking_system/src/DockManager.h"
 //#include "src/external/qt_advanced_docking_system/src/DockWidget.h"
 #include "src/external/toolwindowmanager/src/ToolWindowManager.h"
-#include "src/hippo_core/native/hippo_core.h"
+extern "C" {
+	#include "src/hippo_core/native/hippo_core.h"
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

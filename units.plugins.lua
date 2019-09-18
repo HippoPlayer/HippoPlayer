@@ -442,7 +442,12 @@ SharedLibrary {
 	Sources = {
 	    "src/plugins/view/player/player.cpp",
         gen_moc("src/plugins/view/player/player.h"),
-	}
+	},
+
+	Libs = {
+		{ "wsock32.lib", "kernel32.lib", "user32.lib", "gdi32.lib", "Comdlg32.lib",
+		  "Advapi32.lib", "Qt5Gui.lib", "Qt5Core.lib", "Qt5Widgets.lib"; Config = "win64-*-*" },
+	},
 }
 
 SharedLibrary {
@@ -450,7 +455,12 @@ SharedLibrary {
 	Sources = {
 	    "src/plugins/view/playlist/playlist.cpp",
         gen_moc("src/plugins/view/playlist/playlist.h"),
-	}
+	},
+
+	Libs = {
+		{ "wsock32.lib", "kernel32.lib", "user32.lib", "gdi32.lib", "Comdlg32.lib",
+		  "Advapi32.lib", "Qt5Gui.lib", "Qt5Core.lib", "Qt5Widgets.lib"; Config = "win64-*-*" },
+	},
 }
 
 -----------------------------------------------------------------------------------------------------------------------

@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct HippoCore;
 struct HippoServiceAPI;
 struct HippoMessageAPI;
@@ -25,3 +29,8 @@ extern HippoCoreDrop hippo_core_drop;
 extern HippoPlayFile hippo_play_file;
 extern HippoServiceApiNew hippo_service_api_new;
 extern HippoUpdateMessages hippo_update_messages;
+
+#ifdef __cplusplus
+}
+#endif
+

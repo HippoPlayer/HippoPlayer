@@ -34,15 +34,34 @@ static struct {
     NULL
 };
 
+// not used on Win32 so can be anything
+#define RTLD_NOW 0
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+WCHAR* convert_utf8_to_wide(const char* input) { 
+	int len = MultiByteToWideChar(CP_UTF8, 0, input, -1, NULL, 0);
+	WCHAR* output = (WCHAR*)malloc(len + 4);
+	memset(output, 0, len + 4);
+	MultiByteToWideChar(CP_UTF8, 0, input, -1, output, len);
+
+	return output;
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void* dlopen(const char* filename, int flags) {
 	(void)flags;
-    HINSTANCE inst = LoadLibrary(filename);
+
+	WCHAR* wide_filename = convert_utf8_to_wide(filename);
+
+    HINSTANCE inst = LoadLibrary(wide_filename);
     if (inst == NULL) {
         s_dll_err.lasterror = GetLastError();
         s_dll_err.err_rutin = "dlopen";
     }
+
+    free(wide_filename);
 
     return (void*)inst;
 }
@@ -65,11 +84,15 @@ int dlclose(void* handle) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void* dlsym(void* handle, const char* name) {
+	WCHAR* wide_name = convert_utf8_to_wide(name);
+
     FARPROC fp = GetProcAddress ((HINSTANCE)handle, name);
     if (!fp) {
         s_dll_err.lasterror = GetLastError ();
         s_dll_err.err_rutin = "dlsym";
     }
+	free(wide_name);
+
     return (void *)(intptr_t)fp;
 }
 
@@ -79,7 +102,7 @@ const char* dlerror() {
 	static char errstr[256];
 
     if (s_dll_err.lasterror) {
-        sprintf (errstr, "%s error #%ld", var.err_rutin, var.lasterror);
+        sprintf (errstr, "%s error #%ld", s_dll_err.err_rutin, s_dll_err.lasterror);
         return errstr;
     } else {
         return NULL;
@@ -92,7 +115,7 @@ const char* dlerror() {
 extern int HippoCore_load() {
 #if defined(HIPPO_MAC)
 	const char* core_name = "libhippo_core.dylib";
-#elif defined(HIPPO_WIN)
+#elif defined(_WIN32)
 	const char* core_name = "hippo_core.dll";
 #else
 	// temp temp
