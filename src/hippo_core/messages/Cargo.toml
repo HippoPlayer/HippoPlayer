@@ -4,8 +4,4 @@ version = "0.1.0"
 authors = ["Daniel Collin <daniel@collin.com>"]
 
 [dependencies]
-rmp = "0.8.7"
-rmp-serde = "0.13.7"
-serde = "1.0"
-serde_derive = "1.0"
-num-traits = "0.1"
+flatbuffers = "0.6.0"

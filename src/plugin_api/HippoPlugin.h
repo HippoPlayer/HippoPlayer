@@ -128,77 +128,19 @@ typedef struct HippoMetadataAPI {
 #define HippoMetadata_get_key(api, buffer, type, error_code) api->get_key(api->priv_data, buffer, type, error_code)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-typedef struct HippoMessageEncode {
-    struct HippoMessageEncode* priv_data;
-
-	// Low-level APIs. Should only be used in case of custom commands
-	uint32_t (*get_id)(struct HippoMessageEncode* handle);
-	int (*write_formatted_blob)(struct HippoMessageEncode* handle, const void* data, int size);
-	int (*write_array_count)(struct HippoMessageEncode* handle, int count);
-	int (*write_uint)(struct HippoMessageEncode* handle, uint64_t value);
-	int (*write_str)(struct HippoMessageEncode* handle, const char* input);
-
-} HippoMessageEncode;
-
-// Defines to make it easier to use the HippoMessageEncode API
-
-#define HippoMessageEncode_get_id(msg) msg->get_id(api->priv_data)
-#define HippoMessageEncode_formatted_blob(msg, data, len) msg->write_formatted_blob(msg->priv_data, data, len)
-#define HippoMessageEncode_write_array_count(msg, value) msg->write_array_count(msg->priv_data, value)
-#define HippoMessageEncode_write_uint(msg, value) msg->write_uint(msg->priv_data, value)
-#define HippoMessageEncode_write_string(msg, value) msg->write_str(msg->priv_data, value)
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-typedef struct HippoMessageDecode {
-    struct HippoMessageDecode* priv_data;
-
-	uint32_t (*get_id)(struct HippoMessageDecode* handle);
-	const char* (*get_method)(struct HippoMessageDecode* handle);
-	int (*get_raw_ptr)(struct HippoMessageDecode* handle, void** ptr, uint64_t* len);
-
-	int (*read_array_count)(struct HippoMessageDecode* handle, int* count);
-	int (*read_uint)(struct HippoMessageDecode* handle, uint64_t* value);
-	int (*read_str_len)(struct HippoMessageDecode* handle, uint64_t* size);
-	int (*read_str)(struct HippoMessageDecode* handle, char* dest);
-
-} HippoMessageDecode;
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Plugins can use the MessageAPI to subscribe to events and post data that is being requested
 
 typedef struct HippoMessageAPI {
     // Private internal data
 	struct HippoMessageAPI* priv_data;
-	// void (*subscribe)(struct HippoMessageAPI* priv_data, void* instance_data, const char* type);
-	// void (*unsubscribe)(struct HippoMessageAPI* priv_data, void* instance_data, const char* type);
-
-	struct HippoMessageEncode* (*begin_request)(struct HippoMessageAPI* priv_data, const char* id);
-	struct HippoMessageEncode* (*begin_notification)(struct HippoMessageAPI* priv_data, const char* id);
-	void (*end_message)(struct HippoMessageAPI* priv_data, HippoMessageEncode* message);
-
-	// High-level functions to make it easier to play songs
-	// Switch to next song in the playlist
-	void (*playlist_next_song)(struct HippoMessageAPI* handle);
-	// Switch to previous song in the playlist
-	void (*playlist_prev_song)(struct HippoMessageAPI* handle);
-	// Stop playing of the current song
-	void (*stop_song)(struct HippoMessageAPI* handle);
-	// Play the current song
-	void (*play_song)(struct HippoMessageAPI* handle);
+	// Send message (data must be a Flatbuffer formatted message)
+	void (*send)(struct HippoMessageAPI* handle, const unsigned char* data, int len);
 
 } HippoMessageAPI;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define HippoMessageAPI_begin_request(api, id) api->begin_request(api->priv_data, id)
-#define HippoMessageAPI_end_message(api, message) api->end_message(api->priv_data, message)
-
-#define HippoMessage_playlist_next_song(api) api->playlist_next_song(api->priv_data)
-#define HippoMessage_playlist_prev_song(api) api->playlist_next_song(api->priv_data)
-#define HippoMessage_stop_song(api) api->stop_song(api->priv_data)
-#define HippoMessage_play_song(api) api->play_song(api->priv_data)
+#define HippoMessageAPI_send(api, data, len) api->send(api->priv_data, data, len)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -295,7 +237,7 @@ typedef struct HippoPlaybackPlugin {
 	const char* (*supported_extensions)();
 	void* (*create)(const HippoServiceAPI* services);
 	int (*destroy)(void* user_data);
-	void (*event)(void* user_data, const struct HippoMessageDecode* message);
+	void (*event)(void* user_data, const unsigned char* data, int len);
 	int (*open)(void* user_data, const char* buffer);
 	int (*close)(void* user_data);
 	int (*read_data)(void* user_data, void* dest, uint32_t max_sample_count);

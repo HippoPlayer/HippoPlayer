@@ -360,6 +360,12 @@ SharedLibrary {
 		"PACKAGE_URL=\"\"",
 	},
 
+	Env	= {
+       CXXOPTS = {
+			{ "-Wno-deprecated-declarations"; Config = "linux-*-*" },
+		},
+	},
+
 	Includes = {
 	    "src/plugin_api",
 		"src/plugins/playback/sid/libsidplayfp/src",

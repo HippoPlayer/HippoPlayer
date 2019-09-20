@@ -7,7 +7,9 @@
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QMenuBar>
+#include <flatbuffers/flatbuffers.h>
 #include "../../src/plugin_api/HippoPlugin.h"
+#include "../../src/plugin_api/HippoMessages.h"
 #include "../../src/plugin_api/HippoQtView.h"
 //#include "src/external/qt_advanced_docking_system/src/DockManager.h"
 //#include "src/external/qt_advanced_docking_system/src/DockWidget.h"
@@ -133,18 +135,23 @@ void MainWindow::add_files() {
         return;
     }
 
-    HippoMessageEncode* add_files_msg = HippoMessageAPI_begin_request(m_general_messages, "hippo_playlist_add_urls");
-    HippoMessageEncode_write_array_count(add_files_msg, filenames.count());
+    std::vector<flatbuffers::Offset<flatbuffers::String>> urls;
+    flatbuffers::FlatBufferBuilder builder(4096);
+
+    urls.reserve(filenames.length());
 
     for (auto& filename : filenames) {
         QByteArray filename_data = filename.toUtf8();
         const char* filename_utf8 = filename_data.constData();
-        HippoMessageEncode_write_string(add_files_msg, filename_utf8);
+
+        urls.push_back(builder.CreateString(filename_utf8));
 
         qDebug() << filename_utf8;
     }
 
-    HippoMessageAPI_end_message(m_general_messages, add_files_msg);
+    builder.Finish(CreateHippoMessageDirect(builder, MessageType_add_urls,
+        CreateHippoAddUrls(builder, builder.CreateVector(urls)).Union()));
+    HippoMessageAPI_send(m_general_messages, builder.GetBufferPointer(), builder.GetSize());
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

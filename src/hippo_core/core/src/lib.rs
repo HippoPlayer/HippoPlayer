@@ -32,7 +32,7 @@ use audio::{HippoAudio, MusicInfo};
 use playlist::Playlist;
 use plugin_handler::Plugins;
 use service_ffi::{PluginService, ServiceApi};
-use messages::MessageDecode;
+use messages::*;
 
 use std::io::Read;
 
@@ -180,23 +180,28 @@ pub unsafe extern "C" fn hippo_update_messages(
     ) -> *const ffi::HippoMessageAPI,
     _send_messages: extern "C" fn(
         user_data: *const c_void,
-        msg: *const ffi::HippoMessageDecode,
+        data: *const u8,
+        len: i32,
         index: i32,
     ),
 ) {
-    /*
     let core = &mut *core;
     let count = count as usize;
 
-    let mut playlist_respones = Vec::new();
-    let mut player_action = None;
+    //let mut playlist_respones = Vec::new();
+    //let mut player_action = None;
 
     for msg_index in 0..count {
-        let mut msgs = ServiceApi::get_message_api_from_c_api(get_messages(user_data, msg_index as u32));
+        let msgs = ServiceApi::get_message_api_from_c_api_mut(get_messages(user_data, msg_index as u32));
         let msg_count = msgs.read_stream.len();
 
-        for _ in msg_count {
-            let message = msgs.pop().unwrap();
+        for _ in 0..msg_count {
+            let message_data = msgs.read_stream.pop().unwrap();
+            let message = get_root_as_hippo_message(&message_data);
+
+            println!("Got message {:?}", message.message_type());
+
+            /*
             let mut message_dec = MessageDecode::new(&message.data).unwrap();
 
             //
@@ -216,9 +221,10 @@ pub unsafe extern "C" fn hippo_update_messages(
             core.playlist
                 .event(&mut message_dec)
                 .map(|reply| playlist_respones.push(reply));
+            */
         }
     }
-
+    /*
     for msgs in &messages {
         for message in msgs {
             let mut message_dec = MessageDecode::new(&message.data).unwrap();
@@ -242,9 +248,10 @@ pub unsafe extern "C" fn hippo_update_messages(
                 .map(|reply| playlist_respones.push(reply));
         }
     }
+    */
 
     // Update actions that affects player and playlists
-
+/*
     player_action.map(|action| match action {
         PlayerAction::StartNextSong => {
             core.playlist

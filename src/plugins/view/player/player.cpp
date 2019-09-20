@@ -46,27 +46,24 @@ QWidget* PlayerView::create(struct HippoServiceAPI* service_api) {
 
 void PlayerView::prev_song() {
     flatbuffers::FlatBufferBuilder builder(1024);
-    auto message = CreateHippoMessageDirect(
-        builder, MessageType_select_song,
-        CreateHippoSelectSongDirect(builder, "test").Union());
-
-    HippoMessage_playlist_prev_song(m_message_api);
+    builder.Finish(CreateHippoMessageDirect(builder, MessageType_prev_song, CreateHippoPrevSong(builder).Union()));
+    HippoMessageAPI_send(m_message_api, builder.GetBufferPointer(), builder.GetSize());
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void PlayerView::next_song() {
-    HippoMessage_playlist_next_song(m_message_api);
+    //HippoMessage_playlist_next_song(m_message_api);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void PlayerView::stop_song() {
-    HippoMessage_stop_song(m_message_api);
+    //HippoMessage_stop_song(m_message_api);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void PlayerView::play_song() {
-    HippoMessage_play_song(m_message_api);
+    //HippoMessage_play_song(m_message_api);
 }

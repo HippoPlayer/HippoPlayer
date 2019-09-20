@@ -6,8 +6,6 @@ use std::fs::File;
 use std::io;
 use std::io::Read;
 use ringbuf;
-use messages;
-use messages::{MessageEncode, ValueWriteError};
 use ringbuf::{RingBuffer};
 
 pub struct IoApi {
@@ -46,45 +44,22 @@ pub struct FileWrapper {
 }
 
 pub struct MessageApi {
-    request_id: u32,
-    pub read_stream: ringbuf::Consumer<Box<MessageEncode>>,
-    pub write_stream: ringbuf::Producer<Box<MessageEncode>>,
+    pub read_stream: ringbuf::Consumer<Box<[u8]>>,
+    pub write_stream: ringbuf::Producer<Box<[u8]>>,
 }
 
 impl MessageApi {
     pub fn new() -> MessageApi {
-        let rb = RingBuffer::<Box<MessageEncode>>::new(256);
+        let rb = RingBuffer::<Box<[u8]>>::new(256);
         let (prod, cons) = rb.split();
 
         MessageApi {
-            request_id: 0,
             write_stream: prod,
             read_stream: cons,
         }
     }
 
-    pub fn begin_request(&mut self, name: &str) -> Result<Box<MessageEncode>, ValueWriteError> {
-        let message = MessageEncode::new_request(name, self.request_id)?;
-        self.request_id += 1;
-        Ok(Box::new(message))
-    }
-
-    pub fn begin_notification(
-        &mut self,
-        name: &str,
-    ) -> Result<Box<MessageEncode>, ValueWriteError> {
-        let message = MessageEncode::new_notification(name, self.request_id)?;
-        self.request_id += 1;
-        Ok(Box::new(message))
-    }
-
-    pub fn request_new_id(&mut self) -> u32 {
-        let id = self.request_id;
-        self.request_id += 1;
-        id
-    }
-
-    pub fn end_message(&mut self, message: Box<MessageEncode>) {
+    pub fn send(&mut self, message: Box<[u8]>) {
         //self.write_stream.push(message).unwrap();
         self.write_stream.push(message);
     }

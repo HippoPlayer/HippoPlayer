@@ -3,13 +3,30 @@
 table HippoNextSong {
 }
 
+table HippoPrevSong {
+}
+
+table HippoPlaySong {
+}
+
+table HippoStopSong {
+}
+
 table HippoSelectSong {
   name: string;
 }
 
+table HippoAddUrls {
+  urls: [string];
+}
+
 union MessageType {
   next_song: HippoNextSong,
+  prev_song: HippoPrevSong,
+  play_song: HippoPlaySong,
+  stop_song: HippoStopSong,
   select_song: HippoNextSong,
+  add_urls: HippoAddUrls,
 }
 
 table HippoMessage {

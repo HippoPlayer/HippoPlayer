@@ -1,7 +1,6 @@
 use crate::ffi;
 use crate::service::{FileWrapper, IoApi, MessageApi};
 use crate::song_db::SongDb;
-use messages::{MessageEncode};
 use std::collections::HashMap;
 use std::ffi::CStr;
 use std::io::Read;
@@ -203,175 +202,13 @@ extern "C" fn metadata_set_key_with_encoding(
     -1
 }
 
-unsafe extern "C" fn message_get_id(_priv_data: *mut ffi::HippoMessageEncode) -> u32 {
-    0
-}
-
-extern "C" fn message_write_blob(
-    priv_data: *mut ffi::HippoMessageEncode,
-    data: *const c_void,
-    len: i32,
-) -> i32 {
-    let message: &mut MessageEncode = unsafe { &mut *(priv_data as *mut MessageEncode) };
-    let data = unsafe { slice::from_raw_parts(data as *const u8, len as usize) };
-    message.write_blob(data);
-    0
-}
-
-extern "C" fn message_write_array_count(
-    priv_data: *mut ffi::HippoMessageEncode,
-    count: i32,
-) -> i32 {
-    let message: &mut MessageEncode = unsafe { &mut *(priv_data as *mut MessageEncode) };
-    // TODO: Proper error handling
-    message.write_array_len(count as u32).unwrap();
-    1
-}
-
-extern "C" fn message_write_uint(priv_data: *mut ffi::HippoMessageEncode, count: u64) -> i32 {
-    let message: &mut MessageEncode = unsafe { &mut *(priv_data as *mut MessageEncode) };
-    // TODO: Proper error handling
-    message.write_uint(count).unwrap();
-    1
-}
-
-extern "C" fn message_write_str(priv_data: *mut ffi::HippoMessageEncode, name: *const i8) -> i32 {
-    let message: &mut MessageEncode = unsafe { &mut *(priv_data as *mut MessageEncode) };
-    let name_id = unsafe { CStr::from_ptr(name as *const c_char) };
-    // TODO: Proper error handling
-    message.write_str(&name_id.to_string_lossy()).unwrap();
-    1
-}
-
-fn simple_message(priv_data: *mut ffi::HippoMessageAPI, name: &str) {
+extern "C" fn message_api_send(priv_data: *mut ffi::HippoMessageAPI, data: *const u8, len: i32) {
     let message_api: &mut MessageApi = unsafe { &mut *(priv_data as *mut MessageApi) };
-    println!("Sending message {}", name);
-    let message = message_api.begin_request(name).unwrap();
-    message_api.end_message(message);
-}
-
-extern "C" fn playlist_next_song(priv_data: *mut ffi::HippoMessageAPI) {
-    simple_message(priv_data, "hippo_playlist_next_song");
-}
-
-extern "C" fn playlist_prev_song(priv_data: *mut ffi::HippoMessageAPI) {
-    simple_message(priv_data, "hippo_playlist_prev_song");
-}
-
-extern "C" fn stop_song(priv_data: *mut ffi::HippoMessageAPI) {
-    simple_message(priv_data, "hippo_stop_song");
-}
-
-extern "C" fn play_song(priv_data: *mut ffi::HippoMessageAPI) {
-    simple_message(priv_data, "hippo_play_song");
-}
-
-/*
-extern "C" fn message_decode_get_id(priv_data: *const c_void) -> u32 {
-    let message: &MessageDecode = unsafe { &*(priv_data as *mut MessageDecode) };
-    message.id
-}
-
-extern "C" fn message_decode_get_method(priv_data: *const c_void) -> *const i8 {
-    let message: &MessageDecode = unsafe { &*(priv_data as *mut MessageDecode) };
-    message.method.as_ptr() as *const i8
-}
-
-extern "C" fn message_decode_get_raw_ptr(
-    priv_data: *const c_void,
-    data: *mut *const c_void,
-    len: *mut u64,
-) -> i32 {
-    let message: &MessageDecode = unsafe { &*(priv_data as *mut MessageDecode) };
-
-    let data_t = message.data.get_ref();
-    let pos = message.data.position() as usize;
-    let data_range = &data_t[pos..];
+    let data = unsafe { slice::from_raw_parts(data, len as usize) };
 
     unsafe {
-        let data_ptr: *const c_void = data_range.as_ptr() as *const c_void;
-        *data = data_ptr;
-        *len = data_range.len() as u64;
+        message_api.send(data.to_vec().into_boxed_slice());
     }
-
-    0
-}
-*/
-
-extern "C" fn message_api_begin_request(
-    priv_data: *mut ffi::HippoMessageAPI,
-    id: *const i8,
-) -> *mut ffi::HippoMessageEncode {
-    let message_api: &mut MessageApi = unsafe { &mut *(priv_data as *mut MessageApi) };
-    let name_id = unsafe { CStr::from_ptr(id as *const c_char) };
-
-    println!("message_api_begin_request");
-
-    // TODO: Proper error handling
-    let message = message_api
-        .begin_request(&name_id.to_string_lossy())
-        .unwrap();
-
-    let message_ptr: *mut ffi::HippoMessageEncode = unsafe { transmute(message) };
-
-    let message_c = Box::new(ffi::HippoMessageEncode {
-        priv_data: message_ptr,
-        get_id: Some(message_get_id),
-        write_formatted_blob: Some(message_write_blob),
-        write_array_count: Some(message_write_array_count),
-        write_uint: Some(message_write_uint),
-        write_str: Some(message_write_str),
-    });
-
-    Box::into_raw(message_c) as *mut ffi::HippoMessageEncode
-}
-
-extern "C" fn message_api_begin_notification(
-    priv_data: *mut ffi::HippoMessageAPI,
-    id: *const i8,
-) -> *mut ffi::HippoMessageEncode {
-    let message_api: &mut MessageApi = unsafe { &mut *(priv_data as *mut MessageApi) };
-    let name_id = unsafe { CStr::from_ptr(id as *const c_char) };
-
-    println!("message_api_begin_notification");
-
-    // TODO: Proper error handling
-    let message = message_api
-        .begin_notification(&name_id.to_string_lossy())
-        .unwrap();
-
-    let message_ptr = Box::into_raw(message) as *mut ffi::HippoMessageEncode;
-
-    let message_c = Box::new(ffi::HippoMessageEncode {
-        priv_data: message_ptr,
-        get_id: Some(message_get_id),
-        write_formatted_blob: Some(message_write_blob),
-        write_array_count: Some(message_write_array_count),
-        write_uint: Some(message_write_uint),
-        write_str: Some(message_write_str),
-    });
-
-    Box::into_raw(message_c) as *mut ffi::HippoMessageEncode
-}
-
-/*
-extern "C" fn message_api_request_new_id(priv_data: *mut ffi::HippoMessageAPI) -> u32 {
-    let message_api: &mut MessageApi = unsafe { &mut *(priv_data as *mut MessageApi) };
-    message_api.request_new_id()
-}
-*/
-
-extern "C" fn message_api_end_message(
-    priv_data: *mut ffi::HippoMessageAPI,
-    message: *mut ffi::HippoMessageEncode,
-) {
-    let message_api: &mut MessageApi = unsafe { &mut *(priv_data as *mut MessageApi) };
-    unsafe {
-        let message: *mut MessageEncode = message as *mut MessageEncode;
-        message_api.end_message(Box::from_raw(message));
-    }
-
-    println!("message_api_end_message")
 }
 
 pub struct ServiceApi {
@@ -385,13 +222,7 @@ pub fn new_c_message_api() -> *const ffi::HippoMessageAPI {
 
     let c_message_api = Box::new(ffi::HippoMessageAPI {
         priv_data: message_api as *mut ffi::HippoMessageAPI,
-        begin_request: Some(message_api_begin_request),
-        begin_notification: Some(message_api_begin_notification),
-        end_message: Some(message_api_end_message),
-        playlist_next_song: Some(playlist_next_song),
-        playlist_prev_song: Some(playlist_prev_song),
-        stop_song: Some(stop_song),
-        play_song: Some(play_song),
+        send: Some(message_api_send),
     });
 
     Box::into_raw(c_message_api) as *const ffi::HippoMessageAPI
@@ -422,7 +253,7 @@ impl ServiceApi {
         message_api
     }
 
-    fn get_message_api_from_c_api_mut(api: *const ffi::HippoMessageAPI) -> &'static mut MessageApi {
+    pub fn get_message_api_from_c_api_mut(api: *const ffi::HippoMessageAPI) -> &'static mut MessageApi {
         let message_api: &mut MessageApi = unsafe { &mut *((*api).priv_data as *mut MessageApi) };
         message_api
     }

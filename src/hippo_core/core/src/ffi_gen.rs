@@ -292,99 +292,15 @@ pub struct HippoMetadataAPI {
 #[doc = ""]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct HippoMessageEncode {
-    pub priv_data: *mut HippoMessageEncode,
-    pub get_id: ::std::option::Option<unsafe extern "C" fn(handle: *mut HippoMessageEncode) -> u32>,
-    pub write_formatted_blob: ::std::option::Option<
-        unsafe extern "C" fn(
-            handle: *mut HippoMessageEncode,
-            data: *const ::std::os::raw::c_void,
-            size: ::std::os::raw::c_int,
-        ) -> ::std::os::raw::c_int,
-    >,
-    pub write_array_count: ::std::option::Option<
-        unsafe extern "C" fn(
-            handle: *mut HippoMessageEncode,
-            count: ::std::os::raw::c_int,
-        ) -> ::std::os::raw::c_int,
-    >,
-    pub write_uint: ::std::option::Option<
-        unsafe extern "C" fn(handle: *mut HippoMessageEncode, value: u64) -> ::std::os::raw::c_int,
-    >,
-    pub write_str: ::std::option::Option<
-        unsafe extern "C" fn(
-            handle: *mut HippoMessageEncode,
-            input: *const ::std::os::raw::c_char,
-        ) -> ::std::os::raw::c_int,
-    >,
-}
-#[doc = ""]
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct HippoMessageDecode {
-    pub priv_data: *mut HippoMessageDecode,
-    pub get_id: ::std::option::Option<unsafe extern "C" fn(handle: *mut HippoMessageDecode) -> u32>,
-    pub get_method: ::std::option::Option<
-        unsafe extern "C" fn(handle: *mut HippoMessageDecode) -> *const ::std::os::raw::c_char,
-    >,
-    pub get_raw_ptr: ::std::option::Option<
-        unsafe extern "C" fn(
-            handle: *mut HippoMessageDecode,
-            ptr: *mut *mut ::std::os::raw::c_void,
-            len: *mut u64,
-        ) -> ::std::os::raw::c_int,
-    >,
-    pub read_array_count: ::std::option::Option<
-        unsafe extern "C" fn(
-            handle: *mut HippoMessageDecode,
-            count: *mut ::std::os::raw::c_int,
-        ) -> ::std::os::raw::c_int,
-    >,
-    pub read_uint: ::std::option::Option<
-        unsafe extern "C" fn(
-            handle: *mut HippoMessageDecode,
-            value: *mut u64,
-        ) -> ::std::os::raw::c_int,
-    >,
-    pub read_str_len: ::std::option::Option<
-        unsafe extern "C" fn(
-            handle: *mut HippoMessageDecode,
-            size: *mut u64,
-        ) -> ::std::os::raw::c_int,
-    >,
-    pub read_str: ::std::option::Option<
-        unsafe extern "C" fn(
-            handle: *mut HippoMessageDecode,
-            dest: *mut ::std::os::raw::c_char,
-        ) -> ::std::os::raw::c_int,
-    >,
-}
-#[doc = ""]
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
 pub struct HippoMessageAPI {
     pub priv_data: *mut HippoMessageAPI,
-    pub begin_request: ::std::option::Option<
+    pub send: ::std::option::Option<
         unsafe extern "C" fn(
-            priv_data: *mut HippoMessageAPI,
-            id: *const ::std::os::raw::c_char,
-        ) -> *mut HippoMessageEncode,
+            handle: *mut HippoMessageAPI,
+            data: *const ::std::os::raw::c_uchar,
+            len: ::std::os::raw::c_int,
+        ),
     >,
-    pub begin_notification: ::std::option::Option<
-        unsafe extern "C" fn(
-            priv_data: *mut HippoMessageAPI,
-            id: *const ::std::os::raw::c_char,
-        ) -> *mut HippoMessageEncode,
-    >,
-    pub end_message: ::std::option::Option<
-        unsafe extern "C" fn(priv_data: *mut HippoMessageAPI, message: *mut HippoMessageEncode),
-    >,
-    pub playlist_next_song:
-        ::std::option::Option<unsafe extern "C" fn(handle: *mut HippoMessageAPI)>,
-    pub playlist_prev_song:
-        ::std::option::Option<unsafe extern "C" fn(handle: *mut HippoMessageAPI)>,
-    pub stop_song: ::std::option::Option<unsafe extern "C" fn(handle: *mut HippoMessageAPI)>,
-    pub play_song: ::std::option::Option<unsafe extern "C" fn(handle: *mut HippoMessageAPI)>,
 }
 #[doc = ""]
 #[repr(C)]
@@ -450,7 +366,8 @@ pub struct HippoPlaybackPlugin {
     pub event: ::std::option::Option<
         unsafe extern "C" fn(
             user_data: *mut ::std::os::raw::c_void,
-            message: *const HippoMessageDecode,
+            data: *const ::std::os::raw::c_uchar,
+            len: ::std::os::raw::c_int,
         ),
     >,
     pub open: ::std::option::Option<

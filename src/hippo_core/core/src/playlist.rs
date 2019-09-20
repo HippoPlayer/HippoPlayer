@@ -1,9 +1,9 @@
-use messages::{AddUrls, MessageDecode, MessageEncode};
 use serde_derive::{Deserialize, Serialize};
 use serde_json;
 use std::fs::File;
 use std::io;
 use std::io::{BufReader, BufWriter};
+use messages::HippoMessage;
 
 ///
 /// Metadata for each entry. We will likely stuff more things here later on.
@@ -35,7 +35,8 @@ impl Playlist {
     ///
     /// Handle incoming events
     ///
-    pub fn event(&mut self, msg: &mut MessageDecode) -> Option<MessageEncode> {
+    pub fn event(&mut self, _msg: &HippoMessage) {
+        /*
         match msg.method {
             "hippo_playlist_select_song" => self.select_song(msg),
 
@@ -70,6 +71,7 @@ impl Playlist {
 
             _ => None,
         }
+        */
     }
 
     ///
@@ -93,7 +95,8 @@ impl Playlist {
     ///
     /// Get loaded urls
     ///
-    pub fn get_loaded_urls(&self) -> MessageEncode {
+    pub fn get_loaded_urls(&self) /*-> MessageEncode*/ {
+        /*
         let mut request = MessageEncode::new_request("hippo_playlist_load", 0).unwrap();
 
         request.write_map_len(self.entries.len() as u32).unwrap();
@@ -104,12 +107,14 @@ impl Playlist {
         }
 
         request
+        */
     }
 
     ///
     /// Get the next song to play
     ///
-    fn select_song(&mut self, msg: &mut MessageDecode) -> Option<MessageEncode> {
+    fn select_song(&mut self, msg: &HippoMessage)  {
+        /*
         let row: u32 = msg.read_int().unwrap();
         let url_name = msg.read_str().unwrap();
 
@@ -124,6 +129,7 @@ impl Playlist {
         reply.write_str(&url_name).unwrap();
 
         Some(reply)
+        */
     }
 
     ///
