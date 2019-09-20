@@ -36,14 +36,12 @@ use messages::*;
 
 use std::io::Read;
 
+type MsgGetCallback = extern "C" fn(user_data: *const c_void, index: u32) -> *const ffi::HippoMessageAPI;
+type MsgSendCallback = extern "C" fn(user_data: *const c_void, data: *const u8, len: i32, index: i32);
+
 #[derive(Default, Debug)]
 pub struct SongDb {
     data: HashMap<String, String>,
-}
-
-enum PlayerAction {
-    StartNextSong,
-    StartSelectedSong,
 }
 
 pub struct HippoCore {
@@ -108,6 +106,66 @@ impl HippoCore {
         println!("Unable to find plugin to support {}", filename);
 
         MusicInfo::default()
+    }
+
+    ///
+    /// Post messages to the frontend and make sure to not send to self
+    ///
+    fn send_msgs(user_data: *const c_void, send_messages: MsgSendCallback, data: &[u8], count: usize, current_index: usize) {
+        for msg_index in 0..count {
+            if current_index != msg_index {
+                send_messages(user_data, data.as_ptr(), data.len() as i32, msg_index as i32);
+            }
+        }
+    }
+
+    fn update_messages(&mut self, user_data: *const c_void, count: u32, get_messages: MsgGetCallback, send_messages: MsgSendCallback) {
+        let count = count as usize;
+
+        // Send the UI messages to playlist, each-other and to the backends
+
+        for msg_index in 0..count {
+            let msgs = ServiceApi::get_message_api_from_c_api_mut(get_messages(user_data, msg_index as u32));
+            let msg_count = msgs.read_stream.len();
+
+            for _ in 0..msg_count {
+                let message_data = msgs.read_stream.pop().unwrap();
+                let message = get_root_as_hippo_message(&message_data);
+
+                // Send messages to the frontend
+                Self::send_msgs(user_data, send_messages, &message_data, count, msg_index);
+
+                // Send the message to to playlist and
+                self.playlist.event(&message).map(|reply| {
+                    Self::send_msgs(user_data, send_messages, &reply, count, std::usize::MAX);
+                });
+
+                // If we have active playbacks we push the ui messages to the messages plugin
+                // instance so the backend can reply to them at some point
+
+                for playback in &mut self.audio.playbacks {
+                    playback.write_stream.push(message_data.to_vec().into_boxed_slice()).unwrap();
+                }
+            }
+        }
+
+        // If current song has been updated with messages above we try starting playing the new one
+
+        if self.playlist.is_current_song_updated() {
+            self.playlist
+                .get_current_song()
+                .map(|song| self.play_file(&song));
+        }
+
+        // send the messages from the backends to the UI
+
+        let backend_messages = self.plugin_service.get_message_api_mut();
+        let msg_count = backend_messages.read_stream.len();
+
+        for _ in 0..msg_count {
+            let message_data = backend_messages.read_stream.pop().unwrap();
+            Self::send_msgs(user_data, send_messages, &message_data, count, std::usize::MAX);
+        }
     }
 }
 
@@ -174,110 +232,9 @@ pub unsafe extern "C" fn hippo_update_messages(
     core: *mut HippoCore,
     user_data: *const c_void,
     count: u32,
-    get_messages: extern "C" fn(
-        user_data: *const c_void,
-        index: u32,
-    ) -> *const ffi::HippoMessageAPI,
-    _send_messages: extern "C" fn(
-        user_data: *const c_void,
-        data: *const u8,
-        len: i32,
-        index: i32,
-    ),
-) {
+    get_messages: MsgGetCallback,
+    send_messages: MsgSendCallback) {
+
     let core = &mut *core;
-    let count = count as usize;
-
-    //let mut playlist_respones = Vec::new();
-    //let mut player_action = None;
-
-    for msg_index in 0..count {
-        let msgs = ServiceApi::get_message_api_from_c_api_mut(get_messages(user_data, msg_index as u32));
-        let msg_count = msgs.read_stream.len();
-
-        for _ in 0..msg_count {
-            let message_data = msgs.read_stream.pop().unwrap();
-            let message = get_root_as_hippo_message(&message_data);
-
-            println!("Got message {:?}", message.message_type());
-
-            /*
-            let mut message_dec = MessageDecode::new(&message.data).unwrap();
-
-            //
-            // Parse messages that affects both player and playlist
-            //
-            match message_dec.method {
-                "hippo_playlist_next_song" => {
-                    player_action = Some(PlayerAction::StartNextSong)
-                }
-                "hippo_playlist_select_song" => {
-                    player_action = Some(PlayerAction::StartSelectedSong)
-                }
-
-                _ => (),
-            }
-
-            core.playlist
-                .event(&mut message_dec)
-                .map(|reply| playlist_respones.push(reply));
-            */
-        }
-    }
-    /*
-    for msgs in &messages {
-        for message in msgs {
-            let mut message_dec = MessageDecode::new(&message.data).unwrap();
-
-            //
-            // Parse messages that affects both player and playlist
-            //
-            match message_dec.method {
-                "hippo_playlist_next_song" => {
-                    player_action = Some(PlayerAction::StartNextSong)
-                }
-                "hippo_playlist_select_song" => {
-                    player_action = Some(PlayerAction::StartSelectedSong)
-                }
-
-                _ => (),
-            }
-
-            core.playlist
-                .event(&mut message_dec)
-                .map(|reply| playlist_respones.push(reply));
-        }
-    }
-    */
-
-    // Update actions that affects player and playlists
-/*
-    player_action.map(|action| match action {
-        PlayerAction::StartNextSong => {
-            core.playlist
-                .get_next_song()
-                .map(|song| core.play_file(&song));
-        }
-
-        PlayerAction::StartSelectedSong => {
-            core.playlist
-                .get_current_song()
-                .map(|song| core.play_file(&song));
-        }
-    });
-
-    // Remove the processed messages.
-    // TODO: Use a linear array/ringbuffer to we don't need this
-
-    for msg_index in 0..count {
-        let msgs = ServiceApi::get_message_api_from_c_api(get_messages(user_data, msg_index as u32));
-        for msg_remove in &messages[msg_index] {
-            msgs.remove_message(**msg_remove);
-        }
-    }
-*/
-
-    // Send back the replies from the playlist
-
-    //self.send_messages_to_plugins(&playlist_respones);
+    core.update_messages(user_data, count, get_messages, send_messages);
 }

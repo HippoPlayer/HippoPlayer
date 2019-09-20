@@ -93,7 +93,7 @@ const HippoMessageAPI* MainWindow::get_messages(void* this_, int index) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void MainWindow::send_messages_to_ui(void* this_, const HippoMessageDecode* msg, int index) {
+void MainWindow::send_messages_to_ui(void* this_, const unsigned char* data, int len, int index) {
     MainWindow* main_win = (MainWindow*)this_;
 
     // We ignore message to the general queue right now
@@ -101,7 +101,9 @@ void MainWindow::send_messages_to_ui(void* this_, const HippoMessageDecode* msg,
         return;
     }
 
-    main_win->m_plugin_instances[index - 1].view_plugin->event(msg);
+    printf("message to ui %d\n", index - 1);
+
+    main_win->m_plugin_instances[index - 1].view_plugin->event(data, len);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

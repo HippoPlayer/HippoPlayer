@@ -7,10 +7,9 @@ extern "C" {
 struct HippoCore;
 struct HippoServiceAPI;
 struct HippoMessageAPI;
-struct HippoMessageDecode;
 
 typedef const struct HippoMessageAPI* (*HippoGetMessages)(void* user_data, int index);
-typedef void (*HippoSendMessage)(void* user_data, const struct HippoMessageDecode* msg, int index);
+typedef void (*HippoSendMessage)(void* user_data, const unsigned char* data, int len, int index);
 
 typedef struct HippoCore* (*HippoCoreNew)();
 typedef void (*HippoCoreDrop)(struct HippoCore* core);

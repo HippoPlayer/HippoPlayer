@@ -44,6 +44,12 @@ QWidget* PlayerView::create(struct HippoServiceAPI* service_api) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void PlayerView::event(const unsigned char* data, int len) {
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void PlayerView::prev_song() {
     flatbuffers::FlatBufferBuilder builder(1024);
     builder.Finish(CreateHippoMessageDirect(builder, MessageType_prev_song, CreateHippoPrevSong(builder).Union()));

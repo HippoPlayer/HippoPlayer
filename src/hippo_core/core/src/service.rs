@@ -61,6 +61,6 @@ impl MessageApi {
 
     pub fn send(&mut self, message: Box<[u8]>) {
         //self.write_stream.push(message).unwrap();
-        self.write_stream.push(message);
+        self.write_stream.push(message).unwrap();
     }
 }

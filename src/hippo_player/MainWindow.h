@@ -8,7 +8,6 @@ class ToolWindowManager;
 class HippoQtView;
 struct HippoServiceAPI;
 struct HippoCore;
-struct HippoMessageDecode;
 struct HippoMessageAPI;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -24,7 +23,7 @@ public:
 private:
     // Callback into the core to get internal messages
     static const HippoMessageAPI* get_messages(void* this_, int index);
-    static void send_messages_to_ui(void* this_, const HippoMessageDecode* msg, int index);
+    static void send_messages_to_ui(void* this_, const unsigned char* data, int len, int index);
 
     void create_menus();
 

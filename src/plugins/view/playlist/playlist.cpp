@@ -23,8 +23,10 @@ QWidget* PlaylistView::create(struct HippoServiceAPI* service_api) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void PlaylistView::event(const HippoMessageDecode* message) {
-    (void)message;
+void PlaylistView::event(const unsigned char* data, int len) {
+    printf("got event!\n");
+    (void)data;
+    (void)len;
 }
 
 

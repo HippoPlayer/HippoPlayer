@@ -3,7 +3,6 @@
 #include <QtCore/QObject>
 
 struct HippoServiceAPI;
-struct HippoMessageDecode;
 
 class HippoQtView {
 public:
@@ -13,7 +12,7 @@ public:
     virtual QWidget* create(struct HippoServiceAPI* service_api) = 0;
 
     // Events get sent with messages such as files added to playlist, new song etc
-    virtual void event(const HippoMessageDecode* message) = 0;
+    virtual void event(const unsigned char* data, int len) = 0;
 };
 
 

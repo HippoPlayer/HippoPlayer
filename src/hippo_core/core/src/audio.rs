@@ -7,16 +7,21 @@ use std::os::raw::c_void;
 use std::time::Duration;
 
 use crate::service_ffi::PluginService;
-//use crate::service_ffi::MessageApi;
+use ringbuf::{RingBuffer, Producer, Consumer};
 
-#[derive(Clone)]
 pub struct HippoPlayback {
     plugin_user_data: u64,
     plugin: DecoderPlugin,
-    //incoming_messages: MessageApi,
+    read_stream: Consumer<Box<[u8]>>,
     out_data: Vec<f32>,
     frame_size: usize,
     current_offset: usize, // sender: Sender<DecodeEvent>,
+}
+
+pub struct Instance {
+    plugin_user_data: u64,
+    plugin: DecoderPlugin,
+    pub write_stream: Producer<Box<[u8]>>,
 }
 
 #[derive(Default)]
@@ -30,7 +35,7 @@ impl HippoPlayback {
         plugin: &DecoderPlugin,
         plugin_service: &PluginService,
         filename: &str,
-    ) -> Option<HippoPlayback> {
+    ) -> Option<(HippoPlayback, Instance)> {
         let c_filename = CString::new(filename).unwrap();
         let user_data =
             unsafe { ((plugin.plugin_funcs).create)(plugin_service.get_c_service_api()) } as u64;
@@ -41,14 +46,22 @@ impl HippoPlayback {
         let _open_state =
             unsafe { ((plugin.plugin_funcs).open)(ptr_user_data, c_filename.as_ptr()) };
 
-        Some(HippoPlayback {
+        let rb = RingBuffer::<Box<[u8]>>::new(256);
+        let (prod, cons) = rb.split();
+
+        Some((HippoPlayback {
             plugin_user_data: user_data,
             plugin: plugin.clone(),
             out_data: vec![0.0; frame_size],
-            //incoming_messages: MessageApi::new(),
+            read_stream: cons,
             frame_size: frame_size,
-            current_offset: frame_size + 1, // sender: sender,
-        })
+            current_offset: frame_size + 1 },
+            Instance {
+                write_stream: prod,
+                plugin_user_data: user_data,
+                plugin: plugin.clone(),
+            })
+        )
     }
 }
 
@@ -113,7 +126,7 @@ impl Source for HippoPlayback {
 
 pub struct HippoAudio {
     audio_sink: rodio::Sink,
-    playbacks: Vec<HippoPlayback>, // audio_endpoint: rodio::Endpoint,
+    pub playbacks: Vec<Instance>, // audio_endpoint: rodio::Endpoint,
 }
 
 impl HippoAudio {
@@ -169,8 +182,8 @@ impl HippoAudio {
                 duration: length,
             };
 
-            self.playbacks.push(pb.clone());
-            self.audio_sink.append(pb);
+            self.audio_sink.append(pb.0);
+            self.playbacks.push(pb.1);
 
             info
         } else {

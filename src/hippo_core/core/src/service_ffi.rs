@@ -205,10 +205,7 @@ extern "C" fn metadata_set_key_with_encoding(
 extern "C" fn message_api_send(priv_data: *mut ffi::HippoMessageAPI, data: *const u8, len: i32) {
     let message_api: &mut MessageApi = unsafe { &mut *(priv_data as *mut MessageApi) };
     let data = unsafe { slice::from_raw_parts(data, len as usize) };
-
-    unsafe {
-        message_api.send(data.to_vec().into_boxed_slice());
-    }
+    message_api.send(data.to_vec().into_boxed_slice());
 }
 
 pub struct ServiceApi {

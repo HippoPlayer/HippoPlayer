@@ -16,7 +16,7 @@ class PlayerView : public QObject, HippoQtView
 
 public:
     QWidget* create(struct HippoServiceAPI* service_api);
-    void event(const HippoMessageDecode* message) { (void)message; }
+    void event(const unsigned char* data, int len);
 
     Q_SLOT void next_song();
     Q_SLOT void stop_song();

@@ -17,7 +17,7 @@ class PlaylistView : public QObject, HippoQtView
 
 public:
     QWidget* create(struct HippoServiceAPI* service_api);
-    void event(const HippoMessageDecode* message);
+    void event(const unsigned char* data, int len);
 
 private:
     const struct HippoMessageAPI* m_message_api = nullptr;
