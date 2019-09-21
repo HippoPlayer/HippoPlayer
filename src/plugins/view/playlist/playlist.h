@@ -6,6 +6,7 @@ class QWidget;
 struct HippoMessageAPI;
 struct HippoServiceAPI;
 class QListWidget;
+class QListWidgetItem;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -22,6 +23,8 @@ public:
 private:
     const struct HippoMessageAPI* m_message_api = nullptr;
     QListWidget* m_list = nullptr;
+
+    Q_SLOT void item_double_clicked(QListWidgetItem* item);
 };
 
 

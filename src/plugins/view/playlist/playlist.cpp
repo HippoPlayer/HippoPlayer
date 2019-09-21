@@ -4,6 +4,7 @@
 #include <QtWidgets/QLayout>
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QListWidget>
+#include <QtWidgets/QListWidgetItem>
 #include "../../../plugin_api/HippoPlugin.h"
 #include "../../../plugin_api/HippoMessages.h"
 
@@ -19,7 +20,22 @@ QWidget* PlaylistView::create(struct HippoServiceAPI* service_api) {
 
     vbox->QLayout::addWidget(m_list);
 
+    QObject::connect(m_list, &QListWidget::itemDoubleClicked, this, &PlaylistView::item_double_clicked);
+
     return widget;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void PlaylistView::item_double_clicked(QListWidgetItem* item) {
+    flatbuffers::FlatBufferBuilder builder(1024);
+    QVariant v = item->data(Qt::UserRole);
+    QByteArray path = v.toByteArray();
+
+    builder.Finish(CreateHippoMessageDirect(builder, MessageType_select_song,
+        CreateHippoSelectSongDirect(builder, path.data()).Union()));
+
+    HippoMessageAPI_send(m_message_api, builder.GetBufferPointer(), builder.GetSize());
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -31,21 +47,20 @@ void PlaylistView::event(const unsigned char* data, int len) {
     if (message->message_type() != MessageType_reply_added_urls)
         return;
 
-    auto t = message->message_as_reply_added_urls();
-    printf("%p\n", t);
-
-    auto urls = t->urls();
-
-    printf("%p\n", urls);
+    auto urls = message->message_as_reply_added_urls()->urls();
 
     for (int i = 0, e = urls->Length(); i < e; ++i) {
         auto url = urls->Get(i);
 
         auto path = url->path();
-        //auto title = url->title();
-        //float duration = url->length();
+        auto title = url->title();
 
-        m_list->addItem(QString::fromUtf8(path->c_str()));
+        QListWidgetItem* item = new QListWidgetItem(QString::fromUtf8(title->c_str(), title->size()));
+
+        // Store data as byte array as we are going to use this for the player backend that uses UTF-8
+        item->setData(Qt::UserRole, QByteArray(path->c_str(), path->size()));
+
+        m_list->addItem(item);
     }
 }
 

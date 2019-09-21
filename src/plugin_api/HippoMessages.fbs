@@ -35,7 +35,7 @@ union MessageType {
   prev_song: HippoPrevSong,
   play_song: HippoPlaySong,
   stop_song: HippoStopSong,
-  select_song: HippoNextSong,
+  select_song: HippoSelectSong,
   request_add_urls: HippoRequestAddUrls,
   reply_added_urls: HippoReplyAddedUrls,
 }

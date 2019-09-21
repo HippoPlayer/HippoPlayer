@@ -124,6 +124,27 @@ impl Playlist {
                 return self.create_update_message(index_start);
             },
 
+            MessageType::select_song => {
+                // This is kinda ugly but will do for now
+                // TODO: Proper error handling
+
+                let select_song = msg.message_as_select_song().unwrap();
+                let song_name = select_song.name().unwrap();
+                let mut new_song_id = None;
+
+                for (id, entry) in self.entries.iter().enumerate() {
+                    if entry.path == song_name {
+                        new_song_id = Some(id);
+                        break;
+                    }
+                }
+
+                if let Some(id) = new_song_id {
+                    self.current_song = id as isize;
+                    self.new_song = true;
+                }
+            },
+
             MessageType::next_song => self.advance_song(1),
             MessageType::prev_song => self.advance_song(-1),
 

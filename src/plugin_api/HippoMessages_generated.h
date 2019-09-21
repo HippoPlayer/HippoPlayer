@@ -72,6 +72,38 @@ inline const char *EnumNameMessageType(MessageType e) {
   return EnumNamesMessageType()[index];
 }
 
+template<typename T> struct MessageTypeTraits {
+  static const MessageType enum_value = MessageType_NONE;
+};
+
+template<> struct MessageTypeTraits<HippoNextSong> {
+  static const MessageType enum_value = MessageType_next_song;
+};
+
+template<> struct MessageTypeTraits<HippoPrevSong> {
+  static const MessageType enum_value = MessageType_prev_song;
+};
+
+template<> struct MessageTypeTraits<HippoPlaySong> {
+  static const MessageType enum_value = MessageType_play_song;
+};
+
+template<> struct MessageTypeTraits<HippoStopSong> {
+  static const MessageType enum_value = MessageType_stop_song;
+};
+
+template<> struct MessageTypeTraits<HippoSelectSong> {
+  static const MessageType enum_value = MessageType_select_song;
+};
+
+template<> struct MessageTypeTraits<HippoRequestAddUrls> {
+  static const MessageType enum_value = MessageType_request_add_urls;
+};
+
+template<> struct MessageTypeTraits<HippoReplyAddedUrls> {
+  static const MessageType enum_value = MessageType_reply_added_urls;
+};
+
 bool VerifyMessageType(flatbuffers::Verifier &verifier, const void *obj, MessageType type);
 bool VerifyMessageTypeVector(flatbuffers::Verifier &verifier, const flatbuffers::Vector<flatbuffers::Offset<void>> *values, const flatbuffers::Vector<uint8_t> *types);
 
@@ -427,6 +459,7 @@ struct HippoMessage FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const void *message() const {
     return GetPointer<const void *>(VT_MESSAGE);
   }
+  template<typename T> const T *message_as() const;
   const HippoNextSong *message_as_next_song() const {
     return message_type() == MessageType_next_song ? static_cast<const HippoNextSong *>(message()) : nullptr;
   }
@@ -439,8 +472,8 @@ struct HippoMessage FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const HippoStopSong *message_as_stop_song() const {
     return message_type() == MessageType_stop_song ? static_cast<const HippoStopSong *>(message()) : nullptr;
   }
-  const HippoNextSong *message_as_select_song() const {
-    return message_type() == MessageType_select_song ? static_cast<const HippoNextSong *>(message()) : nullptr;
+  const HippoSelectSong *message_as_select_song() const {
+    return message_type() == MessageType_select_song ? static_cast<const HippoSelectSong *>(message()) : nullptr;
   }
   const HippoRequestAddUrls *message_as_request_add_urls() const {
     return message_type() == MessageType_request_add_urls ? static_cast<const HippoRequestAddUrls *>(message()) : nullptr;
@@ -461,6 +494,34 @@ struct HippoMessage FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            verifier.EndTable();
   }
 };
+
+template<> inline const HippoNextSong *HippoMessage::message_as<HippoNextSong>() const {
+  return message_as_next_song();
+}
+
+template<> inline const HippoPrevSong *HippoMessage::message_as<HippoPrevSong>() const {
+  return message_as_prev_song();
+}
+
+template<> inline const HippoPlaySong *HippoMessage::message_as<HippoPlaySong>() const {
+  return message_as_play_song();
+}
+
+template<> inline const HippoStopSong *HippoMessage::message_as<HippoStopSong>() const {
+  return message_as_stop_song();
+}
+
+template<> inline const HippoSelectSong *HippoMessage::message_as<HippoSelectSong>() const {
+  return message_as_select_song();
+}
+
+template<> inline const HippoRequestAddUrls *HippoMessage::message_as<HippoRequestAddUrls>() const {
+  return message_as_request_add_urls();
+}
+
+template<> inline const HippoReplyAddedUrls *HippoMessage::message_as<HippoReplyAddedUrls>() const {
+  return message_as_reply_added_urls();
+}
 
 struct HippoMessageBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
@@ -533,7 +594,7 @@ inline bool VerifyMessageType(flatbuffers::Verifier &verifier, const void *obj, 
       return verifier.VerifyTable(ptr);
     }
     case MessageType_select_song: {
-      auto ptr = reinterpret_cast<const HippoNextSong *>(obj);
+      auto ptr = reinterpret_cast<const HippoSelectSong *>(obj);
       return verifier.VerifyTable(ptr);
     }
     case MessageType_request_add_urls: {

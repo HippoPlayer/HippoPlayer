@@ -760,9 +760,9 @@ impl<'a> HippoMessage<'a> {
 
   #[inline]
   #[allow(non_snake_case)]
-  pub fn message_as_select_song(&self) -> Option<HippoNextSong<'a>> {
+  pub fn message_as_select_song(&self) -> Option<HippoSelectSong<'a>> {
     if self.message_type() == MessageType::select_song {
-      self.message().map(|u| HippoNextSong::init_from_table(u))
+      self.message().map(|u| HippoSelectSong::init_from_table(u))
     } else {
       None
     }
