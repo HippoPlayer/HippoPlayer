@@ -3,6 +3,7 @@
 #include "../../../plugin_api/HippoQtView.h"
 
 class QWidget;
+class ScrollText;
 struct HippoMessageAPI;
 struct HippoServiceAPI;
 
@@ -25,5 +26,6 @@ public:
 
 private:
     const struct HippoMessageAPI* m_message_api = nullptr;
+    ScrollText* m_song_title = nullptr;
 };
 

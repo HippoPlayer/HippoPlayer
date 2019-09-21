@@ -448,7 +448,9 @@ SharedLibrary {
 	Name = "player",
 	Sources = {
 	    "src/plugins/view/player/player.cpp",
+	    "src/plugins/view/player/scrolltext.cpp",
         gen_moc("src/plugins/view/player/player.h"),
+        gen_moc("src/plugins/view/player/scrolltext.h"),
 	},
 
 	Libs = {

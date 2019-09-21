@@ -3,7 +3,7 @@ use serde_json;
 use std::fs::File;
 use std::io;
 use std::io::{BufReader, BufWriter};
-use messages::{HippoMessage, HippoMessageArgs, MessageType, HippoUrlEntry, HippoReplyAddedUrls, HippoReplyAddedUrlsArgs, HippoUrlEntryArgs};
+use messages::*;
 use std::path::Path;
 
 ///
@@ -82,14 +82,7 @@ impl Playlist {
                 urls: Some(urls_vec),
             });
 
-            let message = HippoMessage::create(&mut builder, &HippoMessageArgs {
-                message_type: MessageType::reply_added_urls,
-                message: Some(added_urls.as_union_value()),
-                user_data: None,
-            });
-
-            builder.finish(message, None);
-            Some(builder.finished_data().to_vec().into_boxed_slice())
+            Some(HippoMessage::create_def(builder, MessageType::reply_added_urls, added_urls.as_union_value()))
         }
     }
 
@@ -124,11 +117,11 @@ impl Playlist {
                 return self.create_update_message(index_start);
             },
 
-            MessageType::select_song => {
+            MessageType::request_select_song => {
                 // This is kinda ugly but will do for now
                 // TODO: Proper error handling
 
-                let select_song = msg.message_as_select_song().unwrap();
+                let select_song = msg.message_as_request_select_song().unwrap();
                 let song_name = select_song.name().unwrap();
                 let mut new_song_id = None;
 
@@ -142,6 +135,15 @@ impl Playlist {
                 if let Some(id) = new_song_id {
                     self.current_song = id as isize;
                     self.new_song = true;
+
+                    let mut builder = messages::FlatBufferBuilder::new_with_capacity(8192);
+                    let title = builder.create_string(&self.entries[id as usize].title);
+
+                    let select_song = HippoSelectSong::create(&mut builder, &HippoSelectSongArgs {
+                        title: Some(title),
+                    });
+
+                    return Some(HippoMessage::create_def(builder, MessageType::select_song, select_song.as_union_value()))
                 }
             },
 

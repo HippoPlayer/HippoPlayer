@@ -32,8 +32,8 @@ void PlaylistView::item_double_clicked(QListWidgetItem* item) {
     QVariant v = item->data(Qt::UserRole);
     QByteArray path = v.toByteArray();
 
-    builder.Finish(CreateHippoMessageDirect(builder, MessageType_select_song,
-        CreateHippoSelectSongDirect(builder, path.data()).Union()));
+    builder.Finish(CreateHippoMessageDirect(builder, MessageType_request_select_song,
+        CreateHippoRequestSelectSongDirect(builder, path.data()).Union()));
 
     HippoMessageAPI_send(m_message_api, builder.GetBufferPointer(), builder.GetSize());
 }
