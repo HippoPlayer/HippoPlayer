@@ -18,12 +18,13 @@ pub enum MessageType {
   play_song = 3,
   stop_song = 4,
   select_song = 5,
-  add_urls = 6,
+  request_add_urls = 6,
+  reply_added_urls = 7,
 
 }
 
 const ENUM_MIN_MESSAGE_TYPE: u8 = 0;
-const ENUM_MAX_MESSAGE_TYPE: u8 = 6;
+const ENUM_MAX_MESSAGE_TYPE: u8 = 7;
 
 impl<'a> flatbuffers::Follow<'a> for MessageType {
   type Inner = Self;
@@ -57,25 +58,27 @@ impl flatbuffers::Push for MessageType {
 }
 
 #[allow(non_camel_case_types)]
-const ENUM_VALUES_MESSAGE_TYPE:[MessageType; 7] = [
+const ENUM_VALUES_MESSAGE_TYPE:[MessageType; 8] = [
   MessageType::NONE,
   MessageType::next_song,
   MessageType::prev_song,
   MessageType::play_song,
   MessageType::stop_song,
   MessageType::select_song,
-  MessageType::add_urls
+  MessageType::request_add_urls,
+  MessageType::reply_added_urls
 ];
 
 #[allow(non_camel_case_types)]
-const ENUM_NAMES_MESSAGE_TYPE:[&'static str; 7] = [
+const ENUM_NAMES_MESSAGE_TYPE:[&'static str; 8] = [
     "NONE",
     "next_song",
     "prev_song",
     "play_song",
     "stop_song",
     "select_song",
-    "add_urls"
+    "request_add_urls",
+    "reply_added_urls"
 ];
 
 pub fn enum_name_message_type(e: MessageType) -> &'static str {
@@ -412,15 +415,15 @@ impl<'a: 'b, 'b> HippoSelectSongBuilder<'a, 'b> {
   }
 }
 
-pub enum HippoAddUrlsOffset {}
+pub enum HippoRequestAddUrlsOffset {}
 #[derive(Copy, Clone, Debug, PartialEq)]
 
-pub struct HippoAddUrls<'a> {
+pub struct HippoRequestAddUrls<'a> {
   pub _tab: flatbuffers::Table<'a>,
 }
 
-impl<'a> flatbuffers::Follow<'a> for HippoAddUrls<'a> {
-    type Inner = HippoAddUrls<'a>;
+impl<'a> flatbuffers::Follow<'a> for HippoRequestAddUrls<'a> {
+    type Inner = HippoRequestAddUrls<'a>;
     #[inline]
     fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -429,18 +432,18 @@ impl<'a> flatbuffers::Follow<'a> for HippoAddUrls<'a> {
     }
 }
 
-impl<'a> HippoAddUrls<'a> {
+impl<'a> HippoRequestAddUrls<'a> {
     #[inline]
     pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        HippoAddUrls {
+        HippoRequestAddUrls {
             _tab: table,
         }
     }
     #[allow(unused_mut)]
     pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-        args: &'args HippoAddUrlsArgs<'args>) -> flatbuffers::WIPOffset<HippoAddUrls<'bldr>> {
-      let mut builder = HippoAddUrlsBuilder::new(_fbb);
+        args: &'args HippoRequestAddUrlsArgs<'args>) -> flatbuffers::WIPOffset<HippoRequestAddUrls<'bldr>> {
+      let mut builder = HippoRequestAddUrlsBuilder::new(_fbb);
       if let Some(x) = args.urls { builder.add_urls(x); }
       builder.finish()
     }
@@ -449,40 +452,216 @@ impl<'a> HippoAddUrls<'a> {
 
   #[inline]
   pub fn urls(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<&'a str>>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<&'a str>>>>(HippoAddUrls::VT_URLS, None)
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<&'a str>>>>(HippoRequestAddUrls::VT_URLS, None)
   }
 }
 
-pub struct HippoAddUrlsArgs<'a> {
+pub struct HippoRequestAddUrlsArgs<'a> {
     pub urls: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<&'a  str>>>>,
 }
-impl<'a> Default for HippoAddUrlsArgs<'a> {
+impl<'a> Default for HippoRequestAddUrlsArgs<'a> {
     #[inline]
     fn default() -> Self {
-        HippoAddUrlsArgs {
+        HippoRequestAddUrlsArgs {
             urls: None,
         }
     }
 }
-pub struct HippoAddUrlsBuilder<'a: 'b, 'b> {
+pub struct HippoRequestAddUrlsBuilder<'a: 'b, 'b> {
   fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
   start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b> HippoAddUrlsBuilder<'a, 'b> {
+impl<'a: 'b, 'b> HippoRequestAddUrlsBuilder<'a, 'b> {
   #[inline]
   pub fn add_urls(&mut self, urls: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<&'b  str>>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(HippoAddUrls::VT_URLS, urls);
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(HippoRequestAddUrls::VT_URLS, urls);
   }
   #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> HippoAddUrlsBuilder<'a, 'b> {
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> HippoRequestAddUrlsBuilder<'a, 'b> {
     let start = _fbb.start_table();
-    HippoAddUrlsBuilder {
+    HippoRequestAddUrlsBuilder {
       fbb_: _fbb,
       start_: start,
     }
   }
   #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<HippoAddUrls<'a>> {
+  pub fn finish(self) -> flatbuffers::WIPOffset<HippoRequestAddUrls<'a>> {
+    let o = self.fbb_.end_table(self.start_);
+    flatbuffers::WIPOffset::new(o.value())
+  }
+}
+
+pub enum HippoUrlEntryOffset {}
+#[derive(Copy, Clone, Debug, PartialEq)]
+
+pub struct HippoUrlEntry<'a> {
+  pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for HippoUrlEntry<'a> {
+    type Inner = HippoUrlEntry<'a>;
+    #[inline]
+    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: flatbuffers::Table { buf: buf, loc: loc },
+        }
+    }
+}
+
+impl<'a> HippoUrlEntry<'a> {
+    #[inline]
+    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        HippoUrlEntry {
+            _tab: table,
+        }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+        args: &'args HippoUrlEntryArgs<'args>) -> flatbuffers::WIPOffset<HippoUrlEntry<'bldr>> {
+      let mut builder = HippoUrlEntryBuilder::new(_fbb);
+      builder.add_length(args.length);
+      if let Some(x) = args.title { builder.add_title(x); }
+      if let Some(x) = args.path { builder.add_path(x); }
+      builder.finish()
+    }
+
+    pub const VT_PATH: flatbuffers::VOffsetT = 4;
+    pub const VT_TITLE: flatbuffers::VOffsetT = 6;
+    pub const VT_LENGTH: flatbuffers::VOffsetT = 8;
+
+  #[inline]
+  pub fn path(&self) -> Option<&'a str> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(HippoUrlEntry::VT_PATH, None)
+  }
+  #[inline]
+  pub fn title(&self) -> Option<&'a str> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(HippoUrlEntry::VT_TITLE, None)
+  }
+  #[inline]
+  pub fn length(&self) -> f32 {
+    self._tab.get::<f32>(HippoUrlEntry::VT_LENGTH, Some(0.0)).unwrap()
+  }
+}
+
+pub struct HippoUrlEntryArgs<'a> {
+    pub path: Option<flatbuffers::WIPOffset<&'a  str>>,
+    pub title: Option<flatbuffers::WIPOffset<&'a  str>>,
+    pub length: f32,
+}
+impl<'a> Default for HippoUrlEntryArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        HippoUrlEntryArgs {
+            path: None,
+            title: None,
+            length: 0.0,
+        }
+    }
+}
+pub struct HippoUrlEntryBuilder<'a: 'b, 'b> {
+  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b> HippoUrlEntryBuilder<'a, 'b> {
+  #[inline]
+  pub fn add_path(&mut self, path: flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(HippoUrlEntry::VT_PATH, path);
+  }
+  #[inline]
+  pub fn add_title(&mut self, title: flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(HippoUrlEntry::VT_TITLE, title);
+  }
+  #[inline]
+  pub fn add_length(&mut self, length: f32) {
+    self.fbb_.push_slot::<f32>(HippoUrlEntry::VT_LENGTH, length, 0.0);
+  }
+  #[inline]
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> HippoUrlEntryBuilder<'a, 'b> {
+    let start = _fbb.start_table();
+    HippoUrlEntryBuilder {
+      fbb_: _fbb,
+      start_: start,
+    }
+  }
+  #[inline]
+  pub fn finish(self) -> flatbuffers::WIPOffset<HippoUrlEntry<'a>> {
+    let o = self.fbb_.end_table(self.start_);
+    flatbuffers::WIPOffset::new(o.value())
+  }
+}
+
+pub enum HippoReplyAddedUrlsOffset {}
+#[derive(Copy, Clone, Debug, PartialEq)]
+
+pub struct HippoReplyAddedUrls<'a> {
+  pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for HippoReplyAddedUrls<'a> {
+    type Inner = HippoReplyAddedUrls<'a>;
+    #[inline]
+    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: flatbuffers::Table { buf: buf, loc: loc },
+        }
+    }
+}
+
+impl<'a> HippoReplyAddedUrls<'a> {
+    #[inline]
+    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        HippoReplyAddedUrls {
+            _tab: table,
+        }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+        args: &'args HippoReplyAddedUrlsArgs<'args>) -> flatbuffers::WIPOffset<HippoReplyAddedUrls<'bldr>> {
+      let mut builder = HippoReplyAddedUrlsBuilder::new(_fbb);
+      if let Some(x) = args.urls { builder.add_urls(x); }
+      builder.finish()
+    }
+
+    pub const VT_URLS: flatbuffers::VOffsetT = 4;
+
+  #[inline]
+  pub fn urls(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<HippoUrlEntry<'a>>>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<HippoUrlEntry<'a>>>>>(HippoReplyAddedUrls::VT_URLS, None)
+  }
+}
+
+pub struct HippoReplyAddedUrlsArgs<'a> {
+    pub urls: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<HippoUrlEntry<'a >>>>>,
+}
+impl<'a> Default for HippoReplyAddedUrlsArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        HippoReplyAddedUrlsArgs {
+            urls: None,
+        }
+    }
+}
+pub struct HippoReplyAddedUrlsBuilder<'a: 'b, 'b> {
+  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b> HippoReplyAddedUrlsBuilder<'a, 'b> {
+  #[inline]
+  pub fn add_urls(&mut self, urls: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<HippoUrlEntry<'b >>>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(HippoReplyAddedUrls::VT_URLS, urls);
+  }
+  #[inline]
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> HippoReplyAddedUrlsBuilder<'a, 'b> {
+    let start = _fbb.start_table();
+    HippoReplyAddedUrlsBuilder {
+      fbb_: _fbb,
+      start_: start,
+    }
+  }
+  #[inline]
+  pub fn finish(self) -> flatbuffers::WIPOffset<HippoReplyAddedUrls<'a>> {
     let o = self.fbb_.end_table(self.start_);
     flatbuffers::WIPOffset::new(o.value())
   }
@@ -591,9 +770,19 @@ impl<'a> HippoMessage<'a> {
 
   #[inline]
   #[allow(non_snake_case)]
-  pub fn message_as_add_urls(&self) -> Option<HippoAddUrls<'a>> {
-    if self.message_type() == MessageType::add_urls {
-      self.message().map(|u| HippoAddUrls::init_from_table(u))
+  pub fn message_as_request_add_urls(&self) -> Option<HippoRequestAddUrls<'a>> {
+    if self.message_type() == MessageType::request_add_urls {
+      self.message().map(|u| HippoRequestAddUrls::init_from_table(u))
+    } else {
+      None
+    }
+  }
+
+  #[inline]
+  #[allow(non_snake_case)]
+  pub fn message_as_reply_added_urls(&self) -> Option<HippoReplyAddedUrls<'a>> {
+    if self.message_type() == MessageType::reply_added_urls {
+      self.message().map(|u| HippoReplyAddedUrls::init_from_table(u))
     } else {
       None
     }

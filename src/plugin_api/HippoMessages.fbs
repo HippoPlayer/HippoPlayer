@@ -16,8 +16,18 @@ table HippoSelectSong {
   name: string;
 }
 
-table HippoAddUrls {
+table HippoRequestAddUrls {
   urls: [string];
+}
+
+table HippoUrlEntry {
+  path: string;
+  title: string;
+  length: float;
+}
+
+table HippoReplyAddedUrls {
+  urls: [HippoUrlEntry];
 }
 
 union MessageType {
@@ -26,7 +36,8 @@ union MessageType {
   play_song: HippoPlaySong,
   stop_song: HippoStopSong,
   select_song: HippoNextSong,
-  add_urls: HippoAddUrls,
+  request_add_urls: HippoRequestAddUrls,
+  reply_added_urls: HippoReplyAddedUrls,
 }
 
 table HippoMessage {

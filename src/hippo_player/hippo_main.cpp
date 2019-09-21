@@ -16,6 +16,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+    /*
     QFile f(QStringLiteral("bin/player/themes/dark/style.qss"));
 
     if (!f.exists()) {
@@ -26,6 +27,7 @@ int main(int argc, char** argv) {
         QTextStream ts(&f);
         app.setStyleSheet(ts.readAll());
     }
+    */
 
     MainWindow main_window;
     main_window.load_plugins(app.applicationDirPath());

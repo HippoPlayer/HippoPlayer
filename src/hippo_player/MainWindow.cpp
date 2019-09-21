@@ -151,8 +151,8 @@ void MainWindow::add_files() {
         qDebug() << filename_utf8;
     }
 
-    builder.Finish(CreateHippoMessageDirect(builder, MessageType_add_urls,
-        CreateHippoAddUrls(builder, builder.CreateVector(urls)).Union()));
+    builder.Finish(CreateHippoMessageDirect(builder, MessageType_request_add_urls,
+        CreateHippoRequestAddUrls(builder, builder.CreateVector(urls)).Union()));
     HippoMessageAPI_send(m_general_messages, builder.GetBufferPointer(), builder.GetSize());
 }
 

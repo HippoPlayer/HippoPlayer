@@ -3,7 +3,8 @@ use serde_json;
 use std::fs::File;
 use std::io;
 use std::io::{BufReader, BufWriter};
-use messages::{HippoMessage, MessageType};
+use messages::{HippoMessage, HippoMessageArgs, MessageType, HippoUrlEntry, HippoReplyAddedUrls, HippoReplyAddedUrlsArgs, HippoUrlEntryArgs};
+use std::path::Path;
 
 ///
 /// Metadata for each entry. We will likely stuff more things here later on.
@@ -52,14 +53,75 @@ impl Playlist {
     }
 
     ///
+    /// Used if the playlist has been updated or just loaded.
+    ///
+    pub fn create_update_message(&self, index_start: usize) -> Option<Box<[u8]>> {
+        let count = self.entries.len();
+
+        if index_start == count {
+            None
+        } else {
+            let entries = &self.entries[index_start..count];
+            let mut builder = messages::FlatBufferBuilder::new_with_capacity(8192);
+            let mut out_ent = Vec::with_capacity(count - index_start);
+
+            for entry in entries {
+                let path_name = builder.create_string(&entry.path);
+                let title_name = builder.create_string(&entry.title);
+
+                out_ent.push(HippoUrlEntry::create(&mut builder, &HippoUrlEntryArgs {
+                    path: Some(path_name),
+                    title: Some(title_name),
+                    length: entry.duration
+                }));
+            }
+
+            let urls_vec = builder.create_vector(&out_ent);
+
+            let added_urls = HippoReplyAddedUrls::create(&mut builder, &HippoReplyAddedUrlsArgs {
+                urls: Some(urls_vec),
+            });
+
+            let message = HippoMessage::create(&mut builder, &HippoMessageArgs {
+                message_type: MessageType::reply_added_urls,
+                message: Some(added_urls.as_union_value()),
+                user_data: None,
+            });
+
+            builder.finish(message, None);
+            Some(builder.finished_data().to_vec().into_boxed_slice())
+        }
+    }
+
+    ///
     /// Handle incoming events
     ///
     pub fn event(&mut self, msg: &HippoMessage) -> Option<Box<[u8]>> {
         match msg.message_type() {
-            MessageType::add_urls => {
-                let urls = msg.message_as_add_urls().unwrap();
+            MessageType::request_add_urls => {
+                // TODO: Currently we just assume these are filenames. Going forward
+                // This may not be the case as it may be a network resource, packed files and such
 
-                println!("data {:?}", urls.urls());
+                let index_start = self.entries.len();
+
+                let urls_msg = msg.message_as_request_add_urls().unwrap();
+                let urls = urls_msg.urls().unwrap();
+
+                for index in 0..urls.len() {
+                    let file = urls.get(index);
+
+                    // Assume files now and if we can't create a file from the path we drop it
+                    let filename = Path::new(&file);
+                    if let Some(base) = filename.file_stem() {
+                        self.entries.push(PlaylistEntry {
+                            path: file.to_owned(),
+                            title: base.to_string_lossy().to_string(),
+                            duration: -1.0, // negative is used to indicate no durion
+                        });
+                    }
+                }
+
+                return self.create_update_message(index_start);
             },
 
             MessageType::next_song => self.advance_song(1),
@@ -69,44 +131,6 @@ impl Playlist {
         }
 
         None
-
-
-        /*
-        match msg.method {
-            "hippo_playlist_select_song" => self.select_song(msg),
-
-            /*
-            "hippo_playlist_next_song" => {
-                self.get_next_song().map(|song| Self::new_song_message(msg, song))
-            },
-
-            "hippo_playlist_previous_song" => {
-                self.get_prev_song().map(|song| Self::new_song_message(msg, song))
-            },
-            */
-            "hippo_playlist_add_urls" => {
-                let files: AddUrls = msg.deserialize().unwrap();
-
-                for file in &files.urls {
-                    let entry = PlaylistEntry {
-                        path: file.clone(),
-                        title: file.clone(),
-                        duration: -10.0,
-                    };
-
-                    self.entries.push(entry);
-                }
-
-                let mut message =
-                    MessageEncode::new_request("hippo_playlist_added_files", msg.id).unwrap();
-                message.serialize(&files).unwrap();
-
-                Some(message)
-            }
-
-            _ => None,
-        }
-        */
     }
 
     ///

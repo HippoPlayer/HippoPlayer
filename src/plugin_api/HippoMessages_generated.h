@@ -16,7 +16,11 @@ struct HippoStopSong;
 
 struct HippoSelectSong;
 
-struct HippoAddUrls;
+struct HippoRequestAddUrls;
+
+struct HippoUrlEntry;
+
+struct HippoReplyAddedUrls;
 
 struct HippoMessage;
 
@@ -27,12 +31,13 @@ enum MessageType {
   MessageType_play_song = 3,
   MessageType_stop_song = 4,
   MessageType_select_song = 5,
-  MessageType_add_urls = 6,
+  MessageType_request_add_urls = 6,
+  MessageType_reply_added_urls = 7,
   MessageType_MIN = MessageType_NONE,
-  MessageType_MAX = MessageType_add_urls
+  MessageType_MAX = MessageType_reply_added_urls
 };
 
-inline const MessageType (&EnumValuesMessageType())[7] {
+inline const MessageType (&EnumValuesMessageType())[8] {
   static const MessageType values[] = {
     MessageType_NONE,
     MessageType_next_song,
@@ -40,27 +45,29 @@ inline const MessageType (&EnumValuesMessageType())[7] {
     MessageType_play_song,
     MessageType_stop_song,
     MessageType_select_song,
-    MessageType_add_urls
+    MessageType_request_add_urls,
+    MessageType_reply_added_urls
   };
   return values;
 }
 
 inline const char * const *EnumNamesMessageType() {
-  static const char * const names[8] = {
+  static const char * const names[9] = {
     "NONE",
     "next_song",
     "prev_song",
     "play_song",
     "stop_song",
     "select_song",
-    "add_urls",
+    "request_add_urls",
+    "reply_added_urls",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameMessageType(MessageType e) {
-  if (e < MessageType_NONE || e > MessageType_add_urls) return "";
+  if (e < MessageType_NONE || e > MessageType_reply_added_urls) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesMessageType()[index];
 }
@@ -230,7 +237,7 @@ inline flatbuffers::Offset<HippoSelectSong> CreateHippoSelectSongDirect(
       name__);
 }
 
-struct HippoAddUrls FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+struct HippoRequestAddUrls FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_URLS = 4
   };
@@ -246,37 +253,164 @@ struct HippoAddUrls FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
 };
 
-struct HippoAddUrlsBuilder {
+struct HippoRequestAddUrlsBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
   void add_urls(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> urls) {
-    fbb_.AddOffset(HippoAddUrls::VT_URLS, urls);
+    fbb_.AddOffset(HippoRequestAddUrls::VT_URLS, urls);
   }
-  explicit HippoAddUrlsBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  explicit HippoRequestAddUrlsBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  HippoAddUrlsBuilder &operator=(const HippoAddUrlsBuilder &);
-  flatbuffers::Offset<HippoAddUrls> Finish() {
+  HippoRequestAddUrlsBuilder &operator=(const HippoRequestAddUrlsBuilder &);
+  flatbuffers::Offset<HippoRequestAddUrls> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<HippoAddUrls>(end);
+    auto o = flatbuffers::Offset<HippoRequestAddUrls>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<HippoAddUrls> CreateHippoAddUrls(
+inline flatbuffers::Offset<HippoRequestAddUrls> CreateHippoRequestAddUrls(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> urls = 0) {
-  HippoAddUrlsBuilder builder_(_fbb);
+  HippoRequestAddUrlsBuilder builder_(_fbb);
   builder_.add_urls(urls);
   return builder_.Finish();
 }
 
-inline flatbuffers::Offset<HippoAddUrls> CreateHippoAddUrlsDirect(
+inline flatbuffers::Offset<HippoRequestAddUrls> CreateHippoRequestAddUrlsDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     const std::vector<flatbuffers::Offset<flatbuffers::String>> *urls = nullptr) {
   auto urls__ = urls ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*urls) : 0;
-  return CreateHippoAddUrls(
+  return CreateHippoRequestAddUrls(
+      _fbb,
+      urls__);
+}
+
+struct HippoUrlEntry FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_PATH = 4,
+    VT_TITLE = 6,
+    VT_LENGTH = 8
+  };
+  const flatbuffers::String *path() const {
+    return GetPointer<const flatbuffers::String *>(VT_PATH);
+  }
+  const flatbuffers::String *title() const {
+    return GetPointer<const flatbuffers::String *>(VT_TITLE);
+  }
+  float length() const {
+    return GetField<float>(VT_LENGTH, 0.0f);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_PATH) &&
+           verifier.VerifyString(path()) &&
+           VerifyOffset(verifier, VT_TITLE) &&
+           verifier.VerifyString(title()) &&
+           VerifyField<float>(verifier, VT_LENGTH) &&
+           verifier.EndTable();
+  }
+};
+
+struct HippoUrlEntryBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_path(flatbuffers::Offset<flatbuffers::String> path) {
+    fbb_.AddOffset(HippoUrlEntry::VT_PATH, path);
+  }
+  void add_title(flatbuffers::Offset<flatbuffers::String> title) {
+    fbb_.AddOffset(HippoUrlEntry::VT_TITLE, title);
+  }
+  void add_length(float length) {
+    fbb_.AddElement<float>(HippoUrlEntry::VT_LENGTH, length, 0.0f);
+  }
+  explicit HippoUrlEntryBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  HippoUrlEntryBuilder &operator=(const HippoUrlEntryBuilder &);
+  flatbuffers::Offset<HippoUrlEntry> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<HippoUrlEntry>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<HippoUrlEntry> CreateHippoUrlEntry(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<flatbuffers::String> path = 0,
+    flatbuffers::Offset<flatbuffers::String> title = 0,
+    float length = 0.0f) {
+  HippoUrlEntryBuilder builder_(_fbb);
+  builder_.add_length(length);
+  builder_.add_title(title);
+  builder_.add_path(path);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<HippoUrlEntry> CreateHippoUrlEntryDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    const char *path = nullptr,
+    const char *title = nullptr,
+    float length = 0.0f) {
+  auto path__ = path ? _fbb.CreateString(path) : 0;
+  auto title__ = title ? _fbb.CreateString(title) : 0;
+  return CreateHippoUrlEntry(
+      _fbb,
+      path__,
+      title__,
+      length);
+}
+
+struct HippoReplyAddedUrls FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_URLS = 4
+  };
+  const flatbuffers::Vector<flatbuffers::Offset<HippoUrlEntry>> *urls() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<HippoUrlEntry>> *>(VT_URLS);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_URLS) &&
+           verifier.VerifyVector(urls()) &&
+           verifier.VerifyVectorOfTables(urls()) &&
+           verifier.EndTable();
+  }
+};
+
+struct HippoReplyAddedUrlsBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_urls(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<HippoUrlEntry>>> urls) {
+    fbb_.AddOffset(HippoReplyAddedUrls::VT_URLS, urls);
+  }
+  explicit HippoReplyAddedUrlsBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  HippoReplyAddedUrlsBuilder &operator=(const HippoReplyAddedUrlsBuilder &);
+  flatbuffers::Offset<HippoReplyAddedUrls> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<HippoReplyAddedUrls>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<HippoReplyAddedUrls> CreateHippoReplyAddedUrls(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<HippoUrlEntry>>> urls = 0) {
+  HippoReplyAddedUrlsBuilder builder_(_fbb);
+  builder_.add_urls(urls);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<HippoReplyAddedUrls> CreateHippoReplyAddedUrlsDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    const std::vector<flatbuffers::Offset<HippoUrlEntry>> *urls = nullptr) {
+  auto urls__ = urls ? _fbb.CreateVector<flatbuffers::Offset<HippoUrlEntry>>(*urls) : 0;
+  return CreateHippoReplyAddedUrls(
       _fbb,
       urls__);
 }
@@ -308,8 +442,11 @@ struct HippoMessage FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const HippoNextSong *message_as_select_song() const {
     return message_type() == MessageType_select_song ? static_cast<const HippoNextSong *>(message()) : nullptr;
   }
-  const HippoAddUrls *message_as_add_urls() const {
-    return message_type() == MessageType_add_urls ? static_cast<const HippoAddUrls *>(message()) : nullptr;
+  const HippoRequestAddUrls *message_as_request_add_urls() const {
+    return message_type() == MessageType_request_add_urls ? static_cast<const HippoRequestAddUrls *>(message()) : nullptr;
+  }
+  const HippoReplyAddedUrls *message_as_reply_added_urls() const {
+    return message_type() == MessageType_reply_added_urls ? static_cast<const HippoReplyAddedUrls *>(message()) : nullptr;
   }
   const flatbuffers::String *user_data() const {
     return GetPointer<const flatbuffers::String *>(VT_USER_DATA);
@@ -399,8 +536,12 @@ inline bool VerifyMessageType(flatbuffers::Verifier &verifier, const void *obj, 
       auto ptr = reinterpret_cast<const HippoNextSong *>(obj);
       return verifier.VerifyTable(ptr);
     }
-    case MessageType_add_urls: {
-      auto ptr = reinterpret_cast<const HippoAddUrls *>(obj);
+    case MessageType_request_add_urls: {
+      auto ptr = reinterpret_cast<const HippoRequestAddUrls *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case MessageType_reply_added_urls: {
+      auto ptr = reinterpret_cast<const HippoReplyAddedUrls *>(obj);
       return verifier.VerifyTable(ptr);
     }
     default: return false;
