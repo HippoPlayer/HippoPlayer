@@ -407,43 +407,6 @@ SharedLibrary {
 --  View plugins
 -----------------------------------------------------------------------------------------------------------------------
 
---[[
-
-RustSharedLibrary {
-	Name = "playlist",
-	CargoConfig = "src/plugins/view/playlist/Cargo.toml",
-	Sources = {
-		get_rs_src("src/plugins/view/playlist"),
-		get_rs_src("src/plugin_api/rust/hippo_api"),
-		get_rs_src("src/plugin_api/rust/messages"),
-		get_rs_src("src/external/rute"),
-	}
-}
-
-RustSharedLibrary {
-	Name = "player",
-	CargoConfig = "src/plugins/view/player/Cargo.toml",
-	Sources = {
-		get_rs_src("src/plugins/view/player"),
-		get_rs_src("src/plugin_api/rust/hippo_api"),
-		get_rs_src("src/plugin_api/rust/messages"),
-		get_rs_src("src/external/rute"),
-	}
-}
-
-RustSharedLibrary {
-	Name = "song_info",
-	CargoConfig = "src/plugins/view/song_info/Cargo.toml",
-	Sources = {
-		get_rs_src("src/plugins/view/song_info"),
-		get_rs_src("src/plugin_api/rust/hippo_api"),
-		get_rs_src("src/plugin_api/rust/messages"),
-		get_rs_src("src/external/rute"),
-	}
-}
-
---]]
-
 SharedLibrary {
 	Name = "player",
 	Sources = {
@@ -460,6 +423,25 @@ SharedLibrary {
 
 	Depends = { "flatbuffers_lib" },
 }
+
+-----------------------------------------------------------------------------------------------------------------------
+
+SharedLibrary {
+	Name = "tracker",
+	Sources = {
+	    "src/plugins/view/tracker/tracker.cpp",
+        gen_moc("src/plugins/view/tracker/tracker.h"),
+	},
+
+	Libs = {
+		{ "wsock32.lib", "kernel32.lib", "user32.lib", "gdi32.lib", "Comdlg32.lib",
+		  "Advapi32.lib", "Qt5Gui.lib", "Qt5Core.lib", "Qt5Widgets.lib"; Config = "win64-*-*" },
+	},
+
+	Depends = { "flatbuffers_lib" },
+}
+
+-----------------------------------------------------------------------------------------------------------------------
 
 SharedLibrary {
 	Name = "playlist",
