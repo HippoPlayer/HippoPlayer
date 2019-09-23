@@ -4,6 +4,8 @@
 
 class QWidget;
 class ScrollText;
+class QPaintEvent;
+class TrackerDisplay;
 struct HippoMessageAPI;
 struct HippoServiceAPI;
 
@@ -21,6 +23,7 @@ public:
 
 private:
     const struct HippoMessageAPI* m_message_api = nullptr;
+    TrackerDisplay* m_display = nullptr;
 };
 
 

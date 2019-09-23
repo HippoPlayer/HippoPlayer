@@ -34,12 +34,9 @@ table HippoReplyAddedUrls {
   urls: [HippoUrlEntry];
 }
 
-command_note
-command_instrument
-command_volumeffect
-command_effect
-command_volume
-command_parameter
+table HippoRequestTrackerData {
+  pattern: int;
+}
 
 // Row data for the tracker
 table HippoRowData {
@@ -48,7 +45,7 @@ table HippoRowData {
   volumeffect: string;
   effect: string;
   volume: string;
-  parameter: string
+  parameter: string;
 }
 
 table HippoTrackerChannel {
@@ -61,12 +58,12 @@ table HippoTrackerChannel {
 // Hardware based notes and such that gets sent to the hardware which means it's a contiguous streams
 // of notes
 
-enum HippoTrackerType:byte { Regular, Hardware }
+enum HippoTrackerType:byte { Regular, Emulated }
 
 // Data used for tracker display provided by current backend
-
 table HippoTrackerData {
-    type: HippoTrackerType; (required)
+    type: HippoTrackerType = Regular;
+    pattern: int;
     channels: [HippoTrackerChannel];
 }
 
@@ -92,6 +89,11 @@ union MessageType {
 
   request_add_urls: HippoRequestAddUrls,
   reply_added_urls: HippoReplyAddedUrls,
+
+  request_tracker_data: HippoRequestSelectSong,
+  tracker_data: HippoTrackerData,
+
+  current_position: HippoCurrentPosition, 
 }
 
 

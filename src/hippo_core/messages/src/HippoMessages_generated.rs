@@ -9,6 +9,66 @@ extern crate flatbuffers;
 use self::flatbuffers::EndianScalar;
 
 #[allow(non_camel_case_types)]
+#[repr(i8)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+pub enum HippoTrackerType {
+  Regular = 0,
+  Emulated = 1,
+
+}
+
+const ENUM_MIN_HIPPO_TRACKER_TYPE: i8 = 0;
+const ENUM_MAX_HIPPO_TRACKER_TYPE: i8 = 1;
+
+impl<'a> flatbuffers::Follow<'a> for HippoTrackerType {
+  type Inner = Self;
+  #[inline]
+  fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+    flatbuffers::read_scalar_at::<Self>(buf, loc)
+  }
+}
+
+impl flatbuffers::EndianScalar for HippoTrackerType {
+  #[inline]
+  fn to_little_endian(self) -> Self {
+    let n = i8::to_le(self as i8);
+    let p = &n as *const i8 as *const HippoTrackerType;
+    unsafe { *p }
+  }
+  #[inline]
+  fn from_little_endian(self) -> Self {
+    let n = i8::from_le(self as i8);
+    let p = &n as *const i8 as *const HippoTrackerType;
+    unsafe { *p }
+  }
+}
+
+impl flatbuffers::Push for HippoTrackerType {
+    type Output = HippoTrackerType;
+    #[inline]
+    fn push(&self, dst: &mut [u8], _rest: &[u8]) {
+        flatbuffers::emplace_scalar::<HippoTrackerType>(dst, *self);
+    }
+}
+
+#[allow(non_camel_case_types)]
+const ENUM_VALUES_HIPPO_TRACKER_TYPE:[HippoTrackerType; 2] = [
+  HippoTrackerType::Regular,
+  HippoTrackerType::Emulated
+];
+
+#[allow(non_camel_case_types)]
+const ENUM_NAMES_HIPPO_TRACKER_TYPE:[&'static str; 2] = [
+    "Regular",
+    "Emulated"
+];
+
+pub fn enum_name_hippo_tracker_type(e: HippoTrackerType) -> &'static str {
+  let index = e as i8;
+  ENUM_NAMES_HIPPO_TRACKER_TYPE[index as usize]
+}
+
+#[allow(non_camel_case_types)]
 #[repr(u8)]
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum MessageType {
@@ -21,11 +81,14 @@ pub enum MessageType {
   select_song = 6,
   request_add_urls = 7,
   reply_added_urls = 8,
+  request_tracker_data = 9,
+  tracker_data = 10,
+  current_position = 11,
 
 }
 
 const ENUM_MIN_MESSAGE_TYPE: u8 = 0;
-const ENUM_MAX_MESSAGE_TYPE: u8 = 8;
+const ENUM_MAX_MESSAGE_TYPE: u8 = 11;
 
 impl<'a> flatbuffers::Follow<'a> for MessageType {
   type Inner = Self;
@@ -59,7 +122,7 @@ impl flatbuffers::Push for MessageType {
 }
 
 #[allow(non_camel_case_types)]
-const ENUM_VALUES_MESSAGE_TYPE:[MessageType; 9] = [
+const ENUM_VALUES_MESSAGE_TYPE:[MessageType; 12] = [
   MessageType::NONE,
   MessageType::next_song,
   MessageType::prev_song,
@@ -68,11 +131,14 @@ const ENUM_VALUES_MESSAGE_TYPE:[MessageType; 9] = [
   MessageType::request_select_song,
   MessageType::select_song,
   MessageType::request_add_urls,
-  MessageType::reply_added_urls
+  MessageType::reply_added_urls,
+  MessageType::request_tracker_data,
+  MessageType::tracker_data,
+  MessageType::current_position
 ];
 
 #[allow(non_camel_case_types)]
-const ENUM_NAMES_MESSAGE_TYPE:[&'static str; 9] = [
+const ENUM_NAMES_MESSAGE_TYPE:[&'static str; 12] = [
     "NONE",
     "next_song",
     "prev_song",
@@ -81,7 +147,10 @@ const ENUM_NAMES_MESSAGE_TYPE:[&'static str; 9] = [
     "request_select_song",
     "select_song",
     "request_add_urls",
-    "reply_added_urls"
+    "reply_added_urls",
+    "request_tracker_data",
+    "tracker_data",
+    "current_position"
 ];
 
 pub fn enum_name_message_type(e: MessageType) -> &'static str {
@@ -746,6 +815,518 @@ impl<'a: 'b, 'b> HippoReplyAddedUrlsBuilder<'a, 'b> {
   }
 }
 
+pub enum HippoRequestTrackerDataOffset {}
+#[derive(Copy, Clone, Debug, PartialEq)]
+
+pub struct HippoRequestTrackerData<'a> {
+  pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for HippoRequestTrackerData<'a> {
+    type Inner = HippoRequestTrackerData<'a>;
+    #[inline]
+    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: flatbuffers::Table { buf: buf, loc: loc },
+        }
+    }
+}
+
+impl<'a> HippoRequestTrackerData<'a> {
+    #[inline]
+    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        HippoRequestTrackerData {
+            _tab: table,
+        }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+        args: &'args HippoRequestTrackerDataArgs) -> flatbuffers::WIPOffset<HippoRequestTrackerData<'bldr>> {
+      let mut builder = HippoRequestTrackerDataBuilder::new(_fbb);
+      builder.add_pattern(args.pattern);
+      builder.finish()
+    }
+
+    pub const VT_PATTERN: flatbuffers::VOffsetT = 4;
+
+  #[inline]
+  pub fn pattern(&self) -> i32 {
+    self._tab.get::<i32>(HippoRequestTrackerData::VT_PATTERN, Some(0)).unwrap()
+  }
+}
+
+pub struct HippoRequestTrackerDataArgs {
+    pub pattern: i32,
+}
+impl<'a> Default for HippoRequestTrackerDataArgs {
+    #[inline]
+    fn default() -> Self {
+        HippoRequestTrackerDataArgs {
+            pattern: 0,
+        }
+    }
+}
+pub struct HippoRequestTrackerDataBuilder<'a: 'b, 'b> {
+  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b> HippoRequestTrackerDataBuilder<'a, 'b> {
+  #[inline]
+  pub fn add_pattern(&mut self, pattern: i32) {
+    self.fbb_.push_slot::<i32>(HippoRequestTrackerData::VT_PATTERN, pattern, 0);
+  }
+  #[inline]
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> HippoRequestTrackerDataBuilder<'a, 'b> {
+    let start = _fbb.start_table();
+    HippoRequestTrackerDataBuilder {
+      fbb_: _fbb,
+      start_: start,
+    }
+  }
+  #[inline]
+  pub fn finish(self) -> flatbuffers::WIPOffset<HippoRequestTrackerData<'a>> {
+    let o = self.fbb_.end_table(self.start_);
+    flatbuffers::WIPOffset::new(o.value())
+  }
+}
+
+pub enum HippoRowDataOffset {}
+#[derive(Copy, Clone, Debug, PartialEq)]
+
+pub struct HippoRowData<'a> {
+  pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for HippoRowData<'a> {
+    type Inner = HippoRowData<'a>;
+    #[inline]
+    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: flatbuffers::Table { buf: buf, loc: loc },
+        }
+    }
+}
+
+impl<'a> HippoRowData<'a> {
+    #[inline]
+    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        HippoRowData {
+            _tab: table,
+        }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+        args: &'args HippoRowDataArgs<'args>) -> flatbuffers::WIPOffset<HippoRowData<'bldr>> {
+      let mut builder = HippoRowDataBuilder::new(_fbb);
+      if let Some(x) = args.parameter { builder.add_parameter(x); }
+      if let Some(x) = args.volume { builder.add_volume(x); }
+      if let Some(x) = args.effect { builder.add_effect(x); }
+      if let Some(x) = args.volumeffect { builder.add_volumeffect(x); }
+      if let Some(x) = args.instrument { builder.add_instrument(x); }
+      if let Some(x) = args.note { builder.add_note(x); }
+      builder.finish()
+    }
+
+    pub const VT_NOTE: flatbuffers::VOffsetT = 4;
+    pub const VT_INSTRUMENT: flatbuffers::VOffsetT = 6;
+    pub const VT_VOLUMEFFECT: flatbuffers::VOffsetT = 8;
+    pub const VT_EFFECT: flatbuffers::VOffsetT = 10;
+    pub const VT_VOLUME: flatbuffers::VOffsetT = 12;
+    pub const VT_PARAMETER: flatbuffers::VOffsetT = 14;
+
+  #[inline]
+  pub fn note(&self) -> Option<&'a str> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(HippoRowData::VT_NOTE, None)
+  }
+  #[inline]
+  pub fn instrument(&self) -> Option<&'a str> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(HippoRowData::VT_INSTRUMENT, None)
+  }
+  #[inline]
+  pub fn volumeffect(&self) -> Option<&'a str> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(HippoRowData::VT_VOLUMEFFECT, None)
+  }
+  #[inline]
+  pub fn effect(&self) -> Option<&'a str> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(HippoRowData::VT_EFFECT, None)
+  }
+  #[inline]
+  pub fn volume(&self) -> Option<&'a str> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(HippoRowData::VT_VOLUME, None)
+  }
+  #[inline]
+  pub fn parameter(&self) -> Option<&'a str> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(HippoRowData::VT_PARAMETER, None)
+  }
+}
+
+pub struct HippoRowDataArgs<'a> {
+    pub note: Option<flatbuffers::WIPOffset<&'a  str>>,
+    pub instrument: Option<flatbuffers::WIPOffset<&'a  str>>,
+    pub volumeffect: Option<flatbuffers::WIPOffset<&'a  str>>,
+    pub effect: Option<flatbuffers::WIPOffset<&'a  str>>,
+    pub volume: Option<flatbuffers::WIPOffset<&'a  str>>,
+    pub parameter: Option<flatbuffers::WIPOffset<&'a  str>>,
+}
+impl<'a> Default for HippoRowDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        HippoRowDataArgs {
+            note: None,
+            instrument: None,
+            volumeffect: None,
+            effect: None,
+            volume: None,
+            parameter: None,
+        }
+    }
+}
+pub struct HippoRowDataBuilder<'a: 'b, 'b> {
+  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b> HippoRowDataBuilder<'a, 'b> {
+  #[inline]
+  pub fn add_note(&mut self, note: flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(HippoRowData::VT_NOTE, note);
+  }
+  #[inline]
+  pub fn add_instrument(&mut self, instrument: flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(HippoRowData::VT_INSTRUMENT, instrument);
+  }
+  #[inline]
+  pub fn add_volumeffect(&mut self, volumeffect: flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(HippoRowData::VT_VOLUMEFFECT, volumeffect);
+  }
+  #[inline]
+  pub fn add_effect(&mut self, effect: flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(HippoRowData::VT_EFFECT, effect);
+  }
+  #[inline]
+  pub fn add_volume(&mut self, volume: flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(HippoRowData::VT_VOLUME, volume);
+  }
+  #[inline]
+  pub fn add_parameter(&mut self, parameter: flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(HippoRowData::VT_PARAMETER, parameter);
+  }
+  #[inline]
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> HippoRowDataBuilder<'a, 'b> {
+    let start = _fbb.start_table();
+    HippoRowDataBuilder {
+      fbb_: _fbb,
+      start_: start,
+    }
+  }
+  #[inline]
+  pub fn finish(self) -> flatbuffers::WIPOffset<HippoRowData<'a>> {
+    let o = self.fbb_.end_table(self.start_);
+    flatbuffers::WIPOffset::new(o.value())
+  }
+}
+
+pub enum HippoTrackerChannelOffset {}
+#[derive(Copy, Clone, Debug, PartialEq)]
+
+pub struct HippoTrackerChannel<'a> {
+  pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for HippoTrackerChannel<'a> {
+    type Inner = HippoTrackerChannel<'a>;
+    #[inline]
+    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: flatbuffers::Table { buf: buf, loc: loc },
+        }
+    }
+}
+
+impl<'a> HippoTrackerChannel<'a> {
+    #[inline]
+    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        HippoTrackerChannel {
+            _tab: table,
+        }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+        args: &'args HippoTrackerChannelArgs<'args>) -> flatbuffers::WIPOffset<HippoTrackerChannel<'bldr>> {
+      let mut builder = HippoTrackerChannelBuilder::new(_fbb);
+      if let Some(x) = args.row_data { builder.add_row_data(x); }
+      builder.finish()
+    }
+
+    pub const VT_ROW_DATA: flatbuffers::VOffsetT = 4;
+
+  #[inline]
+  pub fn row_data(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<HippoRowData<'a>>>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<HippoRowData<'a>>>>>(HippoTrackerChannel::VT_ROW_DATA, None)
+  }
+}
+
+pub struct HippoTrackerChannelArgs<'a> {
+    pub row_data: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<HippoRowData<'a >>>>>,
+}
+impl<'a> Default for HippoTrackerChannelArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        HippoTrackerChannelArgs {
+            row_data: None,
+        }
+    }
+}
+pub struct HippoTrackerChannelBuilder<'a: 'b, 'b> {
+  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b> HippoTrackerChannelBuilder<'a, 'b> {
+  #[inline]
+  pub fn add_row_data(&mut self, row_data: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<HippoRowData<'b >>>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(HippoTrackerChannel::VT_ROW_DATA, row_data);
+  }
+  #[inline]
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> HippoTrackerChannelBuilder<'a, 'b> {
+    let start = _fbb.start_table();
+    HippoTrackerChannelBuilder {
+      fbb_: _fbb,
+      start_: start,
+    }
+  }
+  #[inline]
+  pub fn finish(self) -> flatbuffers::WIPOffset<HippoTrackerChannel<'a>> {
+    let o = self.fbb_.end_table(self.start_);
+    flatbuffers::WIPOffset::new(o.value())
+  }
+}
+
+pub enum HippoTrackerDataOffset {}
+#[derive(Copy, Clone, Debug, PartialEq)]
+
+pub struct HippoTrackerData<'a> {
+  pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for HippoTrackerData<'a> {
+    type Inner = HippoTrackerData<'a>;
+    #[inline]
+    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: flatbuffers::Table { buf: buf, loc: loc },
+        }
+    }
+}
+
+impl<'a> HippoTrackerData<'a> {
+    #[inline]
+    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        HippoTrackerData {
+            _tab: table,
+        }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+        args: &'args HippoTrackerDataArgs<'args>) -> flatbuffers::WIPOffset<HippoTrackerData<'bldr>> {
+      let mut builder = HippoTrackerDataBuilder::new(_fbb);
+      if let Some(x) = args.channels { builder.add_channels(x); }
+      builder.add_pattern(args.pattern);
+      builder.add_type_(args.type_);
+      builder.finish()
+    }
+
+    pub const VT_TYPE_: flatbuffers::VOffsetT = 4;
+    pub const VT_PATTERN: flatbuffers::VOffsetT = 6;
+    pub const VT_CHANNELS: flatbuffers::VOffsetT = 8;
+
+  #[inline]
+  pub fn type_(&self) -> HippoTrackerType {
+    self._tab.get::<HippoTrackerType>(HippoTrackerData::VT_TYPE_, Some(HippoTrackerType::Regular)).unwrap()
+  }
+  #[inline]
+  pub fn pattern(&self) -> i32 {
+    self._tab.get::<i32>(HippoTrackerData::VT_PATTERN, Some(0)).unwrap()
+  }
+  #[inline]
+  pub fn channels(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<HippoTrackerChannel<'a>>>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<HippoTrackerChannel<'a>>>>>(HippoTrackerData::VT_CHANNELS, None)
+  }
+}
+
+pub struct HippoTrackerDataArgs<'a> {
+    pub type_: HippoTrackerType,
+    pub pattern: i32,
+    pub channels: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<HippoTrackerChannel<'a >>>>>,
+}
+impl<'a> Default for HippoTrackerDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        HippoTrackerDataArgs {
+            type_: HippoTrackerType::Regular,
+            pattern: 0,
+            channels: None,
+        }
+    }
+}
+pub struct HippoTrackerDataBuilder<'a: 'b, 'b> {
+  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b> HippoTrackerDataBuilder<'a, 'b> {
+  #[inline]
+  pub fn add_type_(&mut self, type_: HippoTrackerType) {
+    self.fbb_.push_slot::<HippoTrackerType>(HippoTrackerData::VT_TYPE_, type_, HippoTrackerType::Regular);
+  }
+  #[inline]
+  pub fn add_pattern(&mut self, pattern: i32) {
+    self.fbb_.push_slot::<i32>(HippoTrackerData::VT_PATTERN, pattern, 0);
+  }
+  #[inline]
+  pub fn add_channels(&mut self, channels: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<HippoTrackerChannel<'b >>>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(HippoTrackerData::VT_CHANNELS, channels);
+  }
+  #[inline]
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> HippoTrackerDataBuilder<'a, 'b> {
+    let start = _fbb.start_table();
+    HippoTrackerDataBuilder {
+      fbb_: _fbb,
+      start_: start,
+    }
+  }
+  #[inline]
+  pub fn finish(self) -> flatbuffers::WIPOffset<HippoTrackerData<'a>> {
+    let o = self.fbb_.end_table(self.start_);
+    flatbuffers::WIPOffset::new(o.value())
+  }
+}
+
+pub enum HippoCurrentPositionOffset {}
+#[derive(Copy, Clone, Debug, PartialEq)]
+
+pub struct HippoCurrentPosition<'a> {
+  pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for HippoCurrentPosition<'a> {
+    type Inner = HippoCurrentPosition<'a>;
+    #[inline]
+    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: flatbuffers::Table { buf: buf, loc: loc },
+        }
+    }
+}
+
+impl<'a> HippoCurrentPosition<'a> {
+    #[inline]
+    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        HippoCurrentPosition {
+            _tab: table,
+        }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+        args: &'args HippoCurrentPositionArgs) -> flatbuffers::WIPOffset<HippoCurrentPosition<'bldr>> {
+      let mut builder = HippoCurrentPositionBuilder::new(_fbb);
+      builder.add_duration(args.duration);
+      builder.add_current_speed(args.current_speed);
+      builder.add_current_row(args.current_row);
+      builder.add_current_pattern(args.current_pattern);
+      builder.add_position(args.position);
+      builder.finish()
+    }
+
+    pub const VT_POSITION: flatbuffers::VOffsetT = 4;
+    pub const VT_CURRENT_PATTERN: flatbuffers::VOffsetT = 6;
+    pub const VT_CURRENT_ROW: flatbuffers::VOffsetT = 8;
+    pub const VT_CURRENT_SPEED: flatbuffers::VOffsetT = 10;
+    pub const VT_DURATION: flatbuffers::VOffsetT = 12;
+
+  #[inline]
+  pub fn position(&self) -> f32 {
+    self._tab.get::<f32>(HippoCurrentPosition::VT_POSITION, Some(0.0)).unwrap()
+  }
+  #[inline]
+  pub fn current_pattern(&self) -> i32 {
+    self._tab.get::<i32>(HippoCurrentPosition::VT_CURRENT_PATTERN, Some(0)).unwrap()
+  }
+  #[inline]
+  pub fn current_row(&self) -> i32 {
+    self._tab.get::<i32>(HippoCurrentPosition::VT_CURRENT_ROW, Some(0)).unwrap()
+  }
+  #[inline]
+  pub fn current_speed(&self) -> i32 {
+    self._tab.get::<i32>(HippoCurrentPosition::VT_CURRENT_SPEED, Some(0)).unwrap()
+  }
+  #[inline]
+  pub fn duration(&self) -> f32 {
+    self._tab.get::<f32>(HippoCurrentPosition::VT_DURATION, Some(0.0)).unwrap()
+  }
+}
+
+pub struct HippoCurrentPositionArgs {
+    pub position: f32,
+    pub current_pattern: i32,
+    pub current_row: i32,
+    pub current_speed: i32,
+    pub duration: f32,
+}
+impl<'a> Default for HippoCurrentPositionArgs {
+    #[inline]
+    fn default() -> Self {
+        HippoCurrentPositionArgs {
+            position: 0.0,
+            current_pattern: 0,
+            current_row: 0,
+            current_speed: 0,
+            duration: 0.0,
+        }
+    }
+}
+pub struct HippoCurrentPositionBuilder<'a: 'b, 'b> {
+  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b> HippoCurrentPositionBuilder<'a, 'b> {
+  #[inline]
+  pub fn add_position(&mut self, position: f32) {
+    self.fbb_.push_slot::<f32>(HippoCurrentPosition::VT_POSITION, position, 0.0);
+  }
+  #[inline]
+  pub fn add_current_pattern(&mut self, current_pattern: i32) {
+    self.fbb_.push_slot::<i32>(HippoCurrentPosition::VT_CURRENT_PATTERN, current_pattern, 0);
+  }
+  #[inline]
+  pub fn add_current_row(&mut self, current_row: i32) {
+    self.fbb_.push_slot::<i32>(HippoCurrentPosition::VT_CURRENT_ROW, current_row, 0);
+  }
+  #[inline]
+  pub fn add_current_speed(&mut self, current_speed: i32) {
+    self.fbb_.push_slot::<i32>(HippoCurrentPosition::VT_CURRENT_SPEED, current_speed, 0);
+  }
+  #[inline]
+  pub fn add_duration(&mut self, duration: f32) {
+    self.fbb_.push_slot::<f32>(HippoCurrentPosition::VT_DURATION, duration, 0.0);
+  }
+  #[inline]
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> HippoCurrentPositionBuilder<'a, 'b> {
+    let start = _fbb.start_table();
+    HippoCurrentPositionBuilder {
+      fbb_: _fbb,
+      start_: start,
+    }
+  }
+  #[inline]
+  pub fn finish(self) -> flatbuffers::WIPOffset<HippoCurrentPosition<'a>> {
+    let o = self.fbb_.end_table(self.start_);
+    flatbuffers::WIPOffset::new(o.value())
+  }
+}
+
 pub enum HippoMessageOffset {}
 #[derive(Copy, Clone, Debug, PartialEq)]
 
@@ -872,6 +1453,36 @@ impl<'a> HippoMessage<'a> {
   pub fn message_as_reply_added_urls(&self) -> Option<HippoReplyAddedUrls<'a>> {
     if self.message_type() == MessageType::reply_added_urls {
       self.message().map(|u| HippoReplyAddedUrls::init_from_table(u))
+    } else {
+      None
+    }
+  }
+
+  #[inline]
+  #[allow(non_snake_case)]
+  pub fn message_as_request_tracker_data(&self) -> Option<HippoRequestSelectSong<'a>> {
+    if self.message_type() == MessageType::request_tracker_data {
+      self.message().map(|u| HippoRequestSelectSong::init_from_table(u))
+    } else {
+      None
+    }
+  }
+
+  #[inline]
+  #[allow(non_snake_case)]
+  pub fn message_as_tracker_data(&self) -> Option<HippoTrackerData<'a>> {
+    if self.message_type() == MessageType::tracker_data {
+      self.message().map(|u| HippoTrackerData::init_from_table(u))
+    } else {
+      None
+    }
+  }
+
+  #[inline]
+  #[allow(non_snake_case)]
+  pub fn message_as_current_position(&self) -> Option<HippoCurrentPosition<'a>> {
+    if self.message_type() == MessageType::current_position {
+      self.message().map(|u| HippoCurrentPosition::init_from_table(u))
     } else {
       None
     }

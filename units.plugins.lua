@@ -430,7 +430,9 @@ SharedLibrary {
 	Name = "tracker",
 	Sources = {
 	    "src/plugins/view/tracker/tracker.cpp",
+	    "src/plugins/view/tracker/tracker_display.cpp",
         gen_moc("src/plugins/view/tracker/tracker.h"),
+        gen_moc("src/plugins/view/tracker/tracker_display.h"),
 	},
 
 	Libs = {
@@ -479,6 +481,7 @@ Default "SidPlugin"
 --Default "playlist"
 Default "player"
 Default "playlist"
+Default "tracker"
 --Default "song_info"
 --Default "TestViewPlugin"
 

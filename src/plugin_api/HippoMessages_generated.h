@@ -24,7 +24,47 @@ struct HippoSelectSong;
 
 struct HippoReplyAddedUrls;
 
+struct HippoRequestTrackerData;
+
+struct HippoRowData;
+
+struct HippoTrackerChannel;
+
+struct HippoTrackerData;
+
+struct HippoCurrentPosition;
+
 struct HippoMessage;
+
+enum HippoTrackerType {
+  HippoTrackerType_Regular = 0,
+  HippoTrackerType_Emulated = 1,
+  HippoTrackerType_MIN = HippoTrackerType_Regular,
+  HippoTrackerType_MAX = HippoTrackerType_Emulated
+};
+
+inline const HippoTrackerType (&EnumValuesHippoTrackerType())[2] {
+  static const HippoTrackerType values[] = {
+    HippoTrackerType_Regular,
+    HippoTrackerType_Emulated
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesHippoTrackerType() {
+  static const char * const names[3] = {
+    "Regular",
+    "Emulated",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameHippoTrackerType(HippoTrackerType e) {
+  if (e < HippoTrackerType_Regular || e > HippoTrackerType_Emulated) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesHippoTrackerType()[index];
+}
 
 enum MessageType {
   MessageType_NONE = 0,
@@ -36,11 +76,14 @@ enum MessageType {
   MessageType_select_song = 6,
   MessageType_request_add_urls = 7,
   MessageType_reply_added_urls = 8,
+  MessageType_request_tracker_data = 9,
+  MessageType_tracker_data = 10,
+  MessageType_current_position = 11,
   MessageType_MIN = MessageType_NONE,
-  MessageType_MAX = MessageType_reply_added_urls
+  MessageType_MAX = MessageType_current_position
 };
 
-inline const MessageType (&EnumValuesMessageType())[9] {
+inline const MessageType (&EnumValuesMessageType())[12] {
   static const MessageType values[] = {
     MessageType_NONE,
     MessageType_next_song,
@@ -50,13 +93,16 @@ inline const MessageType (&EnumValuesMessageType())[9] {
     MessageType_request_select_song,
     MessageType_select_song,
     MessageType_request_add_urls,
-    MessageType_reply_added_urls
+    MessageType_reply_added_urls,
+    MessageType_request_tracker_data,
+    MessageType_tracker_data,
+    MessageType_current_position
   };
   return values;
 }
 
 inline const char * const *EnumNamesMessageType() {
-  static const char * const names[10] = {
+  static const char * const names[13] = {
     "NONE",
     "next_song",
     "prev_song",
@@ -66,52 +112,19 @@ inline const char * const *EnumNamesMessageType() {
     "select_song",
     "request_add_urls",
     "reply_added_urls",
+    "request_tracker_data",
+    "tracker_data",
+    "current_position",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameMessageType(MessageType e) {
-  if (e < MessageType_NONE || e > MessageType_reply_added_urls) return "";
+  if (e < MessageType_NONE || e > MessageType_current_position) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesMessageType()[index];
 }
-
-template<typename T> struct MessageTypeTraits {
-  static const MessageType enum_value = MessageType_NONE;
-};
-
-template<> struct MessageTypeTraits<HippoNextSong> {
-  static const MessageType enum_value = MessageType_next_song;
-};
-
-template<> struct MessageTypeTraits<HippoPrevSong> {
-  static const MessageType enum_value = MessageType_prev_song;
-};
-
-template<> struct MessageTypeTraits<HippoPlaySong> {
-  static const MessageType enum_value = MessageType_play_song;
-};
-
-template<> struct MessageTypeTraits<HippoStopSong> {
-  static const MessageType enum_value = MessageType_stop_song;
-};
-
-template<> struct MessageTypeTraits<HippoRequestSelectSong> {
-  static const MessageType enum_value = MessageType_request_select_song;
-};
-
-template<> struct MessageTypeTraits<HippoSelectSong> {
-  static const MessageType enum_value = MessageType_select_song;
-};
-
-template<> struct MessageTypeTraits<HippoRequestAddUrls> {
-  static const MessageType enum_value = MessageType_request_add_urls;
-};
-
-template<> struct MessageTypeTraits<HippoReplyAddedUrls> {
-  static const MessageType enum_value = MessageType_reply_added_urls;
-};
 
 bool VerifyMessageType(flatbuffers::Verifier &verifier, const void *obj, MessageType type);
 bool VerifyMessageTypeVector(flatbuffers::Verifier &verifier, const flatbuffers::Vector<flatbuffers::Offset<void>> *values, const flatbuffers::Vector<uint8_t> *types);
@@ -506,6 +519,372 @@ inline flatbuffers::Offset<HippoReplyAddedUrls> CreateHippoReplyAddedUrlsDirect(
       urls__);
 }
 
+struct HippoRequestTrackerData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_PATTERN = 4
+  };
+  int32_t pattern() const {
+    return GetField<int32_t>(VT_PATTERN, 0);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<int32_t>(verifier, VT_PATTERN) &&
+           verifier.EndTable();
+  }
+};
+
+struct HippoRequestTrackerDataBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_pattern(int32_t pattern) {
+    fbb_.AddElement<int32_t>(HippoRequestTrackerData::VT_PATTERN, pattern, 0);
+  }
+  explicit HippoRequestTrackerDataBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  HippoRequestTrackerDataBuilder &operator=(const HippoRequestTrackerDataBuilder &);
+  flatbuffers::Offset<HippoRequestTrackerData> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<HippoRequestTrackerData>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<HippoRequestTrackerData> CreateHippoRequestTrackerData(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    int32_t pattern = 0) {
+  HippoRequestTrackerDataBuilder builder_(_fbb);
+  builder_.add_pattern(pattern);
+  return builder_.Finish();
+}
+
+struct HippoRowData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_NOTE = 4,
+    VT_INSTRUMENT = 6,
+    VT_VOLUMEFFECT = 8,
+    VT_EFFECT = 10,
+    VT_VOLUME = 12,
+    VT_PARAMETER = 14
+  };
+  const flatbuffers::String *note() const {
+    return GetPointer<const flatbuffers::String *>(VT_NOTE);
+  }
+  const flatbuffers::String *instrument() const {
+    return GetPointer<const flatbuffers::String *>(VT_INSTRUMENT);
+  }
+  const flatbuffers::String *volumeffect() const {
+    return GetPointer<const flatbuffers::String *>(VT_VOLUMEFFECT);
+  }
+  const flatbuffers::String *effect() const {
+    return GetPointer<const flatbuffers::String *>(VT_EFFECT);
+  }
+  const flatbuffers::String *volume() const {
+    return GetPointer<const flatbuffers::String *>(VT_VOLUME);
+  }
+  const flatbuffers::String *parameter() const {
+    return GetPointer<const flatbuffers::String *>(VT_PARAMETER);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_NOTE) &&
+           verifier.VerifyString(note()) &&
+           VerifyOffset(verifier, VT_INSTRUMENT) &&
+           verifier.VerifyString(instrument()) &&
+           VerifyOffset(verifier, VT_VOLUMEFFECT) &&
+           verifier.VerifyString(volumeffect()) &&
+           VerifyOffset(verifier, VT_EFFECT) &&
+           verifier.VerifyString(effect()) &&
+           VerifyOffset(verifier, VT_VOLUME) &&
+           verifier.VerifyString(volume()) &&
+           VerifyOffset(verifier, VT_PARAMETER) &&
+           verifier.VerifyString(parameter()) &&
+           verifier.EndTable();
+  }
+};
+
+struct HippoRowDataBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_note(flatbuffers::Offset<flatbuffers::String> note) {
+    fbb_.AddOffset(HippoRowData::VT_NOTE, note);
+  }
+  void add_instrument(flatbuffers::Offset<flatbuffers::String> instrument) {
+    fbb_.AddOffset(HippoRowData::VT_INSTRUMENT, instrument);
+  }
+  void add_volumeffect(flatbuffers::Offset<flatbuffers::String> volumeffect) {
+    fbb_.AddOffset(HippoRowData::VT_VOLUMEFFECT, volumeffect);
+  }
+  void add_effect(flatbuffers::Offset<flatbuffers::String> effect) {
+    fbb_.AddOffset(HippoRowData::VT_EFFECT, effect);
+  }
+  void add_volume(flatbuffers::Offset<flatbuffers::String> volume) {
+    fbb_.AddOffset(HippoRowData::VT_VOLUME, volume);
+  }
+  void add_parameter(flatbuffers::Offset<flatbuffers::String> parameter) {
+    fbb_.AddOffset(HippoRowData::VT_PARAMETER, parameter);
+  }
+  explicit HippoRowDataBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  HippoRowDataBuilder &operator=(const HippoRowDataBuilder &);
+  flatbuffers::Offset<HippoRowData> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<HippoRowData>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<HippoRowData> CreateHippoRowData(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<flatbuffers::String> note = 0,
+    flatbuffers::Offset<flatbuffers::String> instrument = 0,
+    flatbuffers::Offset<flatbuffers::String> volumeffect = 0,
+    flatbuffers::Offset<flatbuffers::String> effect = 0,
+    flatbuffers::Offset<flatbuffers::String> volume = 0,
+    flatbuffers::Offset<flatbuffers::String> parameter = 0) {
+  HippoRowDataBuilder builder_(_fbb);
+  builder_.add_parameter(parameter);
+  builder_.add_volume(volume);
+  builder_.add_effect(effect);
+  builder_.add_volumeffect(volumeffect);
+  builder_.add_instrument(instrument);
+  builder_.add_note(note);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<HippoRowData> CreateHippoRowDataDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    const char *note = nullptr,
+    const char *instrument = nullptr,
+    const char *volumeffect = nullptr,
+    const char *effect = nullptr,
+    const char *volume = nullptr,
+    const char *parameter = nullptr) {
+  auto note__ = note ? _fbb.CreateString(note) : 0;
+  auto instrument__ = instrument ? _fbb.CreateString(instrument) : 0;
+  auto volumeffect__ = volumeffect ? _fbb.CreateString(volumeffect) : 0;
+  auto effect__ = effect ? _fbb.CreateString(effect) : 0;
+  auto volume__ = volume ? _fbb.CreateString(volume) : 0;
+  auto parameter__ = parameter ? _fbb.CreateString(parameter) : 0;
+  return CreateHippoRowData(
+      _fbb,
+      note__,
+      instrument__,
+      volumeffect__,
+      effect__,
+      volume__,
+      parameter__);
+}
+
+struct HippoTrackerChannel FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_ROW_DATA = 4
+  };
+  const flatbuffers::Vector<flatbuffers::Offset<HippoRowData>> *row_data() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<HippoRowData>> *>(VT_ROW_DATA);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_ROW_DATA) &&
+           verifier.VerifyVector(row_data()) &&
+           verifier.VerifyVectorOfTables(row_data()) &&
+           verifier.EndTable();
+  }
+};
+
+struct HippoTrackerChannelBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_row_data(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<HippoRowData>>> row_data) {
+    fbb_.AddOffset(HippoTrackerChannel::VT_ROW_DATA, row_data);
+  }
+  explicit HippoTrackerChannelBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  HippoTrackerChannelBuilder &operator=(const HippoTrackerChannelBuilder &);
+  flatbuffers::Offset<HippoTrackerChannel> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<HippoTrackerChannel>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<HippoTrackerChannel> CreateHippoTrackerChannel(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<HippoRowData>>> row_data = 0) {
+  HippoTrackerChannelBuilder builder_(_fbb);
+  builder_.add_row_data(row_data);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<HippoTrackerChannel> CreateHippoTrackerChannelDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    const std::vector<flatbuffers::Offset<HippoRowData>> *row_data = nullptr) {
+  auto row_data__ = row_data ? _fbb.CreateVector<flatbuffers::Offset<HippoRowData>>(*row_data) : 0;
+  return CreateHippoTrackerChannel(
+      _fbb,
+      row_data__);
+}
+
+struct HippoTrackerData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_TYPE = 4,
+    VT_PATTERN = 6,
+    VT_CHANNELS = 8
+  };
+  HippoTrackerType type() const {
+    return static_cast<HippoTrackerType>(GetField<int8_t>(VT_TYPE, 0));
+  }
+  int32_t pattern() const {
+    return GetField<int32_t>(VT_PATTERN, 0);
+  }
+  const flatbuffers::Vector<flatbuffers::Offset<HippoTrackerChannel>> *channels() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<HippoTrackerChannel>> *>(VT_CHANNELS);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<int8_t>(verifier, VT_TYPE) &&
+           VerifyField<int32_t>(verifier, VT_PATTERN) &&
+           VerifyOffset(verifier, VT_CHANNELS) &&
+           verifier.VerifyVector(channels()) &&
+           verifier.VerifyVectorOfTables(channels()) &&
+           verifier.EndTable();
+  }
+};
+
+struct HippoTrackerDataBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_type(HippoTrackerType type) {
+    fbb_.AddElement<int8_t>(HippoTrackerData::VT_TYPE, static_cast<int8_t>(type), 0);
+  }
+  void add_pattern(int32_t pattern) {
+    fbb_.AddElement<int32_t>(HippoTrackerData::VT_PATTERN, pattern, 0);
+  }
+  void add_channels(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<HippoTrackerChannel>>> channels) {
+    fbb_.AddOffset(HippoTrackerData::VT_CHANNELS, channels);
+  }
+  explicit HippoTrackerDataBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  HippoTrackerDataBuilder &operator=(const HippoTrackerDataBuilder &);
+  flatbuffers::Offset<HippoTrackerData> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<HippoTrackerData>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<HippoTrackerData> CreateHippoTrackerData(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    HippoTrackerType type = HippoTrackerType_Regular,
+    int32_t pattern = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<HippoTrackerChannel>>> channels = 0) {
+  HippoTrackerDataBuilder builder_(_fbb);
+  builder_.add_channels(channels);
+  builder_.add_pattern(pattern);
+  builder_.add_type(type);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<HippoTrackerData> CreateHippoTrackerDataDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    HippoTrackerType type = HippoTrackerType_Regular,
+    int32_t pattern = 0,
+    const std::vector<flatbuffers::Offset<HippoTrackerChannel>> *channels = nullptr) {
+  auto channels__ = channels ? _fbb.CreateVector<flatbuffers::Offset<HippoTrackerChannel>>(*channels) : 0;
+  return CreateHippoTrackerData(
+      _fbb,
+      type,
+      pattern,
+      channels__);
+}
+
+struct HippoCurrentPosition FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_POSITION = 4,
+    VT_CURRENT_PATTERN = 6,
+    VT_CURRENT_ROW = 8,
+    VT_CURRENT_SPEED = 10,
+    VT_DURATION = 12
+  };
+  float position() const {
+    return GetField<float>(VT_POSITION, 0.0f);
+  }
+  int32_t current_pattern() const {
+    return GetField<int32_t>(VT_CURRENT_PATTERN, 0);
+  }
+  int32_t current_row() const {
+    return GetField<int32_t>(VT_CURRENT_ROW, 0);
+  }
+  int32_t current_speed() const {
+    return GetField<int32_t>(VT_CURRENT_SPEED, 0);
+  }
+  float duration() const {
+    return GetField<float>(VT_DURATION, 0.0f);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<float>(verifier, VT_POSITION) &&
+           VerifyField<int32_t>(verifier, VT_CURRENT_PATTERN) &&
+           VerifyField<int32_t>(verifier, VT_CURRENT_ROW) &&
+           VerifyField<int32_t>(verifier, VT_CURRENT_SPEED) &&
+           VerifyField<float>(verifier, VT_DURATION) &&
+           verifier.EndTable();
+  }
+};
+
+struct HippoCurrentPositionBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_position(float position) {
+    fbb_.AddElement<float>(HippoCurrentPosition::VT_POSITION, position, 0.0f);
+  }
+  void add_current_pattern(int32_t current_pattern) {
+    fbb_.AddElement<int32_t>(HippoCurrentPosition::VT_CURRENT_PATTERN, current_pattern, 0);
+  }
+  void add_current_row(int32_t current_row) {
+    fbb_.AddElement<int32_t>(HippoCurrentPosition::VT_CURRENT_ROW, current_row, 0);
+  }
+  void add_current_speed(int32_t current_speed) {
+    fbb_.AddElement<int32_t>(HippoCurrentPosition::VT_CURRENT_SPEED, current_speed, 0);
+  }
+  void add_duration(float duration) {
+    fbb_.AddElement<float>(HippoCurrentPosition::VT_DURATION, duration, 0.0f);
+  }
+  explicit HippoCurrentPositionBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  HippoCurrentPositionBuilder &operator=(const HippoCurrentPositionBuilder &);
+  flatbuffers::Offset<HippoCurrentPosition> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<HippoCurrentPosition>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<HippoCurrentPosition> CreateHippoCurrentPosition(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    float position = 0.0f,
+    int32_t current_pattern = 0,
+    int32_t current_row = 0,
+    int32_t current_speed = 0,
+    float duration = 0.0f) {
+  HippoCurrentPositionBuilder builder_(_fbb);
+  builder_.add_duration(duration);
+  builder_.add_current_speed(current_speed);
+  builder_.add_current_row(current_row);
+  builder_.add_current_pattern(current_pattern);
+  builder_.add_position(position);
+  return builder_.Finish();
+}
+
 struct HippoMessage FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_MESSAGE_TYPE = 4,
@@ -518,7 +897,6 @@ struct HippoMessage FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const void *message() const {
     return GetPointer<const void *>(VT_MESSAGE);
   }
-  template<typename T> const T *message_as() const;
   const HippoNextSong *message_as_next_song() const {
     return message_type() == MessageType_next_song ? static_cast<const HippoNextSong *>(message()) : nullptr;
   }
@@ -543,6 +921,15 @@ struct HippoMessage FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const HippoReplyAddedUrls *message_as_reply_added_urls() const {
     return message_type() == MessageType_reply_added_urls ? static_cast<const HippoReplyAddedUrls *>(message()) : nullptr;
   }
+  const HippoRequestSelectSong *message_as_request_tracker_data() const {
+    return message_type() == MessageType_request_tracker_data ? static_cast<const HippoRequestSelectSong *>(message()) : nullptr;
+  }
+  const HippoTrackerData *message_as_tracker_data() const {
+    return message_type() == MessageType_tracker_data ? static_cast<const HippoTrackerData *>(message()) : nullptr;
+  }
+  const HippoCurrentPosition *message_as_current_position() const {
+    return message_type() == MessageType_current_position ? static_cast<const HippoCurrentPosition *>(message()) : nullptr;
+  }
   const flatbuffers::String *user_data() const {
     return GetPointer<const flatbuffers::String *>(VT_USER_DATA);
   }
@@ -556,38 +943,6 @@ struct HippoMessage FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            verifier.EndTable();
   }
 };
-
-template<> inline const HippoNextSong *HippoMessage::message_as<HippoNextSong>() const {
-  return message_as_next_song();
-}
-
-template<> inline const HippoPrevSong *HippoMessage::message_as<HippoPrevSong>() const {
-  return message_as_prev_song();
-}
-
-template<> inline const HippoPlaySong *HippoMessage::message_as<HippoPlaySong>() const {
-  return message_as_play_song();
-}
-
-template<> inline const HippoStopSong *HippoMessage::message_as<HippoStopSong>() const {
-  return message_as_stop_song();
-}
-
-template<> inline const HippoRequestSelectSong *HippoMessage::message_as<HippoRequestSelectSong>() const {
-  return message_as_request_select_song();
-}
-
-template<> inline const HippoSelectSong *HippoMessage::message_as<HippoSelectSong>() const {
-  return message_as_select_song();
-}
-
-template<> inline const HippoRequestAddUrls *HippoMessage::message_as<HippoRequestAddUrls>() const {
-  return message_as_request_add_urls();
-}
-
-template<> inline const HippoReplyAddedUrls *HippoMessage::message_as<HippoReplyAddedUrls>() const {
-  return message_as_reply_added_urls();
-}
 
 struct HippoMessageBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
@@ -673,6 +1028,18 @@ inline bool VerifyMessageType(flatbuffers::Verifier &verifier, const void *obj, 
     }
     case MessageType_reply_added_urls: {
       auto ptr = reinterpret_cast<const HippoReplyAddedUrls *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case MessageType_request_tracker_data: {
+      auto ptr = reinterpret_cast<const HippoRequestSelectSong *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case MessageType_tracker_data: {
+      auto ptr = reinterpret_cast<const HippoTrackerData *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case MessageType_current_position: {
+      auto ptr = reinterpret_cast<const HippoCurrentPosition *>(obj);
       return verifier.VerifyTable(ptr);
     }
     default: return false;

@@ -49,6 +49,7 @@ int main(int argc, char** argv) {
 
     main_window.create_plugin_by_index(0);
     main_window.create_plugin_by_index(1);
+    main_window.create_plugin_by_index(2);
 
     main_window.show();
 

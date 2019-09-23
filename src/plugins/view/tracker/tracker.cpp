@@ -1,4 +1,5 @@
 #include "tracker.h"
+#include "tracker_display.h"
 #include <QtCore/QDebug>
 #include <QtGui/QIcon>
 #include <QtWidgets/QLayout>
@@ -11,10 +12,9 @@
 
 QWidget* TrackerView::create(struct HippoServiceAPI* service_api) {
     m_message_api = HippoServiceAPI_get_message_api(service_api, HIPPO_MESSAGE_API_VERSION);
+    m_display = new TrackerDisplay(nullptr);
 
-    QWidget* widget = new QWidget;
-
-    return widget;
+    return m_display;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -25,7 +25,5 @@ void TrackerView::event(const unsigned char* data, int len) {
     // Only care about added files right now
     if (message->message_type() != MessageType_select_song)
         return;
-
-    auto title = message->message_as_select_song()->title();
 }
 
