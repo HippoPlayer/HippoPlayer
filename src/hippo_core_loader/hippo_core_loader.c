@@ -41,8 +41,8 @@ static struct {
 
 WCHAR* convert_utf8_to_wide(const char* input) { 
 	int len = MultiByteToWideChar(CP_UTF8, 0, input, -1, NULL, 0);
-	WCHAR* output = (WCHAR*)malloc(len + 4);
-	memset(output, 0, len + 4);
+	len *= 4;
+	WCHAR* output = (WCHAR*)malloc(len);
 	MultiByteToWideChar(CP_UTF8, 0, input, -1, output, len);
 
 	return output;
