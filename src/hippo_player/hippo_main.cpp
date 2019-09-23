@@ -9,14 +9,20 @@
 #include "MainWindow.h"
 #include "src/hippo_core_loader/hippo_core_loader.h"
 
+extern "C" {
+	#include "src/hippo_core/native/hippo_core.h"
+}
+
 int main(int argc, char** argv) {
-    QApplication app(argc, argv);
 
     // Make sure we manage to load the core
     if (!HippoCore_load()) {
         return 1;
     }
 
+    HippoCore* core = hippo_core_new();
+
+    QApplication app(argc, argv);
     app.setStyle(QStyleFactory::create(QStringLiteral("Fusion")));
 
     QPalette darkPalette;
@@ -38,7 +44,7 @@ int main(int argc, char** argv) {
     app.setPalette(darkPalette);
     app.setStyleSheet(QStringLiteral("QToolTip { color: #ffffff; background-color: #2a82da; border: 1px solid white; }"));
 
-    MainWindow main_window;
+    MainWindow main_window(core);
     main_window.load_plugins(app.applicationDirPath());
 
     main_window.create_plugin_by_index(0);

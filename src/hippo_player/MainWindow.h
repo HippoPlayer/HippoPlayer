@@ -16,7 +16,7 @@ class MainWindow : public QMainWindow {
     Q_OBJECT
 
 public:
-    MainWindow();
+    MainWindow(HippoCore* core);
     bool load_plugins(const QString& plugin_dir);
     QWidget* create_plugin_by_index(int index);
 

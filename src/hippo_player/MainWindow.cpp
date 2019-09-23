@@ -20,10 +20,9 @@ extern "C" {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-MainWindow::MainWindow() : QMainWindow(0) {
+MainWindow::MainWindow(HippoCore* core) : m_core(core), QMainWindow(0) {
     m_docking_manager = new ToolWindowManager;
 
-    m_core = hippo_core_new();
     m_general_messages = HippoServiceAPI_get_message_api(hippo_service_api_new(m_core), HIPPO_MESSAGE_API_VERSION);
 
     QVBoxLayout* layout = new QVBoxLayout;
@@ -132,7 +131,7 @@ void MainWindow::create_menus() {
 
 void MainWindow::add_files() {
     QStringList filenames = QFileDialog::getOpenFileNames(this, QStringLiteral("Add files files"), QDir::currentPath(),
-                                                          QStringLiteral("All files (*.*)"));
+                                                          QStringLiteral("All files (*.*)"), nullptr, QFileDialog::DontUseNativeDialog);
     if (filenames.isEmpty()) {
         return;
     }
