@@ -7,6 +7,7 @@
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QMenuBar>
+#include <QtGui/QFontDatabase>
 #include <flatbuffers/flatbuffers.h>
 #include "../../src/plugin_api/HippoPlugin.h"
 #include "../../src/plugin_api/HippoMessages.h"
@@ -20,8 +21,12 @@ extern "C" {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-MainWindow::MainWindow(HippoCore* core) : m_core(core), QMainWindow(0) {
+MainWindow::MainWindow(HippoCore* core) : QMainWindow(0), m_core(core) {
     m_docking_manager = new ToolWindowManager;
+
+    int id = QFontDatabase::addApplicationFont(QStringLiteral("data/fonts/DejaVuSansMono.ttf"));
+    QString family = QFontDatabase::applicationFontFamilies(id).at(0);
+    qDebug() << family;
 
     m_general_messages = HippoServiceAPI_get_message_api(hippo_service_api_new(m_core), HIPPO_MESSAGE_API_VERSION);
 

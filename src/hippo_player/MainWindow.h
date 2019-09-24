@@ -39,8 +39,8 @@ private:
     };
 
 
-    const HippoMessageAPI* m_general_messages = nullptr;
     HippoCore* m_core = nullptr;
+    const HippoMessageAPI* m_general_messages = nullptr;
     ToolWindowManager* m_docking_manager = nullptr;
     QVector<PluginInfo> m_plugin_types;
     QVector<PluginInstance> m_plugin_instances;
