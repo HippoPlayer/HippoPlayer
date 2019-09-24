@@ -734,13 +734,17 @@ struct HippoTrackerData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_TYPE = 4,
     VT_PATTERN = 6,
-    VT_CHANNELS = 8
+    VT_CURRENT_ROW = 8,
+    VT_CHANNELS = 10
   };
   HippoTrackerType type() const {
     return static_cast<HippoTrackerType>(GetField<int8_t>(VT_TYPE, 0));
   }
   int32_t pattern() const {
     return GetField<int32_t>(VT_PATTERN, 0);
+  }
+  int32_t current_row() const {
+    return GetField<int32_t>(VT_CURRENT_ROW, 0);
   }
   const flatbuffers::Vector<flatbuffers::Offset<HippoTrackerChannel>> *channels() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<HippoTrackerChannel>> *>(VT_CHANNELS);
@@ -749,6 +753,7 @@ struct HippoTrackerData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     return VerifyTableStart(verifier) &&
            VerifyField<int8_t>(verifier, VT_TYPE) &&
            VerifyField<int32_t>(verifier, VT_PATTERN) &&
+           VerifyField<int32_t>(verifier, VT_CURRENT_ROW) &&
            VerifyOffset(verifier, VT_CHANNELS) &&
            verifier.VerifyVector(channels()) &&
            verifier.VerifyVectorOfTables(channels()) &&
@@ -764,6 +769,9 @@ struct HippoTrackerDataBuilder {
   }
   void add_pattern(int32_t pattern) {
     fbb_.AddElement<int32_t>(HippoTrackerData::VT_PATTERN, pattern, 0);
+  }
+  void add_current_row(int32_t current_row) {
+    fbb_.AddElement<int32_t>(HippoTrackerData::VT_CURRENT_ROW, current_row, 0);
   }
   void add_channels(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<HippoTrackerChannel>>> channels) {
     fbb_.AddOffset(HippoTrackerData::VT_CHANNELS, channels);
@@ -784,9 +792,11 @@ inline flatbuffers::Offset<HippoTrackerData> CreateHippoTrackerData(
     flatbuffers::FlatBufferBuilder &_fbb,
     HippoTrackerType type = HippoTrackerType_Regular,
     int32_t pattern = 0,
+    int32_t current_row = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<HippoTrackerChannel>>> channels = 0) {
   HippoTrackerDataBuilder builder_(_fbb);
   builder_.add_channels(channels);
+  builder_.add_current_row(current_row);
   builder_.add_pattern(pattern);
   builder_.add_type(type);
   return builder_.Finish();
@@ -796,12 +806,14 @@ inline flatbuffers::Offset<HippoTrackerData> CreateHippoTrackerDataDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     HippoTrackerType type = HippoTrackerType_Regular,
     int32_t pattern = 0,
+    int32_t current_row = 0,
     const std::vector<flatbuffers::Offset<HippoTrackerChannel>> *channels = nullptr) {
   auto channels__ = channels ? _fbb.CreateVector<flatbuffers::Offset<HippoTrackerChannel>>(*channels) : 0;
   return CreateHippoTrackerData(
       _fbb,
       type,
       pattern,
+      current_row,
       channels__);
 }
 

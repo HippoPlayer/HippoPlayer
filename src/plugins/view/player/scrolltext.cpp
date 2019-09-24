@@ -42,7 +42,6 @@ void ScrollText::setSeparator(QString separator) {
 void ScrollText::updateText() {
     timer.stop();
 
-
     singleTextWidth = fontMetrics().horizontalAdvance(_text);
     scrollEnabled = (singleTextWidth > width() - leftMargin);
 

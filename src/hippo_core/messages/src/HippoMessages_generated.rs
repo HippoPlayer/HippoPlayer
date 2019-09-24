@@ -1133,6 +1133,7 @@ impl<'a> HippoTrackerData<'a> {
         args: &'args HippoTrackerDataArgs<'args>) -> flatbuffers::WIPOffset<HippoTrackerData<'bldr>> {
       let mut builder = HippoTrackerDataBuilder::new(_fbb);
       if let Some(x) = args.channels { builder.add_channels(x); }
+      builder.add_current_row(args.current_row);
       builder.add_pattern(args.pattern);
       builder.add_type_(args.type_);
       builder.finish()
@@ -1140,7 +1141,8 @@ impl<'a> HippoTrackerData<'a> {
 
     pub const VT_TYPE_: flatbuffers::VOffsetT = 4;
     pub const VT_PATTERN: flatbuffers::VOffsetT = 6;
-    pub const VT_CHANNELS: flatbuffers::VOffsetT = 8;
+    pub const VT_CURRENT_ROW: flatbuffers::VOffsetT = 8;
+    pub const VT_CHANNELS: flatbuffers::VOffsetT = 10;
 
   #[inline]
   pub fn type_(&self) -> HippoTrackerType {
@@ -1151,6 +1153,10 @@ impl<'a> HippoTrackerData<'a> {
     self._tab.get::<i32>(HippoTrackerData::VT_PATTERN, Some(0)).unwrap()
   }
   #[inline]
+  pub fn current_row(&self) -> i32 {
+    self._tab.get::<i32>(HippoTrackerData::VT_CURRENT_ROW, Some(0)).unwrap()
+  }
+  #[inline]
   pub fn channels(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<HippoTrackerChannel<'a>>>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<HippoTrackerChannel<'a>>>>>(HippoTrackerData::VT_CHANNELS, None)
   }
@@ -1159,6 +1165,7 @@ impl<'a> HippoTrackerData<'a> {
 pub struct HippoTrackerDataArgs<'a> {
     pub type_: HippoTrackerType,
     pub pattern: i32,
+    pub current_row: i32,
     pub channels: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<HippoTrackerChannel<'a >>>>>,
 }
 impl<'a> Default for HippoTrackerDataArgs<'a> {
@@ -1167,6 +1174,7 @@ impl<'a> Default for HippoTrackerDataArgs<'a> {
         HippoTrackerDataArgs {
             type_: HippoTrackerType::Regular,
             pattern: 0,
+            current_row: 0,
             channels: None,
         }
     }
@@ -1183,6 +1191,10 @@ impl<'a: 'b, 'b> HippoTrackerDataBuilder<'a, 'b> {
   #[inline]
   pub fn add_pattern(&mut self, pattern: i32) {
     self.fbb_.push_slot::<i32>(HippoTrackerData::VT_PATTERN, pattern, 0);
+  }
+  #[inline]
+  pub fn add_current_row(&mut self, current_row: i32) {
+    self.fbb_.push_slot::<i32>(HippoTrackerData::VT_CURRENT_ROW, current_row, 0);
   }
   #[inline]
   pub fn add_channels(&mut self, channels: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<HippoTrackerChannel<'b >>>>) {

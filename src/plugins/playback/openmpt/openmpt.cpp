@@ -1,5 +1,6 @@
 #include <libopenmpt/libopenmpt.hpp>
 #include <HippoPlugin.h>
+#include <HippoMessages.h>
 
 #include <vector>
 #include <string>
@@ -8,6 +9,8 @@
 
 const int MAX_EXT_COUNT = 16 * 1024;
 static char s_supported_extensions[MAX_EXT_COUNT];
+
+// TODO: move to local
 static const HippoIoAPI* g_io_api = nullptr;
 static const HippoMetadataAPI* g_metadata_api = nullptr;
 
@@ -15,6 +18,7 @@ static const HippoMetadataAPI* g_metadata_api = nullptr;
 
 struct OpenMptData {
     openmpt::module* mod = 0;
+    const HippoMessageAPI* message_api;
     std::string song_title;
     void* song_data = 0;
     float length;
@@ -59,6 +63,7 @@ static void* openmpt_create(const HippoServiceAPI* service_api) {
 
     g_io_api = HippoServiceAPI_get_io_api(service_api, 1);
     g_metadata_api = HippoServiceAPI_get_metadata_api(service_api, 1);
+    user_data->message_api = HippoServiceAPI_get_message_api(service_api, 1);
 
 	return (void*)user_data;
 }
@@ -94,6 +99,64 @@ static HippoProbeResult openmpt_probe_can_play(const uint8_t* data, uint32_t dat
     printf("openmpt: case %d not handled in switch. Assuming unsupported file\n", res);
 
     return HippoProbeResult_Unsupported;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void send_pattern_data(struct OpenMptData* replayer_data) {
+    flatbuffers::FlatBufferBuilder builder(16 * 1024);
+
+    const int current_pattern = replayer_data->mod->get_current_pattern();
+    const int current_row = replayer_data->mod->get_current_row();
+    const int channel_count = replayer_data->mod->get_num_channels();
+    const int num_rows = replayer_data->mod->get_pattern_num_rows(current_pattern);
+
+    assert(channel_count < 2048);
+    assert(num_rows < 512);
+
+    flatbuffers::Offset<HippoTrackerChannel> channels[2048];
+
+	for (int channel = 0; channel < channel_count; ++channel) {
+        flatbuffers::Offset<HippoRowData> rows[512];
+
+        for (int row = 0; row < num_rows; ++row) {
+	        std::string note = replayer_data->mod->format_pattern_row_channel_command(current_pattern, row, channel, openmpt::module::command_note);
+	        std::string instrument = replayer_data->mod->format_pattern_row_channel_command(current_pattern, row, channel, openmpt::module::command_instrument);
+	        std::string effect = replayer_data->mod->format_pattern_row_channel_command(current_pattern, row, channel, openmpt::module::command_effect);
+	        std::string vol_effect = replayer_data->mod->format_pattern_row_channel_command(current_pattern, row, channel, openmpt::module::command_parameter);
+
+            auto note_name = builder.CreateString(note.c_str());
+            auto inst_name = builder.CreateString(instrument.c_str());
+            auto effect_name = builder.CreateString(effect.c_str());
+            auto voleffect_name = builder.CreateString(vol_effect.c_str());
+
+            HippoRowDataBuilder row_builder(builder);
+            row_builder.add_note(note_name);
+            row_builder.add_instrument(inst_name);
+            row_builder.add_effect(effect_name);
+            row_builder.add_volumeffect(voleffect_name);
+	        rows[row] = row_builder.Finish();
+        }
+
+        auto row_data = builder.CreateVector(rows, num_rows);
+        channels[channel] = CreateHippoTrackerChannel(builder, row_data);
+	}
+
+	auto channel_data = builder.CreateVector(channels, channel_count);
+    auto tracker_data = CreateHippoTrackerData(builder, HippoTrackerType_Regular, current_pattern, current_row, channel_data);
+
+    builder.Finish(CreateHippoMessageDirect(builder, MessageType_tracker_data, tracker_data.Union()));
+
+    HippoMessageAPI_send(replayer_data->message_api, builder.GetBufferPointer(), builder.GetSize());
+
+    /*
+	for (int i = 0; i < 64; ++i) {
+	    std::string t = replayer_data->mod->highlight_pattern_row_channel(pattern, i, 0);
+	    std::string note = replayer_data->mod->format_pattern_row_channel_command(pattern, i, 0, openmpt::module::command_note);
+	    printf("%04x %s - %s\n", i, t.c_str(), note.c_str());
+	}
+	*/
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -137,6 +200,14 @@ static int openmpt_open(void* user_data, const char* filename) {
 		HippoMetadata_set_key(g_metadata_api, filename, 0, instrument.c_str(), keyname);
 	}
 
+	int pattern = 0;
+
+	for (int i = 0; i < 64; ++i) {
+	    std::string t = replayer_data->mod->highlight_pattern_row_channel(pattern, i, 0);
+	    std::string note = replayer_data->mod->format_pattern_row_channel_command(pattern, i, 0, openmpt::module::command_note);
+	    printf("%04x %s - %s\n", i, t.c_str(), note.c_str());
+	}
+
 	return 0;
 }
 
@@ -158,11 +229,25 @@ static int openmpt_close(void* user_data) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int openmpt_read_data(void* user_data, void* dest, uint32_t max_samples) {
-	struct OpenMptData* replayerData = (struct OpenMptData*)user_data;
+	struct OpenMptData* replayer_data = (struct OpenMptData*)user_data;
+
+    // Send current positions back to frontend
+    flatbuffers::FlatBufferBuilder builder(1024);
+    builder.Finish(CreateHippoMessageDirect(builder, MessageType_current_position,
+        CreateHippoCurrentPosition(builder,
+            replayer_data->mod->get_position_seconds(),
+            replayer_data->mod->get_current_pattern(),
+            replayer_data->mod->get_current_row(),
+            replayer_data->mod->get_current_speed(),
+            replayer_data->length).Union()));
+    HippoMessageAPI_send(replayer_data->message_api, builder.GetBufferPointer(), builder.GetSize());
+
+    // TODO: Only send pattern data when we need requsted
+    send_pattern_data(replayer_data);
 
 	// count is number of frames per channel and div by 2 as we have 2 channels
 	const int count = 480;
-    return replayerData->mod->read_interleaved_stereo(48000, count, (float*)dest) * 2;
+    return replayer_data->mod->read_interleaved_stereo(48000, count, (float*)dest) * 2;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

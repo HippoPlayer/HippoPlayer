@@ -9,6 +9,7 @@ class QPaintEvent;
 class QPainter;
 class QResizeEvent;
 class QRegion;
+struct HippoTrackerChannel;
 
 struct TrackerDisplaySettings {
     short line_spacing;
@@ -24,6 +25,7 @@ class TrackerDisplay : public QAbstractScrollArea {
     Q_OBJECT
 public:
 	TrackerDisplay(QWidget* parent);
+    void event(const unsigned char* data, int len);
 
 private:
     struct Range {
@@ -35,12 +37,12 @@ private:
 	void paintEvent(QPaintEvent* event);
     void resizeEvent(QResizeEvent* event);
 
-	void render_track(QPainter& painter, const QRegion& region, int track, bool last_track);
+	void render_track(QPainter& painter, const QRegion& region, int track, const HippoTrackerChannel* channel, bool last_track);
 	void render_tracks(QPainter& painter, const QRegion& region);
     void render_numbers(QPainter& painter, const QRegion& region);
-    void set_playing_row(int row);
     void update_font_size();
     void setup_scroll_bars();
+    void set_playing_row(int row);
     void invalidate_left_margin_row(int row);
     void set_scroll_pos(int new_scroll_pos_x, int new_scroll_pos_y);
 
@@ -86,6 +88,8 @@ private:
     Q_SLOT void test_change_row();
 
 	TrackerDisplaySettings m_settings;
+
+	unsigned char* m_tracker_data = nullptr;
 
 	int m_scroll_pos_x = 0;
 	int m_scroll_pos_y = 0;

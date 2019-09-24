@@ -64,6 +64,7 @@ enum HippoTrackerType:byte { Regular, Emulated }
 table HippoTrackerData {
     type: HippoTrackerType = Regular;
     pattern: int;
+    current_row: int;
     channels: [HippoTrackerChannel];
 }
 
@@ -93,7 +94,7 @@ union MessageType {
   request_tracker_data: HippoRequestSelectSong,
   tracker_data: HippoTrackerData,
 
-  current_position: HippoCurrentPosition, 
+  current_position: HippoCurrentPosition,
 }
 
 

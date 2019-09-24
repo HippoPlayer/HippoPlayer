@@ -4,6 +4,7 @@
 #include <QtGui/QPainter>
 #include <QtCore/QDebug>
 #include <QtCore/QTimer>
+#include "../../../plugin_api/HippoMessages.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -17,10 +18,13 @@ TrackerDisplay::TrackerDisplay(QWidget* parent) :
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
 	setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
 
+
+    /*
     QTimer* timer = new QTimer;
     QObject::connect(timer, &QTimer::timeout, this, &TrackerDisplay::test_change_row);
     timer->setInterval(200);
     timer->start();
+    */
 
 	update_font_size();
 }
@@ -39,7 +43,7 @@ void TrackerDisplay::update_font_size() {
     // C-4 02 F08
 
     // TODO: This needs to change depending on what is being played
-    m_track_width = (metrics.horizontalAdvance('0') * 10) + m_settings.track_text_pad * 2;
+    m_track_width = (metrics.horizontalAdvance('0') * 12) + m_settings.track_text_pad * 2;
     m_left_margin_width = (metrics.horizontalAdvance('0') * 2) + m_settings.margin_spacing * 2;
 }
 
@@ -92,10 +96,12 @@ void TrackerDisplay::render_numbers(QPainter& painter, const QRegion& region) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TrackerDisplay::render_track(QPainter& painter, const QRegion& region, int track, bool last_track) {
+void TrackerDisplay::render_track(QPainter& painter, const QRegion& region, int track, const HippoTrackerChannel* channel, bool last_track) {
 	const QRect& rect = region.boundingRect();
 	const int first_row = qBound(0, get_row_from_physical_y(qMax(rect.top(), m_top_margin_height)), m_row_count - 1);
 	const int last_row = qBound(0, get_row_from_physical_y(qMax(rect.bottom(), m_top_margin_height)), m_row_count - 1);
+
+	auto rows_data = channel->row_data();
 
 	QPen grayDark(QColor(80, 80, 80));
 	QPen gray(QColor(180, 180, 180));
@@ -121,6 +127,8 @@ void TrackerDisplay::render_track(QPainter& painter, const QRegion& region, int 
 		if (!region.intersects(pattern_data_rect))
 			continue;
 
+		auto row_data = rows_data->Get(row);
+
         if (row == m_current_row) {
             painter.setPen(selection);
         } else if (row % 4) {
@@ -131,12 +139,34 @@ void TrackerDisplay::render_track(QPainter& painter, const QRegion& region, int 
 
         //pattern_data_rect.moveLeft(2);
 
-        if (row % 8) {
-            painter.drawText(pattern_data_rect, QStringLiteral("--- -- ---"));
-        } else {
-            painter.drawText(pattern_data_rect, QStringLiteral("C-2 05 F02"));
-        }
+        const char* note = row_data->note()->c_str();
+        const char* instrument = row_data->instrument()->c_str();
+        const char* effect = row_data->effect()->c_str();
+        const char* voleffect = row_data->volumeffect()->c_str();
+
+        painter.drawText(pattern_data_rect, QString(QStringLiteral("%1 %2 %3%4").arg(note, instrument, effect, voleffect)));
     }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void TrackerDisplay::event(const unsigned char* data, int len) {
+    const HippoMessage* message = GetHippoMessage(data);
+
+    // Only care about added files right now
+    if (message->message_type() != MessageType_tracker_data)
+        return;
+
+    // allocate storage buffer if we don't have one
+
+    if (!m_tracker_data) {
+        m_tracker_data = (unsigned char*)malloc(512 * 1024);
+    }
+
+    memcpy(m_tracker_data, data, len);
+
+    const HippoTrackerData* tracker_data = message->message_as_tracker_data();
+    set_playing_row(tracker_data->current_row());
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -155,7 +185,6 @@ void TrackerDisplay::set_playing_row(int new_row) {
 	}
 
 	int y_scroll = (m_current_row * m_row_height) - ((viewport()->height() - m_top_margin_height) / 2) + m_row_height / 2;
-	printf("y_scroll %d\n", y_scroll);
 	set_scroll_pos(m_scroll_pos_x, y_scroll);
 }
 
@@ -178,8 +207,6 @@ void TrackerDisplay::set_scroll_pos(int new_scroll_pos_x, int new_scroll_pos_y) 
         if (dx == 0) clip.setTop(m_top_margin_height); // don't scroll the top margin
         if (dy == 0) clip.setLeft(m_left_margin_width); // don't scroll the left margin
 
-        printf("scroll %d %d\n", dx, dy);
-
 	    viewport()->scroll(dx, dy, clip);
 	}
 
@@ -192,6 +219,9 @@ void TrackerDisplay::set_scroll_pos(int new_scroll_pos_x, int new_scroll_pos_y) 
 void TrackerDisplay::render_tracks(QPainter& painter, const QRegion& region) {
 	const QRect& rect = region.boundingRect();
 
+    const HippoMessage* message = GetHippoMessage(m_tracker_data);
+    const HippoTrackerData* tracker_data = message->message_as_tracker_data();
+
 	const int start_track = qBound(0, get_track_from_physical_x(qMax(rect.left(), m_left_margin_width)), m_track_count);
 	const int end_track = qBound(0, get_track_from_physical_x(rect.right()) + 1, m_track_count);
 
@@ -199,8 +229,10 @@ void TrackerDisplay::render_tracks(QPainter& painter, const QRegion& region) {
 	                           QPointF(rect.right() + 1.0f, rect.bottom() + 1.0f)));
 	painter.fillRect(rect, QBrush(QColor(0, 0, 0)));
 
+	auto channels = tracker_data->channels();
+
 	for (int track = start_track; track < end_track; ++track) {
-		render_track(painter, region, track, track == end_track - 1);
+		render_track(painter, region, track, channels->Get(track), track == end_track - 1);
 	}
 }
 
@@ -210,7 +242,14 @@ void TrackerDisplay::paintEvent(QPaintEvent* event) {
 	QPainter painter(viewport());
 	painter.setFont(m_mono_font);
 
+	// render numbers but no tracks if we don't have any data
+
     render_numbers(painter, event->region());
+
+	if (!m_tracker_data) {
+	    return;
+	}
+
     render_tracks(painter, event->region());
 }
 

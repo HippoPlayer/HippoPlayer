@@ -20,10 +20,6 @@ QWidget* TrackerView::create(struct HippoServiceAPI* service_api) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void TrackerView::event(const unsigned char* data, int len) {
-    const HippoMessage* message = GetHippoMessage(data);
-
-    // Only care about added files right now
-    if (message->message_type() != MessageType_select_song)
-        return;
+    m_display->event(data, len);
 }
 
