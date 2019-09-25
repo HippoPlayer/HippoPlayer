@@ -117,36 +117,7 @@ impl Playlist {
                 return self.create_update_message(index_start);
             },
 
-            MessageType::request_select_song => {
-                // This is kinda ugly but will do for now
-                // TODO: Proper error handling
-
-                let select_song = msg.message_as_request_select_song().unwrap();
-                let song_name = select_song.name().unwrap();
-                let mut new_song_id = None;
-
-                for (id, entry) in self.entries.iter().enumerate() {
-                    if entry.path == song_name {
-                        new_song_id = Some(id);
-                        break;
-                    }
-                }
-
-                if let Some(id) = new_song_id {
-                    self.current_song = id as isize;
-                    self.new_song = true;
-
-                    let mut builder = messages::FlatBufferBuilder::new_with_capacity(8192);
-                    let title = builder.create_string(&self.entries[id as usize].title);
-
-                    let select_song = HippoSelectSong::create(&mut builder, &HippoSelectSongArgs {
-                        title: Some(title),
-                    });
-
-                    return Some(HippoMessage::create_def(builder, MessageType::select_song, select_song.as_union_value()))
-                }
-            },
-
+            MessageType::request_select_song => return self.select_song(msg),
             MessageType::next_song => self.advance_song(1),
             MessageType::prev_song => self.advance_song(-1),
 
@@ -177,41 +148,43 @@ impl Playlist {
     ///
     /// Get loaded urls
     ///
-    pub fn get_loaded_urls(&self) /*-> MessageEncode*/ {
-        /*
-        let mut request = MessageEncode::new_request("hippo_playlist_load", 0).unwrap();
-
-        request.write_map_len(self.entries.len() as u32).unwrap();
-
-        for entry in &self.entries {
-            request.write_str(&entry.path).unwrap();
-            request.write_str(&entry.title).unwrap();
-        }
-
-        request
-        */
+    pub fn get_loaded_urls(&self) -> Option<Box<[u8]>> {
+        self.create_update_message(0)
     }
 
     ///
-    /// Get the next song to play
+    /// Select a new song to play 
     ///
-    fn select_song(&mut self, _msg: &HippoMessage)  {
-        /*
-        let row: u32 = msg.read_int().unwrap();
-        let url_name = msg.read_str().unwrap();
+    fn select_song(&mut self, msg: &HippoMessage) -> Option<Box<[u8]>>  {
+        // This is kinda ugly but will do for now
+        // TODO: Proper error handling
 
-        // TODO: Validate that this index is correct
+        let select_song = msg.message_as_request_select_song().unwrap();
+        let song_name = select_song.name().unwrap();
+        let mut new_song_id = None;
 
-        self.current_song = row as usize;
+        for (id, entry) in self.entries.iter().enumerate() {
+            if entry.path == song_name {
+                new_song_id = Some(id);
+                break;
+            }
+        }
 
-        // Write reply
+        if let Some(id) = new_song_id {
+            self.current_song = id as isize;
+            self.new_song = true;
 
-        let mut reply = MessageEncode::new_request("hippo_playlist_select_song", 0).unwrap();
-        reply.write_int(row).unwrap();
-        reply.write_str(&url_name).unwrap();
+            let mut builder = messages::FlatBufferBuilder::new_with_capacity(8192);
+            let title = builder.create_string(&self.entries[id as usize].title);
 
-        Some(reply)
-        */
+            let select_song = HippoSelectSong::create(&mut builder, &HippoSelectSongArgs {
+                title: Some(title),
+            });
+
+            Some(HippoMessage::create_def(builder, MessageType::select_song, select_song.as_union_value()))
+        } else {
+            None
+        }
     }
 
     ///
