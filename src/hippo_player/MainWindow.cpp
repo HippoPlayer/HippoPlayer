@@ -105,8 +105,6 @@ void MainWindow::send_messages_to_ui(void* this_, const unsigned char* data, int
         return;
     }
 
-    printf("message to ui %d\n", index - 1);
-
     main_win->m_plugin_instances[index - 1].view_plugin->event(data, len);
 }
 
@@ -127,14 +125,13 @@ void MainWindow::create_menus() {
 
     file_menu->addAction(add_files);
 
-    // connect the menus
-
     connect(add_files, &QAction::triggered, this, &MainWindow::add_files);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void MainWindow::add_files() {
+	// Using native dialog will crash/hang on Windows due to COMInit issue
     QStringList filenames = QFileDialog::getOpenFileNames(this, QStringLiteral("Add files files"), QDir::currentPath(),
                                                           QStringLiteral("All files (*.*)"), nullptr, QFileDialog::DontUseNativeDialog);
     if (filenames.isEmpty()) {
