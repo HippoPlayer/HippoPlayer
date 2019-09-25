@@ -47,10 +47,7 @@ int main(int argc, char** argv) {
     MainWindow main_window(core);
     main_window.load_plugins(app.applicationDirPath());
 
-    main_window.create_plugin_by_index(0);
-    main_window.create_plugin_by_index(1);
-    main_window.create_plugin_by_index(2);
-
+	main_window.setup_default_plugins();
     main_window.show();
 
     return app.exec();
