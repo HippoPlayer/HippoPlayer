@@ -8,7 +8,7 @@
 #define __TFMX_H
 
 #define DEBUGLVL 0
-#define DEBUG(x) if (x<DEBUGLVL)
+#define DEBUG(x) if (x < DEBUGLVL)
 
 /* arch-dependent stuff here */
 
@@ -26,30 +26,32 @@ typedef char S8;
  */
 
 typedef union {
-	U32 l;
-	struct {U16 w1,w0;} w;
-	struct {U8 b3,b2,b1,b0;} b;
+    U32 l;
+    struct {
+        U16 w1, w0;
+    } w;
+    struct {
+        U8 b3, b2, b1, b0;
+    } b;
 } UNI;
 
 #define MDAT_EDITBUF_LONGS 16384
 extern U32 mdat_editbuf[MDAT_EDITBUF_LONGS];
 
-extern U8 *smplbuf;
-extern U8 *smplbuf_end;
-extern int *patterns;
-extern int *macros;
+extern U8* smplbuf;
+extern U8* smplbuf_end;
+extern int* patterns;
+extern int* macros;
 extern int multimode;
 extern U32 eClocks;
 extern U32 outRate;
 extern U32 output_chans;
 extern int printinfo;
 
+#define BUFSIZE (8192 * 2)
+#define HALFBUFSIZE (2048 * 2)
 
-#define BUFSIZE (8192*2)
-#define HALFBUFSIZE (2048*2)
-
-#define BOFSIZE (BUFSIZE-1)
-
+#define BOFSIZE (BUFSIZE - 1)
 
 struct TFMXHeader {
     char magic[10];

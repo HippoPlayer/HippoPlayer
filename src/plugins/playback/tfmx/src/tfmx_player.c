@@ -566,6 +566,18 @@ static void player_DoFade(int sp, int dv) {
     mdb.FadeSlope = (mdb.MasterVol > mdb.FadeDest) ? -1 : 1;
 }
 
+// Track-step commands:
+// command 	parameter 	command
+// function
+// EFFE 0000 	none 	STOP 	The song is stopped.
+// EFFE 0001 	yyyy 	LOOP 	The song loops to track-step line yyyy.
+// EFFE 0002 	yyyy 	SPEED 	The song speed is changed to yyyy.
+// EFFE 0003 	yyyy 	TIME SHARE * 	Reduce the processing time of the player on (yyyy = 0001) or off (yyyy = 0000).
+// * This command only works with TFMX music routines without support of the 7-voice mode.
+// EFFE 0003 	00yy 00zz 	7-VOICE ** 	Playback rate of the song in yy kHz, fine adjustment of the song speed by zz.
+// ** This command only works with TFMX music routines that support 7-voice mode.
+// EFFE 0004 	00yy 00zz 	FADE 	The volume of the song is faded to zz with a speed of yy.
+
 static void player_GetTrackStep() {
     U16* l;
     int x, y;
@@ -654,6 +666,16 @@ loop:
 static int player_DoTrack(struct Pdb* p, int pp) {
     UNI x;
     unsigned char t; /*was: int*/
+
+	// Valid pattern numbers for the track page are 0x00 to 0x7F.
+	// This corresponds to a maximum number of 128 patterns.
+	// In addition, there are special pattern commands that apply to a single track,
+	// and track-step commands that affect the entire song.
+
+	// Pattern commands:
+    // 0x80 - Continue playing the previous pattern
+    // 0xFE - Deletes the audio channel specified in the transpose value
+    // 0xFF - empty pattern
 
     if (p->PNum == 0xFE) {
         p->PNum++;

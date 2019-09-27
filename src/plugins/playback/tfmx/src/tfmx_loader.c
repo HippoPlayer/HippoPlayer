@@ -19,6 +19,8 @@
 #include <Winsock2.h>
 #define strncasecmp _strnicmp
 #define strcasecmp _stricmp
+#else
+#include <arpa/inet.h>
 #endif
 
 extern struct Hdb hdb[8];
