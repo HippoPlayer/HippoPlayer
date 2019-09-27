@@ -20,6 +20,7 @@ public:
     bool load_plugins(const QString& plugin_dir);
     void setup_default_plugins();
     QWidget* create_plugin_by_index(int index);
+	void closeEvent(QCloseEvent* event);
 
 private:
     // Callback into the core to get internal messages

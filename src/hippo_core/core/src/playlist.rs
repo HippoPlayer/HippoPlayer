@@ -120,6 +120,7 @@ impl Playlist {
             MessageType::request_select_song => return self.select_song(msg),
             MessageType::next_song => self.advance_song(1),
             MessageType::prev_song => self.advance_song(-1),
+            MessageType::request_added_urls => return self.create_update_message(0),
 
             _ => (),
         }

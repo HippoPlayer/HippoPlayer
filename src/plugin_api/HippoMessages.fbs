@@ -12,6 +12,9 @@ table HippoPlaySong {
 table HippoStopSong {
 }
 
+table HippoRequestAddedUrls {
+}
+
 table HippoRequestSelectSong {
   name: string;
 }
@@ -84,6 +87,7 @@ union MessageType {
   prev_song: HippoPrevSong,
   play_song: HippoPlaySong,
   stop_song: HippoStopSong,
+  request_added_urls: HippoRequestAddedUrls, 
 
   request_select_song: HippoRequestSelectSong,
   select_song: HippoSelectSong,

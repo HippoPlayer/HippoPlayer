@@ -22,6 +22,13 @@ QWidget* PlaylistView::create(struct HippoServiceAPI* service_api) {
 
     QObject::connect(m_list, &QListWidget::itemDoubleClicked, this, &PlaylistView::item_double_clicked);
 
+    // Have the core send us the current list of songs
+    flatbuffers::FlatBufferBuilder builder(1024);
+    builder.Finish(CreateHippoMessageDirect(builder, MessageType_request_added_urls,
+        CreateHippoRequestAddedUrls(builder).Union()));
+
+    HippoMessageAPI_send(m_message_api, builder.GetBufferPointer(), builder.GetSize());
+
     return widget;
 }
 

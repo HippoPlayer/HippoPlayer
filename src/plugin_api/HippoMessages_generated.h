@@ -14,6 +14,8 @@ struct HippoPlaySong;
 
 struct HippoStopSong;
 
+struct HippoRequestAddedUrls;
+
 struct HippoRequestSelectSong;
 
 struct HippoRequestAddUrls;
@@ -72,24 +74,26 @@ enum MessageType {
   MessageType_prev_song = 2,
   MessageType_play_song = 3,
   MessageType_stop_song = 4,
-  MessageType_request_select_song = 5,
-  MessageType_select_song = 6,
-  MessageType_request_add_urls = 7,
-  MessageType_reply_added_urls = 8,
-  MessageType_request_tracker_data = 9,
-  MessageType_tracker_data = 10,
-  MessageType_current_position = 11,
+  MessageType_request_added_urls = 5,
+  MessageType_request_select_song = 6,
+  MessageType_select_song = 7,
+  MessageType_request_add_urls = 8,
+  MessageType_reply_added_urls = 9,
+  MessageType_request_tracker_data = 10,
+  MessageType_tracker_data = 11,
+  MessageType_current_position = 12,
   MessageType_MIN = MessageType_NONE,
   MessageType_MAX = MessageType_current_position
 };
 
-inline const MessageType (&EnumValuesMessageType())[12] {
+inline const MessageType (&EnumValuesMessageType())[13] {
   static const MessageType values[] = {
     MessageType_NONE,
     MessageType_next_song,
     MessageType_prev_song,
     MessageType_play_song,
     MessageType_stop_song,
+    MessageType_request_added_urls,
     MessageType_request_select_song,
     MessageType_select_song,
     MessageType_request_add_urls,
@@ -102,12 +106,13 @@ inline const MessageType (&EnumValuesMessageType())[12] {
 }
 
 inline const char * const *EnumNamesMessageType() {
-  static const char * const names[13] = {
+  static const char * const names[14] = {
     "NONE",
     "next_song",
     "prev_song",
     "play_song",
     "stop_song",
+    "request_added_urls",
     "request_select_song",
     "select_song",
     "request_add_urls",
@@ -238,6 +243,34 @@ struct HippoStopSongBuilder {
 inline flatbuffers::Offset<HippoStopSong> CreateHippoStopSong(
     flatbuffers::FlatBufferBuilder &_fbb) {
   HippoStopSongBuilder builder_(_fbb);
+  return builder_.Finish();
+}
+
+struct HippoRequestAddedUrls FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           verifier.EndTable();
+  }
+};
+
+struct HippoRequestAddedUrlsBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  explicit HippoRequestAddedUrlsBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  HippoRequestAddedUrlsBuilder &operator=(const HippoRequestAddedUrlsBuilder &);
+  flatbuffers::Offset<HippoRequestAddedUrls> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<HippoRequestAddedUrls>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<HippoRequestAddedUrls> CreateHippoRequestAddedUrls(
+    flatbuffers::FlatBufferBuilder &_fbb) {
+  HippoRequestAddedUrlsBuilder builder_(_fbb);
   return builder_.Finish();
 }
 
@@ -921,6 +954,9 @@ struct HippoMessage FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const HippoStopSong *message_as_stop_song() const {
     return message_type() == MessageType_stop_song ? static_cast<const HippoStopSong *>(message()) : nullptr;
   }
+  const HippoRequestAddedUrls *message_as_request_added_urls() const {
+    return message_type() == MessageType_request_added_urls ? static_cast<const HippoRequestAddedUrls *>(message()) : nullptr;
+  }
   const HippoRequestSelectSong *message_as_request_select_song() const {
     return message_type() == MessageType_request_select_song ? static_cast<const HippoRequestSelectSong *>(message()) : nullptr;
   }
@@ -1024,6 +1060,10 @@ inline bool VerifyMessageType(flatbuffers::Verifier &verifier, const void *obj, 
     }
     case MessageType_stop_song: {
       auto ptr = reinterpret_cast<const HippoStopSong *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case MessageType_request_added_urls: {
+      auto ptr = reinterpret_cast<const HippoRequestAddedUrls *>(obj);
       return verifier.VerifyTable(ptr);
     }
     case MessageType_request_select_song: {

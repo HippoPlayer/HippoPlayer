@@ -198,13 +198,23 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
         std::env::set_current_dir(current_path).unwrap();
     }
 
+    // it's ok to allow this function to fail if we have no playlist
+    core.playlist.load("default_playlist.hpl").ok();
+
     Box::into_raw(core) as *const HippoCore
 }
 
 /// Update the song db with a new entry
 #[no_mangle]
-pub extern "C" fn hippo_core_drop(_core: *mut HippoCore) {
-    // TODO: convert back to Box so it will be dropped
+pub extern "C" fn hippo_core_drop(core: *mut HippoCore) {
+    let mut core = unsafe { Box::from_raw(core) }; 
+
+    core.audio.stop();
+    core.playlist.save("default_playlist.hpl").unwrap_or_else(|err| {
+        println!("Unable to save default playlist {}", err);
+    });
+
+    // core will be dropped at this point 
 }
 
 /// Update the song db with a new entry
