@@ -276,15 +276,20 @@ inline flatbuffers::Offset<HippoRequestAddedUrls> CreateHippoRequestAddedUrls(
 
 struct HippoRequestSelectSong FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_NAME = 4
+    VT_PATH = 4,
+    VT_PLAYLIST_INDEX = 6
   };
-  const flatbuffers::String *name() const {
-    return GetPointer<const flatbuffers::String *>(VT_NAME);
+  const flatbuffers::String *path() const {
+    return GetPointer<const flatbuffers::String *>(VT_PATH);
+  }
+  int32_t playlist_index() const {
+    return GetField<int32_t>(VT_PLAYLIST_INDEX, 0);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyOffset(verifier, VT_NAME) &&
-           verifier.VerifyString(name()) &&
+           VerifyOffset(verifier, VT_PATH) &&
+           verifier.VerifyString(path()) &&
+           VerifyField<int32_t>(verifier, VT_PLAYLIST_INDEX) &&
            verifier.EndTable();
   }
 };
@@ -292,8 +297,11 @@ struct HippoRequestSelectSong FLATBUFFERS_FINAL_CLASS : private flatbuffers::Tab
 struct HippoRequestSelectSongBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_name(flatbuffers::Offset<flatbuffers::String> name) {
-    fbb_.AddOffset(HippoRequestSelectSong::VT_NAME, name);
+  void add_path(flatbuffers::Offset<flatbuffers::String> path) {
+    fbb_.AddOffset(HippoRequestSelectSong::VT_PATH, path);
+  }
+  void add_playlist_index(int32_t playlist_index) {
+    fbb_.AddElement<int32_t>(HippoRequestSelectSong::VT_PLAYLIST_INDEX, playlist_index, 0);
   }
   explicit HippoRequestSelectSongBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -309,19 +317,23 @@ struct HippoRequestSelectSongBuilder {
 
 inline flatbuffers::Offset<HippoRequestSelectSong> CreateHippoRequestSelectSong(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<flatbuffers::String> name = 0) {
+    flatbuffers::Offset<flatbuffers::String> path = 0,
+    int32_t playlist_index = 0) {
   HippoRequestSelectSongBuilder builder_(_fbb);
-  builder_.add_name(name);
+  builder_.add_playlist_index(playlist_index);
+  builder_.add_path(path);
   return builder_.Finish();
 }
 
 inline flatbuffers::Offset<HippoRequestSelectSong> CreateHippoRequestSelectSongDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    const char *name = nullptr) {
-  auto name__ = name ? _fbb.CreateString(name) : 0;
+    const char *path = nullptr,
+    int32_t playlist_index = 0) {
+  auto path__ = path ? _fbb.CreateString(path) : 0;
   return CreateHippoRequestSelectSong(
       _fbb,
-      name__);
+      path__,
+      playlist_index);
 }
 
 struct HippoRequestAddUrls FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
@@ -453,15 +465,26 @@ inline flatbuffers::Offset<HippoUrlEntry> CreateHippoUrlEntryDirect(
 
 struct HippoSelectSong FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_TITLE = 4
+    VT_TITLE = 4,
+    VT_PATH = 6,
+    VT_PLAYLIST_INDEX = 8
   };
   const flatbuffers::String *title() const {
     return GetPointer<const flatbuffers::String *>(VT_TITLE);
+  }
+  const flatbuffers::String *path() const {
+    return GetPointer<const flatbuffers::String *>(VT_PATH);
+  }
+  int32_t playlist_index() const {
+    return GetField<int32_t>(VT_PLAYLIST_INDEX, 0);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_TITLE) &&
            verifier.VerifyString(title()) &&
+           VerifyOffset(verifier, VT_PATH) &&
+           verifier.VerifyString(path()) &&
+           VerifyField<int32_t>(verifier, VT_PLAYLIST_INDEX) &&
            verifier.EndTable();
   }
 };
@@ -471,6 +494,12 @@ struct HippoSelectSongBuilder {
   flatbuffers::uoffset_t start_;
   void add_title(flatbuffers::Offset<flatbuffers::String> title) {
     fbb_.AddOffset(HippoSelectSong::VT_TITLE, title);
+  }
+  void add_path(flatbuffers::Offset<flatbuffers::String> path) {
+    fbb_.AddOffset(HippoSelectSong::VT_PATH, path);
+  }
+  void add_playlist_index(int32_t playlist_index) {
+    fbb_.AddElement<int32_t>(HippoSelectSong::VT_PLAYLIST_INDEX, playlist_index, 0);
   }
   explicit HippoSelectSongBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -486,19 +515,28 @@ struct HippoSelectSongBuilder {
 
 inline flatbuffers::Offset<HippoSelectSong> CreateHippoSelectSong(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<flatbuffers::String> title = 0) {
+    flatbuffers::Offset<flatbuffers::String> title = 0,
+    flatbuffers::Offset<flatbuffers::String> path = 0,
+    int32_t playlist_index = 0) {
   HippoSelectSongBuilder builder_(_fbb);
+  builder_.add_playlist_index(playlist_index);
+  builder_.add_path(path);
   builder_.add_title(title);
   return builder_.Finish();
 }
 
 inline flatbuffers::Offset<HippoSelectSong> CreateHippoSelectSongDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    const char *title = nullptr) {
+    const char *title = nullptr,
+    const char *path = nullptr,
+    int32_t playlist_index = 0) {
   auto title__ = title ? _fbb.CreateString(title) : 0;
+  auto path__ = path ? _fbb.CreateString(path) : 0;
   return CreateHippoSelectSong(
       _fbb,
-      title__);
+      title__,
+      path__,
+      playlist_index);
 }
 
 struct HippoReplyAddedUrls FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {

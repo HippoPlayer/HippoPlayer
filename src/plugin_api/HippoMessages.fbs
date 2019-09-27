@@ -16,7 +16,8 @@ table HippoRequestAddedUrls {
 }
 
 table HippoRequestSelectSong {
-  name: string;
+  path: string;
+  playlist_index: int;
 }
 
 table HippoRequestAddUrls {
@@ -30,7 +31,9 @@ table HippoUrlEntry {
 }
 
 table HippoSelectSong {
-    title: string;
+  title: string;
+  path: string;
+  playlist_index: int;
 }
 
 table HippoReplyAddedUrls {
@@ -54,7 +57,6 @@ table HippoRowData {
 table HippoTrackerChannel {
    row_data: [HippoRowData];
 }
-
 
 // Tracker type
 // Regular for tracker formats such as protracker,xm,etc

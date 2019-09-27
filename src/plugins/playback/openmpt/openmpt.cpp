@@ -200,14 +200,6 @@ static int openmpt_open(void* user_data, const char* filename) {
 		HippoMetadata_set_key(g_metadata_api, filename, 0, instrument.c_str(), keyname);
 	}
 
-	int pattern = 0;
-
-	for (int i = 0; i < 64; ++i) {
-	    std::string t = replayer_data->mod->highlight_pattern_row_channel(pattern, i, 0);
-	    std::string note = replayer_data->mod->format_pattern_row_channel_command(pattern, i, 0, openmpt::module::command_note);
-	    printf("%04x %s - %s\n", i, t.c_str(), note.c_str());
-	}
-
 	return 0;
 }
 

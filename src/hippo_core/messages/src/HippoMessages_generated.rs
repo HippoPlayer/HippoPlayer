@@ -506,26 +506,34 @@ impl<'a> HippoRequestSelectSong<'a> {
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
         args: &'args HippoRequestSelectSongArgs<'args>) -> flatbuffers::WIPOffset<HippoRequestSelectSong<'bldr>> {
       let mut builder = HippoRequestSelectSongBuilder::new(_fbb);
-      if let Some(x) = args.name { builder.add_name(x); }
+      builder.add_playlist_index(args.playlist_index);
+      if let Some(x) = args.path { builder.add_path(x); }
       builder.finish()
     }
 
-    pub const VT_NAME: flatbuffers::VOffsetT = 4;
+    pub const VT_PATH: flatbuffers::VOffsetT = 4;
+    pub const VT_PLAYLIST_INDEX: flatbuffers::VOffsetT = 6;
 
   #[inline]
-  pub fn name(&self) -> Option<&'a str> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(HippoRequestSelectSong::VT_NAME, None)
+  pub fn path(&self) -> Option<&'a str> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(HippoRequestSelectSong::VT_PATH, None)
+  }
+  #[inline]
+  pub fn playlist_index(&self) -> i32 {
+    self._tab.get::<i32>(HippoRequestSelectSong::VT_PLAYLIST_INDEX, Some(0)).unwrap()
   }
 }
 
 pub struct HippoRequestSelectSongArgs<'a> {
-    pub name: Option<flatbuffers::WIPOffset<&'a  str>>,
+    pub path: Option<flatbuffers::WIPOffset<&'a  str>>,
+    pub playlist_index: i32,
 }
 impl<'a> Default for HippoRequestSelectSongArgs<'a> {
     #[inline]
     fn default() -> Self {
         HippoRequestSelectSongArgs {
-            name: None,
+            path: None,
+            playlist_index: 0,
         }
     }
 }
@@ -535,8 +543,12 @@ pub struct HippoRequestSelectSongBuilder<'a: 'b, 'b> {
 }
 impl<'a: 'b, 'b> HippoRequestSelectSongBuilder<'a, 'b> {
   #[inline]
-  pub fn add_name(&mut self, name: flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(HippoRequestSelectSong::VT_NAME, name);
+  pub fn add_path(&mut self, path: flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(HippoRequestSelectSong::VT_PATH, path);
+  }
+  #[inline]
+  pub fn add_playlist_index(&mut self, playlist_index: i32) {
+    self.fbb_.push_slot::<i32>(HippoRequestSelectSong::VT_PLAYLIST_INDEX, playlist_index, 0);
   }
   #[inline]
   pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> HippoRequestSelectSongBuilder<'a, 'b> {
@@ -758,26 +770,42 @@ impl<'a> HippoSelectSong<'a> {
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
         args: &'args HippoSelectSongArgs<'args>) -> flatbuffers::WIPOffset<HippoSelectSong<'bldr>> {
       let mut builder = HippoSelectSongBuilder::new(_fbb);
+      builder.add_playlist_index(args.playlist_index);
+      if let Some(x) = args.path { builder.add_path(x); }
       if let Some(x) = args.title { builder.add_title(x); }
       builder.finish()
     }
 
     pub const VT_TITLE: flatbuffers::VOffsetT = 4;
+    pub const VT_PATH: flatbuffers::VOffsetT = 6;
+    pub const VT_PLAYLIST_INDEX: flatbuffers::VOffsetT = 8;
 
   #[inline]
   pub fn title(&self) -> Option<&'a str> {
     self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(HippoSelectSong::VT_TITLE, None)
   }
+  #[inline]
+  pub fn path(&self) -> Option<&'a str> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(HippoSelectSong::VT_PATH, None)
+  }
+  #[inline]
+  pub fn playlist_index(&self) -> i32 {
+    self._tab.get::<i32>(HippoSelectSong::VT_PLAYLIST_INDEX, Some(0)).unwrap()
+  }
 }
 
 pub struct HippoSelectSongArgs<'a> {
     pub title: Option<flatbuffers::WIPOffset<&'a  str>>,
+    pub path: Option<flatbuffers::WIPOffset<&'a  str>>,
+    pub playlist_index: i32,
 }
 impl<'a> Default for HippoSelectSongArgs<'a> {
     #[inline]
     fn default() -> Self {
         HippoSelectSongArgs {
             title: None,
+            path: None,
+            playlist_index: 0,
         }
     }
 }
@@ -789,6 +817,14 @@ impl<'a: 'b, 'b> HippoSelectSongBuilder<'a, 'b> {
   #[inline]
   pub fn add_title(&mut self, title: flatbuffers::WIPOffset<&'b  str>) {
     self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(HippoSelectSong::VT_TITLE, title);
+  }
+  #[inline]
+  pub fn add_path(&mut self, path: flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(HippoSelectSong::VT_PATH, path);
+  }
+  #[inline]
+  pub fn add_playlist_index(&mut self, playlist_index: i32) {
+    self.fbb_.push_slot::<i32>(HippoSelectSong::VT_PLAYLIST_INDEX, playlist_index, 0);
   }
   #[inline]
   pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> HippoSelectSongBuilder<'a, 'b> {

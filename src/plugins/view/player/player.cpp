@@ -55,7 +55,6 @@ QWidget* PlayerView::create(struct HippoServiceAPI* service_api) {
 void PlayerView::event(const unsigned char* data, int len) {
     const HippoMessage* message = GetHippoMessage(data);
 
-    // Only care about added files right now
     if (message->message_type() != MessageType_select_song)
         return;
 
@@ -75,17 +74,24 @@ void PlayerView::prev_song() {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void PlayerView::next_song() {
-    // HippoMessage_playlist_next_song(m_message_api);
+	printf("next song\n");
+    flatbuffers::FlatBufferBuilder builder(1024);
+    builder.Finish(CreateHippoMessageDirect(builder, MessageType_next_song, CreateHippoNextSong(builder).Union()));
+    HippoMessageAPI_send(m_message_api, builder.GetBufferPointer(), builder.GetSize());
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void PlayerView::stop_song() {
-    // HippoMessage_stop_song(m_message_api);
+    flatbuffers::FlatBufferBuilder builder(1024);
+    builder.Finish(CreateHippoMessageDirect(builder, MessageType_stop_song, CreateHippoStopSong(builder).Union()));
+    HippoMessageAPI_send(m_message_api, builder.GetBufferPointer(), builder.GetSize());
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void PlayerView::play_song() {
-    // HippoMessage_play_song(m_message_api);
+    flatbuffers::FlatBufferBuilder builder(1024);
+    builder.Finish(CreateHippoMessageDirect(builder, MessageType_play_song, CreateHippoPlaySong(builder).Union()));
+    HippoMessageAPI_send(m_message_api, builder.GetBufferPointer(), builder.GetSize());
 }

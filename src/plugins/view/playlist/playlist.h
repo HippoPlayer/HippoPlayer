@@ -5,6 +5,7 @@
 class QWidget;
 struct HippoMessageAPI;
 struct HippoServiceAPI;
+struct HippoSelectSong;
 class QListWidget;
 class QListWidgetItem;
 
@@ -21,6 +22,8 @@ public:
     void event(const unsigned char* data, int len);
 
 private:
+	void select_song(const HippoSelectSong* msg);
+
     const struct HippoMessageAPI* m_message_api = nullptr;
     QListWidget* m_list = nullptr;
 
