@@ -10,14 +10,14 @@
 
 TrackerDisplay::TrackerDisplay(QWidget* parent) :
     QAbstractScrollArea(parent),
-    m_mono_font(QStringLiteral("DejaVu Sans Mono"), 14) {
+    m_mono_font(QStringLiteral("DejaVu Sans Mono"), 8) {
     m_settings.line_spacing = 2;
     m_settings.track_text_pad = 4;
     m_settings.margin_spacing = 4;
+    m_row_count = 64;
 
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
 	setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
-
 
     /*
     QTimer* timer = new QTimer;
@@ -43,7 +43,8 @@ void TrackerDisplay::update_font_size() {
     // C-4 02 F08
 
     // TODO: This needs to change depending on what is being played
-    m_track_width = (metrics.horizontalAdvance('0') * 12) + m_settings.track_text_pad * 2;
+    //m_track_width = (metrics.horizontalAdvance('0') * 12) + m_settings.track_text_pad * 2;
+    m_track_width = (metrics.horizontalAdvance('0') * 3) + m_settings.track_text_pad * 2;
     m_left_margin_width = (metrics.horizontalAdvance('0') * 2) + m_settings.margin_spacing * 2;
 }
 
@@ -140,11 +141,13 @@ void TrackerDisplay::render_track(QPainter& painter, const QRegion& region, int 
         //pattern_data_rect.moveLeft(2);
 
         const char* note = row_data->note()->c_str();
-        const char* instrument = row_data->instrument()->c_str();
-        const char* effect = row_data->effect()->c_str();
-        const char* voleffect = row_data->volumeffect()->c_str();
+        //const char* instrument = row_data->instrument()->c_str();
+        //const char* effect = row_data->effect()->c_str();
+        //const char* voleffect = row_data->volumeffect()->c_str();
 
-        painter.drawText(pattern_data_rect, QString(QStringLiteral("%1 %2 %3%4").arg(note, instrument, effect, voleffect)));
+        //painter.drawText(pattern_data_rect, QString(QStringLiteral("%1 %2 %3%4").arg(note, instrument, effect, voleffect)));
+
+        painter.drawText(pattern_data_rect, QString(QStringLiteral("%1").arg(note)));
     }
 }
 
@@ -160,32 +163,30 @@ void TrackerDisplay::event(const unsigned char* data, int len) {
     // allocate storage buffer if we don't have one
 
     if (!m_tracker_data) {
-        m_tracker_data = (unsigned char*)malloc(512 * 1024);
+        m_tracker_data = (unsigned char*)malloc(10 * 1024 * 1024);
     }
 
     memcpy(m_tracker_data, data, len);
 
     const HippoTrackerData* tracker_data = message->message_as_tracker_data();
+
+    auto channels = tracker_data->channels();
+
+	m_row_count = channels->Get(0)->row_data()->Length();
+	m_track_count = channels->Length();
+
     set_playing_row(tracker_data->current_row());
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void TrackerDisplay::set_playing_row(int new_row) {
-	int old_row = m_current_row;
 	m_current_row = new_row;
-
-	//printf("new row %d\n", now_row);
-
-	m_current_row = qBound(0, m_current_row, 64 - 1);
-
-	if (old_row != new_row) {
-		invalidate_left_margin_row(old_row);
-		invalidate_left_margin_row(m_current_row);
-	}
 
 	int y_scroll = (m_current_row * m_row_height) - ((viewport()->height() - m_top_margin_height) / 2) + m_row_height / 2;
 	set_scroll_pos(m_scroll_pos_x, y_scroll);
+
+	viewport()->update();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -258,6 +259,7 @@ void TrackerDisplay::paintEvent(QPaintEvent* event) {
 void TrackerDisplay::invalidate_left_margin_row(int row) {
     QRect rect(QPoint(0, get_physical_y(row)),
                QPoint(m_left_margin_width, get_physical_y(row + 1) - 1));
+    viewport()->update(rect);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -282,8 +284,6 @@ void TrackerDisplay::setup_scroll_bars() {
 }
 
 void TrackerDisplay::resizeEvent(QResizeEvent* event) {
-	//m_row_count = qMin((event->size().height() - m_top_margin) / m_row_height, 64);
-	m_row_count = 64; //(event->size().height() - m_top_margin) / m_row_height;
 	setup_scroll_bars();
 	viewport()->update();
 }
