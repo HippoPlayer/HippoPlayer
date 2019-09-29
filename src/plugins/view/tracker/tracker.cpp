@@ -10,7 +10,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-QWidget* TrackerView::create(struct HippoServiceAPI* service_api) {
+QWidget* TrackerView::create(struct HippoServiceAPI* service_api, QAbstractItemModel* model) {
     m_message_api = HippoServiceAPI_get_message_api(service_api, HIPPO_MESSAGE_API_VERSION);
     m_display = new TrackerDisplay(nullptr);
 

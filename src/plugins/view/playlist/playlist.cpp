@@ -3,24 +3,26 @@
 #include <QtGui/QIcon>
 #include <QtWidgets/QLayout>
 #include <QtWidgets/QWidget>
-#include <QtWidgets/QListWidget>
-#include <QtWidgets/QListWidgetItem>
+#include <QtWidgets/QListView>
 #include "../../../plugin_api/HippoPlugin.h"
 #include "../../../plugin_api/HippoMessages.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-QWidget* PlaylistView::create(struct HippoServiceAPI* service_api) {
+QWidget* PlaylistView::create(struct HippoServiceAPI* service_api, QAbstractItemModel* model) {
     m_message_api = HippoServiceAPI_get_message_api(service_api, HIPPO_MESSAGE_API_VERSION);
 
     QWidget* widget = new QWidget;
     QVBoxLayout* vbox = new QVBoxLayout(widget);
 
-    m_list = new QListWidget;
+    m_list = new QListView;
+    m_list->setModel(model);
+
+    m_list->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
     vbox->QLayout::addWidget(m_list);
 
-    QObject::connect(m_list, &QListWidget::itemDoubleClicked, this, &PlaylistView::item_double_clicked);
+    QObject::connect(m_list, &QListView::doubleClicked, this, &PlaylistView::item_double_clicked);
 
     // Have the core send us the current list of songs
     flatbuffers::FlatBufferBuilder builder(1024);
@@ -42,38 +44,21 @@ void PlaylistView::select_song(const HippoSelectSong* msg) {
 		return;
 	}
 
-	const char* path_name = msg->path()->c_str();
-	int path_len = msg->path()->Length();
-
-	// first just try to select the message based on the index, usually the slow path should never happen
-
-	QListWidgetItem* item = m_list->item(playlist_index); 
-
-	if (item) {
-		QVariant v = item->data(Qt::UserRole);
-		QByteArray path = v.toByteArray();
-
-		if (!strncmp(path.data(), path_name, path_len)) {
-			m_list->setCurrentItem(item);
-			return;
-		} else {
-			printf("Playlist: Unable to set matching item: Expected %s but was %s for entry %d\n",
-					path_name, path.data(), playlist_index);
-		}
-	} else {
-		printf("Unable to set matching item for %s\n", path_name);
-	}
+	const QModelIndex item = m_list->model()->index(playlist_index, 0);
+	m_list->setCurrentIndex(item);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void PlaylistView::item_double_clicked(QListWidgetItem* item) {
+void PlaylistView::item_double_clicked(const QModelIndex& item) {
+    QAbstractItemModel* model = m_list->model();
+
     flatbuffers::FlatBufferBuilder builder(1024);
-    QVariant v = item->data(Qt::UserRole);
+    QVariant v = model->data(item, Qt::UserRole);
     QByteArray path = v.toByteArray();
 
     builder.Finish(CreateHippoMessageDirect(builder, MessageType_request_select_song,
-        CreateHippoRequestSelectSongDirect(builder, path.data(), m_list->row(item)).Union()));
+        CreateHippoRequestSelectSongDirect(builder, path.data(), model->buddy(item).row()).Union()));
 
     HippoMessageAPI_send(m_message_api, builder.GetBufferPointer(), builder.GetSize());
 }
@@ -91,26 +76,7 @@ void PlaylistView::event(const unsigned char* data, int len) {
 			break;
 		}
 
-    	case MessageType_reply_added_urls:
-		{
-			auto urls = message->message_as_reply_added_urls()->urls();
-
-			for (int i = 0, e = urls->Length(); i < e; ++i) {
-				auto url = urls->Get(i);
-
-				auto path = url->path();
-				auto title = url->title();
-
-				QListWidgetItem* item = new QListWidgetItem(QString::fromUtf8(title->c_str(), title->size()));
-
-				// Store data as byte array as we are going to use this for the player backend that uses UTF-8
-				item->setData(Qt::UserRole, QByteArray(path->c_str(), path->size()));
-
-				m_list->addItem(item);
-			}
-
-			break;
-		}
+		default: break;
 	}
 }
 

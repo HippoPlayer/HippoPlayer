@@ -6,8 +6,8 @@ class QWidget;
 struct HippoMessageAPI;
 struct HippoServiceAPI;
 struct HippoSelectSong;
-class QListWidget;
-class QListWidgetItem;
+class QListView;
+class QModelIndex;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -18,16 +18,16 @@ class PlaylistView : public QObject, HippoQtView
     Q_INTERFACES(HippoQtView)
 
 public:
-    QWidget* create(struct HippoServiceAPI* service_api);
+    QWidget* create(struct HippoServiceAPI* service_api, QAbstractItemModel* model);
     void event(const unsigned char* data, int len);
 
 private:
 	void select_song(const HippoSelectSong* msg);
 
     const struct HippoMessageAPI* m_message_api = nullptr;
-    QListWidget* m_list = nullptr;
+    QListView* m_list = nullptr;
 
-    Q_SLOT void item_double_clicked(QListWidgetItem* item);
+    Q_SLOT void item_double_clicked(const QModelIndex& item);
 };
 
 

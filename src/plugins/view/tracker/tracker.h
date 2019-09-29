@@ -18,7 +18,7 @@ class TrackerView : public QObject, HippoQtView
     Q_INTERFACES(HippoQtView)
 
 public:
-    QWidget* create(struct HippoServiceAPI* service_api);
+    QWidget* create(struct HippoServiceAPI* service_api, QAbstractItemModel* model);
     void event(const unsigned char* data, int len);
 
 private:

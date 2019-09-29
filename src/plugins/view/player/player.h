@@ -16,7 +16,7 @@ class PlayerView : public QObject, HippoQtView
     Q_INTERFACES(HippoQtView)
 
 public:
-    QWidget* create(struct HippoServiceAPI* service_api);
+    QWidget* create(struct HippoServiceAPI* service_api, QAbstractItemModel* model);
     void event(const unsigned char* data, int len);
 
     Q_SLOT void next_song();

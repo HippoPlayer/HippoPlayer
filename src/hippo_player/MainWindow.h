@@ -4,6 +4,7 @@
 #include <QtCore/QVector>
 #include <QtWidgets/QMainWindow>
 
+class QStringListModel;
 class ToolWindowManager;
 class HippoQtView;
 struct HippoServiceAPI;
@@ -26,6 +27,7 @@ private:
     // Callback into the core to get internal messages
     static const HippoMessageAPI* get_messages(void* this_, int index);
     static void send_messages_to_ui(void* this_, const unsigned char* data, int len, int index);
+    void handle_incoming_messages(const unsigned char* data, int len);
 
     void create_menus();
 
@@ -40,7 +42,7 @@ private:
         QWidget* widget;
     };
 
-
+    QStringListModel* m_playlist_model;
     HippoCore* m_core = nullptr;
     const HippoMessageAPI* m_general_messages = nullptr;
     ToolWindowManager* m_docking_manager = nullptr;
@@ -48,5 +50,6 @@ private:
     QVector<PluginInstance> m_plugin_instances;
 
     Q_SLOT void add_files();
+    Q_SLOT void remove_playlist_entry();
     Q_SLOT void update_messages();
 };

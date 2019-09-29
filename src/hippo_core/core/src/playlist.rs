@@ -178,7 +178,7 @@ impl Playlist {
     */
 
     ///
-    /// Select a new song to play 
+    /// Select a new song to play
     ///
     fn select_song(&mut self, msg: &HippoMessage) -> Option<Box<[u8]>>  {
         let mut new_song_id = None;
@@ -187,17 +187,19 @@ impl Playlist {
         let playlist_index = select_song.playlist_index() as usize;
 
         if playlist_index < self.entries.len() {
-            if self.entries[playlist_index].path == path_name {
-                new_song_id = Some(playlist_index);
+            //if self.entries[playlist_index].path == path_name {
+            new_song_id = Some(playlist_index);
+            /*
             } else {
                 println!("Warning: Requested song {} at index {} but song is {} that doesn't match",
                     path_name, playlist_index, self.entries[playlist_index].path);
             }
+            */
         } else {
             println!("Warning: Tried to select song at {} - {} but not enough entries in the playlist {}",
                 playlist_index, path_name, self.entries.len());
         }
-        
+
         if let Some(id) = new_song_id {
             self.current_song = id as isize;
             self.new_song = true;

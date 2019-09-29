@@ -17,7 +17,7 @@ static QPushButton* create_button(const QString& icon_filename) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-QWidget* PlayerView::create(struct HippoServiceAPI* service_api) {
+QWidget* PlayerView::create(struct HippoServiceAPI* service_api, QAbstractItemModel* model) {
     m_message_api = HippoServiceAPI_get_message_api(service_api, HIPPO_MESSAGE_API_VERSION);
 
     QWidget* widget = new QWidget;

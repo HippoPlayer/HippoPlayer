@@ -15,6 +15,12 @@ table HippoStopSong {
 table HippoRequestAddedUrls {
 }
 
+table HippoRemoveSelectedPlaylistEntries {
+}
+
+table HippoRemovePlaylistEntries {
+}
+
 table HippoRequestSelectSong {
   path: string;
   playlist_index: int;
@@ -89,7 +95,7 @@ union MessageType {
   prev_song: HippoPrevSong,
   play_song: HippoPlaySong,
   stop_song: HippoStopSong,
-  request_added_urls: HippoRequestAddedUrls, 
+  request_added_urls: HippoRequestAddedUrls,
 
   request_select_song: HippoRequestSelectSong,
   select_song: HippoSelectSong,

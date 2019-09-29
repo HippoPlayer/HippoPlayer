@@ -3,6 +3,7 @@
 #include <QtCore/QDir>
 #include <QtCore/QTimer>
 #include <QtCore/QPluginLoader>
+#include <QtCore/QStringListModel>
 #include <QtWidgets/QBoxLayout>
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QLabel>
@@ -27,6 +28,8 @@ MainWindow::MainWindow(HippoCore* core) : QMainWindow(0), m_core(core) {
     int id = QFontDatabase::addApplicationFont(QStringLiteral("data/fonts/DejaVuSansMono.ttf"));
     QString family = QFontDatabase::applicationFontFamilies(id).at(0);
     qDebug() << family;
+
+    m_playlist_model = new QStringListModel;
 
     m_general_messages = HippoServiceAPI_get_message_api(hippo_service_api_new(m_core), HIPPO_MESSAGE_API_VERSION);
 
@@ -97,11 +100,48 @@ const HippoMessageAPI* MainWindow::get_messages(void* this_, int index) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void MainWindow::handle_incoming_messages(const unsigned char* data, int len) {
+    const HippoMessage* message = GetHippoMessage(data);
+
+    switch (message->message_type())
+	{
+    	case MessageType_reply_added_urls:
+		{
+			auto urls = message->message_as_reply_added_urls()->urls();
+
+			for (int i = 0, e = urls->Length(); i < e; ++i) {
+			    auto url = urls->Get(i);
+				auto path = url->path();
+				auto title = url->title();
+
+                // Get the position
+                int row = m_playlist_model->rowCount();
+
+                // Enable add one or more rows
+                m_playlist_model->insertRows(row, 1);
+
+                // Get the row for Edit mode
+                QModelIndex index = m_playlist_model->index(row);
+
+                m_playlist_model->setData(index, QString::fromUtf8(title->c_str(), title->size()), Qt::EditRole);
+                m_playlist_model->setData(index, QByteArray(path->c_str(), path->size()), Qt::UserRole);
+			}
+
+			break;
+		}
+
+		default: break;
+	}
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void MainWindow::send_messages_to_ui(void* this_, const unsigned char* data, int len, int index) {
     MainWindow* main_win = (MainWindow*)this_;
 
     // We ignore message to the general queue right now
     if (index == 0) {
+        main_win->handle_incoming_messages(data, index);
         return;
     }
 
@@ -117,15 +157,20 @@ void MainWindow::update_messages() {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void MainWindow::create_menus() {
-    QMenu* file_menu = menuBar()->addMenu(QStringLiteral("&File"));
+    QMenu* file_menu = menuBar()->addMenu(QStringLiteral("&Playlist"));
 
     QAction* add_files = new QAction(tr("&Add files.."), this);
-    add_files->setShortcuts(QKeySequence::New);
-    add_files->setStatusTip(tr("Create a new file"));
-
+    add_files->setShortcut(QKeySequence(QStringLiteral("Ctrl+A")));
+    add_files->setStatusTip(tr("Add file(s)/link(s) to the playlist"));
     file_menu->addAction(add_files);
 
+    QAction* remove_playlist_entry = new QAction(tr("&Remove selected"), this);
+    add_files->setShortcut(QKeySequence::Delete);
+    add_files->setStatusTip(tr("Remove selected items in the playlist"));
+    file_menu->addAction(remove_playlist_entry);
+
     connect(add_files, &QAction::triggered, this, &MainWindow::add_files);
+    connect(remove_playlist_entry, &QAction::triggered, this, &MainWindow::remove_playlist_entry);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -155,6 +200,12 @@ void MainWindow::add_files() {
     builder.Finish(CreateHippoMessageDirect(builder, MessageType_request_add_urls,
         CreateHippoRequestAddUrls(builder, builder.CreateVector(urls)).Union()));
     HippoMessageAPI_send(m_general_messages, builder.GetBufferPointer(), builder.GetSize());
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void MainWindow::remove_playlist_entry() {
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -229,7 +280,7 @@ QWidget* MainWindow::create_plugin_by_index(int index) {
     }
 
     HippoServiceAPI* service_api = hippo_service_api_new(m_core);
-    QWidget* widget = view_plugin->create(service_api);
+    QWidget* widget = view_plugin->create(service_api, m_playlist_model);
 
     m_plugin_instances.append({view_plugin, service_api, widget});
 
@@ -253,9 +304,9 @@ void MainWindow::setup_default_plugins() {
 
 	m_docking_manager->addToolWindow(player, ToolWindowManager::EmptySpace);
 
-	m_docking_manager->addToolWindow(tracker, 
-			ToolWindowManager::AreaReference(ToolWindowManager::RightOf, m_docking_manager->areaOf(player))); 
+	m_docking_manager->addToolWindow(tracker,
+			ToolWindowManager::AreaReference(ToolWindowManager::RightOf, m_docking_manager->areaOf(player)));
 
-	m_docking_manager->addToolWindow(playlist, 
-			ToolWindowManager::AreaReference(ToolWindowManager::BottomOf, m_docking_manager->areaOf(player))); 
+	m_docking_manager->addToolWindow(playlist,
+			ToolWindowManager::AreaReference(ToolWindowManager::BottomOf, m_docking_manager->areaOf(player)));
 }
