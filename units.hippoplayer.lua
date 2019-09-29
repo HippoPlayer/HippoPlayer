@@ -157,6 +157,7 @@ Program {
         },
 
         gen_moc("src/hippo_player/MainWindow.h"),
+        gen_moc("src/hippo_player/PlaylistModel.h"),
         --gen_uic("src/hippo_player/test_main/MainWindow.ui"),
     },
 

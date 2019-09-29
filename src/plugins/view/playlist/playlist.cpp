@@ -1,11 +1,97 @@
 #include "playlist.h"
 #include <QtCore/QDebug>
 #include <QtGui/QIcon>
+#include <QtGui/QMouseEvent>
+#include <QtGui/QPainter>
+#include <QtGui/QStandardItemModel>
+#include <QtWidgets/QHeaderView>
 #include <QtWidgets/QLayout>
+#include <QtWidgets/QStyleOptionViewItem>
+#include <QtWidgets/QStyledItemDelegate>
+#include <QtWidgets/QTreeView>
 #include <QtWidgets/QWidget>
-#include <QtWidgets/QListView>
-#include "../../../plugin_api/HippoPlugin.h"
+
 #include "../../../plugin_api/HippoMessages.h"
+#include "../../../plugin_api/HippoPlugin.h"
+
+#if 0
+
+class Delegate : public QStyledItemDelegate {
+    void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const {
+        if((option.state & QStyle::State_Selected) || (option.state & QStyle::State_MouseOver))
+        {
+            // get the color to paint with
+            QVariant var = index.model()->data(index, Qt::BackgroundRole);
+
+            // draw the row and its content
+            painter->fillRect(option.rect, var.value<QColor>());
+            painter->drawText(option.rect, index.model()->data(index, Qt::DisplayRole).toString());
+        }
+        else
+
+        QVariant var = index.model()->data(index, Qt::BackgroundRole);
+        painter->fillRect(option.rect, var.value<QColor>());
+        QStyledItemDelegate::paint(painter, option, index);
+    }
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+class DeselectableTreeView : public QListView
+{
+public:
+    DeselectableTreeView(QWidget *parent) : QListView(parent) {}
+    virtual ~DeselectableTreeView() {}
+
+private:
+    virtual void mousePressEvent(QMouseEvent *event) {
+        QModelIndex item = indexAt(event->pos());
+        bool selected = selectionModel()->isSelected(item);
+        printf("selected %d\n", selected);
+        QListView::mousePressEvent(event);
+        if (selected)
+            selectionModel()->select(item, QItemSelectionModel::Deselect);
+    }
+};
+
+#endif
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+class TreeView : public QTreeView {
+   public:
+    TreeView(QWidget* parent) : QTreeView(parent)
+    {
+        _pixmapBg.load("data/hippo.png");
+    }
+
+    void paintEvent(QPaintEvent* event) {
+        QPainter painter(viewport());
+
+        // Draw a hippo (like classic hippo player) if there are no entries in the playlist
+        if (model()->rowCount() == 0) {
+            painter.setRenderHint(QPainter::SmoothPixmapTransform);
+
+            auto winSize = size();
+            auto pixmapRatio = (float)_pixmapBg.width() / _pixmapBg.height();
+            auto windowRatio = (float)winSize.width() / winSize.height();
+
+            if (pixmapRatio > windowRatio) {
+                auto newWidth = (int)(winSize.height() * pixmapRatio);
+                auto offset = (newWidth - winSize.width()) / -2;
+                painter.drawPixmap(offset, 0, newWidth, winSize.height(), _pixmapBg);
+            } else {
+                auto newHeight = (int)(winSize.width() / pixmapRatio);
+                auto offset = (newHeight - winSize.height()) / -2;
+                painter.drawPixmap(0, offset, winSize.width(), newHeight, _pixmapBg);
+            }
+        }
+
+        return QTreeView::paintEvent(event);
+    }
+
+    QPixmap _pixmapBg;
+};
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -15,19 +101,30 @@ QWidget* PlaylistView::create(struct HippoServiceAPI* service_api, QAbstractItem
     QWidget* widget = new QWidget;
     QVBoxLayout* vbox = new QVBoxLayout(widget);
 
-    m_list = new QListView;
+    m_list = new TreeView(nullptr);
     m_list->setModel(model);
-
     m_list->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    // m_list->setStyleSheet(QStringLiteral("QTreeView { border-image: url(data/hippo.png) no-repeat center center
+    // fixed; background-origin: content; }"));
 
+    // border-image: url(data/hippo.png) 0 0 0 0 stretch stretch; }"));
+    // m_list->setItemDelegate(new Delegate());
+
+    QStandardItemModel* model1 = new QStandardItemModel(0, 3, nullptr);
+    model1->setHeaderData(0, Qt::Horizontal, "Title");
+    model1->setHeaderData(1, Qt::Horizontal, "Duration");
+    model1->setHeaderData(2, Qt::Horizontal, "Information");
+    m_list->setSelectionBehavior(QAbstractItemView::SelectRows);
+
+    m_list->header()->setModel(model1);
     vbox->QLayout::addWidget(m_list);
 
-    QObject::connect(m_list, &QListView::doubleClicked, this, &PlaylistView::item_double_clicked);
+    QObject::connect(m_list, &QTreeView::doubleClicked, this, &PlaylistView::item_double_clicked);
 
     // Have the core send us the current list of songs
     flatbuffers::FlatBufferBuilder builder(1024);
     builder.Finish(CreateHippoMessageDirect(builder, MessageType_request_added_urls,
-        CreateHippoRequestAddedUrls(builder).Union()));
+                                            CreateHippoRequestAddedUrls(builder).Union()));
 
     HippoMessageAPI_send(m_message_api, builder.GetBufferPointer(), builder.GetSize());
 
@@ -37,15 +134,15 @@ QWidget* PlaylistView::create(struct HippoServiceAPI* service_api, QAbstractItem
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void PlaylistView::select_song(const HippoSelectSong* msg) {
-	int playlist_index = msg->playlist_index();
+    int playlist_index = msg->playlist_index();
 
-	if (!msg->path()) {
-		printf("Playlist: no correct path has been set for select_song message, unable to update playlist selection\n");
-		return;
-	}
+    if (!msg->path()) {
+        printf("Playlist: no correct path has been set for select_song message, unable to update playlist selection\n");
+        return;
+    }
 
-	const QModelIndex item = m_list->model()->index(playlist_index, 0);
-	m_list->setCurrentIndex(item);
+    const QModelIndex item = m_list->model()->index(playlist_index, 0);
+    m_list->setCurrentIndex(item);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -57,7 +154,8 @@ void PlaylistView::item_double_clicked(const QModelIndex& item) {
     QVariant v = model->data(item, Qt::UserRole);
     QByteArray path = v.toByteArray();
 
-    builder.Finish(CreateHippoMessageDirect(builder, MessageType_request_select_song,
+    builder.Finish(CreateHippoMessageDirect(
+        builder, MessageType_request_select_song,
         CreateHippoRequestSelectSongDirect(builder, path.data(), model->buddy(item).row()).Union()));
 
     HippoMessageAPI_send(m_message_api, builder.GetBufferPointer(), builder.GetSize());
@@ -68,16 +166,13 @@ void PlaylistView::item_double_clicked(const QModelIndex& item) {
 void PlaylistView::event(const unsigned char* data, int len) {
     const HippoMessage* message = GetHippoMessage(data);
 
-    switch (message->message_type())
-	{
-		case MessageType_select_song:
-		{
-			select_song(message->message_as_select_song());
-			break;
-		}
+    switch (message->message_type()) {
+        case MessageType_select_song: {
+            select_song(message->message_as_select_song());
+            break;
+        }
 
-		default: break;
-	}
+        default:
+            break;
+    }
 }
-
-

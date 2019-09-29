@@ -7,6 +7,7 @@
 class QStringListModel;
 class ToolWindowManager;
 class HippoQtView;
+class PlaylistModel;
 struct HippoServiceAPI;
 struct HippoCore;
 struct HippoMessageAPI;
@@ -42,7 +43,7 @@ private:
         QWidget* widget;
     };
 
-    QStringListModel* m_playlist_model;
+    PlaylistModel* m_playlist_model;
     HippoCore* m_core = nullptr;
     const HippoMessageAPI* m_general_messages = nullptr;
     ToolWindowManager* m_docking_manager = nullptr;

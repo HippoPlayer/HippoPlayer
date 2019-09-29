@@ -10,6 +10,7 @@
 #include <QtWidgets/QMenuBar>
 #include <QtGui/QFontDatabase>
 #include <flatbuffers/flatbuffers.h>
+#include "PlaylistModel.h"
 #include "../../src/plugin_api/HippoPlugin.h"
 #include "../../src/plugin_api/HippoMessages.h"
 #include "../../src/plugin_api/HippoQtView.h"
@@ -29,7 +30,10 @@ MainWindow::MainWindow(HippoCore* core) : QMainWindow(0), m_core(core) {
     QString family = QFontDatabase::applicationFontFamilies(id).at(0);
     qDebug() << family;
 
-    m_playlist_model = new QStringListModel;
+    m_playlist_model = new PlaylistModel;
+    m_playlist_model->setHeaderData(0, Qt::Horizontal, QStringLiteral("Title"));
+    m_playlist_model->setHeaderData(1, Qt::Horizontal, QStringLiteral("Duration"));
+    m_playlist_model->setHeaderData(2, Qt::Horizontal, QStringLiteral("Information"));
 
     m_general_messages = HippoServiceAPI_get_message_api(hippo_service_api_new(m_core), HIPPO_MESSAGE_API_VERSION);
 
@@ -115,16 +119,18 @@ void MainWindow::handle_incoming_messages(const unsigned char* data, int len) {
 				auto title = url->title();
 
                 // Get the position
-                int row = m_playlist_model->rowCount();
+                //int row = m_playlist_model->rowCount();
 
                 // Enable add one or more rows
-                m_playlist_model->insertRows(row, 1);
+                //m_playlist_model->insertRows(row, 1);
 
                 // Get the row for Edit mode
+                /*
                 QModelIndex index = m_playlist_model->index(row);
 
                 m_playlist_model->setData(index, QString::fromUtf8(title->c_str(), title->size()), Qt::EditRole);
                 m_playlist_model->setData(index, QByteArray(path->c_str(), path->size()), Qt::UserRole);
+                */
 			}
 
 			break;
@@ -165,7 +171,7 @@ void MainWindow::create_menus() {
     file_menu->addAction(add_files);
 
     QAction* remove_playlist_entry = new QAction(tr("&Remove selected"), this);
-    add_files->setShortcut(QKeySequence::Delete);
+    remove_playlist_entry->setShortcut(QKeySequence::Delete);
     add_files->setStatusTip(tr("Remove selected items in the playlist"));
     file_menu->addAction(remove_playlist_entry);
 

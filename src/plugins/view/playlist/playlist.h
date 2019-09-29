@@ -6,7 +6,7 @@ class QWidget;
 struct HippoMessageAPI;
 struct HippoServiceAPI;
 struct HippoSelectSong;
-class QListView;
+class QTreeView;
 class QModelIndex;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -25,7 +25,7 @@ private:
 	void select_song(const HippoSelectSong* msg);
 
     const struct HippoMessageAPI* m_message_api = nullptr;
-    QListView* m_list = nullptr;
+    QTreeView* m_list = nullptr;
 
     Q_SLOT void item_double_clicked(const QModelIndex& item);
 };
