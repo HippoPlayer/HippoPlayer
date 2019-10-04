@@ -30,10 +30,10 @@ MainWindow::MainWindow(HippoCore* core) : QMainWindow(0), m_core(core) {
     QString family = QFontDatabase::applicationFontFamilies(id).at(0);
     qDebug() << family;
 
-    m_playlist_model = new PlaylistModel;
-    m_playlist_model->setHeaderData(0, Qt::Horizontal, QStringLiteral("Title"));
-    m_playlist_model->setHeaderData(1, Qt::Horizontal, QStringLiteral("Duration"));
-    m_playlist_model->setHeaderData(2, Qt::Horizontal, QStringLiteral("Information"));
+    m_playlist_model = new PlaylistModel(this);
+    //m_playlist_model->setHeaderData(0, Qt::Horizontal, QStringLiteral("Title"));
+    //m_playlist_model->setHeaderData(1, Qt::Horizontal, QStringLiteral("Duration"));
+    //m_playlist_model->setHeaderData(2, Qt::Horizontal, QStringLiteral("Information"));
 
     m_general_messages = HippoServiceAPI_get_message_api(hippo_service_api_new(m_core), HIPPO_MESSAGE_API_VERSION);
 

@@ -110,13 +110,13 @@ QWidget* PlaylistView::create(struct HippoServiceAPI* service_api, QAbstractItem
     // border-image: url(data/hippo.png) 0 0 0 0 stretch stretch; }"));
     // m_list->setItemDelegate(new Delegate());
 
-    QStandardItemModel* model1 = new QStandardItemModel(0, 3, nullptr);
-    model1->setHeaderData(0, Qt::Horizontal, "Title");
-    model1->setHeaderData(1, Qt::Horizontal, "Duration");
-    model1->setHeaderData(2, Qt::Horizontal, "Information");
-    m_list->setSelectionBehavior(QAbstractItemView::SelectRows);
+    //QStandardItemModel* model1 = new QStandardItemModel(0, 3, nullptr);
+    //model1->setHeaderData(0, Qt::Horizontal, "Title");
+    //model1->setHeaderData(1, Qt::Horizontal, "Duration");
+    //model1->setHeaderData(2, Qt::Horizontal, "Information");
+    //m_list->setSelectionBehavior(QAbstractItemView::SelectRows);
 
-    m_list->header()->setModel(model1);
+    //m_list->header()->setModel(model1);
     vbox->QLayout::addWidget(m_list);
 
     QObject::connect(m_list, &QTreeView::doubleClicked, this, &PlaylistView::item_double_clicked);
