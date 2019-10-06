@@ -6,14 +6,21 @@
 #include <QtCore/QTimer>
 #include "../../../plugin_api/HippoMessages.h"
 
+#define COLOR_32(r, g, b) ((255 << 24) | (r << 16) | (g << 8) | b)
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TrackerDisplay::TrackerDisplay(QWidget* parent) :
     QAbstractScrollArea(parent),
-    m_mono_font(QStringLiteral("DejaVu Sans Mono"), 8) {
+    m_mono_font(QStringLiteral("DejaVu Sans Mono"), 12) {
+
     m_settings.line_spacing = 2;
     m_settings.track_text_pad = 4;
     m_settings.margin_spacing = 4;
+    m_settings.note_color = COLOR_32(255, 255, 255);
+    m_settings.instrument_color = COLOR_32(255, 200, 200);
+    m_settings.effect_color = COLOR_32(200, 200, 255);
+    m_settings.volume_color = COLOR_32(200, 255, 200);
     m_row_count = 64;
 
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
@@ -32,6 +39,11 @@ TrackerDisplay::TrackerDisplay(QWidget* parent) :
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void TrackerDisplay::update_font_size() {
+    QPen m_note_color = QPen(QColor(m_settings.note_color));
+    QPen m_instrument_color = QPen(QColor(m_settings.instrument_color));
+    QPen m_effect_color = QPen(QColor(m_settings.effect_color));
+    QPen m_volume_color = QPen(QColor(m_settings.volume_color));
+
     QFontMetrics metrics(m_mono_font);
 
     m_top_margin = metrics.height() + 2;
@@ -43,9 +55,9 @@ void TrackerDisplay::update_font_size() {
     // C-4 02 F08
 
     // TODO: This needs to change depending on what is being played
-    //m_track_width = (metrics.horizontalAdvance('0') * 12) + m_settings.track_text_pad * 2;
-    m_track_width = (metrics.horizontalAdvance('0') * 3) + m_settings.track_text_pad * 2;
-    m_left_margin_width = (metrics.horizontalAdvance('0') * 2) + m_settings.margin_spacing * 2;
+    m_track_width = (metrics.horizontalAdvance('0') * 12) + m_settings.track_text_pad * 2;
+    //m_track_width = (metrics.horizontalAdvance('0') * 3) + m_settings.track_text_pad * 2;
+    m_left_margin_width = (metrics.horizontalAdvance('0') * 3) + m_settings.margin_spacing * 2;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -104,6 +116,14 @@ void TrackerDisplay::render_track(QPainter& painter, const QRegion& region, int 
 
 	auto rows_data = channel->row_data();
 
+    QFontMetrics metrics(m_mono_font);
+    auto text_advance = metrics.horizontalAdvance('0');
+
+    QPen m_note_color = QPen(QColor(m_settings.note_color));
+    QPen m_instrument_color = QPen(QColor(m_settings.instrument_color));
+    QPen m_effect_color = QPen(QColor(m_settings.effect_color));
+    QPen m_volume_color = QPen(QColor(m_settings.volume_color));
+
 	QPen grayDark(QColor(80, 80, 80));
 	QPen gray(QColor(180, 180, 180));
 	QPen white(QColor(255, 255, 255));
@@ -135,19 +155,43 @@ void TrackerDisplay::render_track(QPainter& painter, const QRegion& region, int 
         } else if (row % 4) {
             painter.setPen(gray);
         } else {
-            painter.setPen(white);
+            painter.setPen(m_note_color);
+        }
+
+        if (*row_data->note()->c_str() == '.') {
+            continue;
         }
 
         //pattern_data_rect.moveLeft(2);
 
-        const char* note = row_data->note()->c_str();
-        //const char* instrument = row_data->instrument()->c_str();
-        //const char* effect = row_data->effect()->c_str();
-        //const char* voleffect = row_data->volumeffect()->c_str();
+        // TODO: We should cache all of this
+        QString note_text = QString::fromLatin1(row_data->note()->c_str(), row_data->note()->size());
+        QString instrument_text = QString::fromLatin1(row_data->instrument()->c_str(), row_data->instrument()->size());
+        QString effect_text = QString::fromLatin1(row_data->effect()->c_str(), row_data->effect()->size());
+        QString effect_volume = QString::fromLatin1(row_data->volumeffect()->c_str(), row_data->volumeffect()->size());
 
-        //painter.drawText(pattern_data_rect, QString(QStringLiteral("%1 %2 %3%4").arg(note, instrument, effect, voleffect)));
+        // Draw note
+        painter.setPen(m_note_color);
+        painter.drawText(pattern_data_rect, note_text);
+        pattern_data_rect.translate(row_data->note()->size() * (text_advance + 4), 0);
 
-        painter.drawText(pattern_data_rect, QString(QStringLiteral("%1").arg(note)));
+        // Draw instrument
+        painter.setPen(m_instrument_color);
+        painter.drawText(pattern_data_rect, instrument_text);
+        pattern_data_rect.translate(row_data->instrument()->size() * (text_advance + 4), 0);
+
+        // Draw effect
+        painter.setPen(m_effect_color);
+        painter.drawText(pattern_data_rect, effect_text);
+        pattern_data_rect.translate(row_data->effect()->size() * text_advance, 0);
+
+        // Draw effect volume
+        painter.setPen(m_volume_color);
+        painter.drawText(pattern_data_rect, effect_volume);
+
+        //QString(QStringLiteral("%1 %2 %3%4").arg(note, instrument, effect, voleffect)));
+
+        //painter.drawText(pattern_data_rect, QString(QStringLiteral("%1").arg(note)));
     }
 }
 

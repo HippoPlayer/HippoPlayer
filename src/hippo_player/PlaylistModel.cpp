@@ -5,6 +5,8 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/*
+
 class TreeItem {
    public:
     TreeItem(const QVector<QVariant>& data, TreeItem* parent) : m_itemData(data), m_parentItem(parent) {}
@@ -85,14 +87,9 @@ Qt::ItemFlags PlaylistModel::flags(const QModelIndex& index) const {
     return QAbstractItemModel::flags(index);
 }
 
-QVariant PlaylistModel::headerData(int section, Qt::Orientation orientation, int role) const {
-    if (orientation == Qt::Horizontal && role == Qt::DisplayRole)
-        return rootItem->data(section);
-
-    return QVariant();
-}
-
 QModelIndex PlaylistModel::index(int row, int column, const QModelIndex& parent) const {
+    qDebug() << "index " << row << ":" << column << " parent " << parent;
+
     if (!hasIndex(row, column, parent))
         return QModelIndex();
 
@@ -104,8 +101,10 @@ QModelIndex PlaylistModel::index(int row, int column, const QModelIndex& parent)
         parentItem = static_cast<TreeItem*>(parent.internalPointer());
 
     TreeItem* childItem = parentItem->child(row);
-    if (childItem)
+    if (childItem) {
+        printf("index: createIndex %p\n", childItem);
         return createIndex(row, column, childItem);
+    }
     return QModelIndex();
 }
 
@@ -118,6 +117,8 @@ QModelIndex PlaylistModel::parent(const QModelIndex& index) const {
 
     if (parentItem == rootItem)
         return QModelIndex();
+
+    printf("parent: create index\n");
 
     return createIndex(parentItem->row(), 0, parentItem);
 }
@@ -183,7 +184,6 @@ void PlaylistModel::setupModelData(const QStringList& lines, TreeItem* parent) {
     }
 }
 
-/*
 QVariant PlaylistModel::headerData(int section, Qt::Orientation orientation, int role) const {
     if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
         switch (section) {
@@ -200,9 +200,6 @@ QVariant PlaylistModel::headerData(int section, Qt::Orientation orientation, int
 
     return QVariant();
 }
-*/
-
-#if 0
 
 PlaylistModel::PlaylistModel(QObject* parent) : QAbstractItemModel(parent) {}
 
@@ -247,4 +244,47 @@ QModelIndex PlaylistModel::parent(const QModelIndex& index) const {
     return QModelIndex();
 }
 
-#endif
+*/
+
+PlaylistModel::PlaylistModel(QObject *parent)
+    :QAbstractTableModel(parent)
+{
+}
+
+QVariant PlaylistModel::headerData(int section, Qt::Orientation orientation, int role) const {
+    if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
+        switch (section) {
+            case 0:
+                return QStringLiteral("Title");
+            case 1:
+                return QStringLiteral("Duration");
+            case 2:
+                return QStringLiteral("Information");
+            default:
+                break;
+        }
+    }
+
+    return QVariant();
+}
+
+
+int PlaylistModel::rowCount(const QModelIndex & /*parent*/) const {
+   return m_entries.size();
+}
+
+int PlaylistModel::columnCount(const QModelIndex & /*parent*/) const {
+    return 3;
+}
+
+QVariant PlaylistModel::data(const QModelIndex &index, int role) const {
+    if (role == Qt::DisplayRole) {
+        switch (index.column()) {
+            case 0 : return m_entries[index.row()].title;
+            case 1 : return m_entries[index.row()].duration;
+            case 2 : return m_entries[index.row()].description;
+        }
+    }
+
+    return QVariant();
+}

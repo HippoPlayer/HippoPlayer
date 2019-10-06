@@ -2,6 +2,7 @@
 
 #include <QtWidgets/QAbstractScrollArea>
 #include <QtGui/QFont>
+#include <QtGui/QPen>
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -15,6 +16,11 @@ struct TrackerDisplaySettings {
     short line_spacing;
     short track_text_pad;  // padding in this area | <-> C-4 .. F03 <-> |
     int margin_spacing;
+
+    uint32_t note_color;
+    uint32_t instrument_color;
+    uint32_t effect_color;
+    uint32_t volume_color;
 };
 
 struct PatternData {
@@ -107,4 +113,9 @@ private:
 
     // Should come from data
     int m_track_count = 4;
+
+    QPen m_note_color;
+    QPen m_instrument_color;
+    QPen m_effect_color;
+    QPen m_volume_color;
 };
