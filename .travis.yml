@@ -12,6 +12,8 @@ matrix:
   - <<: *common
     os: linux
     dist: xenial
+  - os: osx
+    language: rust
     before_script:
     - export BUILD_DATE_ID=$(date)
     - export BUILD_FILE_ID=$(date +%Y%m%d_%H%M)
