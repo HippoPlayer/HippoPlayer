@@ -105,10 +105,10 @@ StaticLibrary {
 
     Env = {
        CXXOPTS = {
-            { "-isystem $(QT5)/lib/QtWidgets.framework/Headers",
-              "-isystem $(QT5)/lib/QtCore.framework/Headers",
-              "-isystem $(QT5)/lib/QtGui.framework/Headers",
-              "-F$(QT5)/lib"; Config = "macosx-*-*" },
+            { "-isystem $(QT5_LIB)/QtWidgets.framework/Headers",
+              "-isystem $(QT5_LIB)/QtCore.framework/Headers",
+              "-isystem $(QT5_LIB)/QtGui.framework/Headers",
+              "-F$(QT5_LIB)"; Config = "macosx-*-*" },
             -- { "-DADS_STATIC -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -fPIC -std=c++14", Config = "linux-*-*" },
         },
 
@@ -166,7 +166,7 @@ Program {
             { "-isystem $(QT5_LIB)/QtWidgets.framework/Headers",
               "-isystem $(QT5_LIB)/QtCore.framework/Headers",
               "-isystem $(QT5_LIB)/QtGui.framework/Headers",
-              "-F$(QT5_LIB)/lib"; Config = "macosx-*-*" },
+              "-F$(QT5_LIB)"; Config = "macosx-*-*" },
             -- { "-DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB", "-isystem $(QT5_INC)"; Config = "linux-*-*" },
         },
 
@@ -191,7 +191,7 @@ Program {
 		},
 
         PROGCOM = {
-            {  "-Wl,-rpath,$(QT5_LIB)", "-F$(QT5_LIB)/lib", "-lstdc++", Config = "macosx-clang-*" },
+            {  "-Wl,-rpath,$(QT5_LIB)", "-F$(QT5_LIB)", "-lstdc++", Config = "macosx-clang-*" },
             {  "-Wl,-rpath,$(QT5_LIB)", "-ldl"; Config = "linux-*-*" },
         },
     },
