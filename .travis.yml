@@ -7,7 +7,11 @@ matrix:
     before_script:
     - export BUILD_DATE_ID=$(date)
     - export BUILD_FILE_ID=$(date +%Y%m%d_%H%M)
-    - sudo add-apt-repository ppa:beineri/opt-qt-5.12.3-xenial --yes && sudo apt-get update && sudo apt-get install libasound2-dev qt512base mesa-common-dev && git clone --recursive https://github.com/deplinenoise/tundra.git && cd tundra && make && sudo make install && cd .. && export QT5_BIN=/opt/qt512/bin; export QT5_INC=/opt/qt512/include; export QT5_LIB=/opt/qt512/li
+    - sudo add-apt-repository ppa:beineri/opt-qt-5.12.3-xenial --yes
+    - sudo apt-get update
+    - sudo apt-get install libasound2-dev qt512base mesa-common-dev
+    - git clone --recursive https://github.com/deplinenoise/tundra.git && cd tundra && make && sudo make install && cd .. &&
+    - export QT5_BIN=/opt/qt512/bin; export QT5_INC=/opt/qt512/include; export QT5_LIB=/opt/qt512/lib
     script:
     - tundra2 linux-gcc-debug
   - os: osx
@@ -16,7 +20,11 @@ matrix:
     before_script:
     - export BUILD_DATE_ID=$(date)
     - export BUILD_FILE_ID=$(date +%Y%m%d_%H%M)
-    - brew update && brew install qt5 && export QT5="`brew --prefix qt5`"
+    - brew update
+    - brew install qt5
+    - export QT5_BIN=/usr/local/opt/qt/bin
+    - export QT5_INC=/usr/local/opt/qt/include
+    - export QT5_LIB=/usr/local/opt/qt/lib
     script:
     - scripts/mac_build_release.sh && scripts/mac_release_deploy.sh
 
