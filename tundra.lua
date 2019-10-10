@@ -32,6 +32,10 @@ local macosx = {
             "-std=c++11",
         },
 
+        SHLIBCOM = {
+            {  "-Wl,-rpath,$(QT5_LIB)", "-F$(QT5_LIB)" },
+        },
+
         SHLIBOPTS = {
 			"-lstdc++",
 			{ "-fsanitize=address"; Config = "*-*-debug-asan" },

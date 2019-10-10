@@ -421,6 +421,8 @@ SharedLibrary {
 		  "Advapi32.lib", "Qt5Guid.lib", "Qt5Cored.lib", "Qt5Widgetsd.lib"; Config = "win64-*-*" },
 	},
 
+    Frameworks = { "Cocoa", "QtWidgets", "QtGui", "QtCore" },
+
 	Depends = { "flatbuffers_lib" },
 }
 
@@ -440,6 +442,8 @@ SharedLibrary {
 		  "Advapi32.lib", "Qt5Guid.lib", "Qt5Cored.lib", "Qt5Widgetsd.lib"; Config = "win64-*-*" },
 	},
 
+    Frameworks = { "Cocoa", "QtWidgets", "QtGui", "QtCore" },
+
 	Depends = { "flatbuffers_lib" },
 }
 
@@ -451,6 +455,8 @@ SharedLibrary {
 	    "src/plugins/view/playlist/playlist.cpp",
         gen_moc("src/plugins/view/playlist/playlist.h"),
 	},
+
+    Frameworks = { "Cocoa", "QtWidgets", "QtGui", "QtCore" },
 
 	Libs = {
 		{ "wsock32.lib", "kernel32.lib", "user32.lib", "gdi32.lib", "Comdlg32.lib",
