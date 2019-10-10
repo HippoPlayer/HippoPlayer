@@ -29,6 +29,7 @@ private:
     static const HippoMessageAPI* get_messages(void* this_, int index);
     static void send_messages_to_ui(void* this_, const unsigned char* data, int len, int index);
     void handle_incoming_messages(const unsigned char* data, int len);
+    void create_plugin_menus();
 
     void create_menus();
 
@@ -50,7 +51,8 @@ private:
     QVector<PluginInfo> m_plugin_types;
     QVector<PluginInstance> m_plugin_instances;
 
+    void create_plugin_instance(int index);
     Q_SLOT void add_files();
-    Q_SLOT void remove_playlist_entry();
+    //Q_SLOT void remove_playlist_entry();
     Q_SLOT void update_messages();
 };

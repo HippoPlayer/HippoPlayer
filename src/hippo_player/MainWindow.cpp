@@ -14,8 +14,6 @@
 #include "../../src/plugin_api/HippoPlugin.h"
 #include "../../src/plugin_api/HippoMessages.h"
 #include "../../src/plugin_api/HippoQtView.h"
-//#include "src/external/qt_advanced_docking_system/src/DockManager.h"
-//#include "src/external/qt_advanced_docking_system/src/DockWidget.h"
 #include "src/external/toolwindowmanager/src/ToolWindowManager.h"
 extern "C" {
 	#include "src/hippo_core/native/hippo_core.h"
@@ -31,9 +29,6 @@ MainWindow::MainWindow(HippoCore* core) : QMainWindow(0), m_core(core) {
     qDebug() << family;
 
     m_playlist_model = new PlaylistModel(this);
-    //m_playlist_model->setHeaderData(0, Qt::Horizontal, QStringLiteral("Title"));
-    //m_playlist_model->setHeaderData(1, Qt::Horizontal, QStringLiteral("Duration"));
-    //m_playlist_model->setHeaderData(2, Qt::Horizontal, QStringLiteral("Information"));
 
     m_general_messages = HippoServiceAPI_get_message_api(hippo_service_api_new(m_core), HIPPO_MESSAGE_API_VERSION);
 
@@ -81,7 +76,7 @@ MainWindow::MainWindow(HippoCore* core) : QMainWindow(0), m_core(core) {
     layout->addWidget(m_docking_manager);
     */
 
-    // resize(800, 600);
+    main_widget->resize(800, 600);
 
     create_menus();
 }
@@ -183,7 +178,7 @@ void MainWindow::create_menus() {
     file_menu->addAction(remove_playlist_entry);
 
     connect(add_files, &QAction::triggered, this, &MainWindow::add_files);
-    connect(remove_playlist_entry, &QAction::triggered, this, &MainWindow::remove_playlist_entry);
+    //connect(remove_playlist_entry, &QAction::triggered, this, &MainWindow::remove_playlist_entry);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -217,8 +212,29 @@ void MainWindow::add_files() {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void MainWindow::remove_playlist_entry() {
+void MainWindow::create_plugin_menus() {
+    QMenu* plugin_menu = menuBar()->addMenu(QStringLiteral("&Plugins"));
+    int plugin_index = 0;
 
+    for (auto& plugin : m_plugin_types) {
+        QAction* plugin_menu_entry = new QAction(plugin.plugin_name);
+        plugin_menu_entry->setData(plugin_index);
+        plugin_menu->addAction(plugin_menu_entry);
+
+        connect(plugin_menu_entry, &QAction::triggered, this,
+            [this, plugin_index]() { create_plugin_instance(plugin_index); });
+        plugin_index++;
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void MainWindow::create_plugin_instance(int index) {
+	QWidget* plugin_widget = create_plugin_by_index(index);
+
+	if (plugin_widget) {
+	    m_docking_manager->addToolWindow(plugin_widget, ToolWindowManager::LastUsedArea);
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -266,6 +282,8 @@ bool MainWindow::load_plugins(const QString& plugin_dir) {
 
         plugins_found++;
     }
+
+    create_plugin_menus();
 
     return plugins_found > 0;
 }
