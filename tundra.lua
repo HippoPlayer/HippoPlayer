@@ -27,6 +27,8 @@ local macosx = {
 
         CXXOPTS = {
             mac_opts,
+            "-I$(QT5_INC)",
+            "-Isrc/external/flatbuffers/include",
             "-std=c++11",
         },
 
