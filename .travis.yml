@@ -3,6 +3,10 @@ __common: &common
   rust: stable
   cache: cargo
 
+os:
+  - linux
+  - osx
+
 matrix:
   include:
   - <<: *common
