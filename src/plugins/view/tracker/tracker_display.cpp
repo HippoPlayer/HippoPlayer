@@ -12,7 +12,7 @@
 
 TrackerDisplay::TrackerDisplay(QWidget* parent) :
     QAbstractScrollArea(parent),
-    m_mono_font(QStringLiteral("DejaVu Sans Mono"), 12) {
+    m_mono_font(QStringLiteral("DejaVu Sans Mono"), 10) {
 
     m_settings.line_spacing = 2;
     m_settings.track_text_pad = 4;
@@ -21,10 +21,14 @@ TrackerDisplay::TrackerDisplay(QWidget* parent) :
     m_settings.instrument_color = COLOR_32(255, 200, 200);
     m_settings.effect_color = COLOR_32(200, 200, 255);
     m_settings.volume_color = COLOR_32(200, 255, 200);
+    //m_settings.display_mask = RowDisplay_Note;
+    m_settings.display_mask = RowDisplay_All;
     m_row_count = 64;
 
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
 	setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+
+	m_scroll_predict_time.invalidate();
 
     /*
     QTimer* timer = new QTimer;
@@ -45,17 +49,33 @@ void TrackerDisplay::update_font_size() {
     QPen m_volume_color = QPen(QColor(m_settings.volume_color));
 
     QFontMetrics metrics(m_mono_font);
+    uint font_width = metrics.horizontalAdvance('0');
 
     m_top_margin = metrics.height() + 2;
     m_bottom_margin = 0;
     m_top_margin_height = metrics.height() + 2;
 
     m_row_height = m_settings.line_spacing + metrics.lineSpacing();
+    m_track_width = m_settings.track_text_pad * 2;
 
     // C-4 02 F08
+    if (m_settings.display_mask & RowDisplay_Note) {
+        m_track_width += font_width * 4;
+    }
 
-    // TODO: This needs to change depending on what is being played
-    m_track_width = (metrics.horizontalAdvance('0') * 12) + m_settings.track_text_pad * 2;
+    if (m_settings.display_mask & RowDisplay_Instrument) {
+        m_track_width += font_width * 3;
+    }
+
+    if (m_settings.display_mask & RowDisplay_Effect) {
+        m_track_width += font_width * 1;
+    }
+
+    if (m_settings.display_mask & RowDisplay_EffectVolume) {
+        m_track_width += font_width * 2;
+    }
+
+    //m_track_width = (metrics.horizontalAdvance('0') * 12) + m_settings.track_text_pad * 2;
     //m_track_width = (metrics.horizontalAdvance('0') * 3) + m_settings.track_text_pad * 2;
     m_left_margin_width = (metrics.horizontalAdvance('0') * 3) + m_settings.margin_spacing * 2;
 }
@@ -127,7 +147,8 @@ void TrackerDisplay::render_track(QPainter& painter, const QRegion& region, int 
 	QPen grayDark(QColor(80, 80, 80));
 	QPen gray(QColor(180, 180, 180));
 	QPen white(QColor(255, 255, 255));
-	QPen selection(QColor(200, 200, 0));
+	QPen selection(QColor(200, 200, 0, 127));
+    QBrush selection_brusch(QColor(128, 128, 128, 128));
 
 	// Draw track separation line
 	const int start_y = get_physical_y(first_row);
@@ -144,12 +165,14 @@ void TrackerDisplay::render_track(QPainter& painter, const QRegion& region, int 
 
 	for (int row = first_row; row <= last_row; ++row) {
 		QRect pattern_data_rect(get_physical_x(track) + 2, get_physical_y(row), m_track_width, m_row_height);
+		QRect region_save = pattern_data_rect;
 
 		if (!region.intersects(pattern_data_rect))
 			continue;
 
 		auto row_data = rows_data->Get(row);
 
+        /*
         if (row == m_current_row) {
             painter.setPen(selection);
         } else if (row % 4) {
@@ -157,12 +180,19 @@ void TrackerDisplay::render_track(QPainter& painter, const QRegion& region, int 
         } else {
             painter.setPen(m_note_color);
         }
+        */
 
         if (*row_data->note()->c_str() == '.') {
+            if (row == m_current_row) {
+                region_save.translate(0, int(m_smooth_scroll));
+                painter.fillRect(region_save, selection_brusch);
+            }
+
             continue;
         }
 
         //pattern_data_rect.moveLeft(2);
+
 
         // TODO: We should cache all of this
         QString note_text = QString::fromLatin1(row_data->note()->c_str(), row_data->note()->size());
@@ -171,23 +201,36 @@ void TrackerDisplay::render_track(QPainter& painter, const QRegion& region, int 
         QString effect_volume = QString::fromLatin1(row_data->volumeffect()->c_str(), row_data->volumeffect()->size());
 
         // Draw note
-        painter.setPen(m_note_color);
-        painter.drawText(pattern_data_rect, note_text);
-        pattern_data_rect.translate(row_data->note()->size() * (text_advance + 4), 0);
+        if (m_settings.display_mask & RowDisplay_Note) {
+            painter.setPen(m_note_color);
+            painter.drawText(pattern_data_rect, note_text);
+            pattern_data_rect.translate(row_data->note()->size() * (text_advance + 4), 0);
+        }
 
         // Draw instrument
-        painter.setPen(m_instrument_color);
-        painter.drawText(pattern_data_rect, instrument_text);
-        pattern_data_rect.translate(row_data->instrument()->size() * (text_advance + 4), 0);
+        if (m_settings.display_mask & RowDisplay_Instrument) {
+            painter.setPen(m_instrument_color);
+            painter.drawText(pattern_data_rect, instrument_text);
+            pattern_data_rect.translate(row_data->instrument()->size() * (text_advance + 4), 0);
+        }
 
         // Draw effect
-        painter.setPen(m_effect_color);
-        painter.drawText(pattern_data_rect, effect_text);
-        pattern_data_rect.translate(row_data->effect()->size() * text_advance, 0);
+        if (m_settings.display_mask & RowDisplay_Effect) {
+            painter.setPen(m_effect_color);
+            painter.drawText(pattern_data_rect, effect_text);
+            pattern_data_rect.translate(row_data->effect()->size() * text_advance, 0);
+        }
 
         // Draw effect volume
-        painter.setPen(m_volume_color);
-        painter.drawText(pattern_data_rect, effect_volume);
+        if (m_settings.display_mask & RowDisplay_EffectVolume) {
+            painter.setPen(m_volume_color);
+            painter.drawText(pattern_data_rect, effect_volume);
+        }
+
+        if (row == m_current_row) {
+            region_save.translate(0, int(m_smooth_scroll));
+            painter.fillRect(region_save, selection_brusch);
+        }
 
         //QString(QStringLiteral("%1 %2 %3%4").arg(note, instrument, effect, voleffect)));
 
@@ -225,10 +268,41 @@ void TrackerDisplay::event(const unsigned char* data, int len) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void TrackerDisplay::set_playing_row(int new_row) {
+    if (m_current_row != new_row) {
+        m_smooth_scroll = 0.0f;
+
+        if (!m_scroll_predict_time.isValid()) {
+            m_scroll_predict_time.start();
+            m_smooth_scroll_step = 0.0f;
+        } else {
+            int64_t time = m_scroll_predict_time.nsecsElapsed();
+            double dt = double(time) / 10000000.0;
+            m_scroll_predict_time.restart();
+            float prev_step = m_desc_step;
+            m_desc_step = float(m_row_height) / float(dt);
+
+            //printf("---------------------------------------------------\n");
+            //printf("  prev_step = %f\n", prev_step);
+            //printf("m_desc_step = %f\n", m_desc_step);
+
+            m_smooth_scroll_step = (m_desc_step + prev_step) * 0.5f;
+
+            //printf("m_smooth_scroll_step = %f\n", m_smooth_scroll_step);
+
+            if (new_row < m_current_row) {
+                m_smooth_scroll_step = -m_smooth_scroll_step;
+            }
+
+            //m_smooth_scroll_step = 1.41f;
+        }
+    }
+
 	m_current_row = new_row;
 
-	int y_scroll = (m_current_row * m_row_height) - ((viewport()->height() - m_top_margin_height) / 2) + m_row_height / 2;
+	int y_scroll = ((m_current_row * m_row_height) - ((viewport()->height() - m_top_margin_height) / 2) + m_row_height / 2) + (int)m_smooth_scroll;
 	set_scroll_pos(m_scroll_pos_x, y_scroll);
+
+	m_smooth_scroll += m_smooth_scroll_step;
 
 	viewport()->update();
 }

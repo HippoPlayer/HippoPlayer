@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QtWidgets/QAbstractScrollArea>
+#include <QtCore/QElapsedTimer>
 #include <QtGui/QFont>
 #include <QtGui/QPen>
 
@@ -12,6 +13,14 @@ class QResizeEvent;
 class QRegion;
 struct HippoTrackerChannel;
 
+enum RowDisplay {
+    RowDisplay_Note = 1,
+    RowDisplay_Instrument = 2,
+    RowDisplay_Effect = 4,
+    RowDisplay_EffectVolume = 8,
+    RowDisplay_All = 0xf,
+};
+
 struct TrackerDisplaySettings {
     short line_spacing;
     short track_text_pad;  // padding in this area | <-> C-4 .. F03 <-> |
@@ -21,6 +30,7 @@ struct TrackerDisplaySettings {
     uint32_t instrument_color;
     uint32_t effect_color;
     uint32_t volume_color;
+    uint32_t display_mask;
 };
 
 struct PatternData {
@@ -118,4 +128,10 @@ private:
     QPen m_instrument_color;
     QPen m_effect_color;
     QPen m_volume_color;
+
+    // This is used to predict speed for smooth scrolling
+    QElapsedTimer m_scroll_predict_time;
+    float m_smooth_scroll = 0.0f;
+    float m_smooth_scroll_step = 0.0f;
+    float m_desc_step = 0.0f;
 };
