@@ -1,16 +1,8 @@
-__common: &common
-  language: rust
-  rust: stable
-  cache: cargo
-
-os:
-  - linux
-  - osx
-
 matrix:
   include:
-  - <<: *common
-    os: linux
+  - os: linux
+    language: rust
+    rust: stable
     dist: xenial
     before_script:
     - export BUILD_DATE_ID=$(date)
@@ -19,6 +11,8 @@ matrix:
     script:
     - tundra2 linux-gcc-debug
   - os: osx
+    language: rust
+    rust: stable
     before_script:
     - export BUILD_DATE_ID=$(date)
     - export BUILD_FILE_ID=$(date +%Y%m%d_%H%M)
