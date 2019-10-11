@@ -4,10 +4,13 @@
 #include <QtGui/QMouseEvent>
 #include <QtGui/QPainter>
 #include <QtGui/QStandardItemModel>
+#include <QtWidgets/QAction>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QLayout>
 #include <QtWidgets/QStyleOptionViewItem>
 #include <QtWidgets/QStyledItemDelegate>
+#include <QtWidgets/QPushButton>
+#include <QtWidgets/QShortcut>
 #include <QtWidgets/QTreeView>
 #include <QtWidgets/QWidget>
 
@@ -60,10 +63,7 @@ private:
 
 class TreeView : public QTreeView {
    public:
-    TreeView(QWidget* parent) : QTreeView(parent)
-    {
-        _pixmapBg.load("data/hippo.png");
-    }
+    TreeView(QWidget* parent) : QTreeView(parent) { _pixmapBg.load("data/hippo.png"); }
 
     void paintEvent(QPaintEvent* event) {
         QPainter painter(viewport());
@@ -101,6 +101,8 @@ QWidget* PlaylistView::create(struct HippoServiceAPI* service_api, QAbstractItem
     QWidget* widget = new QWidget;
     QVBoxLayout* vbox = new QVBoxLayout(widget);
 
+    QPushButton* delete_items_button = new QPushButton(QStringLiteral("Delete items.."));
+
     m_list = new TreeView(nullptr);
     m_list->setModel(model);
     m_list->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -110,16 +112,21 @@ QWidget* PlaylistView::create(struct HippoServiceAPI* service_api, QAbstractItem
     // border-image: url(data/hippo.png) 0 0 0 0 stretch stretch; }"));
     // m_list->setItemDelegate(new Delegate());
 
-    //QStandardItemModel* model1 = new QStandardItemModel(0, 3, nullptr);
-    //model1->setHeaderData(0, Qt::Horizontal, "Title");
-    //model1->setHeaderData(1, Qt::Horizontal, "Duration");
-    //model1->setHeaderData(2, Qt::Horizontal, "Information");
-    //m_list->setSelectionBehavior(QAbstractItemView::SelectRows);
+    // QStandardItemModel* model1 = new QStandardItemModel(0, 3, nullptr);
+    // model1->setHeaderData(0, Qt::Horizontal, "Title");
+    // model1->setHeaderData(1, Qt::Horizontal, "Duration");
+    // model1->setHeaderData(2, Qt::Horizontal, "Information");
+    // m_list->setSelectionBehavior(QAbstractItemView::SelectRows);
 
-    //m_list->header()->setModel(model1);
-    vbox->QLayout::addWidget(m_list);
+    // m_list->header()->setModel(model1);
+    vbox->addWidget(m_list);
+    vbox->addWidget(delete_items_button);
 
     QObject::connect(m_list, &QTreeView::doubleClicked, this, &PlaylistView::item_double_clicked);
+    //QShortcut* delete_items = new QShortcut(QKeySequence(Qt::Key_Delete), delete_items_button);
+    //delete_items->setContext(Qt::WidgetWithChildrenShortcut);
+    QObject::connect(delete_items_button, &QPushButton::pressed, this, &PlaylistView::delete_items);
+    //QObject::connect(delete_items, &QShortcut::activated, this, &PlaylistView::delete_items);
 
     // Have the core send us the current list of songs
     flatbuffers::FlatBufferBuilder builder(1024);
@@ -159,6 +166,23 @@ void PlaylistView::item_double_clicked(const QModelIndex& item) {
         CreateHippoRequestSelectSongDirect(builder, path.data(), model->buddy(item).row()).Union()));
 
     HippoMessageAPI_send(m_message_api, builder.GetBufferPointer(), builder.GetSize());
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void PlaylistView::delete_items() {
+    QAbstractItemModel* model = m_list->model();
+    auto selection_model = m_list->selectionModel();
+    auto list = selection_model->selectedIndexes();
+
+    // TODO: we should batch the removal of items if they are all in order
+    // step 3 for I as we go by rows and not each item
+    for (int i = 0, len = list.size(); i < len; i += 3) {
+        QModelIndex index = list.at(i);
+        model->removeRows(index.row(), 1);
+    }
+
+    model->layoutChanged();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

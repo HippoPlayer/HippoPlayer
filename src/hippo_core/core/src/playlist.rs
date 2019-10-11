@@ -210,6 +210,13 @@ impl Playlist {
     }
 
     ///
+    /// Remove a entry from the list
+    ///
+    pub fn remove_entry(&mut self, entry: i32) {
+        self.entries.remove(entry as usize);
+    }
+
+    ///
     /// Check if current song has been updated and change the flag to false
     ///
     pub fn is_current_song_updated(&mut self) -> bool {

@@ -3,6 +3,10 @@
 #include <QtCore/QDebug>
 #include <QtCore/QVariant>
 
+extern "C" {
+	#include "src/hippo_core/native/hippo_core.h"
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*
@@ -246,8 +250,9 @@ QModelIndex PlaylistModel::parent(const QModelIndex& index) const {
 
 */
 
-PlaylistModel::PlaylistModel(QObject *parent)
-    :QAbstractTableModel(parent)
+PlaylistModel::PlaylistModel(HippoCore* core, QObject *parent)
+    : QAbstractTableModel(parent),
+    m_core(core)
 {
 }
 
@@ -268,16 +273,23 @@ QVariant PlaylistModel::headerData(int section, Qt::Orientation orientation, int
     return QVariant();
 }
 
+bool PlaylistModel::removeRows(int row, int count, const QModelIndex&) {
+    printf("remove %d (count %d)\n", row, count);
+    m_entries.remove(row, count);
+    hippo_playlist_remove_entry(m_core, row);
 
-int PlaylistModel::rowCount(const QModelIndex & /*parent*/) const {
+    return true;
+}
+
+int PlaylistModel::rowCount(const QModelIndex&) const {
    return m_entries.size();
 }
 
-int PlaylistModel::columnCount(const QModelIndex & /*parent*/) const {
+int PlaylistModel::columnCount(const QModelIndex&) const {
     return 3;
 }
 
-QVariant PlaylistModel::data(const QModelIndex &index, int role) const {
+QVariant PlaylistModel::data(const QModelIndex& index, int role) const {
     if (role == Qt::DisplayRole) {
         switch (index.column()) {
             case 0 : return m_entries[index.row()].title;

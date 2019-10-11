@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../../plugin_api/HippoQtView.h"
+#include <QtGui/QKeyEvent>
 
 class QWidget;
 struct HippoMessageAPI;
@@ -20,6 +21,7 @@ class PlaylistView : public QObject, HippoQtView
 public:
     QWidget* create(struct HippoServiceAPI* service_api, QAbstractItemModel* model);
     void event(const unsigned char* data, int len);
+    void delete_items();
 
 private:
 	void select_song(const HippoSelectSong* msg);
@@ -29,5 +31,3 @@ private:
 
     Q_SLOT void item_double_clicked(const QModelIndex& item);
 };
-
-

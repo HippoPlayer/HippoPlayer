@@ -8,6 +8,7 @@
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QMenuBar>
+#include <QtWidgets/QAbstractItemView>
 #include <QtGui/QFontDatabase>
 #include <flatbuffers/flatbuffers.h>
 #include "PlaylistModel.h"
@@ -28,7 +29,8 @@ MainWindow::MainWindow(HippoCore* core) : QMainWindow(0), m_core(core) {
     QString family = QFontDatabase::applicationFontFamilies(id).at(0);
     qDebug() << family;
 
-    m_playlist_model = new PlaylistModel(this);
+    m_playlist_model = new PlaylistModel(m_core, this);
+    //m_playlist_model->setSelectionMode(QAbstractItemView::MultiSelection);
 
     m_general_messages = HippoServiceAPI_get_message_api(hippo_service_api_new(m_core), HIPPO_MESSAGE_API_VERSION);
 

@@ -4,6 +4,7 @@
 #include <QtCore/QAbstractListModel>
 #include <QtCore/QModelIndex>
 
+struct HippoCore;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -39,11 +40,12 @@ class PlaylistModel : public QAbstractTableModel
 {
     Q_OBJECT
 public:
-    PlaylistModel(QObject *parent);
+    PlaylistModel(HippoCore* core, QObject *parent);
     int rowCount(const QModelIndex &parent = QModelIndex()) const ;
     QVariant headerData(int section, Qt::Orientation orientation, int role) const;
     int columnCount(const QModelIndex &parent = QModelIndex()) const;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
+    bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex());
 
     inline void add_entry(QString title, QString duration, QString description) {
         PlaylistEntry entry = { title, duration, description };
@@ -58,5 +60,7 @@ private:
         QString description;
     };
 
+    // I really don't like to have this here but will do for now
+    HippoCore* m_core = nullptr;
     QVector<PlaylistEntry> m_entries;
 };

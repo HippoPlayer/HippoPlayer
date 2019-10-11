@@ -207,14 +207,14 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
 /// Update the song db with a new entry
 #[no_mangle]
 pub extern "C" fn hippo_core_drop(core: *mut HippoCore) {
-    let mut core = unsafe { Box::from_raw(core) }; 
+    let mut core = unsafe { Box::from_raw(core) };
 
     core.audio.stop();
     core.playlist.save("default_playlist.hpl").unwrap_or_else(|err| {
         println!("Unable to save default playlist {}", err);
     });
 
-    // core will be dropped at this point 
+    // core will be dropped at this point
 }
 
 /// Update the song db with a new entry
@@ -248,3 +248,10 @@ pub unsafe extern "C" fn hippo_update_messages(
     let core = &mut *core;
     core.update_messages(user_data, count, get_messages, send_messages);
 }
+
+#[no_mangle]
+pub unsafe extern "C" fn hippo_playlist_remove_entry(core: *mut HippoCore, entry: i32) {
+    let core = &mut *core;
+    core.playlist.remove_entry(entry);
+}
+

@@ -22,12 +22,14 @@ typedef void (*HippoUpdateMessages)(struct HippoCore* core,
                                     int count,
                                     HippoGetMessages get_messages,
                                     HippoSendMessage send_messages);
+typedef void (*HippoPlaylistRemoveEntry)(struct HippoCore* core, int playlist_entry);
 
 extern HippoCoreNew hippo_core_new;
 extern HippoCoreDrop hippo_core_drop;
 extern HippoPlayFile hippo_play_file;
 extern HippoServiceApiNew hippo_service_api_new;
 extern HippoUpdateMessages hippo_update_messages;
+extern HippoPlaylistRemoveEntry hippo_playlist_remove_entry;
 
 #ifdef __cplusplus
 }
