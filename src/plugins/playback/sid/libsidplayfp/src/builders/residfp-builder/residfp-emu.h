@@ -42,6 +42,7 @@ class ReSIDfp final : public sidemu
 {
 private:
     reSIDfp::SID &m_sid;
+    unsigned int m_prev_freq[3];
 
 public:
     static const char* getCredits();

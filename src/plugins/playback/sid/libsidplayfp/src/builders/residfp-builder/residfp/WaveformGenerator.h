@@ -85,7 +85,7 @@ namespace reSIDfp
  */
 class WaveformGenerator
 {
-private:
+public:
     matrix_t* model_wave;
 
     short* wave;

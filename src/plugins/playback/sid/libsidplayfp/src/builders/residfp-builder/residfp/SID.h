@@ -59,6 +59,10 @@ public:
  */
 class SID
 {
+public:
+    /// SID voices
+    std::unique_ptr<Voice> voice[3];
+
 private:
     /// Currently active filter
     Filter* filter;
@@ -83,9 +87,6 @@ private:
 
     /// Paddle Y register support
     std::unique_ptr<Potentiometer> const potY;
-
-    /// SID voices
-    std::unique_ptr<Voice> voice[3];
 
     /// Time to live for the last written value
     int busValueTtl;

@@ -168,7 +168,7 @@ static int sid_read_data(void* user_data, void* dest, uint32_t max_samples) {
 
 	data->engine.play(temp_data, FRAME_SIZE / 2);
 
-	const float scale = 1.0f / 32767.0f;
+	const float scale = 1.0f / 32768.0f;
 
 	for (int i = 0; i < FRAME_SIZE / 2; ++i) {
 		const float v = ((float)temp_data[i]) * scale;
