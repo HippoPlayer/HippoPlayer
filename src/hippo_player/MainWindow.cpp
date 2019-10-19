@@ -108,8 +108,7 @@ void MainWindow::handle_incoming_messages(const unsigned char* data, int len) {
 
     switch (message->message_type())
 	{
-    	case MessageType_reply_added_urls:
-		{
+    	case MessageType_reply_added_urls: {
 			auto urls = message->message_as_reply_added_urls()->urls();
 
 			for (int i = 0, e = urls->Length(); i < e; ++i) {
@@ -141,6 +140,14 @@ void MainWindow::handle_incoming_messages(const unsigned char* data, int len) {
 
 			break;
 		}
+
+        case MessageType_select_song:
+        {
+            printf("--- select song\n");
+            auto msg = message->message_as_select_song();
+            m_playlist_model->update_index(msg);
+            break;
+        }
 
 		default: break;
 	}

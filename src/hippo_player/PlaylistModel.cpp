@@ -2,6 +2,7 @@
 #include <QtCore/QFile>
 #include <QtCore/QDebug>
 #include <QtCore/QVariant>
+#include "../../src/plugin_api/HippoMessages.h"
 
 extern "C" {
 	#include "src/hippo_core/native/hippo_core.h"
@@ -271,6 +272,15 @@ QVariant PlaylistModel::headerData(int section, Qt::Orientation orientation, int
     }
 
     return QVariant();
+}
+
+void PlaylistModel::update_index(const HippoSelectSong* select_song_msg) {
+    int index = select_song_msg->playlist_index();
+
+    printf("updating index %d\n - %s", index, select_song_msg->title()->c_str());
+
+    m_entries[index].title = QString::fromUtf8(select_song_msg->title()->c_str());
+    //m_entries[index].duration = QString::number(select_song_msg->duration());
 }
 
 bool PlaylistModel::removeRows(int row, int count, const QModelIndex&) {

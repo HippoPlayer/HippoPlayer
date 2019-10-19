@@ -156,12 +156,22 @@ impl HippoCore {
         // If current song has been updated with messages above we try starting playing the new one
 
         if self.playlist.is_current_song_updated() {
-            self.playlist
-                .get_current_song()
-                .map(|song| self.play_file(&song));
+            let new_song = self.playlist.get_current_song();
+
+            if let Some(song) = new_song {
+                self.play_file(&song);
+
+                if let Some(metadata) = self.plugin_service.get_song_db().get_data(&song) {
+                    let message = get_root_as_hippo_message(&metadata);
+                    let metadata_message = message.message_as_song_metadata().unwrap();
+                    self.playlist.update_current_entry(&metadata_message);
+
+                    self.playlist.current_song_message().map(|reply| {
+                        Self::send_msgs(user_data, send_messages, &reply, count, std::usize::MAX);
+                    });
+                }
+            }
         }
-
-
 
         // send the messages from the backends to the UI
 

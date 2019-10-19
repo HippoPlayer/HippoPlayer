@@ -53,7 +53,21 @@ impl Playlist {
             self.current_song = new_song;
         }
 
-        self.current_song_message()
+        None
+
+        //self.current_song_message()
+    }
+
+    pub fn update_current_entry(&mut self, metadata: &HippoSongMetadata) {
+        let entry = &mut self.entries[self.current_song as usize];
+
+        metadata.title().map(|title| {
+            if title != "" {
+                entry.title = title.to_owned();
+            }
+        });
+
+        entry.duration = metadata.length();
     }
 
     ///
@@ -203,10 +217,9 @@ impl Playlist {
         if let Some(id) = new_song_id {
             self.current_song = id as isize;
             self.new_song = true;
-            return self.current_song_message();
-        } else {
-            None
         }
+
+        None
     }
 
     ///
