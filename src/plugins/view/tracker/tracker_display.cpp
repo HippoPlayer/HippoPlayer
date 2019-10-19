@@ -12,7 +12,7 @@
 
 TrackerDisplay::TrackerDisplay(QWidget* parent) :
     QAbstractScrollArea(parent),
-    m_mono_font(QStringLiteral("DejaVu Sans Mono"), 10) {
+    m_mono_font(QStringLiteral("DejaVu Sans Mono"), 8) {
 
     m_settings.line_spacing = 2;
     m_settings.track_text_pad = 4;

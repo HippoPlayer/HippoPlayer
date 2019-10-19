@@ -20,13 +20,14 @@ pub const __USE_MISC: u32 = 1;
 pub const __USE_ATFILE: u32 = 1;
 pub const __USE_FORTIFY_LEVEL: u32 = 0;
 pub const __GLIBC_USE_DEPRECATED_GETS: u32 = 0;
+pub const __GLIBC_USE_DEPRECATED_SCANF: u32 = 0;
 pub const _STDC_PREDEF_H: u32 = 1;
 pub const __STDC_IEC_559__: u32 = 1;
 pub const __STDC_IEC_559_COMPLEX__: u32 = 1;
 pub const __STDC_ISO_10646__: u32 = 201706;
 pub const __GNU_LIBRARY__: u32 = 6;
 pub const __GLIBC__: u32 = 2;
-pub const __GLIBC_MINOR__: u32 = 28;
+pub const __GLIBC_MINOR__: u32 = 29;
 pub const _SYS_CDEFS_H: u32 = 1;
 pub const __glibc_c99_flexarr_available: u32 = 1;
 pub const __WORDSIZE: u32 = 64;
@@ -38,11 +39,13 @@ pub const __GLIBC_USE_IEC_60559_BFP_EXT: u32 = 0;
 pub const __GLIBC_USE_IEC_60559_FUNCS_EXT: u32 = 0;
 pub const __GLIBC_USE_IEC_60559_TYPES_EXT: u32 = 0;
 pub const _BITS_TYPES_H: u32 = 1;
+pub const __TIMESIZE: u32 = 64;
 pub const _BITS_TYPESIZES_H: u32 = 1;
 pub const __OFF_T_MATCHES_OFF64_T: u32 = 1;
 pub const __INO_T_MATCHES_INO64_T: u32 = 1;
 pub const __RLIM_T_MATCHES_RLIM64_T: u32 = 1;
 pub const __FD_SETSIZE: u32 = 1024;
+pub const _BITS_TIME64_H: u32 = 1;
 pub const _BITS_WCHAR_H: u32 = 1;
 pub const _BITS_STDINT_INTN_H: u32 = 1;
 pub const _BITS_STDINT_UINTN_H: u32 = 1;
@@ -84,6 +87,7 @@ pub const SIZE_MAX: i32 = -1;
 pub const WINT_MIN: u32 = 0;
 pub const WINT_MAX: u32 = 4294967295;
 pub const HIPPO_FILE_API_VERSION: u32 = 1;
+pub const HIPPO_METADATA_API_VERSION: u32 = 1;
 pub const HIPPO_PLAYBACK_PLUGIN_API_VERSION: u32 = 1;
 pub const HIPPO_MESSAGE_API_VERSION: u32 = 1;
 pub type __u_char = ::std::os::raw::c_uchar;
@@ -260,34 +264,21 @@ pub type HippoMetadataResult = i32;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct HippoMetadataAPI {
-    pub get_key: ::std::option::Option<
-        unsafe extern "C" fn(
-            priv_data: *mut HippoMetadataAPIPrivData,
-            buffer: *const ::std::os::raw::c_char,
-            type_: *const ::std::os::raw::c_char,
-            error_code: *mut ::std::os::raw::c_int,
-        ) -> *const ::std::os::raw::c_char,
-    >,
-    pub set_key: ::std::option::Option<
-        unsafe extern "C" fn(
-            priv_data: *mut HippoMetadataAPIPrivData,
-            buffer: *const ::std::os::raw::c_char,
-            sub_song: u32,
-            value: *const ::std::os::raw::c_char,
-            type_: *const ::std::os::raw::c_char,
-        ) -> ::std::os::raw::c_int,
-    >,
-    pub set_key_with_encoding: ::std::option::Option<
-        unsafe extern "C" fn(
-            priv_data: *mut HippoMetadataAPIPrivData,
-            buffer: *const ::std::os::raw::c_char,
-            sub_song: u32,
-            value: *const ::std::os::raw::c_char,
-            type_: *const ::std::os::raw::c_char,
-            encoding: HippoMetaEncoding,
-        ) -> ::std::os::raw::c_int,
-    >,
     pub priv_data: *mut HippoMetadataAPIPrivData,
+    pub set_data: ::std::option::Option<
+        unsafe extern "C" fn(
+            priv_data: *mut HippoMetadataAPIPrivData,
+            resource: *const ::std::os::raw::c_char,
+            data: *const ::std::os::raw::c_uchar,
+            len: ::std::os::raw::c_int,
+        ),
+    >,
+    pub get_data: ::std::option::Option<
+        unsafe extern "C" fn(
+            priv_data: *mut HippoMetadataAPIPrivData,
+            resource: *const ::std::os::raw::c_char,
+        ) -> *const ::std::os::raw::c_uchar,
+    >,
 }
 #[doc = ""]
 #[repr(C)]
@@ -390,6 +381,12 @@ pub struct HippoPlaybackPlugin {
         unsafe extern "C" fn(
             user_data: *mut ::std::os::raw::c_void,
             ms: ::std::os::raw::c_int,
+        ) -> ::std::os::raw::c_int,
+    >,
+    pub metadata: ::std::option::Option<
+        unsafe extern "C" fn(
+            url: *const ::std::os::raw::c_char,
+            services: *const HippoServiceAPI,
         ) -> ::std::os::raw::c_int,
     >,
     pub save: ::std::option::Option<

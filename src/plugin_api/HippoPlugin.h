@@ -52,6 +52,9 @@ typedef struct HippoIoAPI {
 	struct HippoApiPrivData* priv_data;
 } HippoFileAPI;
 
+#define HippoIo_read_file_to_memory(api, filename, dest, size) api->read_file_to_memory(api->priv_data, filename, dest, size)
+#define HippoIo_free_file_to_memory(api, dest) api->free_file_to_memory(api->priv_data, dest)
+
 #define HIPPO_FILE_API_VERSION 1
 
 struct HippoMetadataAPIPrivData;
@@ -69,63 +72,24 @@ enum HippoMetadataResult {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef struct HippoMetadataAPI {
-    //
-    // Get a string key associated with buffer.
-    //
-    // priv_data = send in priv_data pointer from this struct.
-    // buffer = filename, url/stream, etc associated with the key
-    // type = Key to retrive
-    // error_code = HippoMetadataResult (may be NULL)
-    // Returns data for the key. If there is an error (such as key not found) the return value will be NULL and
-    // the error code will be updated.
-    //
-    const char* (*get_key)(
-		struct HippoMetadataAPIPrivData* priv_data,
-		const char* buffer,
-		const char* type,
-		int* error_code);
-    //
-    // Set a key associated with buffer.
-    //
-    // priv_data = send in priv_data pointer from this struct.
-    // buffer = filename, url/stream, etc associated with the key
-    // value = value to set with the key
-    // type = Key to retrive
-    //
-    // HippoMetadataResult
-    //
-    int (*set_key)(
-		struct HippoMetadataAPIPrivData* priv_data,
-		const char* buffer,
-		uint32_t sub_song,
-		const char* value,
-		const char* type);
-
-    //
-    // Set a key associated with buffer with specific ecoding.
-    //
-    // In some cases the text you want to set may not be UTF-8 and this will convert from another encoding for you as HippoPlayer
-    // uses utf8 for all strings internally
-    //
-    // priv_data = send in priv_data pointer from this struct.
-    // buffer = filename, url/stream, etc associated with the key
-    // value = value to set with the key
-    // type = Key to retrive
-    //
-    int (*set_key_with_encoding)(
-		struct HippoMetadataAPIPrivData* priv_data,
-		const char* buffer,
-		uint32_t sub_song,
-		const char* value,
-		const char* type,
-		enum HippoMetaEncoding encoding);
-
 	struct HippoMetadataAPIPrivData* priv_data;
+
+    void (*set_data)(
+		struct HippoMetadataAPIPrivData* priv_data,
+		const char* resource,
+		const unsigned char* data,
+		int len);
+
+    const unsigned char* (*get_data)(
+        struct HippoMetadataAPIPrivData* priv_data,
+        const char* resource);
+
 } HippoMetadataAPI;
 
-#define HippoMetadata_set_key(api, buffer, sub_song, value, type) api->set_key(api->priv_data, buffer, sub_song, value, type)
-#define HippoMetadata_set_key_with_encoding(api, buffer, type, value, encode_type, error_code) api->set_key(api->priv_data, buffer, type, value, encode_type, error_code)
-#define HippoMetadata_get_key(api, buffer, type, error_code) api->get_key(api->priv_data, buffer, type, error_code)
+#define HIPPO_METADATA_API_VERSION 1
+
+#define HippoMetadata_set_data(api, resource, data, len) api->set_data(api->priv_data, resource, data, len)
+#define HippoMetadata_get_data(api, resource) api->get_data(api->priv_data, resource)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Plugins can use the MessageAPI to subscribe to events and post data that is being requested
@@ -228,6 +192,7 @@ typedef struct HippoServiceAPI {
 
 struct HippoSaveAPI;
 struct HippoLoadAPI;
+struct HippoMetadataAPI;
 
 typedef struct HippoPlaybackPlugin {
 	uint64_t api_version;
@@ -242,6 +207,7 @@ typedef struct HippoPlaybackPlugin {
 	int (*close)(void* user_data);
 	int (*read_data)(void* user_data, void* dest, uint32_t max_sample_count);
 	int (*seek)(void* user_data, int ms);
+	int (*metadata)(const char* url, const HippoServiceAPI* services);
 	int (*save)(void* user_data, const struct HippoSaveAPI* save_api);
 	int (*load)(void* user_data, const struct HippoLoadAPI* load_api);
 } HippoPlaybackPlugin;

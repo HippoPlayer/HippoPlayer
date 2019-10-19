@@ -153,54 +153,35 @@ extern "C" fn get_message_api(
     service_api.get_c_message_api()
 }
 
-extern "C" fn metadata_get_key(
-    _priv_data: *mut ffi::HippoMetadataAPIPrivData,
-    _resource: *const i8,
-    _key_type: *const i8,
-    error_code: *mut i32,
-) -> *const i8 {
-    // not implemented yet
-    unsafe {
-        *error_code = -1;
-    }
-    ptr::null()
-    //let res = unsafe { CStr::from_ptr(resource as *const c_char) };
-    //file_api.exists(&filename.to_string_lossy())
-}
-
-extern "C" fn metadata_set_key(
+extern "C" fn metadata_set_data(
     priv_data: *mut ffi::HippoMetadataAPIPrivData,
     resource: *const i8,
-    sub_song: u32,
-    value: *const i8,
-    key: *const i8,
-) -> i32 {
+    data: *const u8,
+    len: i32) {
+
     let song_db: &mut SongDb = unsafe { &mut *(priv_data as *mut SongDb) };
+    let data = unsafe { slice::from_raw_parts(data, len as usize) };
+
     // TODO: Use CFixedString
     let res = unsafe { CStr::from_ptr(resource as *const c_char) };
-    let value = unsafe { CStr::from_ptr(value as *const c_char) };
-    let key = unsafe { CStr::from_ptr(key as *const c_char) };
-
-    song_db.set_key(
-        &res.to_string_lossy(),
-        sub_song as usize,
-        &value.to_string_lossy(),
-        &key.to_string_lossy(),
-    );
-
-    0
+    song_db.set_data(&res.to_string_lossy(), data.to_vec().into_boxed_slice());
 }
 
-extern "C" fn metadata_set_key_with_encoding(
-    _priv_data: *mut ffi::HippoMetadataAPIPrivData,
-    _resource: *const i8,
-    _sub_song: u32,
-    _value: *const i8,
-    _key_type: *const i8,
-    _encoding: u32,
-) -> i32 {
-    -1
+extern "C" fn metadata_get_data(
+    priv_data: *mut ffi::HippoMetadataAPIPrivData,
+    resource: *const i8) -> *const u8 {
+
+    let song_db: &SongDb = unsafe { &*(priv_data as *const SongDb) };
+
+    // TODO: Use CFixedString
+    let res = unsafe { CStr::from_ptr(resource as *const c_char) };
+    if let Some(data) = song_db.get_data(&res.to_string_lossy()) {
+        data.as_ptr()
+    } else {
+        ptr::null()
+    }
 }
+
 
 extern "C" fn message_api_send(priv_data: *mut ffi::HippoMessageAPI, data: *const u8, len: i32) {
     let message_api: &mut MessageApi = unsafe { &mut *(priv_data as *mut MessageApi) };
@@ -293,9 +274,8 @@ impl ServiceApi {
 
         let c_metadata_api = Box::new(ffi::HippoMetadataAPI {
             priv_data: metadata_api,
-            get_key: Some(metadata_get_key),
-            set_key: Some(metadata_set_key),
-            set_key_with_encoding: Some(metadata_set_key_with_encoding),
+            set_data: Some(metadata_set_data),
+            get_data: Some(metadata_get_data),
         });
 
         let c_metadata_api: *const ffi::HippoMetadataAPI = unsafe { transmute(c_metadata_api) };

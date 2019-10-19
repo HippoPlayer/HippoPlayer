@@ -73,6 +73,10 @@ impl HippoCore {
             }
 
             if plugin.probe_can_play(&buffer, buffer_read_size, filename, metadata.len()) {
+                if self.plugin_service.get_song_db().get_data(filename).is_none() {
+                    plugin.get_metadata(&filename, &self.plugin_service);
+                }
+
                 // This is a bit hacky right now but will do the trick
                 self.audio.stop();
                 self.audio = HippoAudio::new();
@@ -156,6 +160,8 @@ impl HippoCore {
                 .get_current_song()
                 .map(|song| self.play_file(&song));
         }
+
+
 
         // send the messages from the backends to the UI
 

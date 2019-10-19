@@ -6,9 +6,9 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-typedef struct FCReplayerData 
+typedef struct FCReplayerData
 {
-	void* decoder; 
+	void* decoder;
 	void* tune;
 } FCReplayerData;
 
@@ -69,7 +69,7 @@ static int fcOpen(void* userData, const char* buffer)
 {
 	int status;
 	char* tempData; // TODO: Fix proper allocator
-	FCReplayerData* replayer = (FCReplayerData*)userData;	
+	FCReplayerData* replayer = (FCReplayerData*)userData;
 
 	// TODO: Add reader functions etc to be used instead of fopen as file may come from zip, etc
 
@@ -123,7 +123,7 @@ static int fcClose(void* userData)
 
 static int fcReadData(void* userData, void* dest)
 {
-	struct FCReplayerData* replayerData = (struct FCReplayerData*)userData;	
+	struct FCReplayerData* replayerData = (struct FCReplayerData*)userData;
     fc14dec_buffer_fill(replayerData->decoder, dest, 16 * 1024);
 	return 0;
 }
@@ -144,7 +144,10 @@ static int fcFrameSize(void* userData)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static HippoPlaybackPlugin g_fcPlugin = 
+
+
+
+static HippoPlaybackPlugin g_fcPlugin =
 {
 	1,
 	fcInfo,

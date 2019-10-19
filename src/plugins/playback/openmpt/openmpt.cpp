@@ -162,7 +162,7 @@ static void send_pattern_data(struct OpenMptData* replayer_data) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int openmpt_open(void* user_data, const char* filename) {
-	char keyname[32];
+	//char keyname[32];
     uint64_t size = 0;
 	struct OpenMptData* replayer_data = (struct OpenMptData*)user_data;
 
@@ -176,29 +176,6 @@ static int openmpt_open(void* user_data, const char* filename) {
     replayer_data->mod = new openmpt::module(replayer_data->song_data, size);
     replayer_data->song_title = replayer_data->mod->get_metadata("title");
     replayer_data->length = replayer_data->mod->get_duration_seconds();
-
-    const auto& mod = replayer_data->mod;
-
-	HippoMetadata_set_key(g_metadata_api, filename, 0, mod->get_metadata("title").c_str(), "title");
-	HippoMetadata_set_key(g_metadata_api, filename, 0, mod->get_metadata("type_long").c_str(), "type");
-	HippoMetadata_set_key(g_metadata_api, filename, 0, mod->get_metadata("tracker").c_str(), "authoring_tool");
-	HippoMetadata_set_key(g_metadata_api, filename, 0, mod->get_metadata("artist").c_str(), "artist");
-	HippoMetadata_set_key(g_metadata_api, filename, 0, mod->get_metadata("date").c_str(), "date");
-	HippoMetadata_set_key(g_metadata_api, filename, 0, mod->get_metadata("message_raw").c_str(), "message");
-
-	int i = 1;
-
-	for (const auto& sample : mod->get_sample_names()) {
-		sprintf(keyname, "sample_%04d", i++);
-		HippoMetadata_set_key(g_metadata_api, filename, 0, sample.c_str(), keyname);
-	}
-
-	i = 1;
-
-	for (const auto& instrument : mod->get_instrument_names()) {
-		sprintf(keyname, "instrument_%04d", i++);
-		HippoMetadata_set_key(g_metadata_api, filename, 0, instrument.c_str(), keyname);
-	}
 
 	return 0;
 }
@@ -250,6 +227,66 @@ static int openmpt_seek(void* user_data, int ms) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static int openmpt_metadata(const char* filename, const HippoServiceAPI* service_api) {
+    void* data = 0;
+    uint64_t size = 0;
+
+    const HippoIoAPI* io_api = HippoServiceAPI_get_io_api(service_api, HIPPO_FILE_API_VERSION);
+    const HippoMetadataAPI* metadata_api = HippoServiceAPI_get_metadata_api(service_api, HIPPO_METADATA_API_VERSION);
+
+    HippoIoErrorCode res = HippoIo_read_file_to_memory(io_api, filename, &data, &size);
+
+    if (res < 0) {
+        return -1;
+    }
+
+    openmpt::module mod(data, size);
+    float length = mod.get_duration_seconds();
+
+    std::vector<flatbuffers::Offset<flatbuffers::String>> instruments;
+    std::vector<flatbuffers::Offset<flatbuffers::String>> samples;
+
+    flatbuffers::FlatBufferBuilder builder(4096);
+
+    auto url = builder.CreateString(filename);
+    auto title = builder.CreateString(mod.get_metadata("title").c_str());
+    auto song_type = builder.CreateString(mod.get_metadata("type_long").c_str());
+    auto authoring_tool = builder.CreateString(mod.get_metadata("tracker").c_str());
+    auto artist = builder.CreateString(mod.get_metadata("artist").c_str());
+    auto date = builder.CreateString(mod.get_metadata("date").c_str());
+    auto message = builder.CreateString(mod.get_metadata("message_raw").c_str());
+
+	for (const auto& sample : mod.get_sample_names()) {
+        samples.push_back(builder.CreateString(sample.c_str()));
+	}
+
+	for (const auto& instrument : mod.get_instrument_names()) {
+	    instruments.push_back(builder.CreateString(instrument.c_str()));
+	}
+
+    builder.Finish(CreateHippoMessageDirect(builder, MessageType_song_metadata,
+        CreateHippoSongMetadata(builder,
+            url,
+            title,
+            song_type,
+            length,
+            authoring_tool,
+            artist,
+            date,
+            message,
+            builder.CreateVector(samples),
+            builder.CreateVector(instruments)).Union()));
+
+    HippoMetadata_set_data(metadata_api, filename, builder.GetBufferPointer(), builder.GetSize());
+
+    // Make sure to free the buffer before we leave
+    HippoIo_free_file_to_memory(io_api, data);
+
+	return 0;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /*
 static int openmpt_length(void* user_data) {
     OpenMptData* data = (OpenMptData*)user_data;
@@ -267,6 +304,7 @@ void openmpt_event(void* user_data, const unsigned char* data, int len) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
 static HippoPlaybackPlugin g_openmptPlugin = {
 	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
 	"libopenmpt",
@@ -280,6 +318,7 @@ static HippoPlaybackPlugin g_openmptPlugin = {
 	openmpt_close,
 	openmpt_read_data,
 	openmpt_seek,
+	openmpt_metadata,
 	NULL,
 	NULL,
 };

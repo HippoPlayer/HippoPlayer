@@ -7,7 +7,7 @@ use std::sync::Arc;
 use walkdir::{DirEntry, WalkDir};
 
 //use hippo_api::ffi::{CHippoPlaybackPlugin};
-//use crate::service_ffi::{PluginService};
+use crate::service_ffi::{PluginService};
 
 #[derive(Debug, Clone)]
 pub struct HippoPlaybackPluginFFI {
@@ -36,6 +36,9 @@ pub struct HippoPlaybackPluginFFI {
         max_sample_count: u32,
     ) -> i32,
     pub seek: unsafe extern "C" fn(user_data: *mut c_void, ms: i32) -> i32,
+    pub metadata: Option<
+        unsafe extern "C" fn(buffer: *const i8, services: *const ffi::HippoServiceAPI) -> i32,
+    >,
     pub save: Option<
         unsafe extern "C" fn(user_data: *mut c_void, save_api: *const ffi::HippoSaveAPI) -> i32,
     >,
@@ -89,6 +92,15 @@ impl DecoderPlugin {
             _ => false,
         }
     }
+
+    pub fn get_metadata(&self, filename: &str, service: &PluginService) {
+        let c_filename = CString::new(filename).unwrap();
+        unsafe {
+            if let Some(func) = self.plugin_funcs.metadata {
+                let _ = func(c_filename.as_ptr(), service.get_c_service_api());
+            }
+        };
+    }
 }
 
 pub struct Plugins {
@@ -140,6 +152,7 @@ impl Plugins {
                 close: native_plugin.close.unwrap(),
                 read_data: native_plugin.read_data.unwrap(),
                 seek: native_plugin.seek.unwrap(),
+                metadata: native_plugin.metadata,
                 save: native_plugin.save,
                 load: native_plugin.load,
             };

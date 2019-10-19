@@ -60,8 +60,21 @@ table HippoRowData {
   parameter: string;
 }
 
+table HippoSongMetadata {
+  url: string;
+  title: string;
+  type: string;
+  length: float;
+  authoring_tool: string;
+  artist: string;
+  date: string;
+  message: string;
+  samples: [string];
+  instruments: [string];
+}
+
 table HippoTrackerChannel {
-   row_data: [HippoRowData];
+  row_data: [HippoRowData];
 }
 
 // Tracker type
@@ -73,10 +86,10 @@ enum HippoTrackerType:byte { Regular, Emulated }
 
 // Data used for tracker display provided by current backend
 table HippoTrackerData {
-    type: HippoTrackerType = Regular;
-    pattern: int;
-    current_row: int;
-    channels: [HippoTrackerChannel];
+  type: HippoTrackerType = Regular;
+  pattern: int;
+  current_row: int;
+  channels: [HippoTrackerChannel];
 }
 
 // This is for the current position for a playing song. If it's tracker based current pattern
@@ -107,6 +120,8 @@ union MessageType {
   tracker_data: HippoTrackerData,
 
   current_position: HippoCurrentPosition,
+
+  song_metadata: HippoSongMetadata,
 }
 
 

@@ -3,4 +3,6 @@
 t2-output
 playlist.json
 .ccls-cache
+src/hippo_core/core/target
+
 

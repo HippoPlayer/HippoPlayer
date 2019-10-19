@@ -16,6 +16,10 @@ struct HippoStopSong;
 
 struct HippoRequestAddedUrls;
 
+struct HippoRemoveSelectedPlaylistEntries;
+
+struct HippoRemovePlaylistEntries;
+
 struct HippoRequestSelectSong;
 
 struct HippoRequestAddUrls;
@@ -29,6 +33,8 @@ struct HippoReplyAddedUrls;
 struct HippoRequestTrackerData;
 
 struct HippoRowData;
+
+struct HippoSongMetadata;
 
 struct HippoTrackerChannel;
 
@@ -82,11 +88,12 @@ enum MessageType {
   MessageType_request_tracker_data = 10,
   MessageType_tracker_data = 11,
   MessageType_current_position = 12,
+  MessageType_song_metadata = 13,
   MessageType_MIN = MessageType_NONE,
-  MessageType_MAX = MessageType_current_position
+  MessageType_MAX = MessageType_song_metadata
 };
 
-inline const MessageType (&EnumValuesMessageType())[13] {
+inline const MessageType (&EnumValuesMessageType())[14] {
   static const MessageType values[] = {
     MessageType_NONE,
     MessageType_next_song,
@@ -100,13 +107,14 @@ inline const MessageType (&EnumValuesMessageType())[13] {
     MessageType_reply_added_urls,
     MessageType_request_tracker_data,
     MessageType_tracker_data,
-    MessageType_current_position
+    MessageType_current_position,
+    MessageType_song_metadata
   };
   return values;
 }
 
 inline const char * const *EnumNamesMessageType() {
-  static const char * const names[14] = {
+  static const char * const names[15] = {
     "NONE",
     "next_song",
     "prev_song",
@@ -120,13 +128,14 @@ inline const char * const *EnumNamesMessageType() {
     "request_tracker_data",
     "tracker_data",
     "current_position",
+    "song_metadata",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameMessageType(MessageType e) {
-  if (e < MessageType_NONE || e > MessageType_current_position) return "";
+  if (e < MessageType_NONE || e > MessageType_song_metadata) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesMessageType()[index];
 }
@@ -271,6 +280,62 @@ struct HippoRequestAddedUrlsBuilder {
 inline flatbuffers::Offset<HippoRequestAddedUrls> CreateHippoRequestAddedUrls(
     flatbuffers::FlatBufferBuilder &_fbb) {
   HippoRequestAddedUrlsBuilder builder_(_fbb);
+  return builder_.Finish();
+}
+
+struct HippoRemoveSelectedPlaylistEntries FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           verifier.EndTable();
+  }
+};
+
+struct HippoRemoveSelectedPlaylistEntriesBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  explicit HippoRemoveSelectedPlaylistEntriesBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  HippoRemoveSelectedPlaylistEntriesBuilder &operator=(const HippoRemoveSelectedPlaylistEntriesBuilder &);
+  flatbuffers::Offset<HippoRemoveSelectedPlaylistEntries> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<HippoRemoveSelectedPlaylistEntries>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<HippoRemoveSelectedPlaylistEntries> CreateHippoRemoveSelectedPlaylistEntries(
+    flatbuffers::FlatBufferBuilder &_fbb) {
+  HippoRemoveSelectedPlaylistEntriesBuilder builder_(_fbb);
+  return builder_.Finish();
+}
+
+struct HippoRemovePlaylistEntries FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           verifier.EndTable();
+  }
+};
+
+struct HippoRemovePlaylistEntriesBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  explicit HippoRemovePlaylistEntriesBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  HippoRemovePlaylistEntriesBuilder &operator=(const HippoRemovePlaylistEntriesBuilder &);
+  flatbuffers::Offset<HippoRemovePlaylistEntries> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<HippoRemovePlaylistEntries>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<HippoRemovePlaylistEntries> CreateHippoRemovePlaylistEntries(
+    flatbuffers::FlatBufferBuilder &_fbb) {
+  HippoRemovePlaylistEntriesBuilder builder_(_fbb);
   return builder_.Finish();
 }
 
@@ -750,6 +815,182 @@ inline flatbuffers::Offset<HippoRowData> CreateHippoRowDataDirect(
       parameter__);
 }
 
+struct HippoSongMetadata FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_URL = 4,
+    VT_TITLE = 6,
+    VT_TYPE = 8,
+    VT_LENGTH = 10,
+    VT_AUTHORING_TOOL = 12,
+    VT_ARTIST = 14,
+    VT_DATE = 16,
+    VT_MESSAGE = 18,
+    VT_SAMPLES = 20,
+    VT_INSTRUMENTS = 22
+  };
+  const flatbuffers::String *url() const {
+    return GetPointer<const flatbuffers::String *>(VT_URL);
+  }
+  const flatbuffers::String *title() const {
+    return GetPointer<const flatbuffers::String *>(VT_TITLE);
+  }
+  const flatbuffers::String *type() const {
+    return GetPointer<const flatbuffers::String *>(VT_TYPE);
+  }
+  float length() const {
+    return GetField<float>(VT_LENGTH, 0.0f);
+  }
+  const flatbuffers::String *authoring_tool() const {
+    return GetPointer<const flatbuffers::String *>(VT_AUTHORING_TOOL);
+  }
+  const flatbuffers::String *artist() const {
+    return GetPointer<const flatbuffers::String *>(VT_ARTIST);
+  }
+  const flatbuffers::String *date() const {
+    return GetPointer<const flatbuffers::String *>(VT_DATE);
+  }
+  const flatbuffers::String *message() const {
+    return GetPointer<const flatbuffers::String *>(VT_MESSAGE);
+  }
+  const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *samples() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_SAMPLES);
+  }
+  const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *instruments() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_INSTRUMENTS);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_URL) &&
+           verifier.VerifyString(url()) &&
+           VerifyOffset(verifier, VT_TITLE) &&
+           verifier.VerifyString(title()) &&
+           VerifyOffset(verifier, VT_TYPE) &&
+           verifier.VerifyString(type()) &&
+           VerifyField<float>(verifier, VT_LENGTH) &&
+           VerifyOffset(verifier, VT_AUTHORING_TOOL) &&
+           verifier.VerifyString(authoring_tool()) &&
+           VerifyOffset(verifier, VT_ARTIST) &&
+           verifier.VerifyString(artist()) &&
+           VerifyOffset(verifier, VT_DATE) &&
+           verifier.VerifyString(date()) &&
+           VerifyOffset(verifier, VT_MESSAGE) &&
+           verifier.VerifyString(message()) &&
+           VerifyOffset(verifier, VT_SAMPLES) &&
+           verifier.VerifyVector(samples()) &&
+           verifier.VerifyVectorOfStrings(samples()) &&
+           VerifyOffset(verifier, VT_INSTRUMENTS) &&
+           verifier.VerifyVector(instruments()) &&
+           verifier.VerifyVectorOfStrings(instruments()) &&
+           verifier.EndTable();
+  }
+};
+
+struct HippoSongMetadataBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_url(flatbuffers::Offset<flatbuffers::String> url) {
+    fbb_.AddOffset(HippoSongMetadata::VT_URL, url);
+  }
+  void add_title(flatbuffers::Offset<flatbuffers::String> title) {
+    fbb_.AddOffset(HippoSongMetadata::VT_TITLE, title);
+  }
+  void add_type(flatbuffers::Offset<flatbuffers::String> type) {
+    fbb_.AddOffset(HippoSongMetadata::VT_TYPE, type);
+  }
+  void add_length(float length) {
+    fbb_.AddElement<float>(HippoSongMetadata::VT_LENGTH, length, 0.0f);
+  }
+  void add_authoring_tool(flatbuffers::Offset<flatbuffers::String> authoring_tool) {
+    fbb_.AddOffset(HippoSongMetadata::VT_AUTHORING_TOOL, authoring_tool);
+  }
+  void add_artist(flatbuffers::Offset<flatbuffers::String> artist) {
+    fbb_.AddOffset(HippoSongMetadata::VT_ARTIST, artist);
+  }
+  void add_date(flatbuffers::Offset<flatbuffers::String> date) {
+    fbb_.AddOffset(HippoSongMetadata::VT_DATE, date);
+  }
+  void add_message(flatbuffers::Offset<flatbuffers::String> message) {
+    fbb_.AddOffset(HippoSongMetadata::VT_MESSAGE, message);
+  }
+  void add_samples(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> samples) {
+    fbb_.AddOffset(HippoSongMetadata::VT_SAMPLES, samples);
+  }
+  void add_instruments(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> instruments) {
+    fbb_.AddOffset(HippoSongMetadata::VT_INSTRUMENTS, instruments);
+  }
+  explicit HippoSongMetadataBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  HippoSongMetadataBuilder &operator=(const HippoSongMetadataBuilder &);
+  flatbuffers::Offset<HippoSongMetadata> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<HippoSongMetadata>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<HippoSongMetadata> CreateHippoSongMetadata(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<flatbuffers::String> url = 0,
+    flatbuffers::Offset<flatbuffers::String> title = 0,
+    flatbuffers::Offset<flatbuffers::String> type = 0,
+    float length = 0.0f,
+    flatbuffers::Offset<flatbuffers::String> authoring_tool = 0,
+    flatbuffers::Offset<flatbuffers::String> artist = 0,
+    flatbuffers::Offset<flatbuffers::String> date = 0,
+    flatbuffers::Offset<flatbuffers::String> message = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> samples = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> instruments = 0) {
+  HippoSongMetadataBuilder builder_(_fbb);
+  builder_.add_instruments(instruments);
+  builder_.add_samples(samples);
+  builder_.add_message(message);
+  builder_.add_date(date);
+  builder_.add_artist(artist);
+  builder_.add_authoring_tool(authoring_tool);
+  builder_.add_length(length);
+  builder_.add_type(type);
+  builder_.add_title(title);
+  builder_.add_url(url);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<HippoSongMetadata> CreateHippoSongMetadataDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    const char *url = nullptr,
+    const char *title = nullptr,
+    const char *type = nullptr,
+    float length = 0.0f,
+    const char *authoring_tool = nullptr,
+    const char *artist = nullptr,
+    const char *date = nullptr,
+    const char *message = nullptr,
+    const std::vector<flatbuffers::Offset<flatbuffers::String>> *samples = nullptr,
+    const std::vector<flatbuffers::Offset<flatbuffers::String>> *instruments = nullptr) {
+  auto url__ = url ? _fbb.CreateString(url) : 0;
+  auto title__ = title ? _fbb.CreateString(title) : 0;
+  auto type__ = type ? _fbb.CreateString(type) : 0;
+  auto authoring_tool__ = authoring_tool ? _fbb.CreateString(authoring_tool) : 0;
+  auto artist__ = artist ? _fbb.CreateString(artist) : 0;
+  auto date__ = date ? _fbb.CreateString(date) : 0;
+  auto message__ = message ? _fbb.CreateString(message) : 0;
+  auto samples__ = samples ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*samples) : 0;
+  auto instruments__ = instruments ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*instruments) : 0;
+  return CreateHippoSongMetadata(
+      _fbb,
+      url__,
+      title__,
+      type__,
+      length,
+      authoring_tool__,
+      artist__,
+      date__,
+      message__,
+      samples__,
+      instruments__);
+}
+
 struct HippoTrackerChannel FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_ROW_DATA = 4
@@ -1016,6 +1257,9 @@ struct HippoMessage FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const HippoCurrentPosition *message_as_current_position() const {
     return message_type() == MessageType_current_position ? static_cast<const HippoCurrentPosition *>(message()) : nullptr;
   }
+  const HippoSongMetadata *message_as_song_metadata() const {
+    return message_type() == MessageType_song_metadata ? static_cast<const HippoSongMetadata *>(message()) : nullptr;
+  }
   const flatbuffers::String *user_data() const {
     return GetPointer<const flatbuffers::String *>(VT_USER_DATA);
   }
@@ -1130,6 +1374,10 @@ inline bool VerifyMessageType(flatbuffers::Verifier &verifier, const void *obj, 
     }
     case MessageType_current_position: {
       auto ptr = reinterpret_cast<const HippoCurrentPosition *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case MessageType_song_metadata: {
+      auto ptr = reinterpret_cast<const HippoSongMetadata *>(obj);
       return verifier.VerifyTable(ptr);
     }
     default: return false;

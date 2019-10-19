@@ -81,6 +81,8 @@ MainWindow::MainWindow(HippoCore* core) : QMainWindow(0), m_core(core) {
     main_widget->resize(800, 600);
 
     create_menus();
+
+    resize(2840, 1600);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
