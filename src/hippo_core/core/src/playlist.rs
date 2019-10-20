@@ -14,6 +14,7 @@ pub struct PlaylistEntry {
     path: String,
     title: String,
     duration: f32,
+    song_type: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
@@ -68,6 +69,7 @@ impl Playlist {
         });
 
         entry.duration = metadata.length();
+        metadata.song_type().map(|song_type| entry.song_type = song_type.to_owned());
     }
 
     ///
@@ -86,11 +88,20 @@ impl Playlist {
             for entry in entries {
                 let path_name = builder.create_string(&entry.path);
                 let title_name = builder.create_string(&entry.title);
+                let song_type = builder.create_string(&entry.song_type);
+
+                let song_desc = HippoSongDescription::create(&mut builder, &HippoSongDescriptionArgs {
+                    authoring_tool: None,
+                    artist: None,
+                    date: None,
+                    title: Some(title_name),
+                    song_type: Some(song_type),
+                    duration: entry.duration,
+                });
 
                 out_ent.push(HippoUrlEntry::create(&mut builder, &HippoUrlEntryArgs {
                     path: Some(path_name),
-                    title: Some(title_name),
-                    length: entry.duration
+                    description: Some(song_desc),
                 }));
             }
 
@@ -109,13 +120,23 @@ impl Playlist {
     ///
     pub fn current_song_message(&self) -> Option<Box<[u8]>> {
         if !self.entries.is_empty() {
+            let entry = &self.entries[self.current_song as usize];
+
             let mut builder = messages::FlatBufferBuilder::new_with_capacity(8192);
-            let title = builder.create_string(&self.entries[self.current_song as usize].title);
-            let path = builder.create_string(&self.entries[self.current_song as usize].path);
+            let title = builder.create_string(&entry.title);
+            let song_type = builder.create_string(&entry.song_type);
+
+            let song_desc = HippoSongDescription::create(&mut builder, &HippoSongDescriptionArgs {
+                authoring_tool: None,
+                artist: None,
+                date: None,
+                title: Some(title),
+                song_type: Some(song_type),
+                duration: entry.duration,
+            });
 
             let select_song = HippoSelectSong::create(&mut builder, &HippoSelectSongArgs {
-                title: Some(title),
-                path: Some(path),
+                description: Some(song_desc),
                 playlist_index: self.current_song as i32,
             });
 
@@ -148,6 +169,7 @@ impl Playlist {
                         self.entries.push(PlaylistEntry {
                             path: file.to_owned(),
                             title: base.to_string_lossy().to_string(),
+                            song_type: String::new(),
                             duration: -1.0, // negative is used to indicate no durion
                         });
                     }

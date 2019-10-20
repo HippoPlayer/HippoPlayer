@@ -30,15 +30,22 @@ table HippoRequestAddUrls {
   urls: [string];
 }
 
+table HippoSongDescription {
+  title: string;
+  duration: float;
+  song_type: string;
+  artist: string;
+  date: string;
+  authoring_tool: string;
+}
+
 table HippoUrlEntry {
   path: string;
-  title: string;
-  length: float;
+  description: HippoSongDescription;
 }
 
 table HippoSelectSong {
-  title: string;
-  path: string;
+  description: HippoSongDescription;
   playlist_index: int;
 }
 
@@ -63,7 +70,7 @@ table HippoRowData {
 table HippoSongMetadata {
   url: string;
   title: string;
-  type: string;
+  song_type: string;
   length: float;
   authoring_tool: string;
   artist: string;

@@ -113,15 +113,22 @@ void MainWindow::handle_incoming_messages(const unsigned char* data, int len) {
 
 			for (int i = 0, e = urls->Length(); i < e; ++i) {
 			    auto url = urls->Get(i);
-				//auto path = url->path();
-				auto title = url->title();
+
+                m_playlist_model->add_entry(url);
+
+                /*
+                auto desc = url->description();
+
+				auto title = desc->title();
+				auto duration = desc->duration();
+				auto song_type = desc->song_type();
 
 				printf("added urls\n");
 
 				m_playlist_model->add_entry(QString::fromUtf8(title->c_str(), title->size()),
 				    QStringLiteral("Unknown"), QStringLiteral(""));
+				*/
 
-				m_playlist_model->layoutChanged();
 
                 // Get the position
                 //int row = m_playlist_model->rowCount();
@@ -137,6 +144,8 @@ void MainWindow::handle_incoming_messages(const unsigned char* data, int len) {
                 m_playlist_model->setData(index, QByteArray(path->c_str(), path->size()), Qt::UserRole);
                 */
 			}
+
+            m_playlist_model->layoutChanged();
 
 			break;
 		}

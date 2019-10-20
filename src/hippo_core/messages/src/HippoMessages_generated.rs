@@ -770,6 +770,142 @@ impl<'a: 'b, 'b> HippoRequestAddUrlsBuilder<'a, 'b> {
   }
 }
 
+pub enum HippoSongDescriptionOffset {}
+#[derive(Copy, Clone, Debug, PartialEq)]
+
+pub struct HippoSongDescription<'a> {
+  pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for HippoSongDescription<'a> {
+    type Inner = HippoSongDescription<'a>;
+    #[inline]
+    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: flatbuffers::Table { buf: buf, loc: loc },
+        }
+    }
+}
+
+impl<'a> HippoSongDescription<'a> {
+    #[inline]
+    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        HippoSongDescription {
+            _tab: table,
+        }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+        args: &'args HippoSongDescriptionArgs<'args>) -> flatbuffers::WIPOffset<HippoSongDescription<'bldr>> {
+      let mut builder = HippoSongDescriptionBuilder::new(_fbb);
+      if let Some(x) = args.authoring_tool { builder.add_authoring_tool(x); }
+      if let Some(x) = args.date { builder.add_date(x); }
+      if let Some(x) = args.artist { builder.add_artist(x); }
+      if let Some(x) = args.song_type { builder.add_song_type(x); }
+      builder.add_duration(args.duration);
+      if let Some(x) = args.title { builder.add_title(x); }
+      builder.finish()
+    }
+
+    pub const VT_TITLE: flatbuffers::VOffsetT = 4;
+    pub const VT_DURATION: flatbuffers::VOffsetT = 6;
+    pub const VT_SONG_TYPE: flatbuffers::VOffsetT = 8;
+    pub const VT_ARTIST: flatbuffers::VOffsetT = 10;
+    pub const VT_DATE: flatbuffers::VOffsetT = 12;
+    pub const VT_AUTHORING_TOOL: flatbuffers::VOffsetT = 14;
+
+  #[inline]
+  pub fn title(&self) -> Option<&'a str> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(HippoSongDescription::VT_TITLE, None)
+  }
+  #[inline]
+  pub fn duration(&self) -> f32 {
+    self._tab.get::<f32>(HippoSongDescription::VT_DURATION, Some(0.0)).unwrap()
+  }
+  #[inline]
+  pub fn song_type(&self) -> Option<&'a str> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(HippoSongDescription::VT_SONG_TYPE, None)
+  }
+  #[inline]
+  pub fn artist(&self) -> Option<&'a str> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(HippoSongDescription::VT_ARTIST, None)
+  }
+  #[inline]
+  pub fn date(&self) -> Option<&'a str> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(HippoSongDescription::VT_DATE, None)
+  }
+  #[inline]
+  pub fn authoring_tool(&self) -> Option<&'a str> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(HippoSongDescription::VT_AUTHORING_TOOL, None)
+  }
+}
+
+pub struct HippoSongDescriptionArgs<'a> {
+    pub title: Option<flatbuffers::WIPOffset<&'a  str>>,
+    pub duration: f32,
+    pub song_type: Option<flatbuffers::WIPOffset<&'a  str>>,
+    pub artist: Option<flatbuffers::WIPOffset<&'a  str>>,
+    pub date: Option<flatbuffers::WIPOffset<&'a  str>>,
+    pub authoring_tool: Option<flatbuffers::WIPOffset<&'a  str>>,
+}
+impl<'a> Default for HippoSongDescriptionArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        HippoSongDescriptionArgs {
+            title: None,
+            duration: 0.0,
+            song_type: None,
+            artist: None,
+            date: None,
+            authoring_tool: None,
+        }
+    }
+}
+pub struct HippoSongDescriptionBuilder<'a: 'b, 'b> {
+  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b> HippoSongDescriptionBuilder<'a, 'b> {
+  #[inline]
+  pub fn add_title(&mut self, title: flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(HippoSongDescription::VT_TITLE, title);
+  }
+  #[inline]
+  pub fn add_duration(&mut self, duration: f32) {
+    self.fbb_.push_slot::<f32>(HippoSongDescription::VT_DURATION, duration, 0.0);
+  }
+  #[inline]
+  pub fn add_song_type(&mut self, song_type: flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(HippoSongDescription::VT_SONG_TYPE, song_type);
+  }
+  #[inline]
+  pub fn add_artist(&mut self, artist: flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(HippoSongDescription::VT_ARTIST, artist);
+  }
+  #[inline]
+  pub fn add_date(&mut self, date: flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(HippoSongDescription::VT_DATE, date);
+  }
+  #[inline]
+  pub fn add_authoring_tool(&mut self, authoring_tool: flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(HippoSongDescription::VT_AUTHORING_TOOL, authoring_tool);
+  }
+  #[inline]
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> HippoSongDescriptionBuilder<'a, 'b> {
+    let start = _fbb.start_table();
+    HippoSongDescriptionBuilder {
+      fbb_: _fbb,
+      start_: start,
+    }
+  }
+  #[inline]
+  pub fn finish(self) -> flatbuffers::WIPOffset<HippoSongDescription<'a>> {
+    let o = self.fbb_.end_table(self.start_);
+    flatbuffers::WIPOffset::new(o.value())
+  }
+}
+
 pub enum HippoUrlEntryOffset {}
 #[derive(Copy, Clone, Debug, PartialEq)]
 
@@ -799,42 +935,34 @@ impl<'a> HippoUrlEntry<'a> {
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
         args: &'args HippoUrlEntryArgs<'args>) -> flatbuffers::WIPOffset<HippoUrlEntry<'bldr>> {
       let mut builder = HippoUrlEntryBuilder::new(_fbb);
-      builder.add_length(args.length);
-      if let Some(x) = args.title { builder.add_title(x); }
+      if let Some(x) = args.description { builder.add_description(x); }
       if let Some(x) = args.path { builder.add_path(x); }
       builder.finish()
     }
 
     pub const VT_PATH: flatbuffers::VOffsetT = 4;
-    pub const VT_TITLE: flatbuffers::VOffsetT = 6;
-    pub const VT_LENGTH: flatbuffers::VOffsetT = 8;
+    pub const VT_DESCRIPTION: flatbuffers::VOffsetT = 6;
 
   #[inline]
   pub fn path(&self) -> Option<&'a str> {
     self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(HippoUrlEntry::VT_PATH, None)
   }
   #[inline]
-  pub fn title(&self) -> Option<&'a str> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(HippoUrlEntry::VT_TITLE, None)
-  }
-  #[inline]
-  pub fn length(&self) -> f32 {
-    self._tab.get::<f32>(HippoUrlEntry::VT_LENGTH, Some(0.0)).unwrap()
+  pub fn description(&self) -> Option<HippoSongDescription<'a>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<HippoSongDescription<'a>>>(HippoUrlEntry::VT_DESCRIPTION, None)
   }
 }
 
 pub struct HippoUrlEntryArgs<'a> {
     pub path: Option<flatbuffers::WIPOffset<&'a  str>>,
-    pub title: Option<flatbuffers::WIPOffset<&'a  str>>,
-    pub length: f32,
+    pub description: Option<flatbuffers::WIPOffset<HippoSongDescription<'a >>>,
 }
 impl<'a> Default for HippoUrlEntryArgs<'a> {
     #[inline]
     fn default() -> Self {
         HippoUrlEntryArgs {
             path: None,
-            title: None,
-            length: 0.0,
+            description: None,
         }
     }
 }
@@ -848,12 +976,8 @@ impl<'a: 'b, 'b> HippoUrlEntryBuilder<'a, 'b> {
     self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(HippoUrlEntry::VT_PATH, path);
   }
   #[inline]
-  pub fn add_title(&mut self, title: flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(HippoUrlEntry::VT_TITLE, title);
-  }
-  #[inline]
-  pub fn add_length(&mut self, length: f32) {
-    self.fbb_.push_slot::<f32>(HippoUrlEntry::VT_LENGTH, length, 0.0);
+  pub fn add_description(&mut self, description: flatbuffers::WIPOffset<HippoSongDescription<'b >>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<HippoSongDescription>>(HippoUrlEntry::VT_DESCRIPTION, description);
   }
   #[inline]
   pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> HippoUrlEntryBuilder<'a, 'b> {
@@ -900,22 +1024,16 @@ impl<'a> HippoSelectSong<'a> {
         args: &'args HippoSelectSongArgs<'args>) -> flatbuffers::WIPOffset<HippoSelectSong<'bldr>> {
       let mut builder = HippoSelectSongBuilder::new(_fbb);
       builder.add_playlist_index(args.playlist_index);
-      if let Some(x) = args.path { builder.add_path(x); }
-      if let Some(x) = args.title { builder.add_title(x); }
+      if let Some(x) = args.description { builder.add_description(x); }
       builder.finish()
     }
 
-    pub const VT_TITLE: flatbuffers::VOffsetT = 4;
-    pub const VT_PATH: flatbuffers::VOffsetT = 6;
-    pub const VT_PLAYLIST_INDEX: flatbuffers::VOffsetT = 8;
+    pub const VT_DESCRIPTION: flatbuffers::VOffsetT = 4;
+    pub const VT_PLAYLIST_INDEX: flatbuffers::VOffsetT = 6;
 
   #[inline]
-  pub fn title(&self) -> Option<&'a str> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(HippoSelectSong::VT_TITLE, None)
-  }
-  #[inline]
-  pub fn path(&self) -> Option<&'a str> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(HippoSelectSong::VT_PATH, None)
+  pub fn description(&self) -> Option<HippoSongDescription<'a>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<HippoSongDescription<'a>>>(HippoSelectSong::VT_DESCRIPTION, None)
   }
   #[inline]
   pub fn playlist_index(&self) -> i32 {
@@ -924,16 +1042,14 @@ impl<'a> HippoSelectSong<'a> {
 }
 
 pub struct HippoSelectSongArgs<'a> {
-    pub title: Option<flatbuffers::WIPOffset<&'a  str>>,
-    pub path: Option<flatbuffers::WIPOffset<&'a  str>>,
+    pub description: Option<flatbuffers::WIPOffset<HippoSongDescription<'a >>>,
     pub playlist_index: i32,
 }
 impl<'a> Default for HippoSelectSongArgs<'a> {
     #[inline]
     fn default() -> Self {
         HippoSelectSongArgs {
-            title: None,
-            path: None,
+            description: None,
             playlist_index: 0,
         }
     }
@@ -944,12 +1060,8 @@ pub struct HippoSelectSongBuilder<'a: 'b, 'b> {
 }
 impl<'a: 'b, 'b> HippoSelectSongBuilder<'a, 'b> {
   #[inline]
-  pub fn add_title(&mut self, title: flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(HippoSelectSong::VT_TITLE, title);
-  }
-  #[inline]
-  pub fn add_path(&mut self, path: flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(HippoSelectSong::VT_PATH, path);
+  pub fn add_description(&mut self, description: flatbuffers::WIPOffset<HippoSongDescription<'b >>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<HippoSongDescription>>(HippoSelectSong::VT_DESCRIPTION, description);
   }
   #[inline]
   pub fn add_playlist_index(&mut self, playlist_index: i32) {
@@ -1294,7 +1406,7 @@ impl<'a> HippoSongMetadata<'a> {
       if let Some(x) = args.artist { builder.add_artist(x); }
       if let Some(x) = args.authoring_tool { builder.add_authoring_tool(x); }
       builder.add_length(args.length);
-      if let Some(x) = args.type_ { builder.add_type_(x); }
+      if let Some(x) = args.song_type { builder.add_song_type(x); }
       if let Some(x) = args.title { builder.add_title(x); }
       if let Some(x) = args.url { builder.add_url(x); }
       builder.finish()
@@ -1302,7 +1414,7 @@ impl<'a> HippoSongMetadata<'a> {
 
     pub const VT_URL: flatbuffers::VOffsetT = 4;
     pub const VT_TITLE: flatbuffers::VOffsetT = 6;
-    pub const VT_TYPE_: flatbuffers::VOffsetT = 8;
+    pub const VT_SONG_TYPE: flatbuffers::VOffsetT = 8;
     pub const VT_LENGTH: flatbuffers::VOffsetT = 10;
     pub const VT_AUTHORING_TOOL: flatbuffers::VOffsetT = 12;
     pub const VT_ARTIST: flatbuffers::VOffsetT = 14;
@@ -1320,8 +1432,8 @@ impl<'a> HippoSongMetadata<'a> {
     self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(HippoSongMetadata::VT_TITLE, None)
   }
   #[inline]
-  pub fn type_(&self) -> Option<&'a str> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(HippoSongMetadata::VT_TYPE_, None)
+  pub fn song_type(&self) -> Option<&'a str> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(HippoSongMetadata::VT_SONG_TYPE, None)
   }
   #[inline]
   pub fn length(&self) -> f32 {
@@ -1356,7 +1468,7 @@ impl<'a> HippoSongMetadata<'a> {
 pub struct HippoSongMetadataArgs<'a> {
     pub url: Option<flatbuffers::WIPOffset<&'a  str>>,
     pub title: Option<flatbuffers::WIPOffset<&'a  str>>,
-    pub type_: Option<flatbuffers::WIPOffset<&'a  str>>,
+    pub song_type: Option<flatbuffers::WIPOffset<&'a  str>>,
     pub length: f32,
     pub authoring_tool: Option<flatbuffers::WIPOffset<&'a  str>>,
     pub artist: Option<flatbuffers::WIPOffset<&'a  str>>,
@@ -1371,7 +1483,7 @@ impl<'a> Default for HippoSongMetadataArgs<'a> {
         HippoSongMetadataArgs {
             url: None,
             title: None,
-            type_: None,
+            song_type: None,
             length: 0.0,
             authoring_tool: None,
             artist: None,
@@ -1396,8 +1508,8 @@ impl<'a: 'b, 'b> HippoSongMetadataBuilder<'a, 'b> {
     self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(HippoSongMetadata::VT_TITLE, title);
   }
   #[inline]
-  pub fn add_type_(&mut self, type_: flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(HippoSongMetadata::VT_TYPE_, type_);
+  pub fn add_song_type(&mut self, song_type: flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(HippoSongMetadata::VT_SONG_TYPE, song_type);
   }
   #[inline]
   pub fn add_length(&mut self, length: f32) {

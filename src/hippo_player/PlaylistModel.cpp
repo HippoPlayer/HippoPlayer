@@ -1,4 +1,5 @@
 #include "PlaylistModel.h"
+#include <QtCore/QDateTime>
 #include <QtCore/QFile>
 #include <QtCore/QDebug>
 #include <QtCore/QVariant>
@@ -276,12 +277,32 @@ QVariant PlaylistModel::headerData(int section, Qt::Orientation orientation, int
 
 void PlaylistModel::update_index(const HippoSelectSong* select_song_msg) {
     int index = select_song_msg->playlist_index();
+    auto desc = select_song_msg->description();
 
-    printf("updating index %d\n - %s", index, select_song_msg->title()->c_str());
+    m_entries[index].title = QString::fromUtf8(desc->title()->c_str());
+    m_entries[index].duration = QDateTime::fromTime_t((int)desc->duration()).toUTC().toString(QStringLiteral("hh:mm:ss"));
+    m_entries[index].description = QString::fromUtf8(desc->song_type()->c_str());
 
-    m_entries[index].title = QString::fromUtf8(select_song_msg->title()->c_str());
-    //m_entries[index].duration = QString::number(select_song_msg->duration());
+    layoutChanged();
 }
+
+void PlaylistModel::add_entry(const HippoUrlEntry* select_song_msg) {
+    auto desc = select_song_msg->description();
+    QString duration;
+
+    auto title = QString::fromUtf8(desc->title()->c_str());
+    auto description = QString::fromUtf8(desc->song_type()->c_str());
+
+    if (desc->duration() > 0.0) {
+        duration = QDateTime::fromTime_t((int)desc->duration()).toUTC().toString(QStringLiteral("hh:mm:ss"));
+    } else {
+        duration = QStringLiteral("Unknown");
+    }
+
+    PlaylistEntry entry = { title, duration, description };
+    m_entries.push_back(entry);
+}
+
 
 bool PlaylistModel::removeRows(int row, int count, const QModelIndex&) {
     printf("remove %d (count %d)\n", row, count);

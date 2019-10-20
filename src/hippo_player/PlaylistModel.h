@@ -6,6 +6,7 @@
 
 struct HippoCore;
 struct HippoSelectSong;
+struct HippoUrlEntry;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -47,12 +48,15 @@ public:
     int columnCount(const QModelIndex &parent = QModelIndex()) const;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
     bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex());
-    void update_index(const HippoSelectSong* select_song_msg);
+    void update_index(const HippoSelectSong* select_song);
+    void add_entry(const HippoUrlEntry* msg);
 
+    /*
     inline void add_entry(QString title, QString duration, QString description) {
         PlaylistEntry entry = { title, duration, description };
         m_entries.push_back(entry);
     }
+    */
 
 private:
 

@@ -58,7 +58,7 @@ void PlayerView::event(const unsigned char* data, int len) {
     if (message->message_type() != MessageType_select_song)
         return;
 
-    auto title = message->message_as_select_song()->title();
+    auto title = message->message_as_select_song()->description()->title();
 
     m_song_title->setText(QString::fromUtf8(title->c_str(), title->size()));
 }

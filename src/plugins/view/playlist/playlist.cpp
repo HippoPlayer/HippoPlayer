@@ -142,12 +142,6 @@ QWidget* PlaylistView::create(struct HippoServiceAPI* service_api, QAbstractItem
 
 void PlaylistView::select_song(const HippoSelectSong* msg) {
     int playlist_index = msg->playlist_index();
-
-    if (!msg->path()) {
-        printf("Playlist: no correct path has been set for select_song message, unable to update playlist selection\n");
-        return;
-    }
-
     const QModelIndex item = m_list->model()->index(playlist_index, 0);
     m_list->setCurrentIndex(item);
 }
