@@ -53,6 +53,7 @@ private:
 
     void create_plugin_instance(int index);
     Q_SLOT void add_files();
+    Q_SLOT void add_directory();
     //Q_SLOT void remove_playlist_entry();
     Q_SLOT void update_messages();
 };

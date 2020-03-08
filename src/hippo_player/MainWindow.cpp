@@ -4,6 +4,7 @@
 #include <QtCore/QTimer>
 #include <QtCore/QPluginLoader>
 #include <QtCore/QStringListModel>
+#include <QtCore/QDirIterator>
 #include <QtWidgets/QBoxLayout>
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QLabel>
@@ -192,13 +193,49 @@ void MainWindow::create_menus() {
     add_files->setStatusTip(tr("Add file(s)/link(s) to the playlist"));
     file_menu->addAction(add_files);
 
+    QAction* add_dir = new QAction(tr("&Add Directory.."), this);
+    add_dir->setShortcut(QKeySequence(QStringLiteral("Ctrl+D")));
+    add_dir->setStatusTip(tr("Add directory of files to the playlist"));
+    file_menu->addAction(add_dir);
+
     QAction* remove_playlist_entry = new QAction(tr("&Remove selected"), this);
     remove_playlist_entry->setShortcut(QKeySequence::Delete);
     add_files->setStatusTip(tr("Remove selected items in the playlist"));
     file_menu->addAction(remove_playlist_entry);
 
     connect(add_files, &QAction::triggered, this, &MainWindow::add_files);
-    //connect(remove_playlist_entry, &QAction::triggered, this, &MainWindow::remove_playlist_entry);
+    connect(add_dir, &QAction::triggered, this, &MainWindow::add_directory);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void MainWindow::add_directory() {
+	// Using native dialog will crash/hang on Windows due to COMInit issue
+    QString dir_name = QFileDialog::getExistingDirectory(this, tr("Select Directory"), tr(""),
+                  QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks | QFileDialog::DontUseNativeDialog);
+
+    if (dir_name.isEmpty()) {
+        return;
+    }
+
+    // TODO: Spaw thread for this
+    std::vector<flatbuffers::Offset<flatbuffers::String>> urls;
+    flatbuffers::FlatBufferBuilder builder(4096);
+
+    urls.reserve(1024);
+
+    QDirIterator it(dir_name, QStringList() << tr("*.*"), QDir::Files, QDirIterator::Subdirectories);
+
+    while (it.hasNext()) {
+        QByteArray filename_data = it.next().toUtf8();
+        const char* filename_utf8 = filename_data.constData();
+
+        urls.push_back(builder.CreateString(filename_utf8));
+    }
+
+    builder.Finish(CreateHippoMessageDirect(builder, MessageType_request_add_urls,
+        CreateHippoRequestAddUrls(builder, builder.CreateVector(urls)).Union()));
+    HippoMessageAPI_send(m_general_messages, builder.GetBufferPointer(), builder.GetSize());
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
