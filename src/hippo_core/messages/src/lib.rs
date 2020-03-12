@@ -1,3 +1,7 @@
+#![allow(dead_code)]
+#![allow(non_snake_case)]
+#![allow(unused_imports)]
+
 extern crate flatbuffers;
 
 pub mod HippoMessages_generated;

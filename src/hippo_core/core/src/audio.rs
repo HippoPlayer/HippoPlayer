@@ -12,7 +12,7 @@ use ringbuf::{RingBuffer, Producer, Consumer};
 pub struct HippoPlayback {
     plugin_user_data: u64,
     plugin: DecoderPlugin,
-    read_stream: Consumer<Box<[u8]>>,
+    _read_stream: Consumer<Box<[u8]>>,
     out_data: Vec<f32>,
     frame_size: usize,
     current_offset: usize, // sender: Sender<DecodeEvent>,
@@ -53,7 +53,7 @@ impl HippoPlayback {
             plugin_user_data: user_data,
             plugin: plugin.clone(),
             out_data: vec![0.0; frame_size],
-            read_stream: cons,
+            _read_stream: cons,
             frame_size,
             current_offset: frame_size + 1 },
             Instance {
