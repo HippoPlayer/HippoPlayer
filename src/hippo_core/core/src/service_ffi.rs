@@ -226,8 +226,8 @@ impl ServiceApi {
         song_db
     }
 
-    pub fn get_message_api_from_c_api(api: *const ffi::HippoMessageAPI) -> &'static MessageApi {
-        let message_api: &MessageApi = unsafe { &*((*api).priv_data as *const MessageApi) };
+    pub unsafe fn get_message_api_from_c_api(api: *const ffi::HippoMessageAPI) -> &'static MessageApi {
+        let message_api: &MessageApi = &*((*api).priv_data as *const MessageApi);
         message_api
     }
 
