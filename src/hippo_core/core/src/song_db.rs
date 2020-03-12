@@ -12,7 +12,11 @@ impl SongDb {
     }
 
     pub fn set_data(&mut self, resource: &str, entry: Box<[u8]>) {
-        println!("song_db: insterting data {} with size {}", resource, entry.len());
+        println!(
+            "song_db: insterting data {} with size {}",
+            resource,
+            entry.len()
+        );
         self.songs.insert(resource.to_owned(), entry);
     }
 

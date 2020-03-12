@@ -157,8 +157,8 @@ extern "C" fn metadata_set_data(
     priv_data: *mut ffi::HippoMetadataAPIPrivData,
     resource: *const i8,
     data: *const u8,
-    len: i32) {
-
+    len: i32,
+) {
     let song_db: &mut SongDb = unsafe { &mut *(priv_data as *mut SongDb) };
     let data = unsafe { slice::from_raw_parts(data, len as usize) };
 
@@ -169,8 +169,8 @@ extern "C" fn metadata_set_data(
 
 extern "C" fn metadata_get_data(
     priv_data: *mut ffi::HippoMetadataAPIPrivData,
-    resource: *const i8) -> *const u8 {
-
+    resource: *const i8,
+) -> *const u8 {
     let song_db: &SongDb = unsafe { &*(priv_data as *const SongDb) };
 
     // TODO: Use CFixedString
@@ -181,7 +181,6 @@ extern "C" fn metadata_get_data(
         ptr::null()
     }
 }
-
 
 extern "C" fn message_api_send(priv_data: *mut ffi::HippoMessageAPI, data: *const u8, len: i32) {
     let message_api: &mut MessageApi = unsafe { &mut *(priv_data as *mut MessageApi) };
@@ -206,7 +205,6 @@ pub fn new_c_message_api() -> *const ffi::HippoMessageAPI {
     Box::into_raw(c_message_api) as *const ffi::HippoMessageAPI
 }
 
-
 impl ServiceApi {
     fn get_c_io_api(&self) -> *const ffi::HippoIoAPI {
         self.c_io_api
@@ -226,12 +224,16 @@ impl ServiceApi {
         song_db
     }
 
-    pub unsafe fn get_message_api_from_c_api(api: *const ffi::HippoMessageAPI) -> &'static MessageApi {
+    pub unsafe fn get_message_api_from_c_api(
+        api: *const ffi::HippoMessageAPI,
+    ) -> &'static MessageApi {
         let message_api: &MessageApi = &*((*api).priv_data as *const MessageApi);
         message_api
     }
 
-    pub fn get_message_api_from_c_api_mut(api: *const ffi::HippoMessageAPI) -> &'static mut MessageApi {
+    pub fn get_message_api_from_c_api_mut(
+        api: *const ffi::HippoMessageAPI,
+    ) -> &'static mut MessageApi {
         let message_api: &mut MessageApi = unsafe { &mut *((*api).priv_data as *mut MessageApi) };
         message_api
     }
@@ -283,7 +285,7 @@ impl ServiceApi {
         ServiceApi {
             c_io_api,
             c_metadata_api,
-            c_message_api : new_c_message_api(),
+            c_message_api: new_c_message_api(),
         }
     }
 }

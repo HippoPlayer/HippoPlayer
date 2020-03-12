@@ -29,15 +29,17 @@ mod service;
 pub mod service_ffi;
 
 use audio::{HippoAudio, MusicInfo};
+use messages::*;
 use playlist::Playlist;
 use plugin_handler::Plugins;
 use service_ffi::{PluginService, ServiceApi};
-use messages::*;
 
 use std::io::Read;
 
-type MsgGetCallback = extern "C" fn(user_data: *const c_void, index: u32) -> *const ffi::HippoMessageAPI;
-type MsgSendCallback = extern "C" fn(user_data: *const c_void, data: *const u8, len: i32, index: i32);
+type MsgGetCallback =
+    extern "C" fn(user_data: *const c_void, index: u32) -> *const ffi::HippoMessageAPI;
+type MsgSendCallback =
+    extern "C" fn(user_data: *const c_void, data: *const u8, len: i32, index: i32);
 
 #[derive(Default, Debug)]
 pub struct SongDb {
@@ -73,7 +75,12 @@ impl HippoCore {
             }
 
             if plugin.probe_can_play(&buffer, buffer_read_size, filename, metadata.len()) {
-                if self.plugin_service.get_song_db().get_data(filename).is_none() {
+                if self
+                    .plugin_service
+                    .get_song_db()
+                    .get_data(filename)
+                    .is_none()
+                {
                     plugin.get_metadata(&filename, &self.plugin_service);
                 }
 
@@ -115,21 +122,41 @@ impl HippoCore {
     ///
     /// Post messages to the frontend and make sure to not send to self
     ///
-    fn send_msgs(user_data: *const c_void, send_messages: MsgSendCallback, data: &[u8], count: usize, current_index: usize) {
+    fn send_msgs(
+        user_data: *const c_void,
+        send_messages: MsgSendCallback,
+        data: &[u8],
+        count: usize,
+        current_index: usize,
+    ) {
         for msg_index in 0..count {
             if current_index != msg_index {
-                send_messages(user_data, data.as_ptr(), data.len() as i32, msg_index as i32);
+                send_messages(
+                    user_data,
+                    data.as_ptr(),
+                    data.len() as i32,
+                    msg_index as i32,
+                );
             }
         }
     }
 
-    fn update_messages(&mut self, user_data: *const c_void, count: u32, get_messages: MsgGetCallback, send_messages: MsgSendCallback) {
+    fn update_messages(
+        &mut self,
+        user_data: *const c_void,
+        count: u32,
+        get_messages: MsgGetCallback,
+        send_messages: MsgSendCallback,
+    ) {
         let count = count as usize;
 
         // Send the UI messages to playlist, each-other and to the backends
 
         for msg_index in 0..count {
-            let msgs = ServiceApi::get_message_api_from_c_api_mut(get_messages(user_data, msg_index as u32));
+            let msgs = ServiceApi::get_message_api_from_c_api_mut(get_messages(
+                user_data,
+                msg_index as u32,
+            ));
             let msg_count = msgs.read_stream.len();
 
             for _ in 0..msg_count {
@@ -148,7 +175,10 @@ impl HippoCore {
                 // instance so the backend can reply to them at some point
 
                 for playback in &mut self.audio.playbacks {
-                    playback.write_stream.push(message_data.to_vec().into_boxed_slice()).unwrap();
+                    playback
+                        .write_stream
+                        .push(message_data.to_vec().into_boxed_slice())
+                        .unwrap();
                 }
             }
         }
@@ -180,7 +210,13 @@ impl HippoCore {
 
         for _ in 0..msg_count {
             let message_data = backend_messages.read_stream.pop().unwrap();
-            Self::send_msgs(user_data, send_messages, &message_data, count, std::usize::MAX);
+            Self::send_msgs(
+                user_data,
+                send_messages,
+                &message_data,
+                count,
+                std::usize::MAX,
+            );
         }
     }
 }
@@ -226,9 +262,11 @@ pub extern "C" fn hippo_core_drop(core: *mut HippoCore) {
     let mut core = unsafe { Box::from_raw(core) };
 
     core.audio.stop();
-    core.playlist.save("default_playlist.hpl").unwrap_or_else(|err| {
-        println!("Unable to save default playlist {}", err);
-    });
+    core.playlist
+        .save("default_playlist.hpl")
+        .unwrap_or_else(|err| {
+            println!("Unable to save default playlist {}", err);
+        });
 
     // core will be dropped at this point
 }
@@ -259,8 +297,8 @@ pub unsafe extern "C" fn hippo_update_messages(
     user_data: *const c_void,
     count: u32,
     get_messages: MsgGetCallback,
-    send_messages: MsgSendCallback) {
-
+    send_messages: MsgSendCallback,
+) {
     let core = &mut *core;
     core.update_messages(user_data, count, get_messages, send_messages);
 }
@@ -270,4 +308,3 @@ pub unsafe extern "C" fn hippo_playlist_remove_entry(core: *mut HippoCore, entry
     let core = &mut *core;
     core.playlist.remove_entry(entry);
 }
-

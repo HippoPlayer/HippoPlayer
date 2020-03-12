@@ -7,7 +7,7 @@ use std::sync::Arc;
 use walkdir::{DirEntry, WalkDir};
 
 //use hippo_api::ffi::{CHippoPlaybackPlugin};
-use crate::service_ffi::{PluginService};
+use crate::service_ffi::PluginService;
 
 #[derive(Debug, Clone)]
 pub struct HippoPlaybackPluginFFI {
@@ -24,9 +24,7 @@ pub struct HippoPlaybackPluginFFI {
     pub supported_extensions: unsafe extern "C" fn() -> *const c_char,
     pub create: unsafe extern "C" fn(services: *const ffi::HippoServiceAPI) -> *mut c_void,
     pub destroy: unsafe extern "C" fn(user_data: *mut c_void) -> i32,
-    pub event: Option<
-        unsafe extern "C" fn(user_data: *mut c_void, data: *const u8, len: i32),
-    >,
+    pub event: Option<unsafe extern "C" fn(user_data: *mut c_void, data: *const u8, len: i32)>,
 
     pub open: unsafe extern "C" fn(user_data: *mut c_void, buffer: *const c_char) -> i32,
     pub close: unsafe extern "C" fn(user_data: *mut c_void) -> i32,

@@ -1,12 +1,12 @@
 #![allow(clippy::box_vec)]
 
+use ringbuf;
+use ringbuf::RingBuffer;
 use std::collections::HashMap;
 use std::fs;
 use std::fs::File;
 use std::io;
 use std::io::Read;
-use ringbuf;
-use ringbuf::{RingBuffer};
 
 pub struct IoApi {
     pub saved_allocs: HashMap<*const u8, Box<[u8]>>,

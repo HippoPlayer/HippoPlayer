@@ -1,10 +1,9 @@
-
+use messages::*;
 use serde_derive::{Deserialize, Serialize};
 use serde_json;
 use std::fs::File;
 use std::io;
 use std::io::{BufReader, BufWriter};
-use messages::*;
 use std::path::Path;
 
 ///
@@ -70,7 +69,9 @@ impl Playlist {
         });
 
         entry.duration = metadata.length();
-        metadata.song_type().map(|song_type| entry.song_type = song_type.to_owned());
+        metadata
+            .song_type()
+            .map(|song_type| entry.song_type = song_type.to_owned());
     }
 
     ///
@@ -91,28 +92,41 @@ impl Playlist {
                 let title_name = builder.create_string(&entry.title);
                 let song_type = builder.create_string(&entry.song_type);
 
-                let song_desc = HippoSongDescription::create(&mut builder, &HippoSongDescriptionArgs {
-                    authoring_tool: None,
-                    artist: None,
-                    date: None,
-                    title: Some(title_name),
-                    song_type: Some(song_type),
-                    duration: entry.duration,
-                });
+                let song_desc = HippoSongDescription::create(
+                    &mut builder,
+                    &HippoSongDescriptionArgs {
+                        authoring_tool: None,
+                        artist: None,
+                        date: None,
+                        title: Some(title_name),
+                        song_type: Some(song_type),
+                        duration: entry.duration,
+                    },
+                );
 
-                out_ent.push(HippoUrlEntry::create(&mut builder, &HippoUrlEntryArgs {
-                    path: Some(path_name),
-                    description: Some(song_desc),
-                }));
+                out_ent.push(HippoUrlEntry::create(
+                    &mut builder,
+                    &HippoUrlEntryArgs {
+                        path: Some(path_name),
+                        description: Some(song_desc),
+                    },
+                ));
             }
 
             let urls_vec = builder.create_vector(&out_ent);
 
-            let added_urls = HippoReplyAddedUrls::create(&mut builder, &HippoReplyAddedUrlsArgs {
-                urls: Some(urls_vec),
-            });
+            let added_urls = HippoReplyAddedUrls::create(
+                &mut builder,
+                &HippoReplyAddedUrlsArgs {
+                    urls: Some(urls_vec),
+                },
+            );
 
-            Some(HippoMessage::create_def(builder, MessageType::reply_added_urls, added_urls.as_union_value()))
+            Some(HippoMessage::create_def(
+                builder,
+                MessageType::reply_added_urls,
+                added_urls.as_union_value(),
+            ))
         }
     }
 
@@ -127,21 +141,31 @@ impl Playlist {
             let title = builder.create_string(&entry.title);
             let song_type = builder.create_string(&entry.song_type);
 
-            let song_desc = HippoSongDescription::create(&mut builder, &HippoSongDescriptionArgs {
-                authoring_tool: None,
-                artist: None,
-                date: None,
-                title: Some(title),
-                song_type: Some(song_type),
-                duration: entry.duration,
-            });
+            let song_desc = HippoSongDescription::create(
+                &mut builder,
+                &HippoSongDescriptionArgs {
+                    authoring_tool: None,
+                    artist: None,
+                    date: None,
+                    title: Some(title),
+                    song_type: Some(song_type),
+                    duration: entry.duration,
+                },
+            );
 
-            let select_song = HippoSelectSong::create(&mut builder, &HippoSelectSongArgs {
-                description: Some(song_desc),
-                playlist_index: self.current_song as i32,
-            });
+            let select_song = HippoSelectSong::create(
+                &mut builder,
+                &HippoSelectSongArgs {
+                    description: Some(song_desc),
+                    playlist_index: self.current_song as i32,
+                },
+            );
 
-            Some(HippoMessage::create_def(builder, MessageType::select_song, select_song.as_union_value()))
+            Some(HippoMessage::create_def(
+                builder,
+                MessageType::select_song,
+                select_song.as_union_value(),
+            ))
         } else {
             None
         }
@@ -177,7 +201,7 @@ impl Playlist {
                 }
 
                 self.create_update_message(index_start)
-            },
+            }
 
             MessageType::request_select_song => self.select_song(msg),
             MessageType::next_song => self.advance_song(1),
@@ -217,7 +241,7 @@ impl Playlist {
     ///
     /// Select a new song to play
     ///
-    fn select_song(&mut self, msg: &HippoMessage) -> Option<Box<[u8]>>  {
+    fn select_song(&mut self, msg: &HippoMessage) -> Option<Box<[u8]>> {
         let mut new_song_id = None;
         let select_song = msg.message_as_request_select_song().unwrap();
         let path_name = select_song.path().unwrap();
@@ -226,12 +250,12 @@ impl Playlist {
         if playlist_index < self.entries.len() {
             //if self.entries[playlist_index].path == path_name {
             new_song_id = Some(playlist_index);
-            /*
-            } else {
-                println!("Warning: Requested song {} at index {} but song is {} that doesn't match",
-                    path_name, playlist_index, self.entries[playlist_index].path);
-            }
-            */
+        /*
+        } else {
+            println!("Warning: Requested song {} at index {} but song is {} that doesn't match",
+                path_name, playlist_index, self.entries[playlist_index].path);
+        }
+        */
         } else {
             println!("Warning: Tried to select song at {} - {} but not enough entries in the playlist {}",
                 playlist_index, path_name, self.entries.len());

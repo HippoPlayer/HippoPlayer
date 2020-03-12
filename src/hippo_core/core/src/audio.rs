@@ -7,7 +7,7 @@ use std::os::raw::c_void;
 use std::time::Duration;
 
 use crate::service_ffi::PluginService;
-use ringbuf::{RingBuffer, Producer, Consumer};
+use ringbuf::{Consumer, Producer, RingBuffer};
 
 pub struct HippoPlayback {
     plugin_user_data: u64,
@@ -49,19 +49,21 @@ impl HippoPlayback {
         let rb = RingBuffer::<Box<[u8]>>::new(256);
         let (prod, cons) = rb.split();
 
-        Some((HippoPlayback {
-            plugin_user_data: user_data,
-            plugin: plugin.clone(),
-            out_data: vec![0.0; frame_size],
-            _read_stream: cons,
-            frame_size,
-            current_offset: frame_size + 1 },
+        Some((
+            HippoPlayback {
+                plugin_user_data: user_data,
+                plugin: plugin.clone(),
+                out_data: vec![0.0; frame_size],
+                _read_stream: cons,
+                frame_size,
+                current_offset: frame_size + 1,
+            },
             Instance {
                 write_stream: prod,
                 plugin_user_data: user_data,
                 plugin: plugin.clone(),
-            })
-        )
+            },
+        ))
     }
 }
 

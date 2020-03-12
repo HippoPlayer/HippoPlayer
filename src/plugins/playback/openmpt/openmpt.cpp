@@ -212,7 +212,7 @@ static int openmpt_read_data(void* user_data, void* dest, uint32_t max_samples) 
     HippoMessageAPI_send(replayer_data->message_api, builder.GetBufferPointer(), builder.GetSize());
 
     // TODO: Only send pattern data when we need requsted
-    send_pattern_data(replayer_data);
+    //send_pattern_data(replayer_data);
 
 	// count is number of frames per channel and div by 2 as we have 2 channels
 	const int count = 480;
