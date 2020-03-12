@@ -8,9 +8,9 @@ edition = "2018"
 crate-type = ["dylib"]
 
 [dependencies]
-ringbuf = "0.1.6"
+ringbuf = "0.2"
 messages = { path = "../messages" }
-rodio = "0.9.0"
+rodio = "0.10"
 dynamic_reload = "0.4.0"
 walkdir = "2"
 serde = "1.0"

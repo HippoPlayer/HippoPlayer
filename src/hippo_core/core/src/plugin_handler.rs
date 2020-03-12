@@ -160,7 +160,7 @@ impl Plugins {
             self.decoder_plugins.push(DecoderPlugin {
                 plugin: plugin.clone(),
                 plugin_path: name.to_owned(),
-                plugin_funcs: plugin_funcs,
+                plugin_funcs,
             });
         }
     }
@@ -196,7 +196,6 @@ impl Plugins {
             Ok(lib) => self.add_plugin_lib(name, &lib),
             Err(e) => {
                 println!("Unable to load dynamic lib, err {:?}", e);
-                return;
             }
         }
     }

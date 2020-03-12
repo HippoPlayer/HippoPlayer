@@ -54,7 +54,7 @@ impl HippoPlayback {
             plugin: plugin.clone(),
             out_data: vec![0.0; frame_size],
             read_stream: cons,
-            frame_size: frame_size,
+            frame_size,
             current_offset: frame_size + 1 },
             Instance {
                 write_stream: prod,
@@ -175,7 +175,7 @@ impl HippoAudio {
             let length = -10;
             let info = MusicInfo {
                 //title: CStr::from_ptr(c_title).to_string_lossy().into_owned(),
-                title: title,
+                title,
                 duration: length,
             };
 
