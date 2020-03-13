@@ -1,10 +1,13 @@
 #include <HippoPlugin.h>
+#include <HippoMessages.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
 #include <math.h>
+extern "C" {
 #include "replayer/hvl_replay.h"
+}
 
 #define FREQ 48000
 #define FRAME_SIZE ((FREQ * 2) / 50)
@@ -17,15 +20,6 @@ struct HivelyReplayerData {
 	struct hvl_tune* tune;
 	void* song_data;
 };
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/*
-static const char* hively_track_info(void* userData) {
-	struct HivelyReplayerData* user_data = (struct HivelyReplayerData*)userData;
-	return user_data->tune->ht_Name;
-}
-*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -87,19 +81,18 @@ static int hively_close(void* userData) {
 // TODO: These checks needs to be made much better (sanity check some more sizes in the pattern etc)
 
 enum HippoProbeResult hively_probe_can_play(const uint8_t* data, uint32_t data_size, const char* filename, uint64_t total_size) {
+    printf("hvl probe %c %c %c\n", data[0], data[1], data[2]);
 	if ((data[0] == 'T') &&
 		(data[1] == 'H') &&
 		(data[2] == 'X') &&
 		(data[3] < 3)) {
-
 		return HippoProbeResult_Supported;
 	}
 
 	if ((data[0] == 'H') &&
 		(data[1] == 'V') &&
-		(data[2] == 'L') &&
-		(data[3] > 1)) {
-
+		(data[2] == 'L')) {
+		printf("hvl supported\n");
 		return HippoProbeResult_Supported;
 	}
 
@@ -119,7 +112,7 @@ static int hively_read_data(void* userData, void* dest, uint32_t max_count) {
 
 	int frames_decoded = hvl_DecodeFrame(replayerData->tune, ptr, ptr + 2, 4) / 2;
 
-	const float scale = 1.0f / 32768.0f;
+	const float scale = 1.0f / 32767.0f;
 
 	for (int i = 0; i < frames_decoded; ++i) {
 		newDest[i] = ((float)temp_data[i]) * scale;
@@ -132,6 +125,71 @@ static int hively_read_data(void* userData, void* dest, uint32_t max_count) {
 
 static int hively_seek(void* userData, int ms) {
 	return 0;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static int hively_metadata(const char* filename, const HippoServiceAPI* service_api) {
+    void* data = 0;
+    uint64_t size = 0;
+
+    const HippoIoAPI* io_api = HippoServiceAPI_get_io_api(service_api, HIPPO_FILE_API_VERSION);
+    const HippoMetadataAPI* metadata_api = HippoServiceAPI_get_metadata_api(service_api, HIPPO_METADATA_API_VERSION);
+
+    HippoIoErrorCode res = HippoIo_read_file_to_memory(io_api, filename, &data, &size);
+
+    if (res < 0) {
+        return -1;
+    }
+
+    bool is_ahx = true;
+    uint8_t* t = (uint8_t*)data;
+
+    if((t[0] == 'H') && (t[1] == 'V') && (t[2] == 'L')) {
+        is_ahx = false;
+    }
+
+	struct hvl_tune* tune = hvl_LoadTuneMemory((uint8_t*) data, (int)size, FREQ, 0);
+
+    // TODO: Calculate lenght
+    float length = -1.0f;
+
+    std::vector<flatbuffers::Offset<flatbuffers::String>> instruments;
+    std::vector<flatbuffers::Offset<flatbuffers::String>> samples;
+
+    flatbuffers::FlatBufferBuilder builder(4096);
+
+    auto url = builder.CreateString(filename);
+    auto title = builder.CreateString(tune->ht_Name);
+    auto song_type = builder.CreateString(is_ahx ? "AHX Tracker" : "Hively Tracker");
+    auto authoring_tool = builder.CreateString(is_ahx ? "AHX Tracker" : "Hively Tracker");
+    auto artist = builder.CreateString("");
+    auto date = builder.CreateString("");
+    auto message = builder.CreateString("");
+
+    for (int i = 0; i < tune->ht_InstrumentNr; ++i) {
+	    instruments.push_back(builder.CreateString(tune->ht_Instruments[i].ins_Name));
+    }
+
+    builder.Finish(CreateHippoMessageDirect(builder, MessageType_song_metadata,
+        CreateHippoSongMetadata(builder,
+            url,
+            title,
+            song_type,
+            length,
+            authoring_tool,
+            artist,
+            date,
+            message,
+            builder.CreateVector(samples),
+            builder.CreateVector(instruments)).Union()));
+
+    HippoMetadata_set_data(metadata_api, filename, builder.GetBufferPointer(), builder.GetSize());
+
+    // Make sure to free the buffer before we leave
+    HippoIo_free_file_to_memory(io_api, data);
+
+    return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -165,14 +223,14 @@ static HippoPlaybackPlugin g_hively_plugin = {
 	hively_close,
 	hively_read_data,
 	hively_seek,
-	NULL,
+	hively_metadata,
 	NULL,
 	NULL,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-HIPPO_EXPORT HippoPlaybackPlugin* hippo_playback_plugin() {
+extern "C" HIPPO_EXPORT HippoPlaybackPlugin* hippo_playback_plugin() {
 	return &g_hively_plugin;
 }
 

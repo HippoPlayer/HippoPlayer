@@ -135,10 +135,11 @@ SharedLibrary {
 	},
 
 	Sources = {
-		"src/plugins/playback/hively/HivelyPlugin.c",
+		"src/plugins/playback/hively/HivelyPlugin.cpp",
 		"src/plugins/playback/hively/replayer/hvl_replay.c"
 	},
 
+	Depends = { "flatbuffers_lib" },
 }
 
 -----------------------------------------------------------------------------------------------------------------------

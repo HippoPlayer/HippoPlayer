@@ -120,7 +120,7 @@ extern int HippoCore_load() {
 	const char* core_name = "hippo_core.dll";
 #else
 	// temp temp
-	const char* core_name = "/home/emoon/code/hippo_player/t2-output/linux-gcc-debug-default/libhippo_core.so";
+	const char* core_name = "/home/emoon/code/projects/hippo_player/t2-output/linux-gcc-debug-default/libhippo_core.so";
 #endif
 
 	void* core_handle = dlopen(core_name, RTLD_NOW);
