@@ -1,4 +1,5 @@
 #include <HippoPlugin.h>
+#include <HippoMessages.h>
 #include <uade/uade.h>
 #include <uade/eagleplayer.h>
 #include <stdlib.h>
@@ -7,6 +8,7 @@
 //static char s_player_name[1024]; // hack
 
 #include <thread>
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -50,6 +52,7 @@ struct uade_state* create_uade_state(int spawn) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef struct UadePlugin {
+    const HippoMetadataAPI* metadata_api = nullptr;
 	struct uade_state* state = nullptr;
 	bool closing_down;
 } UadePlugin;
@@ -121,6 +124,7 @@ enum HippoProbeResult uade_probe_can_play(const uint8_t* data, uint32_t data_siz
 
 static void* uade_create(const struct HippoServiceAPI* services) {
 	UadePlugin* plugin = new UadePlugin;
+    plugin->metadata_api = HippoServiceAPI_get_metadata_api(services, HIPPO_METADATA_API_VERSION);
 
 	return plugin;
 }
@@ -133,7 +137,40 @@ static int uade_open(void* user_data, const char* buffer) {
 	plugin->state = create_uade_state(1);
 
 	if (uade_play(buffer, -1, plugin->state) == 1) {
-		printf("starting play\n");
+	    // we can only get this data when it started playing :(
+        const struct uade_song_info* song_info = uade_get_song_info(plugin->state);
+
+        float length = (float)song_info->duration;
+        length = length == 0.0f ? -1.0f : length;
+
+        std::vector<flatbuffers::Offset<flatbuffers::String>> instruments;
+        std::vector<flatbuffers::Offset<flatbuffers::String>> samples;
+
+        flatbuffers::FlatBufferBuilder builder(4096);
+
+        auto url = builder.CreateString(buffer);
+        auto title = builder.CreateString(song_info->modulename);
+        auto song_type = builder.CreateString(song_info->playername);
+        auto authoring_tool = builder.CreateString(song_info->playername);
+        auto artist = builder.CreateString("");
+        auto date = builder.CreateString("");
+        auto message = builder.CreateString("");
+
+        builder.Finish(CreateHippoMessageDirect(builder, MessageType_song_metadata,
+            CreateHippoSongMetadata(builder,
+                url,
+                title,
+                song_type,
+                length,
+                authoring_tool,
+                artist,
+                date,
+                message,
+                builder.CreateVector(samples),
+                builder.CreateVector(instruments)).Union()));
+
+        HippoMetadata_set_data(plugin->metadata_api, buffer, builder.GetBufferPointer(), builder.GetSize());
+
 		return 1;
 	}
 
@@ -173,7 +210,7 @@ static int uade_read_data(void* user_data, void* dest, uint32_t max_samples) {
 
 	float* new_dest = (float*)dest;
 
-	const float scale = 1.0f / 32768.0f;
+	const float scale = 1.0f / 32767.0f;
 
 	for (int i = 0; i < 480 * 2; ++i) {
 		new_dest[i] = ((float)data[i]) * scale;

@@ -103,6 +103,15 @@ impl HippoCore {
                 continue;
             }
 
+            if self
+                .plugin_service
+                .get_song_db()
+                .get_data(filename)
+                .is_none()
+            {
+                plugin.get_metadata(&filename, &self.plugin_service);
+            }
+
             if plugin.probe_can_play(&buffer, buffer_read_size, filename, metadata.len()) {
                 // This is a bit hacky right now but will do the trick
                 self.audio.stop();
