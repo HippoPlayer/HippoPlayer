@@ -67,6 +67,7 @@ int clock_gettime_temp(int clk_id, struct timespec *t)
 }
 #else
 #include <time.h>		// for clock_gettime()
+#define clock_gettime_temp clock_gettime
 #endif
 
 #include <unistd.h>		// for usleep()
