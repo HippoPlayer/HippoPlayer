@@ -61,3 +61,17 @@ jobs:
         export QT5_LIB=$Qt5_DIR/lib
         scripts/mac_build_release.sh
 
+  # Build macOS
+  build_windows:
+    runs-on: windows
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v2
+    - name: Build Release
+      run: |
+        set QT5_BIN=%Qt5_DIR%\bin
+        set QT5_INC=%Qt5_DIR%\include
+        set QT5_LIB=%Qt5_DIR%\lib
+        scripts\win64_build_release.cmd
+
