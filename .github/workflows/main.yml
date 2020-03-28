@@ -12,8 +12,7 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
+  build_linux:
     # The type of runner that the job will run on
     runs-on: ubuntu-18.04
 
@@ -36,11 +35,7 @@ jobs:
         cached: ${{ steps.cache-qt.outputs.cache-hit }}
 
     - name: Install deps
-      run:  sudo apt-get install libasound2-dev mesa-common-dev
-
-    - name: Show paths
-      run: |
-        echo $Qt5_DIR
+      run: sudo apt-get install libasound2-dev mesa-common-dev
 
     - name: Install Tundra
       run: git clone --recursive https://github.com/deplinenoise/tundra.git && cd tundra && make && sudo make install && cd ..
@@ -51,4 +46,28 @@ jobs:
         export QT5_INC=$Qt5_DIR/include
         export QT5_LIB=$Qt5_DIR/lib
         tundra2 linux-gcc-debug
+  build_macOS:
+    # The type of runner that the job will run on
+    runs-on: macOS
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - uses: actions/checkout@v2
+
+    # install Qt with cache
+    - name: Cache Qt
+      id: cache-qt
+      uses: actions/cache@v1
+      with:
+        path: ../Qt
+        key: QtCache
+
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v2
+      with:
+        cached: ${{ steps.cache-qt.outputs.cache-hit }}
+
+    - name: Build Release
+      run: scripts/mac_build_release.sh
 
