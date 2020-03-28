@@ -22,13 +22,14 @@ jobs:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
 
-    # Runs a single command using the runners shell
-    - name: Run a one-line script
-      run: echo Hello, world!
-
-    # Runs a set of commands using the runners shell
-    - name: Run a multi-line script
+    - name: Install deps
       run: |
-        echo Add other actions to build,
-        echo test, and deploy your project.
+        sudo add-apt-repository ppa:beineri/opt-qt-5.12.3-xenial --yes
+        sudo apt-get update
+        sudo apt-get install libasound2-dev qt512base mesa-common-dev
+    - name: Install Tundra
+      run: git clone --recursive https://github.com/deplinenoise/tundra.git && cd tundra && make && sudo make install && cd ..
+
+    - name: Build Debug
+      run: tundra2 linux-gcc-debug
 
