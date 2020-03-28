@@ -123,7 +123,7 @@ impl Plugins {
         if let Ok(fun) = func {
             println!("Found playback plugin with callback data {:?}", fun());
 
-            let native_plugin = unsafe { (*fun()) };
+            let native_plugin = unsafe { *fun() };
 
             // To make the plugin code a bit nicer we move over to a separate structure internally.
             // This also allows us allows us to check functions are correct at one place instead of
