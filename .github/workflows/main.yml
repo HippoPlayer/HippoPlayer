@@ -66,9 +66,9 @@ jobs:
       uses: jurplel/install-qt-action@v2
     - name: Set env
       run: |
-        set QT5_BIN=%Qt5_DIR%\bin
-        set QT5_INC=%Qt5_DIR%\include
-        set QT5_LIB=%Qt5_DIR%\lib
+        echo "::set-env QT5_BIN=%Qt5_DIR%\bin"
+        echo "::set-env QT5_INC=%Qt5_DIR%\include"
+        echo "::set-env QT5_LIB=%Qt5_DIR%\lib"
         echo QT5_BIN
         dir %QT5_BIN%
     - name: Build Release
