@@ -59,7 +59,7 @@ jobs:
 
   # Build Windows
   build_windows:
-    runs-on: windows
+    runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2
     - name: Install Qt
