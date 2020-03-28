@@ -1,0 +1,19 @@
+[package]
+name = "hippo_core"
+version = "0.1.0"
+authors = ["Daniel Collin <daniel@collin.com>"]
+edition = "2018"
+
+[lib]
+crate-type = ["dylib"]
+
+[dependencies]
+ringbuf = "0.2"
+messages = { path = "../messages" }
+scfg = { path = "../scfg" }
+rodio = "0.10"
+dynamic_reload = "0.4.0"
+walkdir = "2"
+serde = "1.0"
+serde_derive = "1.0"
+serde_json = "1.0"

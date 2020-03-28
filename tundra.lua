@@ -4,8 +4,8 @@ local native = require('tundra.native')
 
 local mac_opts = {
     "-Wall", "-I.",
-    -- "-Weverything", "-Werror",
     { "-O0", "-g"; Config = "*-*-debug" },
+    { "-O0", "-fsanitize=address", "-fno-omit-frame-pointer", "-g"; Config = "*-*-debug-asan" },
     { "-O3", "-g"; Config = "*-*-release" },
 }
 
@@ -13,7 +13,10 @@ local mac_opts = {
 
 local macosx = {
     Env = {
-		QT5 = native.getenv("QT5", ""),
+		QT5_INC = native.getenv("QT5_INC"),
+		QT5_BIN = native.getenv("QT5_BIN"),
+		QT5_LIB = native.getenv("QT5_LIB"),
+
         RUST_CARGO_OPTS = {
             { "test"; Config = "*-*-*-test" },
         },
@@ -24,11 +27,24 @@ local macosx = {
 
         CXXOPTS = {
             mac_opts,
+            "-I$(QT5_INC)",
+            "-Isrc/external/flatbuffers/include",
             "-std=c++11",
         },
 
-        SHLIBOPTS = { "-lstdc++" },
-        PROGCOM = { "-lstdc++" },
+        SHLIBCOM = {
+            {  "-Wl,-rpath,$(QT5_LIB)", "-F$(QT5_LIB)" },
+        },
+
+        SHLIBOPTS = {
+			"-lstdc++",
+			{ "-fsanitize=address"; Config = "*-*-debug-asan" },
+		},
+
+        PROGCOM = {
+			"-lstdc++",
+			{ "-fsanitize=address"; Config = "*-*-debug-asan" },
+		},
     },
 
     Frameworks = {
@@ -39,9 +55,9 @@ local macosx = {
     },
 
     ReplaceEnv = {
-        QTMOC = "$(QT5)/bin/moc",
-        QTUIC = "$(QT5)/bin/uic",
-        QTRCC = "$(QT5)/bin/rcc",
+        QTMOC = "$(QT5_BIN)/moc",
+        QTUIC = "$(QT5_BIN)/uic",
+        QTRCC = "$(QT5_BIN)/rcc",
     },
 }
 
@@ -49,7 +65,7 @@ local macosx = {
 
 local gcc_opts = {
     "-I.",
-    "-Wno-array-bounds", "-Wno-attributes", "-Wno-unused-value",
+    "-Wno-array-bounds", "-Wno-attributes", "-Wno-unused-value", "-Werror=incompatible-pointer-types",
     "-DOBJECT_DIR=\\\"$(OBJECTDIR)\\\"",
     "-Wall",
     "-fPIC",
@@ -59,7 +75,10 @@ local gcc_opts = {
 
 local gcc_env = {
     Env = {
-		QT5 = native.getenv("QT5", ""),
+		QT5_INC = native.getenv("QT5_INC"),
+		QT5_BIN = native.getenv("QT5_BIN"),
+		QT5_LIB = native.getenv("QT5_LIB"),
+
         RUST_CARGO_OPTS = {
             { "test"; Config = "*-*-*-test" },
         },
@@ -71,14 +90,16 @@ local gcc_env = {
         CXXOPTS = {
             gcc_opts,
             "-std=c++11",
+            "-I$(QT5_INC)",
+            "-Isrc/external/flatbuffers/include",
         },
-
     },
 
     ReplaceEnv = {
-        QTMOC = "$(QT5)/bin/moc",
-        QTUIC = "$(QT5)/bin/uic",
-        QTRCC = "$(QT5)/bin/rcc",
+        QTMOC = "$(QT5_BIN)/moc -DQ_OS_LINUX",
+        QTUIC = "$(QT5_BIN)/uic",
+        QTRCC = "$(QT5_BIN)/rcc",
+        LD = "c++",
     },
 }
 
@@ -93,7 +114,10 @@ local win64_opts = {
 
 local win64 = {
     Env = {
-		QT5 = native.getenv("QT5", ""),
+		QT5_INC = native.getenv("QT5_INC"),
+		QT5_BIN = native.getenv("QT5_BIN"),
+		QT5_LIB = native.getenv("QT5_LIB"),
+
         RUST_CARGO_OPTS = {
             { "test"; Config = "*-*-*-test" },
         },
@@ -105,15 +129,21 @@ local win64 = {
 
         CXXOPTS = {
             win64_opts,
+            "/I$(QT5_INC)",
+            "/Isrc/external/flatbuffers/include",
         },
 
         OBJCCOM = "meh",
+
+        LIBPATH = {
+			{ "$(QT5_LIB)"; Config = "win64-*-*" },
+		},
     },
 
     ReplaceEnv = {
-        QTMOC = "$(QT5)\\bin\\moc",
-        QTUIC = "$(QT5)\\bin\\uic",
-        QTRCC = "$(QT5)\\bin\\rcc",
+        QTMOC = "$(QT5_BIN)\\moc",
+        QTUIC = "$(QT5_BIN)\\uic",
+        QTRCC = "$(QT5_BIN)\\rcc",
     },
 }
 
@@ -121,8 +151,8 @@ local win64 = {
 
 Build {
     Passes = {
-        BuildTools = { Name="Build Tools", BuildOrder = 1 },
-        GenerateSources = { Name="Generate sources", BuildOrder = 2 },
+        BuildTools = { Name = "Build Tools", BuildOrder = 1 },
+        GenerateSources = { Name = "Generate sources", BuildOrder = 2 },
     },
 
     Units = {
@@ -133,8 +163,9 @@ Build {
 
     Configs = {
         Config { Name = "macosx-clang", DefaultOnHost = "macosx", Inherit = macosx, Tools = { "clang-osx", "rust", "qt" } },
-        Config { Name = "win64-msvc", DefaultOnHost = { "windows" }, Inherit = win64, Tools = { "msvc", "rust", "qt" } },
+        Config { Name = "win64-msvc", DefaultOnHost = { "windows" }, Inherit = win64, Tools = { "msvc-vs2017", "rust", "qt" } },
         Config { Name = "linux-gcc", DefaultOnHost = { "linux" }, Inherit = gcc_env, Tools = { "gcc", "rust", "qt" } },
+        Config { Name = "linux-clang", DefaultOnHost = { "linux" }, Inherit = gcc_env, Tools = { "clang", "rust", "qt" } },
     },
 
     IdeGenerationHints = {
@@ -158,7 +189,7 @@ Build {
     },
 
     Variants = { "debug", "release" },
-    SubVariants = { "default", "test" },
+    SubVariants = { "default", "asan" },
 }
 
 -- vim: ts=4:sw=4:sts=4

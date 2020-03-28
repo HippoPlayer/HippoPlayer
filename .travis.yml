@@ -1,63 +1,47 @@
-language: rust
-rust: stable
-cache: cargo
-
-os:
-  - linux
-  - osx
-
-env:
-    - COMPILER=g++-6
-addons:
-  apt:
-    sources:
-        - ubuntu-toolchain-r-test
-    packages:
-        - g++-6
-
-before_script:
-  - export BUILD_DATE_ID=$(date)
-  - export BUILD_FILE_ID=$(date +%Y%m%d_%H%M)
-  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
-      brew update &&
-      brew install qt5 &&
-      export QT5="`brew --prefix qt5`";
-    fi
-  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then
-      sudo add-apt-repository ppa:beineri/opt-qt571-trusty --yes;
-      sudo apt-get update;
-      sudo apt-get install qt57base mesa-common-dev;
-      sudo apt-get install -y libasound2-dev alsa-utils alsa-oss;
-      sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 90;
-      sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-6 90;
-      git clone --recursive https://github.com/deplinenoise/tundra.git;
-      cd tundra;
-      make;
-      sudo make install;
-      cd ..;
-      g++ --version;
-      export QT5=/opt/qt57;
-   fi
-
-script:
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then tundra2 linux-gcc-debug ; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then scripts/mac_build_release.sh && scripts/mac_release_deploy.sh ; fi
+matrix:
+  include:
+  - os: linux
+    language: rust
+    rust: stable
+    dist: xenial
+    before_script:
+    - export BUILD_DATE_ID=$(date)
+    - export BUILD_FILE_ID=$(date +%Y%m%d_%H%M)
+    - sudo add-apt-repository ppa:beineri/opt-qt-5.12.3-xenial --yes
+    - sudo apt-get update
+    - sudo apt-get install libasound2-dev qt512base mesa-common-dev
+    - git clone --recursive https://github.com/deplinenoise/tundra.git && cd tundra && make && sudo make install && cd ..
+    - export QT5_BIN=/opt/qt512/bin; export QT5_INC=/opt/qt512/include; export QT5_LIB=/opt/qt512/lib
+    script:
+    - tundra2 linux-gcc-debug
+  - os: osx
+    language: rust
+    rust: stable
+    before_script:
+    - export BUILD_DATE_ID=$(date)
+    - export BUILD_FILE_ID=$(date +%Y%m%d_%H%M)
+    - brew update
+    - brew install qt5
+    - export QT5_BIN=/usr/local/opt/qt/bin
+    - export QT5_INC=/usr/local/opt/qt/include
+    - export QT5_LIB=/usr/local/opt/qt/lib
+    script:
+    - scripts/mac_build_release.sh && scripts/mac_release_deploy.sh
 
 deploy:
-  provider: s3
-  access_key_id:
+provider: s3
+access_key_id:
     secure: RGENJvMtqnfNkAtM2gjAYu6tO+1bltEWDU2p9atQjtnPK0/xJpxxvp8zkaYnhScactCGSmqZjtmmUg/KSJ3A1tgHQt7doUjP7rD/5fGkiJw8rydBez8biMZV5StKtYPMGzl7vzCbqo17NCiHC0qo0lSIWYEWcvLKmLL6XadWXjCga/6+zqXGf+uapU2g9+sx6ijJZB28LHxn09VDxN8Gk7Z9maM1LfJsneKz4UBLYzdabQNMru8bpZ08AU6ZSSZReKf0KFJSKK2wUc3nt0TiVGmo9eA9SOe4GY3pZm+WojGN7uXy1Goz/pMUlzfoGk3S1xd/BD4y4c8HJMNovWbLP6TzEGUydL+gewyjh1bJ0UPZNyPXO99ueueDs468fgCYATc4MA/FTQgp98UMkV4gQVEz5uCiudnUVPK7uixMGrMaqYkpYn7s214Bk8FT/9IFlMrB9ZZlSQ/PRC9jWZIKzVEtcOQHAeL/zf1QhMQ5BXeGyka921y6W646e9/g51GCqZP9oXCQFOTnBbl+WU6BW1hvKwZ2je+YkiTjWXKIFiywd2vtyjRr89U7rDsOaQ664ZbjMW5v2yn4XTr+neZy/e8js3PrAMOVyn5cfhFfAvmWEn9WjB42rDCm7Niq4dfpKt1q7fEMLFvY6Ofg1uLnfxj0/DkP+W84WKNN5n6WBL0=
-  secret_access_key:
+secret_access_key:
     secure: E+pHfmWTT//s03yGJ8mZweFgitKVmJcLBFybvSJWjIcSdCMOePUVbSrkuJUAMOrAsdaR2/yTjLewS3iEFv99O80cxB5PWjwqIseLFxRmnLJG/xU2XA8GPcu1jWA3Ka5ne6AZgvLSSidcBnm8LhWNFqwICypudSQCAN/sBSP1YFaz1IR3eEbF/2BYKGsbHZUMySo+xPxXrP+m5y2FAf0CfwPHhNB/v76PZ9/ApQa8dSgDUcsacE5Dliq95uBsejl0elOrzRK60fAowljLzfJFPq0hJGw/LrpxnsjrVZXfoxnkHJfXKb6grhY8EYa9pAGUGx4IFwSFevIdmxeKhHmw0v97o7LtWLnufxCEeqsShrgjHx9kTnx1ce4vTwiGZ+I8T3qSQIUzkwWIg9/8lormYZ0zAeUTr0LMk9cl4uzD2LVGjkhMyaVb3uRewW+542VDlhYil6nyxAvehs1nW6fbLPaGeOrWHjhXVFtUsNrkB3wC6GnXQNj8a43JFTgFnHCtvp6jiBbovatjIIlyk5kXdVbF8h9hAaM/MclZy1tFs71lWuArOUGMHI3FNlbrONHHplISKrh/htefrBY6+sMwJ4s+Q3l7cgU4w7AbQIays2Iq4ULqJC8e3gM39AvD/7WiIl+w7O9KMFF2SPkL30NWaShoX9DU4V7do31aLXS53ko=
-  region: eu-west-3
-  bucket: hippoplayer
-  upload-dir: master-branch-builds
-  local_dir: t2-output/build
-  acl: public_read
-  skip_cleanup: true
-  on:
+region: eu-west-3
+bucket: hippoplayer
+upload-dir: master-branch-builds
+local_dir: t2-output/build
+acl: public_read
+skip_cleanup: true
+on:
     repo: emoon/HippoPlayer
     branch: master
     condition: $TRAVIS_OS_NAME = osx
-
 

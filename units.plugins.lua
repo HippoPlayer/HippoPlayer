@@ -7,6 +7,15 @@ local native = require('tundra.native')
 
 -----------------------------------------------------------------------------------------------------------------------
 
+local function gen_moc(src)
+    return Moc {
+        Pass = "GenerateSources",
+        Source = src
+    }
+end
+
+-----------------------------------------------------------------------------------------------------------------------
+
 local function get_rs_src(dir)
 	return Glob {
 		Dir = dir,
@@ -63,13 +72,91 @@ StaticLibrary {
 
 -----------------------------------------------------------------------------------------------------------------------
 
-SharedLibrary {
-	Name = "HivelyPlugin",
+StaticLibrary {
+	Name = "flatbuffers_lib",
+
+	Pass = "GenerateSources",
+
+	SourceDir = "src/external/flatbuffers",
+
+	Includes = {
+		"src/external/flatbuffers/include",
+	},
+
 	Sources = {
-		"src/plugins/hively/HivelyPlugin.c",
-		"src/plugins/hively/replayer/hvl_replay.c"
+		"src/code_generators.cpp",
+		"src/idl_parser.cpp",
+		"src/idl_gen_text.cpp",
+		"src/reflection.cpp",
+		"src/util.cpp",
 	},
 }
+
+Program {
+	Name = "flatc",
+
+	Pass = "GenerateSources",
+
+	SourceDir = "src/external/flatbuffers",
+
+	Includes = {
+		"src/external/flatbuffers/include",
+		"src/external/flatbuffers",
+	},
+
+	Sources = {
+		"src/idl_gen_cpp.cpp",
+		"src/idl_gen_dart.cpp",
+		"src/idl_gen_general.cpp",
+		"src/idl_gen_kotlin.cpp",
+		"src/idl_gen_go.cpp",
+		"src/idl_gen_js_ts.cpp",
+		"src/idl_gen_php.cpp",
+		"src/idl_gen_python.cpp",
+		"src/idl_gen_lobster.cpp",
+		"src/idl_gen_lua.cpp",
+		"src/idl_gen_rust.cpp",
+		"src/idl_gen_fbs.cpp",
+		"src/idl_gen_json_schema.cpp",
+		"src/flatc.cpp",
+		"src/flatc_main.cpp",
+	},
+
+	Depends = { "flatbuffers_lib" },
+}
+
+-----------------------------------------------------------------------------------------------------------------------
+
+SharedLibrary {
+	Name = "HivelyPlugin",
+
+	Includes = {
+	    "src/plugin_api",
+	},
+
+	Sources = {
+		"src/plugins/playback/hively/HivelyPlugin.cpp",
+		"src/plugins/playback/hively/replayer/hvl_replay.c"
+	},
+
+	Depends = { "flatbuffers_lib" },
+}
+
+-----------------------------------------------------------------------------------------------------------------------
+
+--[[
+SharedLibrary {
+	Name = "TestViewPlugin",
+
+	Includes = {
+	    "src/plugin_api",
+	},
+
+	Sources = {
+		get_c_cpp_src("src/plugins/view/test_view"),
+	},
+}
+--]]
 
 -----------------------------------------------------------------------------------------------------------------------
 
@@ -77,19 +164,20 @@ SharedLibrary {
 	Name = "openmpt",
 	Defines = { "LIBOPENMPT_BUILD" },
 	Includes = {
-		"src/plugins/openmpt/libopenmpt",
-		"src/plugins/openmpt/libopenmpt/common"
+	    "src/plugin_api",
+		"src/plugins/playback/openmpt/libopenmpt",
+		"src/plugins/playback/openmpt/libopenmpt/common"
 	},
 
 	Sources = {
-		get_c_cpp_src("src/plugins/openmpt/libopenmpt/soundlib"),
-		get_c_cpp_src("src/plugins/openmpt/libopenmpt/common"),
-		get_c_cpp_src("src/plugins/openmpt/libopenmpt/sounddsp"),
-		"src/plugins/openmpt/libopenmpt/libopenmpt/libopenmpt_c.cpp",
-		"src/plugins/openmpt/libopenmpt/libopenmpt/libopenmpt_cxx.cpp",
-		"src/plugins/openmpt/libopenmpt/libopenmpt/libopenmpt_impl.cpp",
-		"src/plugins/openmpt/libopenmpt/libopenmpt/libopenmpt_ext_impl.cpp",
-		"src/plugins/openmpt/openmpt.cpp",
+		get_c_cpp_src("src/plugins/playback/openmpt/libopenmpt/soundlib"),
+		get_c_cpp_src("src/plugins/playback/openmpt/libopenmpt/common"),
+		get_c_cpp_src("src/plugins/playback/openmpt/libopenmpt/sounddsp"),
+		"src/plugins/playback/openmpt/libopenmpt/libopenmpt/libopenmpt_c.cpp",
+		"src/plugins/playback/openmpt/libopenmpt/libopenmpt/libopenmpt_cxx.cpp",
+		"src/plugins/playback/openmpt/libopenmpt/libopenmpt/libopenmpt_impl.cpp",
+		"src/plugins/playback/openmpt/libopenmpt/libopenmpt/libopenmpt_ext_impl.cpp",
+		"src/plugins/playback/openmpt/openmpt.cpp",
 	},
 
 	Libs = {
@@ -103,7 +191,7 @@ SharedLibrary {
 SharedLibrary {
 	Name = "vgm",
 
-	SourceDir = "src/plugins/vgm",
+	SourceDir = "src/plugins/playback/vgm",
 
 	Defines = {
 		"DISABLE_HWOPL_SUPPORT",
@@ -113,6 +201,7 @@ SharedLibrary {
 	},
 
 	Includes = {
+	    "src/plugin_api",
 		"src/external/zlib",
 	},
 
@@ -220,8 +309,12 @@ SharedLibrary {
 SharedLibrary {
 	Name = "TfmxPlugin",
 
+	Includes = {
+	    "src/plugin_api",
+	},
+
 	Sources = {
-		get_c_cpp_src("src/plugins/tfmx"),
+		get_c_cpp_src("src/plugins/playback/tfmx"),
 	},
 
 	Libs = {
@@ -234,8 +327,12 @@ SharedLibrary {
 SharedLibrary {
 	Name = "DummyPlugin",
 
+	Includes = {
+	    "src/plugin_api",
+	},
+
 	Sources = {
-		get_c_cpp_src("src/plugins/dummy"),
+		get_c_cpp_src("src/plugins/playback/dummy"),
 	},
 }
 
@@ -244,8 +341,12 @@ SharedLibrary {
 SharedLibrary {
 	Name = "MDXPlugin",
 
+	Includes = {
+	    "src/plugin_api",
+	},
+
 	Sources = {
-		get_c_cpp_src("src/plugins/mdx"),
+		get_c_cpp_src("src/plugins/playback/mdx"),
 	},
 }
 
@@ -260,13 +361,20 @@ SharedLibrary {
 		"PACKAGE_URL=\"\"",
 	},
 
+	Env	= {
+       CXXOPTS = {
+			{ "-Wno-deprecated-declarations"; Config = "linux-*-*" },
+		},
+	},
+
 	Includes = {
-		"src/plugins/sid/libsidplayfp/src",
-		"src/plugins/sid/libsidplayfp/src/builders/residfp-builder/residfp",
+	    "src/plugin_api",
+		"src/plugins/playback/sid/libsidplayfp/src",
+		"src/plugins/playback/sid/libsidplayfp/src/builders/residfp-builder/residfp",
 	},
 
 	Sources = {
-		get_c_cpp_src("src/plugins/sid"),
+		get_c_cpp_src("src/plugins/playback/sid"),
 	},
 
 	Libs = { "stdc++"; Config = "macosx-*-*" },
@@ -296,7 +404,76 @@ SharedLibrary {
 
 --]]
 
+-----------------------------------------------------------------------------------------------------------------------
+--  View plugins
+-----------------------------------------------------------------------------------------------------------------------
 
+SharedLibrary {
+	Name = "player",
+	Sources = {
+	    "src/plugins/view/player/player.cpp",
+	    "src/plugins/view/player/scrolltext.cpp",
+        gen_moc("src/plugins/view/player/player.h"),
+        gen_moc("src/plugins/view/player/scrolltext.h"),
+	},
+
+	Libs = {
+		{ "wsock32.lib", "kernel32.lib", "user32.lib", "gdi32.lib", "Comdlg32.lib",
+		  "Advapi32.lib", "Qt5Guid.lib", "Qt5Cored.lib", "Qt5Widgetsd.lib"; Config = "win64-*-*" },
+	},
+
+    Frameworks = { "Cocoa", "QtWidgets", "QtGui", "QtCore" },
+
+	Depends = { "flatbuffers_lib" },
+}
+
+-----------------------------------------------------------------------------------------------------------------------
+
+SharedLibrary {
+	Name = "tracker",
+	Sources = {
+	    "src/plugins/view/tracker/tracker.cpp",
+	    "src/plugins/view/tracker/tracker_display.cpp",
+        gen_moc("src/plugins/view/tracker/tracker.h"),
+        gen_moc("src/plugins/view/tracker/tracker_display.h"),
+	},
+
+	Libs = {
+		{ "wsock32.lib", "kernel32.lib", "user32.lib", "gdi32.lib", "Comdlg32.lib",
+		  "Advapi32.lib", "Qt5Guid.lib", "Qt5Cored.lib", "Qt5Widgetsd.lib"; Config = "win64-*-*" },
+	},
+
+    Frameworks = { "Cocoa", "QtWidgets", "QtGui", "QtCore" },
+
+	Depends = { "flatbuffers_lib" },
+}
+
+-----------------------------------------------------------------------------------------------------------------------
+
+SharedLibrary {
+	Name = "playlist",
+	Sources = {
+	    "src/plugins/view/playlist/playlist.cpp",
+        gen_moc("src/plugins/view/playlist/playlist.h"),
+	},
+
+    Frameworks = { "Cocoa", "QtWidgets", "QtGui", "QtCore" },
+
+	Libs = {
+		{ "wsock32.lib", "kernel32.lib", "user32.lib", "gdi32.lib", "Comdlg32.lib",
+		  "Advapi32.lib", "Qt5Guid.lib", "Qt5Cored.lib", "Qt5Widgetsd.lib"; Config = "win64-*-*" },
+	},
+}
+
+-----------------------------------------------------------------------------------------------------------------------
+-- Default plugins
+-----------------------------------------------------------------------------------------------------------------------
+
+-- Tools
+
+Default "flatc"
+
+-- Decoders
 
 Default "TfmxPlugin"
 Default "HivelyPlugin"
@@ -305,6 +482,15 @@ Default "vgm"
 Default "DummyPlugin"
 Default "MDXPlugin"
 Default "SidPlugin"
+
+-- Views
+
+--Default "playlist"
+Default "player"
+Default "playlist"
+Default "tracker"
+--Default "song_info"
+--Default "TestViewPlugin"
 
 -- Default "FutureComposerPlugin"
 -- Default "TfmxPlugin"

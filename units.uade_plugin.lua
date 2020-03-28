@@ -7,15 +7,16 @@ local platform = require "tundra.platform"
 local os = require "os"
 
 local common_includes = {
-	"src/plugins/uade/bencode/include",
-	"src/plugins/uade/uade/",
-	"src/plugins/uade/uade/src/",
-	"src/plugins/uade/uade/src/include/",
-	"src/plugins/uade/uade/src/frontends/include/",
-	"src/plugins/uade/uade/src/frontends/common/",
+	"src/plugin_api",
+	"src/plugins/playback/uade/bencode/include",
+	"src/plugins/playback/uade/uade/",
+	"src/plugins/playback/uade/uade/src/",
+	"src/plugins/playback/uade/uade/src/include/",
+	"src/plugins/playback/uade/uade/src/frontends/include/",
+	"src/plugins/playback/uade/uade/src/frontends/common/",
 }
 
-local source_dir = "src/plugins/uade"
+local source_dir = "src/plugins/playback/uade"
 local macos_linux_opts = {
 	Env = {
 		CCOPTS = { {
@@ -124,7 +125,7 @@ SharedLibrary {
         "uade/src/frontends/common/vparray.c",
         "uade/src/frontends/common/support.c",
         "uade/src/frontends/common/fifo.c",
-
+        "uade/compat/strlrep.c",
         "uade/src/newcpu.c",
         "uade/src/memory.c",
         "uade/src/custom.c",

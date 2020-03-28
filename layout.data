@@ -1,0 +1,13 @@
+{
+  "view_instance_states": [
+    {
+      "plugin_name": "Playlist",
+      "instance_id": "Playlist"
+    },
+    {
+      "plugin_name": "Player",
+      "instance_id": "Player"
+    }
+  ],
+  "layout": "<?xml version=\"1.0\"?>\n<QtAdvancedDockingSystem Version=\"0\" DockContainers=\"1\">\n    <DockContainerWidget Floating=\"0\">\n        <Splitter Orientation=\"2\" Count=\"2\">\n            <DockAreaWidget Tabs=\"1\" CurrentIndex=\"0\">\n                <DockWidget ObjectName=\"Player\" PluginData=\"pls save me pls!\" Closed=\"0\"/>\n            </DockAreaWidget>\n            <DockAreaWidget Tabs=\"1\" CurrentIndex=\"0\">\n                <DockWidget ObjectName=\"Playlist\" PluginData=\"pls save me pls!\" Closed=\"0\"/>\n            </DockAreaWidget>\n            <Sizes>112 457 </Sizes>\n        </Splitter>\n    </DockContainerWidget>\n</QtAdvancedDockingSystem>\n"
+}

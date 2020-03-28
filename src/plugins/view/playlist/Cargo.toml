@@ -1,0 +1,15 @@
+[package]
+name = "playlist"
+version = "0.1.0"
+authors = ["Daniel Collin <daniel@collin.com>"]
+
+[lib]
+name = "playlist"
+crate-type = ["cdylib"]
+
+[dependencies]
+hippo_api = { path = "../../../plugin_api/rust/hippo_api" }
+rute = { path = "../../../external/rute" }
+serde = "1.0"
+rmp-serde = "0.13.7"
+

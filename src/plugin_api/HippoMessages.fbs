@@ -1,0 +1,140 @@
+// Messages internal and external messages based on Flatbuffers
+
+table HippoNextSong {
+}
+
+table HippoPrevSong {
+}
+
+table HippoPlaySong {
+}
+
+table HippoStopSong {
+}
+
+table HippoRequestAddedUrls {
+}
+
+table HippoRemoveSelectedPlaylistEntries {
+}
+
+table HippoRemovePlaylistEntries {
+}
+
+table HippoRequestSelectSong {
+  path: string;
+  playlist_index: int;
+}
+
+table HippoRequestAddUrls {
+  urls: [string];
+}
+
+table HippoSongDescription {
+  title: string;
+  duration: float;
+  song_type: string;
+  artist: string;
+  date: string;
+  authoring_tool: string;
+}
+
+table HippoUrlEntry {
+  path: string;
+  description: HippoSongDescription;
+}
+
+table HippoSelectSong {
+  description: HippoSongDescription;
+  playlist_index: int;
+}
+
+table HippoReplyAddedUrls {
+  urls: [HippoUrlEntry];
+}
+
+table HippoRequestTrackerData {
+  pattern: int;
+}
+
+// Row data for the tracker
+table HippoRowData {
+  note: string;
+  instrument: string;
+  volumeffect: string;
+  effect: string;
+  volume: string;
+  parameter: string;
+}
+
+table HippoSongMetadata {
+  url: string;
+  title: string;
+  song_type: string;
+  length: float;
+  authoring_tool: string;
+  artist: string;
+  date: string;
+  message: string;
+  samples: [string];
+  instruments: [string];
+}
+
+table HippoTrackerChannel {
+  row_data: [HippoRowData];
+}
+
+// Tracker type
+// Regular for tracker formats such as protracker,xm,etc
+// Hardware based notes and such that gets sent to the hardware which means it's a contiguous streams
+// of notes
+
+enum HippoTrackerType:byte { Regular, Emulated }
+
+// Data used for tracker display provided by current backend
+table HippoTrackerData {
+  type: HippoTrackerType = Regular;
+  pattern: int;
+  current_row: int;
+  channels: [HippoTrackerChannel];
+}
+
+// This is for the current position for a playing song. If it's tracker based current pattern
+// and such can be written here but is optional
+
+table HippoCurrentPosition {
+  position: float;
+  current_pattern: int;
+  current_row: int;
+  current_speed: int;
+  duration: float;
+}
+
+union MessageType {
+  next_song: HippoNextSong,
+  prev_song: HippoPrevSong,
+  play_song: HippoPlaySong,
+  stop_song: HippoStopSong,
+  request_added_urls: HippoRequestAddedUrls,
+
+  request_select_song: HippoRequestSelectSong,
+  select_song: HippoSelectSong,
+
+  request_add_urls: HippoRequestAddUrls,
+  reply_added_urls: HippoReplyAddedUrls,
+
+  request_tracker_data: HippoRequestSelectSong,
+  tracker_data: HippoTrackerData,
+
+  current_position: HippoCurrentPosition,
+
+  song_metadata: HippoSongMetadata,
+}
+
+
+table HippoMessage {
+  message: MessageType;
+  user_data: string;
+}
+
+root_type HippoMessage;
