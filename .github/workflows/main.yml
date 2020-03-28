@@ -69,6 +69,6 @@ jobs:
         set QT5_BIN=%Qt5_DIR%\bin
         set QT5_INC=%Qt5_DIR%\include
         set QT5_LIB=%Qt5_DIR%\lib
-        bin\windows\tundra2 win64-msvc-debug
+        bin/windows/tundra2.exe win64-msvc-debug
 
 
