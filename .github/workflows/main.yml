@@ -22,8 +22,18 @@ jobs:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
 
+    # install Qt with cache
+    - name: Cache Qt
+      id: cache-qt
+      uses: actions/cache@v1
+      with:
+        path: ../Qt
+        key: QtCache
+
     - name: Install Qt
       uses: jurplel/install-qt-action@v2
+      with:
+        cached: ${{ steps.cache-qt.outputs.cache-hit }}
 
     - name: Install deps
       run:  sudo apt-get install libasound2-dev mesa-common-dev
