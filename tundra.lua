@@ -27,6 +27,10 @@ local macosx = {
 
         CXXOPTS = {
             mac_opts,
+            "-isystem $(QT5_LIB)/QtWidgets.framework/Headers",
+            "-isystem $(QT5_LIB)/QtCore.framework/Headers",
+            "-isystem $(QT5_LIB)/QtGui.framework/Headers",
+            "-F$(QT5_LIB)",
             "-I$(QT5_INC)",
             "-Isrc/external/flatbuffers/include",
             "-std=c++11",

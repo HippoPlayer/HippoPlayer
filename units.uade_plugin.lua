@@ -125,7 +125,7 @@ SharedLibrary {
         "uade/src/frontends/common/vparray.c",
         "uade/src/frontends/common/support.c",
         "uade/src/frontends/common/fifo.c",
-        "uade/compat/strlrep.c",
+        { "uade/compat/strlrep.c"; Config = "linux-*-*" },
         "uade/src/newcpu.c",
         "uade/src/memory.c",
         "uade/src/custom.c",

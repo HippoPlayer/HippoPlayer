@@ -6,29 +6,72 @@ name: CI
 # events but only for the master branch
 on:
   push:
-    branches: [ master ]
+    branches: [ dev-ci ]
   pull_request:
     branches: [ master ]
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
-    runs-on: ubuntu-latest
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
+  build_linux:
+    runs-on: ubuntu-18.04
     steps:
-    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
 
-    # Runs a single command using the runners shell
-    - name: Run a one-line script
-      run: echo Hello, world!
+    # install Qt with cache
+    - name: Cache Qt
+      id: cache-qt
+      uses: actions/cache@v1
+      with:
+        path: ../Qt
+        key: QtCache
 
-    # Runs a set of commands using the runners shell
-    - name: Run a multi-line script
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v2
+      with:
+        cached: ${{ steps.cache-qt.outputs.cache-hit }}
+
+    - name: Install deps
+      run: sudo apt-get install libasound2-dev mesa-common-dev
+
+    - name: Install Tundra
+      run: git clone --recursive https://github.com/deplinenoise/tundra.git && cd tundra && make && sudo make install && cd ..
+
+    - name: Build Debug
       run: |
-        echo Add other actions to build,
-        echo test, and deploy your project.
+        export QT5_BIN=$Qt5_DIR/bin
+        export QT5_INC=$Qt5_DIR/include
+        export QT5_LIB=$Qt5_DIR/lib
+        tundra2 linux-gcc-debug
+
+  # Build macOS
+  build_macOS:
+    runs-on: macos
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v2
+    - name: Build Release
+      run: |
+        export QT5_BIN=$Qt5_DIR/bin
+        export QT5_INC=$Qt5_DIR/include
+        export QT5_LIB=$Qt5_DIR/lib
+        scripts/mac_build_release.sh
+
+# Build Windows
+#  build_windows:
+#    runs-on: windows-latest
+#    steps:
+#    - uses: actions/checkout@v2
+#    - name: Install Qt
+#      uses: jurplel/install-qt-action@v2
+#    - name: Env test
+#      run: |
+#        echo "Testing"
+#        echo %Qt5_DIR%
+#        echo "Testing 2"
+#        set QT5_BIN=%Qt5_DIR%/bin
+#        echo %QT5_BIN%
+#    - name: Build Release
+#      run: bin\windows\tundra2.exe win64-msvc-debug
+
 
