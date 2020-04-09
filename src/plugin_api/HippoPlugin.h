@@ -92,6 +92,38 @@ typedef struct HippoMetadataAPI {
 #define HippoMetadata_get_data(api, resource) api->get_data(api->priv_data, resource)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#define HIPPO_SETTINGS_API_VERSION 1
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef enum HippoSettingResult {
+	HippoSettingsResult_Ok = 0,
+	HippoSettingsResult_SettingNotFound = 1,
+	HippoSettingsResult_KeyNotFound = 2,
+	HippoSettingsResult_InvalidType = 3,
+} HippoSettingResult;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef struct HippoSettingsAPI {
+    // Private internal data
+	struct HippoSettingsAPI* priv_data;
+	HippoSettingResult (*get_int)(
+	    struct HippoMessageAPI* handle,
+	    void* user_data,
+	    const char* setting,
+	    const char* key,
+        int* res);
+	HippoSettingResult (*get_float)(
+	    struct HippoMessageAPI* handle,
+	    void* user_data,
+	    const char* setting,
+	    const char* key,
+        float* res);
+} HippoSettingsAPI;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Plugins can use the MessageAPI to subscribe to events and post data that is being requested
 
 typedef struct HippoMessageAPI {

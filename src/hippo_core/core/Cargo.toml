@@ -10,7 +10,7 @@ crate-type = ["dylib"]
 [dependencies]
 ringbuf = "0.2"
 messages = { path = "../messages" }
-scfg = { path = "../scfg" }
+config = { path = "../config" }
 rodio = "0.10"
 dynamic_reload = "0.4.0"
 walkdir = "2"

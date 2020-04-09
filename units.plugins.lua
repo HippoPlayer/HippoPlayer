@@ -186,6 +186,11 @@ SharedLibrary {
 	},
 }
 
+local openmpt_cfg = CopyFile {
+	Source = "src/plugins/playback/openmpt/libopenmpt.cfg",
+	Target = "$(OBJECTDIR)/libopenmpt.cfg"
+}
+
 -----------------------------------------------------------------------------------------------------------------------
 
 SharedLibrary {
@@ -477,7 +482,10 @@ Default "flatc"
 
 Default "TfmxPlugin"
 Default "HivelyPlugin"
+
 Default "openmpt"
+Default(openmpt_cfg)
+
 Default "vgm"
 Default "DummyPlugin"
 Default "MDXPlugin"
