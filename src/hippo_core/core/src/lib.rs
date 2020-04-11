@@ -6,8 +6,8 @@ use std::os::raw::{c_char, c_void};
 use std::path::Path;
 use std::ptr;
 
-mod core_config;
 mod audio;
+mod core_config;
 mod playlist;
 mod plugin_handler;
 mod song_db;
@@ -17,11 +17,11 @@ mod service;
 pub mod service_ffi;
 
 use audio::{HippoAudio, MusicInfo};
+use core_config::CoreConfig;
 use messages::*;
 use playlist::Playlist;
 use plugin_handler::Plugins;
 use service_ffi::{PluginService, ServiceApi};
-use core_config::CoreConfig;
 
 use std::io::Read;
 
@@ -34,7 +34,6 @@ type MsgSendCallback =
 pub struct SongDb {
     data: HashMap<String, String>,
 }
-
 
 pub struct HippoCore {
     config: CoreConfig,
@@ -80,7 +79,6 @@ impl HippoCore {
             }
         }
 
-
         println!("Unable to find plugin to support {}", filename);
 
         MusicInfo::default()
@@ -96,8 +94,7 @@ impl HippoCore {
         count: usize,
         current_index: usize,
     ) {
-        for msg_index in (0..count)
-            .filter(|v| *v != current_index) {
+        for msg_index in (0..count).filter(|v| *v != current_index) {
             send_messages(
                 user_data,
                 data.as_ptr(),
@@ -221,7 +218,7 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
         for i in 0..plugin_count {
             let lower_name = plugins.decoder_plugins[i].plugin_path.to_lowercase();
             if lower_name.rfind(name).is_some() && plugin_count > index {
-               plugins.decoder_plugins.swap(index, i);
+                plugins.decoder_plugins.swap(index, i);
             }
         }
     }
@@ -231,7 +228,7 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
         for i in 0..plugin_count {
             let lower_name = plugins.decoder_plugins[i].plugin_path.to_lowercase();
             if lower_name.rfind(name).is_some() && plugin_count > index {
-               plugins.decoder_plugins.swap((plugin_count - 1) - index, i);
+                plugins.decoder_plugins.swap((plugin_count - 1) - index, i);
             }
         }
     }
