@@ -102,7 +102,7 @@ impl DecoderPlugin {
 }
 
 pub struct Plugins {
-    pub decoder_plugins: Vec<DecoderPlugin>,
+    pub decoder_plugins: Vec<Box<DecoderPlugin>>,
     pub plugin_handler: DynamicReload,
 }
 
@@ -155,11 +155,11 @@ impl Plugins {
                 load: native_plugin.load,
             };
 
-            self.decoder_plugins.push(DecoderPlugin {
+            self.decoder_plugins.push(Box::new(DecoderPlugin {
                 plugin: plugin.clone(),
                 plugin_path: name.to_owned(),
                 plugin_funcs,
-            });
+            }));
         }
     }
 

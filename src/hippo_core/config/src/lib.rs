@@ -2,13 +2,15 @@ use lexpr::Value;
 use std::fs::File;
 use std::path::Path;
 use std::io::Read;
+use serde_lexpr::{from_str};
+use serde::de::DeserializeOwned;
 
 pub struct Config {
     pub value: lexpr::Value,
 }
 
 impl Config {
-    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Config, String> {
+	fn read_to_file<P: AsRef<Path>>(path: P) -> Result<(String, String), String> {
         let file_path = path.as_ref().to_str().unwrap().to_owned();
 
         // Open the file in read-only mode with buffer.
@@ -27,6 +29,11 @@ impl Config {
         }
 
         data.push_str("\n)");
+        Ok((file_path, data))
+    }
+
+    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Config, String> {
+    	let (file_path, data) = Self::read_to_file(path)?;
 
         // Read an arbitrary S-expression, using parser options suitable for Emacs Lisp.
         let value = match lexpr::from_str(&data) {
@@ -37,13 +44,28 @@ impl Config {
         Ok(Config { value })
     }
 
+	///
+	/// This parses a file, inserts the extra ( ) for the outer scope and reports
+	/// Parsing errors that may happen. This uses serde to deserialize into a struct of T
+	///
+    pub fn deserialize<'a, P: AsRef<Path>, T: DeserializeOwned>(path: P) -> Result<T, String> {
+    	let (file_path, data) = Self::read_to_file(path)?;
+
+		let t: T = match from_str(&data) {
+            Err(e) => return Err(format!("Unable to parse {}: {}", file_path, e)),
+            Ok(v) => v,
+		};
+
+		Ok(t)
+    }
+
     ///
     /// Load a config file with a spec that allows more error checking to be done
     ///
     pub fn new_file_with_cfg<P: AsRef<Path>>(path: P, spec: &str) -> Result<Config, String> {
     	let cfg = Self::from_file(path)?;
         // Read an arbitrary S-expression, using parser options suitable for Emacs Lisp.
-        let cfg_data = match lexpr::from_str(&spec) {
+        let _cfg_data = match lexpr::from_str(&spec) {
             Err(e) => return Err(format!("Unable to parse spec: {}", e)),
             Ok(v) => v,
         };

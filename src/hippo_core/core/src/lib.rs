@@ -4,21 +4,9 @@ use std::fs;
 use std::fs::File;
 use std::os::raw::{c_char, c_void};
 use std::path::Path;
+use std::ptr;
 
-/*
-use hippo_api;
-use messages;
-use rodio;
-use walkdir;
-
-#[macro_use]
-use serde_derive;
-pub use rmp;
-use rmp_rpc;
-use serde;
-use serde_json;
-*/
-
+mod core_config;
 mod audio;
 mod playlist;
 mod plugin_handler;
@@ -33,6 +21,7 @@ use messages::*;
 use playlist::Playlist;
 use plugin_handler::Plugins;
 use service_ffi::{PluginService, ServiceApi};
+use core_config::CoreConfig;
 
 use std::io::Read;
 
@@ -46,7 +35,9 @@ pub struct SongDb {
     data: HashMap<String, String>,
 }
 
+
 pub struct HippoCore {
+    config: CoreConfig,
     audio: HippoAudio,
     plugins: Plugins,
     plugin_service: service_ffi::PluginService,
@@ -64,16 +55,9 @@ impl HippoCore {
         let mut f = File::open(filename).unwrap();
         let buffer_read_size = f.read(&mut buffer[..]).unwrap();
 
-        // TODO: Proper priority order of plugins. Right now we just put uade as the last one to
-        // check
-
         // find a plugin that supports the file
 
         for plugin in &self.plugins.decoder_plugins {
-            if plugin.plugin_path.rfind("uade").is_some() {
-                continue;
-            }
-
             if plugin.probe_can_play(&buffer, buffer_read_size, filename, metadata.len()) {
                 if self
                     .plugin_service
@@ -96,32 +80,6 @@ impl HippoCore {
             }
         }
 
-        // do the same fo uade
-
-        for plugin in &self.plugins.decoder_plugins {
-            if plugin.plugin_path.rfind("uade").is_none() {
-                continue;
-            }
-
-            if self
-                .plugin_service
-                .get_song_db()
-                .get_data(filename)
-                .is_none()
-            {
-                plugin.get_metadata(&filename, &self.plugin_service);
-            }
-
-            if plugin.probe_can_play(&buffer, buffer_read_size, filename, metadata.len()) {
-                // This is a bit hacky right now but will do the trick
-                self.audio.stop();
-                self.audio = HippoAudio::new();
-                let info = self
-                    .audio
-                    .start_with_file(&plugin, &self.plugin_service, filename);
-                return info;
-            }
-        }
 
         println!("Unable to find plugin to support {}", filename);
 
@@ -138,15 +96,14 @@ impl HippoCore {
         count: usize,
         current_index: usize,
     ) {
-        for msg_index in 0..count {
-            if current_index != msg_index {
-                send_messages(
-                    user_data,
-                    data.as_ptr(),
-                    data.len() as i32,
-                    msg_index as i32,
-                );
-            }
+        for msg_index in (0..count)
+            .filter(|v| *v != current_index) {
+            send_messages(
+                user_data,
+                data.as_ptr(),
+                data.len() as i32,
+                msg_index as i32,
+            );
         }
     }
 
@@ -233,14 +190,15 @@ impl HippoCore {
 /// Create new instance of the song db
 #[no_mangle]
 pub extern "C" fn hippo_core_new() -> *const HippoCore {
-    let mut core = Box::new(HippoCore {
-        audio: HippoAudio::new(),
-        plugins: Plugins::new(),
-        plugin_service: service_ffi::PluginService::new(),
-        playlist: Playlist::new(),
-        _current_song_time: -10.0,
-        _is_playing: false,
-    });
+    let config = match CoreConfig::load("data/config/global.cfg") {
+        Ok(v) => v,
+        Err(e) => {
+            println!("Config error: {}", e);
+            return ptr::null();
+        }
+    };
+
+    let mut plugins = Plugins::new();
 
     let current_path = std::env::current_dir().unwrap();
 
@@ -252,7 +210,41 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
 
     println!("The current directory is {}", path.display());
 
-    core.plugins.add_plugins_from_path();
+    plugins.add_plugins_from_path();
+
+    // sort plugins according to priority order
+
+    let plugin_count = plugins.decoder_plugins.len();
+
+    // sort high-prority plugins
+    for (index, name) in config.playback_priority_high.iter().enumerate() {
+        for i in 0..plugin_count {
+            let lower_name = plugins.decoder_plugins[i].plugin_path.to_lowercase();
+            if lower_name.rfind(name).is_some() && plugin_count > index {
+               plugins.decoder_plugins.swap(index, i);
+            }
+        }
+    }
+
+    // sort low-prority plugins
+    for (index, name) in config.playback_priority_low.iter().enumerate() {
+        for i in 0..plugin_count {
+            let lower_name = plugins.decoder_plugins[i].plugin_path.to_lowercase();
+            if lower_name.rfind(name).is_some() && plugin_count > index {
+               plugins.decoder_plugins.swap((plugin_count - 1) - index, i);
+            }
+        }
+    }
+
+    let mut core = Box::new(HippoCore {
+        config,
+        plugins,
+        audio: HippoAudio::new(),
+        plugin_service: service_ffi::PluginService::new(),
+        playlist: Playlist::new(),
+        _current_song_time: -10.0,
+        _is_playing: false,
+    });
 
     // No need to switch back if we are in the correct spot
     if !Path::new("bin").is_dir() {
