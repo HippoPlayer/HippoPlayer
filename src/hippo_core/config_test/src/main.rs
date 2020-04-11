@@ -2,10 +2,11 @@ use serde_lexpr::{from_str, to_string};
 use serde_derive::{Serialize, Deserialize};
 use config::Config;
 
-#[derive(Serialize, Deserialize, PartialEq, Eq, Default)]
+#[derive(Serialize, Deserialize, Default)]
 struct Test {
     playback_priority_reverse: Vec<String>,
     playback_priority_forward: Vec<String>,
+    test: f32,
 }
 
 fn main() {
@@ -14,11 +15,11 @@ fn main() {
     config.playback_priority_reverse.push("uade 2".to_owned());
     config.playback_priority_forward.push("openmpt".to_owned());
 
-    //let t = to_string(&config).unwrap();
-    let t = "((playback_priority_forward \"uade\" \"uade 2\") (foo \"test\") (playback_priority_reverse \"openmpt\"))";
+    let t = to_string(&config).unwrap();
+    //let t = "((playback_priority_forward \"uade\" \"uade 2\") (foo \"test\") (playback_priority_reverse \"openmpt\"))";
 
-    let v: Test = from_str(&t).unwrap();
+    //let v: Test = from_str(&t).unwrap();
 
     println!("{}", t);
-    println!("{}", v.playback_priority_reverse[0]);
+    //println!("{}", v.playback_priority_reverse[0]);
 }

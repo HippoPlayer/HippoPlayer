@@ -151,8 +151,8 @@ static int hively_metadata(const char* filename, const HippoServiceAPI* service_
 
 	struct hvl_tune* tune = hvl_LoadTuneMemory((uint8_t*) data, (int)size, FREQ, 0);
 
-    // TODO: Calculate lenght
-    float length = -1.0f;
+    // TODO: Calculate len
+    float length = 0.0f;
 
     std::vector<flatbuffers::Offset<flatbuffers::String>> instruments;
     std::vector<flatbuffers::Offset<flatbuffers::String>> samples;

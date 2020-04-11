@@ -239,7 +239,7 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
         audio: HippoAudio::new(),
         plugin_service: service_ffi::PluginService::new(),
         playlist: Playlist::new(),
-        _current_song_time: -10.0,
+        _current_song_time: 0.0,
         _is_playing: false,
     });
 
