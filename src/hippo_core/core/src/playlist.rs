@@ -42,8 +42,6 @@ impl Playlist {
     fn advance_song(&mut self, direction: isize) -> Option<Box<[u8]>> {
         let count = self.entries.len() as isize;
 
-        println!("advance song");
-
         if count > 0 {
             let new_song = (self.current_song + direction) % count;
 
@@ -195,7 +193,7 @@ impl Playlist {
                             path: file.to_owned(),
                             title: base.to_string_lossy().to_string(),
                             song_type: String::new(),
-                            duration: -1.0, // negative is used to indicate no durion
+                            duration: 0.0,
                         });
                     }
                 }
@@ -248,14 +246,7 @@ impl Playlist {
         let playlist_index = select_song.playlist_index() as usize;
 
         if playlist_index < self.entries.len() {
-            //if self.entries[playlist_index].path == path_name {
             new_song_id = Some(playlist_index);
-        /*
-        } else {
-            println!("Warning: Requested song {} at index {} but song is {} that doesn't match",
-                path_name, playlist_index, self.entries[playlist_index].path);
-        }
-        */
         } else {
             println!("Warning: Tried to select song at {} - {} but not enough entries in the playlist {}",
                 playlist_index, path_name, self.entries.len());

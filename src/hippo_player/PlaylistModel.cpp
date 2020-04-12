@@ -278,9 +278,18 @@ QVariant PlaylistModel::headerData(int section, Qt::Orientation orientation, int
 void PlaylistModel::update_index(const HippoSelectSong* select_song_msg) {
     int index = select_song_msg->playlist_index();
     auto desc = select_song_msg->description();
+    int duration = desc->duration();
+    QString dur;
 
     m_entries[index].title = QString::fromUtf8(desc->title()->c_str());
-    m_entries[index].duration = QDateTime::fromTime_t((int)desc->duration()).toUTC().toString(QStringLiteral("hh:mm:ss"));
+    if (duration == 0) {
+        // use default duration (right now 5 min for songs without a length)
+        dur = QDateTime::fromTime_t((int)m_default_length).toUTC().toString(QStringLiteral("hh:mm:ss"));
+        dur.insert(0, QStringLiteral("∞ "));
+    } else {
+        dur = QDateTime::fromTime_t((int)m_default_length).toUTC().toString(QStringLiteral("hh:mm:ss"));
+    }
+    m_entries[index].duration = dur;
     m_entries[index].description = QString::fromUtf8(desc->song_type()->c_str());
 
     layoutChanged();
