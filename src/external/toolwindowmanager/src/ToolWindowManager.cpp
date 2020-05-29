@@ -1302,6 +1302,7 @@ void ToolWindowManager::drawHotspotPixmaps()
     // for the sides, add an arrow.
     if(ref != AddTo)
     {
+      /*
       QPainterPath path;
 
       if(ref == LeftOf)
@@ -1336,8 +1337,8 @@ void ToolWindowManager::drawHotspotPixmaps()
             tip, tip + QPointF(-3, -3), tip + QPointF(3, -3),
         }));
       }
-
       p.fillPath(path, QBrush(Qt::black));
+      */
     }
   }
 
