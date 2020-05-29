@@ -73,7 +73,7 @@ static int hively_open(void* user_data, const char* filename) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int hively_close(void* userData) {
+static int hively_close(void* user_data) {
 	return 0;
 }
 
@@ -81,7 +81,6 @@ static int hively_close(void* userData) {
 // TODO: These checks needs to be made much better (sanity check some more sizes in the pattern etc)
 
 enum HippoProbeResult hively_probe_can_play(const uint8_t* data, uint32_t data_size, const char* filename, uint64_t total_size) {
-    printf("hvl probe %c %c %c\n", data[0], data[1], data[2]);
 	if ((data[0] == 'T') &&
 		(data[1] == 'H') &&
 		(data[2] == 'X') &&
@@ -92,7 +91,6 @@ enum HippoProbeResult hively_probe_can_play(const uint8_t* data, uint32_t data_s
 	if ((data[0] == 'H') &&
 		(data[1] == 'V') &&
 		(data[2] == 'L')) {
-		printf("hvl supported\n");
 		return HippoProbeResult_Supported;
 	}
 
@@ -101,14 +99,14 @@ enum HippoProbeResult hively_probe_can_play(const uint8_t* data, uint32_t data_s
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int hively_read_data(void* userData, void* dest, uint32_t max_count) {
+static int hively_read_data(void* user_data, void* dest, uint32_t max_count) {
 	int16_t temp_data[FRAME_SIZE * 4];
 	int8_t* ptr = (int8_t*)temp_data;
 
 	float* newDest = (float*)dest;
 
 	// TODO: Support more than one tune
-	struct HivelyReplayerData* replayerData = (struct HivelyReplayerData*)userData;
+	struct HivelyReplayerData* replayerData = (struct HivelyReplayerData*)user_data;
 
 	int frames_decoded = hvl_DecodeFrame(replayerData->tune, ptr, ptr + 2, 4) / 2;
 
@@ -123,7 +121,7 @@ static int hively_read_data(void* userData, void* dest, uint32_t max_count) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int hively_seek(void* userData, int ms) {
+static int hively_seek(void* user_data, int ms) {
 	return 0;
 }
 
@@ -159,10 +157,12 @@ static int hively_metadata(const char* filename, const HippoServiceAPI* service_
 
     flatbuffers::FlatBufferBuilder builder(4096);
 
+    const char* tool = is_ahx ? "AHX Tracker" : "Hively Tracker";
+
     auto url = builder.CreateString(filename);
     auto title = builder.CreateString(tune->ht_Name);
-    auto song_type = builder.CreateString(is_ahx ? "AHX Tracker" : "Hively Tracker");
-    auto authoring_tool = builder.CreateString(is_ahx ? "AHX Tracker" : "Hively Tracker");
+    auto song_type = builder.CreateString(tool);
+    auto authoring_tool = builder.CreateString(tool);
     auto artist = builder.CreateString("");
     auto date = builder.CreateString("");
     auto message = builder.CreateString("");
@@ -195,7 +195,7 @@ static int hively_metadata(const char* filename, const HippoServiceAPI* service_
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*
-static int hively_length(void* userData) {
+static int hively_length(void* user_data) {
 	return -10;
 }
 */
