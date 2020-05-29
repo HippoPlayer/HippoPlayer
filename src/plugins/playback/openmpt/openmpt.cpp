@@ -162,7 +162,6 @@ static void send_pattern_data(struct OpenMptData* replayer_data) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int openmpt_open(void* user_data, const char* filename) {
-	//char keyname[32];
     uint64_t size = 0;
 	struct OpenMptData* replayer_data = (struct OpenMptData*)user_data;
 
@@ -200,23 +199,26 @@ static int openmpt_close(void* user_data) {
 static int openmpt_read_data(void* user_data, void* dest, uint32_t max_samples) {
 	struct OpenMptData* replayer_data = (struct OpenMptData*)user_data;
 
-    // Send current positions back to frontend
-    flatbuffers::FlatBufferBuilder builder(1024);
-    builder.Finish(CreateHippoMessageDirect(builder, MessageType_current_position,
-        CreateHippoCurrentPosition(builder,
-            replayer_data->mod->get_position_seconds(),
-            replayer_data->mod->get_current_pattern(),
-            replayer_data->mod->get_current_row(),
-            replayer_data->mod->get_current_speed(),
-            replayer_data->length).Union()));
-    HippoMessageAPI_send(replayer_data->message_api, builder.GetBufferPointer(), builder.GetSize());
+	// count is number of frames per channel and div by 2 as we have 2 channels
+	const int count = 480;
+    int gen_count = replayer_data->mod->read_interleaved_stereo(48000, count, (float*)dest) * 2;
+
+    // Send current positions back to frontend if we have some more data
+    if (gen_count > 0) {
+        flatbuffers::FlatBufferBuilder builder(1024);
+        builder.Finish(CreateHippoMessageDirect(builder, MessageType_current_position,
+            CreateHippoCurrentPosition(builder,
+                replayer_data->mod->get_position_seconds(),
+                replayer_data->mod->get_current_pattern(),
+                replayer_data->mod->get_current_row(),
+                replayer_data->mod->get_current_speed(),
+                replayer_data->length).Union()));
+        HippoMessageAPI_send(replayer_data->message_api, builder.GetBufferPointer(), builder.GetSize());
+    }
 
     // TODO: Only send pattern data when we need requsted
     //send_pattern_data(replayer_data);
-
-	// count is number of frames per channel and div by 2 as we have 2 channels
-	const int count = 480;
-    return replayer_data->mod->read_interleaved_stereo(48000, count, (float*)dest) * 2;
+    return gen_count;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -284,15 +286,6 @@ static int openmpt_metadata(const char* filename, const HippoServiceAPI* service
 
 	return 0;
 }
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/*
-static int openmpt_length(void* user_data) {
-    OpenMptData* data = (OpenMptData*)user_data;
-	return int(data->length);
-}
-*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
