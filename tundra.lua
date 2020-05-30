@@ -69,7 +69,7 @@ local macosx = {
 
 local gcc_opts = {
     "-I.",
-    "-Wno-array-bounds", "-Wno-attributes", "-Wno-unused-value", "-Werror=incompatible-pointer-types",
+    "-Wno-array-bounds", "-Wno-attributes", "-Wno-unused-value",
     "-DOBJECT_DIR=\\\"$(OBJECTDIR)\\\"",
     "-Wall",
     "-fPIC",
