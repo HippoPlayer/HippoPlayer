@@ -1,2 +1,2 @@
 #/bin/sh
-tundra2 -v linux-gcc-debug
+tundra2 linux-gcc-debug
