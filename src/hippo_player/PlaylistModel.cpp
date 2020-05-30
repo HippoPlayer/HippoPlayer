@@ -252,11 +252,15 @@ QModelIndex PlaylistModel::parent(const QModelIndex& index) const {
 
 */
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 PlaylistModel::PlaylistModel(HippoCore* core, QObject *parent)
     : QAbstractTableModel(parent),
     m_core(core)
 {
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 QVariant PlaylistModel::headerData(int section, Qt::Orientation orientation, int role) const {
     if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
@@ -275,6 +279,8 @@ QVariant PlaylistModel::headerData(int section, Qt::Orientation orientation, int
     return QVariant();
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void PlaylistModel::update_index(const HippoSelectSong* select_song_msg) {
     int index = select_song_msg->playlist_index();
     auto desc = select_song_msg->description();
@@ -287,13 +293,16 @@ void PlaylistModel::update_index(const HippoSelectSong* select_song_msg) {
         dur = QDateTime::fromTime_t((int)m_default_length).toUTC().toString(QStringLiteral("hh:mm:ss"));
         dur.insert(0, QStringLiteral("∞ "));
     } else {
-        dur = QDateTime::fromTime_t((int)m_default_length).toUTC().toString(QStringLiteral("hh:mm:ss"));
+        dur = QDateTime::fromTime_t((int)duration).toUTC().toString(QStringLiteral("hh:mm:ss"));
     }
+
     m_entries[index].duration = dur;
     m_entries[index].description = QString::fromUtf8(desc->song_type()->c_str());
 
     layoutChanged();
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void PlaylistModel::add_entry(const HippoUrlEntry* select_song_msg) {
     auto desc = select_song_msg->description();
@@ -312,6 +321,7 @@ void PlaylistModel::add_entry(const HippoUrlEntry* select_song_msg) {
     m_entries.push_back(entry);
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool PlaylistModel::removeRows(int row, int count, const QModelIndex&) {
     printf("remove %d (count %d)\n", row, count);
@@ -321,13 +331,19 @@ bool PlaylistModel::removeRows(int row, int count, const QModelIndex&) {
     return true;
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 int PlaylistModel::rowCount(const QModelIndex&) const {
    return m_entries.size();
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 int PlaylistModel::columnCount(const QModelIndex&) const {
     return 3;
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 QVariant PlaylistModel::data(const QModelIndex& index, int role) const {
     if (role == Qt::DisplayRole) {
