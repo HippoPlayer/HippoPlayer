@@ -163,6 +163,13 @@ SharedLibrary {
 SharedLibrary {
 	Name = "openmpt",
 	Defines = { "LIBOPENMPT_BUILD" },
+
+    Env = {
+       CXXOPTS = {
+			{ "-std=c++17"; Config = "linux-*-*" },
+		},
+    },
+
 	Includes = {
 	    "src/plugin_api",
 		"src/plugins/playback/openmpt/libopenmpt",

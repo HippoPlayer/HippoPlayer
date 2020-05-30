@@ -71,7 +71,7 @@ void Echo::Process(float *pOutL, float *pOutR, uint32 numFrames)
 			chnOutput += chnDelay * m_param[kEchoFeedback];
 
 			// Prevent denormals
-			if(mpt::abs(chnOutput) < 1e-24f)
+			if(std::abs(chnOutput) < 1e-24f)
 				chnOutput = 0.0f;
 
 			m_delayLine[m_writePos * 2 + channel] = chnOutput;
@@ -103,7 +103,7 @@ void Echo::SetParameter(PlugParamIndex index, PlugParamValue value)
 	{
 		Limit(value, 0.0f, 1.0f);
 		if(index == kEchoPanDelay)
-			value = Util::Round(value);
+			value = mpt::round(value);
 		m_param[index] = value;
 		RecalculateEchoParams();
 	}

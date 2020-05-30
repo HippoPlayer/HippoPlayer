@@ -24,12 +24,6 @@ pub struct Instance {
     pub write_stream: Producer<Box<[u8]>>,
 }
 
-#[derive(Default)]
-pub struct MusicInfo {
-    pub title: String,
-    pub duration: i32,
-}
-
 impl HippoPlayback {
     pub fn start_with_file(
         plugin: &DecoderPlugin,
@@ -164,29 +158,13 @@ impl HippoAudio {
         plugin: &DecoderPlugin,
         service: &PluginService,
         filename: &str,
-    ) -> MusicInfo {
+    ) {
         // TODO: Do error checking
         let playback = HippoPlayback::start_with_file(plugin, service, filename);
 
         if let Some(pb) = playback {
-            // TODO: Wrap this
-            let title = "Fixme".to_owned();
-
-            //let c_title = ((plugin.plugin_funcs).track_info)(pb.plugin_user_data as *mut c_void);
-            //let length = ((plugin.plugin_funcs).length)(pb.plugin_user_data as *mut c_void);
-            let length = 0;
-            let info = MusicInfo {
-                //title: CStr::from_ptr(c_title).to_string_lossy().into_owned(),
-                title,
-                duration: length,
-            };
-
             self.audio_sink.append(pb.0);
             self.playbacks.push(pb.1);
-
-            info
-        } else {
-            MusicInfo::default()
         }
     }
 }

@@ -8,9 +8,7 @@
  */
 
 static const char * const license =
-"The OpenMPT code is licensed under the BSD license." "\n"
-"" "\n"
-"Copyright (c) 2004-2018, OpenMPT contributors" "\n"
+"Copyright (c) 2004-2020, OpenMPT contributors" "\n"
 "Copyright (c) 1997-2003, Olivier Lapicque" "\n"
 "All rights reserved." "\n"
 "" "\n"
@@ -46,12 +44,16 @@ static const char * const license =
 #include <iostream>
 #include <iterator>
 #include <limits>
+#include <locale>
 #include <map>
+#include <random>
 #include <set>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
+#include <cassert>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
@@ -59,7 +61,16 @@ static const char * const license =
 #include <cstring>
 #include <ctime>
 
-#if defined(WIN32)
+#if defined(__DJGPP__)
+#include <conio.h>
+#include <dpmi.h>
+#include <fcntl.h>
+#include <io.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <termios.h>
+#include <unistd.h>
+#elif defined(WIN32)
 #include <conio.h>
 #include <fcntl.h>
 #include <io.h>
@@ -69,9 +80,6 @@ static const char * const license =
 #include <mmsystem.h>
 #include <mmreg.h>
 #else
-#if defined(MPT_NEEDS_THREADS)
-#include <pthread.h>
-#endif
 #include <termios.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
@@ -89,52 +97,65 @@ static const char * const license =
 #include "openmpt123_sndfile.hpp"
 #include "openmpt123_raw.hpp"
 #include "openmpt123_stdout.hpp"
+#include "openmpt123_allegro42.hpp"
 #include "openmpt123_portaudio.hpp"
 #include "openmpt123_pulseaudio.hpp"
-#include "openmpt123_sdl.hpp"
 #include "openmpt123_sdl2.hpp"
 #include "openmpt123_waveout.hpp"
 
 namespace openmpt123 {
 
 struct silent_exit_exception : public std::exception {
-	silent_exit_exception() throw() { }
 };
 
 struct show_license_exception : public std::exception {
-	show_license_exception() throw() { }
 };
 
 struct show_credits_exception : public std::exception {
-	show_credits_exception() throw() { }
 };
 
 struct show_man_version_exception : public std::exception {
-	show_man_version_exception() throw() { }
 };
 
 struct show_man_help_exception : public std::exception {
-	show_man_help_exception() throw() { }
 };
 
 struct show_short_version_number_exception : public std::exception {
-	show_short_version_number_exception() throw() { }
 };
 
 struct show_version_number_exception : public std::exception {
-	show_version_number_exception() throw() { }
 };
 
 struct show_long_version_number_exception : public std::exception {
-	show_long_version_number_exception() throw() { }
 };
+
+#if defined( WIN32 )
+bool IsConsole( DWORD stdHandle ) {
+	HANDLE hStd = GetStdHandle( stdHandle );
+	if ( ( hStd != NULL ) && ( hStd != INVALID_HANDLE_VALUE ) ) {
+		DWORD mode = 0;
+		if ( GetConsoleMode( hStd, &mode ) != FALSE ) {
+			return true;
+		}
+	}
+	return false;
+}
+#endif
 
 bool IsTerminal( int fd ) {
 #if defined( WIN32 )
-	return true
-		&& ( _isatty( fd ) ? true : false )
-		&& GetConsoleWindow() != NULL
-		;
+	if ( !_isatty( fd ) ) {
+		return false;
+	}
+	DWORD stdHandle = 0;
+	if ( fd == 0 ) {
+		stdHandle = STD_INPUT_HANDLE;
+	} else if ( fd == 1 ) {
+		stdHandle = STD_OUTPUT_HANDLE;
+	} else if ( fd == 2 ) {
+		stdHandle = STD_ERROR_HANDLE;
+	}
+	return IsConsole( stdHandle );
 #else
 	return isatty( fd ) ? true : false;
 #endif
@@ -166,10 +187,10 @@ static void set_input_mode() {
 
 class file_audio_stream_raii : public file_audio_stream_base {
 private:
-	file_audio_stream_base * impl;
+	std::unique_ptr<file_audio_stream_base> impl;
 public:
 	file_audio_stream_raii( const commandlineflags & flags, const std::string & filename, std::ostream & log )
-		: impl(0)
+		: impl(nullptr)
 	{
 		if ( !flags.force_overwrite ) {
 			std::ifstream testfile( filename, std::ios::binary );
@@ -180,18 +201,18 @@ public:
 		if ( false ) {
 			// nothing
 		} else if ( flags.output_extension == "raw" ) {
-			impl = new raw_stream_raii( filename, flags, log );
+			impl = std::make_unique<raw_stream_raii>( filename, flags, log );
 #ifdef MPT_WITH_MMIO
 		} else if ( flags.output_extension == "wav" ) {
-			impl = new mmio_stream_raii( filename, flags, log );
+			impl = std::make_unique<mmio_stream_raii>( filename, flags, log );
 #endif				
 #ifdef MPT_WITH_FLAC
 		} else if ( flags.output_extension == "flac" ) {
-			impl = new flac_stream_raii( filename, flags, log );
+			impl = std::make_unique<flac_stream_raii>( filename, flags, log );
 #endif				
 #ifdef MPT_WITH_SNDFILE
 		} else {
-			impl = new sndfile_stream_raii( filename, flags, log );
+			impl = std::make_unique<sndfile_stream_raii>( filename, flags, log );
 #endif
 		}
 		if ( !impl ) {
@@ -199,32 +220,29 @@ public:
 		}
 	}
 	virtual ~file_audio_stream_raii() {
-		if ( impl ) {
-			delete impl;
-			impl = 0;
-		}
+		return;
 	}
-	virtual void write_metadata( std::map<std::string,std::string> metadata ) {
+	void write_metadata( std::map<std::string,std::string> metadata ) override {
 		impl->write_metadata( metadata );
 	}
-	virtual void write_updated_metadata( std::map<std::string,std::string> metadata ) {
+	void write_updated_metadata( std::map<std::string,std::string> metadata ) override {
 		impl->write_updated_metadata( metadata );
 	}
-	virtual void write( const std::vector<float*> buffers, std::size_t frames ) {
+	void write( const std::vector<float*> buffers, std::size_t frames ) override {
 		impl->write( buffers, frames );
 	}
-	virtual void write( const std::vector<std::int16_t*> buffers, std::size_t frames ) {
+	void write( const std::vector<std::int16_t*> buffers, std::size_t frames ) override {
 		impl->write( buffers, frames );
 	}
 };                                                                                                                
 
 static std::string ctls_to_string( const std::map<std::string, std::string> & ctls ) {
 	std::string result;
-	for ( std::map<std::string, std::string>::const_iterator it = ctls.begin(); it != ctls.end(); ++it ) {
+	for ( const auto & ctl : ctls ) {
 		if ( !result.empty() ) {
 			result += "; ";
 		}
-		result += it->first + "=" + it->second;
+		result += ctl.first + "=" + ctl.second;
 	}
 	return result;
 }
@@ -285,8 +303,8 @@ static std::ostream & operator << ( std::ostream & s, const commandlineflags & f
 	s << "Ctls: " << ctls_to_string( flags.ctls ) << std::endl;
 	s << std::endl;
 	s << "Files: " << std::endl;
-	for ( std::vector<std::string>::const_iterator filename = flags.filenames.begin(); filename != flags.filenames.end(); ++filename ) {
-		s << " " << *filename << std::endl;
+	for ( const auto & filename : flags.filenames ) {
+		s << " " << filename << std::endl;
 	}
 	s << std::endl;
 	return s;
@@ -441,7 +459,7 @@ static std::string seconds_to_string( double time ) {
 
 static void show_info( std::ostream & log, bool verbose ) {
 	log << "openmpt123" << " v" << OPENMPT123_VERSION_STRING << ", libopenmpt " << openmpt::string::get( "library_version" ) << " (" << "OpenMPT " << openmpt::string::get( "core_version" ) << ")" << std::endl;
-	log << "Copyright (c) 2013-2018 OpenMPT developers <https://lib.openmpt.org/>" << std::endl;
+	log << "Copyright (c) 2013-2020 OpenMPT developers <https://lib.openmpt.org/>" << std::endl;
 	if ( !verbose ) {
 		log << std::endl;
 		return;
@@ -468,13 +486,13 @@ static void show_info( std::ostream & log, bool verbose ) {
 			fields.push_back( field );
 		}
 		bool first = true;
-		for ( std::vector<std::string>::const_iterator it = fields.begin(); it != fields.end(); ++it ) {
+		for ( const auto & field : fields ) {
 			if ( first ) {
 				first = false;
 			} else {
 				log << ", ";
 			}
-			log << (*it);
+			log << field;
 		}
 	}
 	log << std::endl;
@@ -494,18 +512,6 @@ static void show_info( std::ostream & log, bool verbose ) {
 	std::memset( &sdlver, 0, sizeof( SDL_version ) );
 	SDL_VERSION( &sdlver );
 	log << "API: " << static_cast<int>( sdlver.major ) << "." << static_cast<int>( sdlver.minor ) << "." << static_cast<int>( sdlver.patch ) << "";
-	log << " <https://libsdl.org/>" << std::endl;
-#endif
-#ifdef MPT_WITH_SDL
-	const SDL_version * linked_sdlver = SDL_Linked_Version();
-	log << " libSDL ";
-	if ( linked_sdlver ) {
-		log << static_cast<int>( linked_sdlver->major ) << "." << static_cast<int>( linked_sdlver->minor ) << "." << static_cast<int>( linked_sdlver->patch ) << " ";
-	}
-	SDL_version sdlver;
-	std::memset( &sdlver, 0, sizeof( SDL_version ) );
-	SDL_VERSION( &sdlver );
-	log << "(API: " << static_cast<int>( sdlver.major ) << "." << static_cast<int>( sdlver.minor ) << "." << static_cast<int>( sdlver.patch ) << ")";
 	log << " <https://libsdl.org/>" << std::endl;
 #endif
 #ifdef MPT_WITH_PULSEAUDIO
@@ -530,7 +536,7 @@ static void show_info( std::ostream & log, bool verbose ) {
 static void show_man_version( textout & log ) {
 	log << "openmpt123" << " v" << OPENMPT123_VERSION_STRING << std::endl;
 	log << std::endl;
-	log << "Copyright (c) 2013-2018 OpenMPT developers <https://lib.openmpt.org/>" << std::endl;
+	log << "Copyright (c) 2013-2020 OpenMPT developers <https://lib.openmpt.org/>" << std::endl;
 }
 
 static void show_short_version( textout & log ) {
@@ -665,13 +671,13 @@ static void show_help( textout & log, bool with_info = true, bool longhelp = fal
 			log << "    ";
 			std::vector<std::string> extensions = openmpt::get_supported_extensions();
 			bool first = true;
-			for ( std::vector<std::string>::iterator i = extensions.begin(); i != extensions.end(); ++i ) {
+			for ( const auto & extension : extensions ) {
 				if ( first ) {
 					first = false;
 				} else {
 					log << ", ";
 				}
-				log << *i;
+				log << extension;
 			}
 			log << std::endl;
 		}
@@ -711,54 +717,32 @@ static void show_help_keyboard( textout & log ) {
 }
 
 
-template < typename T, typename Tmod >
-T ctl_get( Tmod & mod, const std::string & ctl ) {
-	T result = T();
-	try {
-		std::istringstream str;
-		str.imbue( std::locale::classic() );
-		str.str( mod.ctl_get( ctl ) );
-		str >> std::fixed >> std::setprecision(16) >> result;
-	} catch ( const openmpt::exception & ) {
-		// ignore
-	}
-	return result;
-}
-
-template < typename T, typename Tmod >
-void ctl_set( Tmod & mod, const std::string & ctl, const T & val ) {
-	try {
-		std::ostringstream str;
-		str.imbue( std::locale::classic() );
-		str << std::fixed << std::setprecision(16) << val;
-		mod.ctl_set( ctl, str.str() );
-	} catch ( const openmpt::exception & ) {
-		// ignore
-	}
-	return;
-}
-
 template < typename Tmod >
 static void apply_mod_settings( commandlineflags & flags, Tmod & mod ) {
-	flags.separation = std::max( flags.separation,  0 );
-	flags.filtertaps = std::max( flags.filtertaps,  1 );
-	flags.filtertaps = std::min( flags.filtertaps,  8 );
-	flags.ramping    = std::max( flags.ramping,    -1 );
-	flags.ramping    = std::min( flags.ramping,    10 );
-	flags.tempo      = std::max( flags.tempo,     -48 );
-	flags.tempo      = std::min( flags.tempo,      48 );
-	flags.pitch      = std::max( flags.pitch,     -48 );
-	flags.pitch      = std::min( flags.pitch,      48 );
+	flags.separation = std::max( flags.separation, std::int32_t(   0 ) );
+	flags.filtertaps = std::max( flags.filtertaps, std::int32_t(   1 ) );
+	flags.filtertaps = std::min( flags.filtertaps, std::int32_t(   8 ) );
+	flags.ramping    = std::max( flags.ramping,    std::int32_t(  -1 ) );
+	flags.ramping    = std::min( flags.ramping,    std::int32_t(  10 ) );
+	flags.tempo      = std::max( flags.tempo,      std::int32_t( -48 ) );
+	flags.tempo      = std::min( flags.tempo,      std::int32_t(  48 ) );
+	flags.pitch      = std::max( flags.pitch,      std::int32_t( -48 ) );
+	flags.pitch      = std::min( flags.pitch,      std::int32_t(  48 ) );
 	mod.set_render_param( openmpt::module::RENDER_MASTERGAIN_MILLIBEL, flags.gain );
 	mod.set_render_param( openmpt::module::RENDER_STEREOSEPARATION_PERCENT, flags.separation );
 	mod.set_render_param( openmpt::module::RENDER_INTERPOLATIONFILTER_LENGTH, flags.filtertaps );
 	mod.set_render_param( openmpt::module::RENDER_VOLUMERAMPING_STRENGTH, flags.ramping );
-	ctl_set( mod, "play.tempo_factor", tempo_flag_to_double( flags.tempo ) );
-	ctl_set( mod, "play.pitch_factor", pitch_flag_to_double( flags.pitch ) );
-	std::ostringstream dither_str;
-	dither_str.imbue( std::locale::classic() );
-	dither_str << flags.dither;
-	mod.ctl_set( "dither", dither_str.str() );
+	try {
+		mod.ctl_set_floatingpoint( "play.tempo_factor", tempo_flag_to_double( flags.tempo ) );
+	} catch ( const openmpt::exception & ) {
+		// ignore
+	}
+	try {
+		mod.ctl_set_floatingpoint( "play.pitch_factor", pitch_flag_to_double( flags.pitch ) );
+	} catch ( const openmpt::exception & ) {
+		// ignore
+	}
+	mod.ctl_set_integer( "dither", flags.dither );
 }
 
 struct prev_file { int count; prev_file( int c ) : count(c) { } };
@@ -887,10 +871,16 @@ static const char * const channel_tags[4][4] = {
 };
 
 static std::string channel_to_string( int channels, int channel, const meter_channel & meter, bool tiny = false ) {
-	float db = 20.0f * std::log10( meter.peak );
-	float db_hold = 20.0f * std::log10( meter.hold );
-	int val = static_cast<int>( db + 48.0f );
-	int hold_pos = static_cast<int>( db_hold + 48.0f );
+	int val = std::numeric_limits<int>::min();
+	int hold_pos = std::numeric_limits<int>::min();
+	if ( meter.peak > 0.0f ) {
+		float db = 20.0f * std::log10( meter.peak );
+		val = static_cast<int>( db + 48.0f );
+	}
+	if ( meter.hold > 0.0f ) {
+		float db_hold = 20.0f * std::log10( meter.hold );
+		hold_pos = static_cast<int>( db_hold + 48.0f );
+	}
 	if ( val < 0 ) {
 		val = 0;
 	}
@@ -910,13 +900,13 @@ static std::string channel_to_string( int channels, int channel, const meter_cha
 		headroom = 0;
 	}
 	if ( tiny ) {
-		if ( meter.clip != 0.0f || db >= 0.0f ) {
+		if ( meter.clip != 0.0f || meter.peak >= 1.0f ) {
 			return "#";
-		} else if ( db > -6.0f ) {
+		} else if ( meter.peak > std::pow( 10.0f, -6.0f / 20.0f ) ) {
 			return "O";
-		} else if ( db > -12.0f ) {
+		} else if ( meter.peak > std::pow( 10.0f, -12.0f / 20.0f ) ) {
 			return "o";
-		} else if ( db > -18.0f ) {
+		} else if ( meter.peak > std::pow( 10.0f, -18.0f / 20.0f ) ) {
 			return ".";
 		} else {
 			return " ";
@@ -1030,9 +1020,9 @@ void render_loop( commandlineflags & flags, Tmod & mod, double & duration, texto
 	log.writeout();
 
 	std::size_t bufsize;
-	if ( flags.mode == ModeUI ) {
+	if ( flags.mode == Mode::UI ) {
 		bufsize = std::min( flags.ui_redraw_interval, flags.period ) * flags.samplerate / 1000;
-	} else if ( flags.mode == ModeBatch ) {
+	} else if ( flags.mode == Mode::Batch ) {
 		bufsize = flags.period * flags.samplerate / 1000;
 	} else {
 		bufsize = 1024;
@@ -1095,30 +1085,31 @@ void render_loop( commandlineflags & flags, Tmod & mod, double & duration, texto
 
 	log.writeout();
 
-#if defined( WIN32 )
-	HANDLE hStdErr = NULL;
-	COORD coord_cursor = COORD();
-	if ( multiline ) {
-		log.flush();
-		hStdErr = GetStdHandle( STD_ERROR_HANDLE );
-		if ( hStdErr ) {
-			CONSOLE_SCREEN_BUFFER_INFO csbi;
-			ZeroMemory( &csbi, sizeof( CONSOLE_SCREEN_BUFFER_INFO ) );
-			GetConsoleScreenBufferInfo( hStdErr, &csbi );
-			coord_cursor = csbi.dwCursorPosition;
-			coord_cursor.X = 1;
-			coord_cursor.Y -= lines;
-		}
-	}
-#endif
-
 	double cpu_smooth = 0.0;
 
 	while ( true ) {
 
-		if ( flags.mode == ModeUI ) {
+		if ( flags.mode == Mode::UI ) {
 
-#if defined( WIN32 )
+#if defined( __DJGPP__ )
+
+			while ( kbhit() ) {
+				int c = getch();
+				if ( !handle_keypress( c, flags, mod, audio_stream ) ) {
+					return;
+				}
+			}
+
+#elif defined( WIN32 ) && defined( UNICODE )
+
+			while ( _kbhit() ) {
+				wint_t c = _getwch();
+				if ( !handle_keypress( c, flags, mod, audio_stream ) ) {
+					return;
+				}
+			}
+
+#elif defined( WIN32 )
 
 			while ( _kbhit() ) {
 				int c = _getch();
@@ -1200,16 +1191,7 @@ void render_loop( commandlineflags & flags, Tmod & mod, double & duration, texto
 		}
 
 		if ( multiline ) {
-#if defined( WIN32 )
-			log.flush();
-			if ( hStdErr ) {
-				SetConsoleCursorPosition( hStdErr, coord_cursor );
-			}
-#else
-			for ( int line = 0; line < lines; ++line ) {
-				log << "\x1b[1A";
-			}
-#endif
+			log.cursor_up( lines );
 			log << std::endl;
 			if ( flags.show_meters ) {
 				draw_meters( log, meter, flags );
@@ -1394,8 +1376,8 @@ template < typename Tmod >
 std::map<std::string,std::string> get_metadata( const Tmod & mod ) {
 	std::map<std::string,std::string> result;
 	const std::vector<std::string> metadata_keys = mod.get_metadata_keys();
-	for ( std::vector<std::string>::const_iterator key = metadata_keys.begin(); key != metadata_keys.end(); ++key ) {
-		result[ *key ] = mod.get_metadata( *key );
+	for ( const auto & key : metadata_keys ) {
+		result[ key ] = mod.get_metadata( key );
 	}
 	return result;
 }
@@ -1419,9 +1401,9 @@ public:
 
 static void show_fields( textout & log, const std::vector<field> & fields ) {
 	const std::size_t fw = 11;
-	for ( std::vector<field>::const_iterator it = fields.begin(); it != fields.end(); ++it ) {
-		std::string key = it->key;
-		std::string val = it->val;
+	for ( const auto & field :fields ) {
+		std::string key = field.key;
+		std::string val = field.val;
 		if ( key.length() < fw ) {
 			key += std::string( fw - key.length(), '.' );
 		}
@@ -1491,7 +1473,7 @@ void render_mod_file( commandlineflags & flags, const std::string & filename, st
 
 	log.writeout();
 
-	if ( flags.mode != ModeProbe && flags.mode != ModeInfo ) {
+	if ( flags.mode != Mode::Probe && flags.mode != Mode::Info ) {
 		mod.set_repeat_count( flags.repeatcount );
 		apply_mod_settings( flags, mod );
 	}
@@ -1527,6 +1509,9 @@ void render_mod_file( commandlineflags & flags, const std::string & filename, st
 			set_field( fields, "Container" ).ostream() << mod.get_metadata( "container" ) << " (" << mod.get_metadata( "container_long" ) << ")";
 		}
 		set_field( fields, "Type" ).ostream() << mod.get_metadata( "type" ) << " (" << mod.get_metadata( "type_long" ) << ")";
+		if ( !mod.get_metadata( "originaltype" ).empty() ) {
+			set_field( fields, "Orig. Type" ).ostream() << mod.get_metadata( "originaltype" ) << " (" << mod.get_metadata( "originaltype_long" ) << ")";
+		}
 		if ( ( mod.get_num_subsongs() > 1 ) && ( flags.subsong != -1 ) ) {
 			set_field( fields, "Subsong" ).ostream() << flags.subsong;
 		}
@@ -1558,13 +1543,13 @@ void render_mod_file( commandlineflags & flags, const std::string & filename, st
 
 	log.writeout();
 
-	if ( flags.filenames.size() == 1 || flags.mode == ModeRender ) {
+	if ( flags.filenames.size() == 1 || flags.mode == Mode::Render ) {
 		audio_stream.write_metadata( get_metadata( mod ) );
 	} else {
 		audio_stream.write_updated_metadata( get_metadata( mod ) );
 	}
 
-	if ( flags.mode == ModeProbe || flags.mode == ModeInfo ) {
+	if ( flags.mode == Mode::Probe || flags.mode == Mode::Info ) {
 		return;
 	}
 
@@ -1754,18 +1739,17 @@ static void render_file( commandlineflags & flags, const std::string & filename,
 }
 
 
-static std::string get_random_filename(std::set<std::string> & filenames) {
-	// TODO: actually use a useful random distribution
-	std::size_t index = std::rand() % filenames.size();
+static std::string get_random_filename( std::set<std::string> & filenames, std::default_random_engine & prng ) {
+	std::size_t index = std::uniform_int_distribution<std::size_t>( 0, filenames.size() - 1 )( prng );
 	std::set<std::string>::iterator it = filenames.begin();
 	std::advance( it, index );
 	return *it;
 }
 
 
-static void render_files( commandlineflags & flags, textout & log, write_buffers_interface & audio_stream ) {
+static void render_files( commandlineflags & flags, textout & log, write_buffers_interface & audio_stream, std::default_random_engine & prng ) {
 	if ( flags.randomize ) {
-		std::random_shuffle( flags.filenames.begin(), flags.filenames.end() );
+		std::shuffle( flags.filenames.begin(), flags.filenames.end(), prng );
 	}
 	try {
 		while ( true ) {
@@ -1777,7 +1761,7 @@ static void render_files( commandlineflags & flags, textout & log, write_buffers
 					if ( shuffle_set.empty() ) {
 						break;
 					}
-					std::string filename = get_random_filename( shuffle_set );
+					std::string filename = get_random_filename( shuffle_set, prng );
 					try {
 						flags.playlist_index = std::find( flags.filenames.begin(), flags.filenames.end(), filename ) - flags.filenames.begin();
 						render_file( flags, filename, log, audio_stream );
@@ -1962,7 +1946,9 @@ static commandlineflags parse_openmpt123( const std::vector<std::string> & args,
 	commandlineflags flags;
 
 	bool files_only = false;
-	for ( std::vector<std::string>::const_iterator i = args.begin(); i != args.end(); ++i ) {
+	// cppcheck false-positive
+	// cppcheck-suppress StlMissingComparison
+	for ( auto i = args.begin(); i != args.end(); ++i ) {
 		if ( i == args.begin() ) {
 			// skip program name
 			continue;
@@ -1999,15 +1985,15 @@ static commandlineflags parse_openmpt123( const std::vector<std::string> & args,
 			} else if ( arg == "--license" ) {
 				throw show_license_exception();
 			} else if ( arg == "--probe" ) {
-				flags.mode = ModeProbe;
+				flags.mode = Mode::Probe;
 			} else if ( arg == "--info" ) {
-				flags.mode = ModeInfo;
+				flags.mode = Mode::Info;
 			} else if ( arg == "--ui" ) {
-				flags.mode = ModeUI;
+				flags.mode = Mode::UI;
 			} else if ( arg == "--batch" ) {
-				flags.mode = ModeBatch;
+				flags.mode = Mode::Batch;
 			} else if ( arg == "--render" ) {
-				flags.mode = ModeRender;
+				flags.mode = Mode::Render;
 			} else if ( arg == "--terminal-width" && nextarg != "" ) {
 				std::istringstream istr( nextarg );
 				istr >> flags.terminal_width;
@@ -2053,14 +2039,14 @@ static commandlineflags parse_openmpt123( const std::vector<std::string> & args,
 #if defined( MPT_WITH_SDL2 )
 					drivers << "    " << "sdl2" << std::endl;
 #endif
-#if defined( MPT_WITH_SDL )
-					drivers << "    " << "sdl" << std::endl;
-#endif
 #if defined( MPT_WITH_PORTAUDIO )
 					drivers << "    " << "portaudio" << std::endl;
 #endif
 #if defined( WIN32 )
 					drivers << "    " << "waveout" << std::endl;
+#endif
+#if defined( MPT_WITH_ALLEGRO42 )
+					drivers << "    " << "allegro42" << std::endl;
 #endif
 					throw show_help_exception( drivers.str() );
 				} else if ( nextarg == "default" ) {
@@ -2087,6 +2073,9 @@ static commandlineflags parse_openmpt123( const std::vector<std::string> & args,
 #endif
 #if defined( WIN32 )
 					devices << show_waveout_devices( log );
+#endif
+#if defined( MPT_WITH_ALLEGRO42 )
+					devices << show_allegro42_devices( log );
 #endif
 					throw show_help_exception( devices.str() );
 				} else if ( nextarg == "default" ) {
@@ -2220,21 +2209,33 @@ static commandlineflags parse_openmpt123( const std::vector<std::string> & args,
 
 #if defined(WIN32)
 
-class ConsoleCP_utf8_raii {
+class FD_utf8_raii {
 private:
-	const UINT oldCP;
-	const UINT oldOutputCP;
+	FILE * file;
+	int old_mode;
 public:
-	ConsoleCP_utf8_raii()
-		: oldCP(GetConsoleCP())
-		, oldOutputCP(GetConsoleOutputCP())
+	FD_utf8_raii( FILE * file, bool set_utf8 )
+		: file(file)
+		, old_mode(-1)
 	{
-		SetConsoleCP( 65001 ); // UTF-8
-		SetConsoleOutputCP( 65001 ); // UTF-8
+		if ( set_utf8 ) {
+			fflush( file );
+			#if defined(UNICODE)
+				old_mode = _setmode( _fileno( file ), _O_U8TEXT );
+			#else
+				old_mode = _setmode( _fileno( file ), _O_TEXT );
+			#endif
+			if ( old_mode == -1 ) {
+				throw exception( "failed to set TEXT mode on file descriptor" );
+			}
+		}
 	}
-	~ConsoleCP_utf8_raii() {
-		SetConsoleCP( oldCP );
-		SetConsoleOutputCP( oldOutputCP );
+	~FD_utf8_raii()
+	{
+		if ( old_mode != -1 ) {
+			fflush( file );
+			old_mode = _setmode( _fileno( file ), old_mode );
+		}
 	}
 };
 
@@ -2243,7 +2244,7 @@ private:
 	FILE * file;
 	int old_mode;
 public:
-	FD_binary_raii(FILE * file, bool set_binary)
+	FD_binary_raii( FILE * file, bool set_binary )
 		: file(file)
 		, old_mode(-1)
 	{
@@ -2281,12 +2282,14 @@ static int main( int argc, char * argv [] ) {
 	#endif
 
 #if defined(WIN32)
-	ConsoleCP_utf8_raii console_cp;
+	FD_utf8_raii stdin_utf8_guard( stdin, true );
+	FD_utf8_raii stdout_utf8_guard( stdout, true );
+	FD_utf8_raii stderr_utf8_guard( stderr, true );
 #endif
 	textout_dummy dummy_log;
 #if defined(WIN32)
-	textout_console std_out( GetStdHandle( STD_OUTPUT_HANDLE ) );
-	textout_console std_err( GetStdHandle( STD_ERROR_HANDLE ) );
+	textout_ostream_console std_out( std::wcout, STD_OUTPUT_HANDLE );
+	textout_ostream_console std_err( std::wclog, STD_ERROR_HANDLE );
 #else
 	textout_ostream std_out( std::cout );
 	textout_ostream std_err( std::clog );
@@ -2348,8 +2351,8 @@ static int main( int argc, char * argv [] ) {
 	try {
 
 		bool stdin_can_ui = true;
-		for ( std::vector<std::string>::iterator filename = flags.filenames.begin(); filename != flags.filenames.end(); ++filename ) {
-			if ( *filename == "-" ) {
+		for ( const auto & filename : flags.filenames ) {
+			if ( filename == "-" ) {
 				stdin_can_ui = false;
 				break;
 			}
@@ -2373,16 +2376,16 @@ static int main( int argc, char * argv [] ) {
 		// setup terminal
 		#if !defined(WIN32)
 			if ( stdin_can_ui ) {
-				if ( flags.mode == ModeUI ) {
+				if ( flags.mode == Mode::UI ) {
 					set_input_mode();
 				}
 			}
 		#endif
 		
-		textout & log = flags.quiet ? *static_cast<textout*>( &dummy_log ) : *static_cast<textout*>( stdout_can_ui ? &std_out : &std_err );
+		textout & log = flags.quiet ? static_cast<textout&>( dummy_log ) : static_cast<textout&>( stdout_can_ui ? std_out : std_err );
 
 		show_info( log, flags.verbose );
-		
+
 		if ( !flags.warnings.empty() ) {
 			log << flags.warnings << std::endl;
 		}
@@ -2393,53 +2396,62 @@ static int main( int argc, char * argv [] ) {
 
 		log.writeout();
 
-		std::srand( static_cast<unsigned int>( std::time( NULL ) ) );
+		std::default_random_engine prng;
+		try {
+			std::random_device rd;
+			std::seed_seq seq{ rd(), static_cast<unsigned int>( std::time( NULL ) ) };
+			prng = std::default_random_engine{ seq };
+		} catch ( const std::exception & ) {
+			std::seed_seq seq{ static_cast<unsigned int>( std::time( NULL ) ) };
+			prng = std::default_random_engine{ seq };
+		}
+		std::srand( std::uniform_int_distribution<unsigned int>()( prng ) );
 
 		switch ( flags.mode ) {
-			case ModeProbe: {
-				for ( std::vector<std::string>::iterator filename = flags.filenames.begin(); filename != flags.filenames.end(); ++filename ) {
-					probe_file( flags, *filename, log );
+			case Mode::Probe: {
+				for ( const auto & filename : flags.filenames ) {
+					probe_file( flags, filename, log );
 					flags.playlist_index++;
 				}
 			} break;
-			case ModeInfo: {
+			case Mode::Info: {
 				void_audio_stream dummy;
-				render_files( flags, log, dummy );
+				render_files( flags, log, dummy, prng );
 			} break;
-			case ModeUI:
-			case ModeBatch: {
+			case Mode::UI:
+			case Mode::Batch: {
 				if ( flags.use_stdout ) {
 					flags.apply_default_buffer_sizes();
 					stdout_stream_raii stdout_audio_stream;
-					render_files( flags, log, stdout_audio_stream );
+					render_files( flags, log, stdout_audio_stream, prng );
 				} else if ( !flags.output_filename.empty() ) {
 					flags.apply_default_buffer_sizes();
 					file_audio_stream_raii file_audio_stream( flags, flags.output_filename, log );
-					render_files( flags, log, file_audio_stream );
+					render_files( flags, log, file_audio_stream, prng );
 #if defined( MPT_WITH_PULSEAUDIO )
 				} else if ( flags.driver == "pulseaudio" || flags.driver.empty() ) {
 					pulseaudio_stream_raii pulseaudio_stream( flags, log );
-					render_files( flags, log, pulseaudio_stream );
+					render_files( flags, log, pulseaudio_stream, prng );
 #endif
 #if defined( MPT_WITH_SDL2 )
 				} else if ( flags.driver == "sdl2" || flags.driver.empty() ) {
 					sdl2_stream_raii sdl2_stream( flags, log );
-					render_files( flags, log, sdl2_stream );
-#endif
-#if defined( MPT_WITH_SDL )
-				} else if ( flags.driver == "sdl" || flags.driver.empty() ) {
-					sdl_stream_raii sdl_stream( flags, log );
-					render_files( flags, log, sdl_stream );
+					render_files( flags, log, sdl2_stream, prng );
 #endif
 #if defined( MPT_WITH_PORTAUDIO )
 				} else if ( flags.driver == "portaudio" || flags.driver.empty() ) {
 					portaudio_stream_raii portaudio_stream( flags, log );
-					render_files( flags, log, portaudio_stream );
+					render_files( flags, log, portaudio_stream, prng );
 #endif
 #if defined( WIN32 )
 				} else if ( flags.driver == "waveout" || flags.driver.empty() ) {
 					waveout_stream_raii waveout_stream( flags );
-					render_files( flags, log, waveout_stream );
+					render_files( flags, log, waveout_stream, prng );
+#endif
+#if defined( MPT_WITH_ALLEGRO42 )
+				} else if ( flags.driver == "allegro42" || flags.driver.empty() ) {
+					allegro42_stream_raii allegro42_stream( flags, log );
+					render_files( flags, log, allegro42_stream, prng );
 #endif
 				} else {
 					if ( flags.driver.empty() ) {
@@ -2449,21 +2461,27 @@ static int main( int argc, char * argv [] ) {
 					}
 				}
 			} break;
-			case ModeRender: {
-				for ( std::vector<std::string>::iterator filename = flags.filenames.begin(); filename != flags.filenames.end(); ++filename ) {
+			case Mode::Render: {
+				for ( const auto & filename : flags.filenames ) {
 					flags.apply_default_buffer_sizes();
-					file_audio_stream_raii file_audio_stream( flags, *filename + std::string(".") + flags.output_extension, log );
-					render_file( flags, *filename, log, file_audio_stream );
+					file_audio_stream_raii file_audio_stream( flags, filename + std::string(".") + flags.output_extension, log );
+					render_file( flags, filename, log, file_audio_stream );
 					flags.playlist_index++;
 				}
 			} break;
-			case ModeNone:
+			case Mode::None:
 			break;
 		}
 
 	} catch ( args_error_exception & ) {
 		show_help( std_out );
 		return 1;
+#ifdef MPT_WITH_ALLEGRO42
+	} catch ( allegro42_exception & e ) {
+		std_err << "Allegro-4.2 error: " << e.what() << std::endl;
+		std_err.writeout();
+		return 1;
+#endif
 #ifdef MPT_WITH_PULSEAUDIO
 	} catch ( pulseaudio_exception & e ) {
 		std_err << "PulseAudio error: " << e.what() << std::endl;
@@ -2473,12 +2491,6 @@ static int main( int argc, char * argv [] ) {
 #ifdef MPT_WITH_PORTAUDIO
 	} catch ( portaudio_exception & e ) {
 		std_err << "PortAudio error: " << e.what() << std::endl;
-		std_err.writeout();
-		return 1;
-#endif
-#ifdef MPT_WITH_SDL
-	} catch ( sdl_exception & e ) {
-		std_err << "SDL error: " << e.what() << std::endl;
 		std_err.writeout();
 		return 1;
 #endif

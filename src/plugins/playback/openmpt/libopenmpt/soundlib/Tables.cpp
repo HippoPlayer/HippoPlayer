@@ -11,11 +11,11 @@
 
 #include "stdafx.h"
 #include "Tables.h"
-#include <math.h>
 #include "Sndfile.h"
 
 #include "Resampler.h"
 #include "WindowedFIR.h"
+#include <cmath>
 
 
 OPENMPT_NAMESPACE_BEGIN
@@ -24,16 +24,16 @@ OPENMPT_NAMESPACE_BEGIN
 /////////////////////////////////////////////////////////////////////////////
 // Note Name Tables
 
-const char NoteNamesSharp[12][4] =
+const mpt::uchar NoteNamesSharp[12][4] =
 {
-	"C-", "C#", "D-", "D#", "E-", "F-",
-	"F#", "G-", "G#", "A-", "A#", "B-"
+	UL_("C-"), UL_("C#"), UL_("D-"), UL_("D#"), UL_("E-"), UL_("F-"),
+	UL_("F#"), UL_("G-"), UL_("G#"), UL_("A-"), UL_("A#"), UL_("B-")
 };
 
-const char NoteNamesFlat[12][4] =
+const mpt::uchar NoteNamesFlat[12][4] =
 {
-	"C-", "Db", "D-", "Eb", "E-", "F-",
-	"Gb", "G-", "Ab", "A-", "Bb", "B-"
+	UL_("C-"), UL_("Db"), UL_("D-"), UL_("Eb"), UL_("E-"), UL_("F-"),
+	UL_("Gb"), UL_("G-"), UL_("Ab"), UL_("A-"), UL_("Bb"), UL_("B-")
 };
 
 
@@ -43,64 +43,69 @@ const char NoteNamesFlat[12][4] =
 struct ModFormatInfo
 {
 	MODTYPE format;              // MOD_TYPE_XXXX
-	const MPT_UCHAR_TYPE *name;  // "ProTracker"
+	const mpt::uchar *name;  // "ProTracker"
 	const char *extension;       // "mod"
 };
 
-// remember to also update libopenmpt/foo_openmpt.cpp (all other plugins read these dynamically)
+// Note: Formats with identical extensions must be grouped together.
 static constexpr ModFormatInfo modFormatInfo[] =
 {
-	{ MOD_TYPE_MOD,  MPT_ULITERAL("ProTracker"),              "mod" },
-	{ MOD_TYPE_S3M,  MPT_ULITERAL("ScreamTracker 3"),         "s3m" },
-	{ MOD_TYPE_XM,   MPT_ULITERAL("FastTracker II"),          "xm" },
-	{ MOD_TYPE_IT,   MPT_ULITERAL("Impulse Tracker"),         "it" },
-#ifdef MPT_EXTERNAL_SAMPLES
-	{ MOD_TYPE_IT,   MPT_ULITERAL("Impulse Tracker Project"), "itp" },
-#endif
-	{ MOD_TYPE_MPT,  MPT_ULITERAL("OpenMPT"),                 "mptm" },
-	{ MOD_TYPE_STM,  MPT_ULITERAL("ScreamTracker 2"),         "stm" },
-	{ MOD_TYPE_MOD,  MPT_ULITERAL("ProTracker"),              "pt36" },
-	{ MOD_TYPE_MOD,  MPT_ULITERAL("NoiseTracker"),            "nst" },
-	{ MOD_TYPE_MOD,  MPT_ULITERAL("Soundtracker"),            "m15" },
-	{ MOD_TYPE_MOD,  MPT_ULITERAL("Soundtracker"),            "stk" },
-	{ MOD_TYPE_MOD,  MPT_ULITERAL("SoundTracker 2.6"),        "st26" },
-	{ MOD_TYPE_MOD,  MPT_ULITERAL("Ice Tracker"),             "ice" },
-	{ MOD_TYPE_MOD,  MPT_ULITERAL("Mod's Grave"),             "wow" },
-	{ MOD_TYPE_ULT,  MPT_ULITERAL("UltraTracker"),            "ult" },
-	{ MOD_TYPE_669,  MPT_ULITERAL("Composer 669 / UNIS 669"), "669" },
-	{ MOD_TYPE_MTM,  MPT_ULITERAL("MultiTracker"),            "mtm" },
-	{ MOD_TYPE_MED,  MPT_ULITERAL("OctaMed"),                 "med" },
-	{ MOD_TYPE_FAR,  MPT_ULITERAL("Farandole Composer"),      "far" },
-	{ MOD_TYPE_MDL,  MPT_ULITERAL("Digitrakker"),             "mdl" },
-	{ MOD_TYPE_AMS,  MPT_ULITERAL("Extreme's Tracker"),       "ams" },
-	{ MOD_TYPE_AMS2, MPT_ULITERAL("Velvet Studio"),           "ams" },
-	{ MOD_TYPE_DSM,  MPT_ULITERAL("DSIK Format"),             "dsm" },
-	{ MOD_TYPE_AMF,  MPT_ULITERAL("DSMI"),                    "amf" },
-	{ MOD_TYPE_AMF0, MPT_ULITERAL("ASYLUM"),                  "amf" },
-	{ MOD_TYPE_OKT,  MPT_ULITERAL("Oktalyzer"),               "okt" },
-	{ MOD_TYPE_DMF,  MPT_ULITERAL("X-Tracker"),               "dmf" },
-	{ MOD_TYPE_PTM,  MPT_ULITERAL("PolyTracker"),             "ptm" },
-	{ MOD_TYPE_PSM,  MPT_ULITERAL("Epic Megagames MASI"),     "psm" },
-	{ MOD_TYPE_MT2,  MPT_ULITERAL("MadTracker 2"),            "mt2" },
-	{ MOD_TYPE_DBM,  MPT_ULITERAL("DigiBooster Pro"),         "dbm" },
-	{ MOD_TYPE_DIGI, MPT_ULITERAL("DigiBooster"),             "digi" },
-	{ MOD_TYPE_IMF,  MPT_ULITERAL("Imago Orpheus"),           "imf" },
-	{ MOD_TYPE_J2B,  MPT_ULITERAL("Galaxy Sound System"),     "j2b" },
-	{ MOD_TYPE_PLM,  MPT_ULITERAL("Disorder Tracker 2"),      "plm" },
-	{ MOD_TYPE_SFX,  MPT_ULITERAL("SoundFX"),                 "sfx" },
-	{ MOD_TYPE_SFX,  MPT_ULITERAL("SoundFX"),                 "sfx2" },
-	{ MOD_TYPE_SFX,  MPT_ULITERAL("MultiMedia Sound"),        "mms" },
-	{ MOD_TYPE_STP,  MPT_ULITERAL("Soundtracker Pro II"),     "stp" },
-	{ MOD_TYPE_DTM,  MPT_ULITERAL("Digital Tracker"),         "dtm" },
+	{ MOD_TYPE_MPT,  UL_("OpenMPT"),                    "mptm" },
+	{ MOD_TYPE_MOD,  UL_("ProTracker"),                 "mod" },
+	{ MOD_TYPE_S3M,  UL_("ScreamTracker 3"),            "s3m" },
+	{ MOD_TYPE_XM,   UL_("FastTracker 2"),              "xm" },
+	{ MOD_TYPE_IT,   UL_("Impulse Tracker"),            "it" },
 
+	{ MOD_TYPE_669,  UL_("Composer 669 / UNIS 669"),    "669" },
+	{ MOD_TYPE_AMF0, UL_("ASYLUM Music Format"),        "amf" },
+	{ MOD_TYPE_AMF,  UL_("DSMI Advanced Music Format"), "amf" },
+	{ MOD_TYPE_AMS,  UL_("Extreme's Tracker"),          "ams" },
+	{ MOD_TYPE_AMS,  UL_("Velvet Studio"),              "ams" },
+	{ MOD_TYPE_S3M,  UL_("CDFM / Composer 670"),        "c67" },
+	{ MOD_TYPE_DBM,  UL_("DigiBooster Pro"),            "dbm" },
+	{ MOD_TYPE_DIGI, UL_("DigiBooster"),                "digi" },
+	{ MOD_TYPE_DMF,  UL_("X-Tracker"),                  "dmf" },
+	{ MOD_TYPE_DSM,  UL_("DSIK Format"),                "dsm" },
+	{ MOD_TYPE_DTM,  UL_("Digital Tracker"),            "dtm" },
+	{ MOD_TYPE_FAR,  UL_("Farandole Composer"),         "far" },
+	{ MOD_TYPE_IMF,  UL_("Imago Orpheus"),              "imf" },
+	{ MOD_TYPE_MOD,  UL_("Ice Tracker"),                "ice" },
+#ifdef MPT_EXTERNAL_SAMPLES
+	{ MOD_TYPE_IT,   UL_("Impulse Tracker Project"),    "itp" },
+#endif
+	{ MOD_TYPE_J2B,  UL_("Galaxy Sound System"),        "j2b" },
+	{ MOD_TYPE_MOD,  UL_("Soundtracker"),               "m15" },
+	{ MOD_TYPE_MDL,  UL_("Digitrakker"),                "mdl" },
+	{ MOD_TYPE_MED,  UL_("OctaMED"),                    "med" },
+	{ MOD_TYPE_SFX,  UL_("MultiMedia Sound"),           "mms" },
+	{ MOD_TYPE_MT2,  UL_("MadTracker 2"),               "mt2" },
+	{ MOD_TYPE_MTM,  UL_("MultiTracker"),               "mtm" },
+	{ MOD_TYPE_MOD,  UL_("NoiseTracker"),               "nst" },
+	{ MOD_TYPE_OKT,  UL_("Oktalyzer"),                  "okt" },
+	{ MOD_TYPE_PLM,  UL_("Disorder Tracker 2"),         "plm" },
+	{ MOD_TYPE_PSM,  UL_("Epic Megagames MASI"),        "psm" },
+	{ MOD_TYPE_MOD,  UL_("ProTracker"),                 "pt36" },
+	{ MOD_TYPE_PTM,  UL_("PolyTracker"),                "ptm" },
+	{ MOD_TYPE_SFX,  UL_("SoundFX"),                    "sfx" },
+	{ MOD_TYPE_SFX,  UL_("SoundFX"),                    "sfx2" },
+	{ MOD_TYPE_MOD,  UL_("SoundTracker 2.6"),           "st26" },
+	{ MOD_TYPE_MOD,  UL_("Soundtracker"),               "stk" },
+	{ MOD_TYPE_STM,  UL_("ScreamTracker 2"),            "stm" },
+	{ MOD_TYPE_STP,  UL_("Soundtracker Pro II"),        "stp" },
+	{ MOD_TYPE_ULT,  UL_("UltraTracker"),               "ult" },
+	{ MOD_TYPE_MOD,  UL_("Grave Composer"),             "wow" },
+	// converted formats (no MODTYPE)
+	{ MOD_TYPE_NONE, UL_("General Digital Music"),      "gdm" },
+	{ MOD_TYPE_NONE, UL_("Un4seen MO3"),                "mo3" },
+	{ MOD_TYPE_NONE, UL_("OggMod FastTracker 2"),       "oxm" },
 #ifndef NO_ARCHIVE_SUPPORT
 	// Compressed modules
-	{ MOD_TYPE_MOD,  MPT_ULITERAL("ProTracker"),              "mdz" },
-	{ MOD_TYPE_MOD,  MPT_ULITERAL("ProTracker"),              "mdr" },
-	{ MOD_TYPE_S3M,  MPT_ULITERAL("ScreamTracker 3"),         "s3z" },
-	{ MOD_TYPE_XM,   MPT_ULITERAL("FastTracker II"),          "xmz" },
-	{ MOD_TYPE_IT,   MPT_ULITERAL("Impulse Tracker"),         "itz" },
-	{ MOD_TYPE_MPT,  MPT_ULITERAL("OpenMPT"),                 "mptmz" },
+	{ MOD_TYPE_MOD,  UL_("Compressed ProTracker"),      "mdz" },
+	{ MOD_TYPE_MOD,  UL_("Compressed Module"),          "mdr" },
+	{ MOD_TYPE_S3M,  UL_("Compressed ScreamTracker 3"), "s3z" },
+	{ MOD_TYPE_XM,   UL_("Compressed FastTracker 2"),   "xmz" },
+	{ MOD_TYPE_IT,   UL_("Compressed Impulse Tracker"), "itz" },
+	{ MOD_TYPE_MPT,  UL_("Compressed OpenMPT"),         "mptmz" },
 #endif
 };
 
@@ -108,24 +113,21 @@ static constexpr ModFormatInfo modFormatInfo[] =
 struct ModContainerInfo
 {
 	MODCONTAINERTYPE format;     // MOD_CONTAINERTYPE_XXXX
-	const MPT_UCHAR_TYPE *name;  // "Unreal Music"
+	const mpt::uchar *name;  // "Unreal Music"
 	const char *extension;       // "umx"
 };
 
-// remember to also update libopenmpt/libopenmpt_foobar2000.cpp (all other plugins read these dynamically)
 static constexpr ModContainerInfo modContainerInfo[] =
 {
 	// Container formats
-	{ MOD_CONTAINERTYPE_GDM,   MPT_ULITERAL("General Digital Music"),    "gdm"   },
-	{ MOD_CONTAINERTYPE_UMX,   MPT_ULITERAL("Unreal Music"),             "umx"   },
-	{ MOD_CONTAINERTYPE_MO3,   MPT_ULITERAL("Un4seen MO3"),              "mo3"   },
-	{ MOD_CONTAINERTYPE_XPK,   MPT_ULITERAL("XPK packed"),               "xpk"   },
-	{ MOD_CONTAINERTYPE_PP20,  MPT_ULITERAL("PowerPack PP20"),           "ppm"   },
-	{ MOD_CONTAINERTYPE_MMCMP, MPT_ULITERAL("Music Module Compressor"),  "mmcmp" }
+	{ MOD_CONTAINERTYPE_UMX,   UL_("Unreal Music"),             "umx"   },
+	{ MOD_CONTAINERTYPE_XPK,   UL_("XPK packed"),               "xpk"   },
+	{ MOD_CONTAINERTYPE_PP20,  UL_("PowerPack PP20"),           "ppm"   },
+	{ MOD_CONTAINERTYPE_MMCMP, UL_("Music Module Compressor"),  "mmcmp" }
 #ifdef MODPLUG_TRACKER
 	,
-	{ MOD_CONTAINERTYPE_WAV,   MPT_ULITERAL("Wave"),                     "wav"   },
-	{ MOD_CONTAINERTYPE_UAX,   MPT_ULITERAL("Unreal Sounds"),            "uax"   }
+	{ MOD_CONTAINERTYPE_WAV,   UL_("Wave"),                     "wav"   },
+	{ MOD_CONTAINERTYPE_UAX,   UL_("Unreal Sounds"),            "uax"   }
 #endif
 };
 
@@ -133,74 +135,11 @@ static constexpr ModContainerInfo modContainerInfo[] =
 #ifdef MODPLUG_TRACKER
 static constexpr ModFormatInfo otherFormatInfo[] =
 {
-	{ MOD_TYPE_MID,  MPT_ULITERAL("MIDI"), "mid" },
-	{ MOD_TYPE_MID,  MPT_ULITERAL("MIDI"), "rmi" },
-	{ MOD_TYPE_MID,  MPT_ULITERAL("MIDI"), "smf" }
+	{ MOD_TYPE_MID,  UL_("MIDI"), "mid" },
+	{ MOD_TYPE_MID,  UL_("MIDI"), "rmi" },
+	{ MOD_TYPE_MID,  UL_("MIDI"), "smf" }
 };
 #endif
-
-
-struct ModCharsetInfo
-{
-	MODTYPE type;
-	mpt::Charset charset;
-};
-
-static constexpr ModCharsetInfo ModCharsetInfos[] =
-{
-	// Amiga
-	{ MOD_TYPE_OKT , mpt::CharsetISO8859_1  },
-	{ MOD_TYPE_DBM , mpt::CharsetISO8859_1  },
-	{ MOD_TYPE_DIGI, mpt::CharsetISO8859_1  },
-	{ MOD_TYPE_SFX , mpt::CharsetISO8859_1  },
-	{ MOD_TYPE_STP,  mpt::CharsetISO8859_1  },
-	// Amiga // DOS
-	{ MOD_TYPE_MOD , mpt::CharsetISO8859_1  },
-	{ MOD_TYPE_MED , mpt::CharsetISO8859_1  },
-	// Atari
-	{ MOD_TYPE_DTM , mpt::CharsetISO8859_1  },
-	// DOS
-	{ MOD_TYPE_S3M , mpt::CharsetCP437      },
-	{ MOD_TYPE_XM  , mpt::CharsetCP437      },
-	{ MOD_TYPE_MTM , mpt::CharsetCP437      },
-	{ MOD_TYPE_IT  , mpt::CharsetCP437      },
-	{ MOD_TYPE_669 , mpt::CharsetCP437      },
-	{ MOD_TYPE_STM , mpt::CharsetCP437      },
-	{ MOD_TYPE_FAR , mpt::CharsetCP437      },
-	{ MOD_TYPE_AMF , mpt::CharsetCP437      },
-	{ MOD_TYPE_AMF0, mpt::CharsetCP437      },
-	{ MOD_TYPE_MDL , mpt::CharsetCP437      },
-	{ MOD_TYPE_DMF , mpt::CharsetCP437      },
-	{ MOD_TYPE_PTM , mpt::CharsetCP437      },
-	{ MOD_TYPE_PSM , mpt::CharsetCP437      },
-	{ MOD_TYPE_J2B , mpt::CharsetCP437      },
-	{ MOD_TYPE_IMF , mpt::CharsetCP437      },
-	{ MOD_TYPE_ULT , mpt::CharsetCP437      },
-	{ MOD_TYPE_AMS , mpt::CharsetCP437      },
-	{ MOD_TYPE_AMS2, mpt::CharsetCP437      },
-	{ MOD_TYPE_DSM , mpt::CharsetCP437      },
-	// Windows
-	{ MOD_TYPE_MT2 , mpt::CharsetWindows1252},
-	{ MOD_TYPE_MPT , mpt::CharsetWindows1252},
-	// random stuff
-	{ MOD_TYPE_MID , mpt::CharsetASCII      },
-};
-
-
-mpt::Charset CSoundFile::GetCharsetFromModType(MODTYPE modType)
-{
-	// This is just a rough heuristic.
-	// It could be improved by adjusting the charset according to the tracker that had been used to save the file.
-	for(const auto &charsetInfo : ModCharsetInfos)
-	{
-		if(charsetInfo.type == modType)
-		{
-			return charsetInfo.charset;
-		}
-	}
-	// fallback
-	return mpt::CharsetASCII;
-}
 
 
 std::vector<const char *> CSoundFile::GetSupportedExtensions(bool otherFormats)
@@ -237,21 +176,19 @@ std::vector<const char *> CSoundFile::GetSupportedExtensions(bool otherFormats)
 }
 
 
-static bool IsEqualExtension(const char *a, const char *b)
+static bool IsEqualExtension(std::string_view a, std::string_view b)
 {
-	std::size_t lena = std::strlen(a);
-	std::size_t lenb = std::strlen(b);
-	if(lena != lenb)
+	if(a.length() != b.length())
 	{
 		return false;
 	}
-	return mpt::CompareNoCaseAscii(a, b, lena) == 0;
+	return mpt::CompareNoCaseAscii(a, b) == 0;
 }
 
 
-bool CSoundFile::IsExtensionSupported(const char *ext)
+bool CSoundFile::IsExtensionSupported(std::string_view ext)
 {
-	if(ext == nullptr || ext[0] == 0)
+	if(ext.length() == 0)
 	{
 		return false;
 	}
@@ -273,57 +210,16 @@ bool CSoundFile::IsExtensionSupported(const char *ext)
 }
 
 
-mpt::ustring CSoundFile::ModTypeToString(MODTYPE modtype)
-{
-	for(const auto &formatInfo : modFormatInfo)
-	{
-		if(formatInfo.format & modtype)
-		{
-			return mpt::ToUnicode(mpt::CharsetUTF8, formatInfo.extension);
-		}
-	}
-	return mpt::ustring();
-}
-
-
 mpt::ustring CSoundFile::ModContainerTypeToString(MODCONTAINERTYPE containertype)
 {
 	for(const auto &containerInfo : modContainerInfo)
 	{
 		if(containerInfo.format == containertype)
 		{
-			return mpt::ToUnicode(mpt::CharsetUTF8, containerInfo.extension);
+			return mpt::ToUnicode(mpt::Charset::UTF8, containerInfo.extension);
 		}
 	}
 	return mpt::ustring();
-}
-
-
-mpt::ustring CSoundFile::ModTypeToTracker(MODTYPE modtype)
-{
-	std::set<mpt::ustring> retvals;
-	mpt::ustring retval;
-	if(modtype == MOD_TYPE_MOD)
-	{ // special case MOD
-		return MPT_USTRING("Generic Amiga / PC MOD file");
-	}
-	for(const auto &formatInfo : modFormatInfo)
-	{
-		if(formatInfo.format & modtype)
-		{
-			mpt::ustring name = formatInfo.name;
-			if(retvals.find(name) == retvals.end())
-			{
-				retvals.insert(name);
-				if(!retval.empty())
-				{
-					retval += MPT_USTRING(" / ");
-				}
-				retval += name;
-			}
-		}
-	}
-	return retval;
 }
 
 
@@ -336,12 +232,11 @@ mpt::ustring CSoundFile::ModContainerTypeToTracker(MODCONTAINERTYPE containertyp
 		if(containerInfo.format == containertype)
 		{
 			mpt::ustring name = containerInfo.name;
-			if(retvals.find(name) == retvals.end())
+			if(retvals.insert(name).second)
 			{
-				retvals.insert(name);
 				if(!retval.empty())
 				{
-					retval += MPT_USTRING(" / ");
+					retval += U_(" / ");
 				}
 				retval += name;
 			}
@@ -360,9 +255,10 @@ const uint8 ImpulseTrackerPortaVolCmd[16] =
 	0x80, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
 };
 
-// Period table for Protracker octaves 0-5:
-const uint16 ProTrackerPeriodTable[6*12] =
+// Period table for ProTracker octaves (1-7 in FastTracker 2, also used for file I/O):
+const uint16 ProTrackerPeriodTable[7*12] =
 {
+	2*1712,2*1616,2*1524,2*1440,2*1356,2*1280,2*1208,2*1140,2*1076,2*1016,2*960,2*906,
 	1712,1616,1524,1440,1356,1280,1208,1140,1076,1016,960,907,
 	856,808,762,720,678,640,604,570,538,508,480,453,
 	428,404,381,360,339,320,302,285,269,254,240,226,
@@ -400,11 +296,9 @@ const uint8 ModEFxTable[16] =
 };
 
 // S3M C-4 periods
-const uint16 FreqS3MTable[16] =
+const uint16 FreqS3MTable[12] =
 {
-	1712,1616,1524,1440,1356,1280,
-	1208,1140,1076,1016,960,907,
-	0,0,0,0
+	1712,1616,1524,1440,1356,1280,1208,1140,1076,1016,960,907
 };
 
 // S3M FineTune frequencies
@@ -579,28 +473,6 @@ const uint32 XMLinearTable[768] =
 	271508,271263,271018,270774,270530,270286,270042,269798,
 	269555,269312,269069,268826,268583,268341,268099,267857
 };
-
-
-const int8 ft2VibratoTable[256] =
-{
-	0,-2,-3,-5,-6,-8,-9,-11,-12,-14,-16,-17,-19,-20,-22,-23,
-	-24,-26,-27,-29,-30,-32,-33,-34,-36,-37,-38,-39,-41,-42,
-	-43,-44,-45,-46,-47,-48,-49,-50,-51,-52,-53,-54,-55,-56,
-	-56,-57,-58,-59,-59,-60,-60,-61,-61,-62,-62,-62,-63,-63,
-	-63,-64,-64,-64,-64,-64,-64,-64,-64,-64,-64,-64,-63,-63,
-	-63,-62,-62,-62,-61,-61,-60,-60,-59,-59,-58,-57,-56,-56,
-	-55,-54,-53,-52,-51,-50,-49,-48,-47,-46,-45,-44,-43,-42,
-	-41,-39,-38,-37,-36,-34,-33,-32,-30,-29,-27,-26,-24,-23,
-	-22,-20,-19,-17,-16,-14,-12,-11,-9,-8,-6,-5,-3,-2,0,
-	2,3,5,6,8,9,11,12,14,16,17,19,20,22,23,24,26,27,29,30,
-	32,33,34,36,37,38,39,41,42,43,44,45,46,47,48,49,50,51,
-	52,53,54,55,56,56,57,58,59,59,60,60,61,61,62,62,62,63,
-	63,63,64,64,64,64,64,64,64,64,64,64,64,63,63,63,62,62,
-	62,61,61,60,60,59,59,58,57,56,56,55,54,53,52,51,50,49,
-	48,47,46,45,44,43,42,41,39,38,37,36,34,33,32,30,29,27,
-	26,24,23,22,20,19,17,16,14,12,11,9,8,6,5,3,2
-};
-
 
 
 // round(65536 * 2**(n/768))
@@ -809,27 +681,29 @@ const int16 CResampler::FastSincTable[256*4] =
 
 
 // Compute Bessel function Izero(y) using a series approximation
-static double izero(double y)
+double Izero(double y)
 {
-	double s=1, ds=1, d=0;
+	double s = 1, ds = 1, d = 0;
 	do
 	{
-		d = d + 2; ds = ds * (y*y)/(d*d);
+		d = d + 2;
+		ds = ds * (y * y) / (d * d);
 		s = s + ds;
-	} while (ds > 1E-7 * s);
+	} while(ds > 1E-7 * s);
 	return s;
 }
 
-static void getsinc(SINC_TYPE *psinc, double beta, double lowpass_factor)
+
+static void getsinc(SINC_TYPE *psinc, double beta, double cutoff)
 {
-	if(lowpass_factor >= 0.999)
+	if(cutoff >= 0.999)
 	{
 		// Avoid mixer overflows.
 		// 1.0 itself does not make much sense.
-		lowpass_factor = 0.999;
+		cutoff = 0.999;
 	}
-	const double izero_beta = izero(beta);
-	const double kPi = 4.0*atan(1.0)*lowpass_factor;
+	const double izeroBeta = Izero(beta);
+	const double kPi = 4.0 * std::atan(1.0) * cutoff;
 	for (int isrc=0; isrc<8*SINC_PHASES; isrc++)
 	{
 		double fsinc;
@@ -840,10 +714,11 @@ static void getsinc(SINC_TYPE *psinc, double beta, double lowpass_factor)
 			fsinc = 1.0;
 		} else
 		{
-			double x = (double)(ix - (4*SINC_PHASES)) * (double)(1.0/SINC_PHASES);
-			fsinc = sin(x*kPi) * izero(beta*sqrt(1-x*x*(1.0/16.0))) / (izero_beta*x*kPi); // Kaiser window
+			const double x = (double)(ix - (4*SINC_PHASES)) * (double)(1.0/SINC_PHASES);
+			const double xPi = x * kPi;
+			fsinc = std::sin(xPi) * Izero(beta * std::sqrt(1 - x * x * (1.0 / 16.0))) / (izeroBeta * xPi); // Kaiser window
 		}
-		double coeff = fsinc * lowpass_factor;
+		double coeff = fsinc * cutoff;
 #ifdef MPT_INTMIXER
 		int n = (int)std::floor(coeff * (1<<SINC_QUANTSHIFT) + 0.5);
 		MPT_ASSERT(n <= int16_max);
@@ -855,49 +730,15 @@ static void getsinc(SINC_TYPE *psinc, double beta, double lowpass_factor)
 	}
 }
 
-#if 0
-
-// this code is currently unused
-
-static double GetSpline(double x, double c0, double c1, double c2, double c3)
-{
-	double Xo = c1;
-	double Xa = c0 - Xo;
-	double Xb = c2 - Xo;
-	double Ux = (Xb-Xa)/2;
-	double Vx = (c3 - Xo)/2;
-	double a = Vx+Ux-2*Xb;
-	double b = 3*Xb-2*Ux-Vx;
-	return (((a*x+b)*x)+Ux)*x+Xo;
-}
-
-
-static void getdownsample2x(short int *psinc)
-{
-	for (int i=0; i<SINC_PHASES; i++)
-	{
-		double x = (double)i * (double)(0.5/SINC_PHASES);
-		psinc[i*8+7] = (short int)(GetSpline(x,     0, 0, 0, 1) * 8192);
-		psinc[i*8+6] = (short int)(GetSpline(x+0.5, 0, 0, 0, 1) * 8192);
-		psinc[i*8+5] = (short int)(GetSpline(x,     0, 0, 1, 0) * 8192);
-		psinc[i*8+4] = (short int)(GetSpline(x+0.5, 0, 0, 1, 0) * 8192);
-		psinc[i*8+3] = (short int)(GetSpline(x,     0, 1, 0, 0) * 8192);
-		psinc[i*8+2] = (short int)(GetSpline(x+0.5, 0, 1, 0, 0) * 8192);
-		psinc[i*8+1] = (short int)(GetSpline(x,     1, 0, 0, 0) * 8192);
-		psinc[i*8+0] = (short int)(GetSpline(x+0.5, 1, 0, 0, 0) * 8192);
-	}
-}
-
-#endif
-
 
 #ifdef MODPLUG_TRACKER
 bool CResampler::StaticTablesInitialized = false;
-SINC_TYPE CResampler::gKaiserSinc[SINC_PHASES*8];     // Upsampling
-SINC_TYPE CResampler::gDownsample13x[SINC_PHASES*8];	// Downsample 1.333x
-SINC_TYPE CResampler::gDownsample2x[SINC_PHASES*8];		// Downsample 2x
+SINC_TYPE CResampler::gKaiserSinc[SINC_PHASES * 8];     // Upsampling
+SINC_TYPE CResampler::gDownsample13x[SINC_PHASES * 8];  // Downsample 1.333x
+SINC_TYPE CResampler::gDownsample2x[SINC_PHASES * 8];   // Downsample 2x
+Paula::BlepTables CResampler::blepTables;               // Amiga BLEP resampler
 #ifndef MPT_INTMIXER
-mixsample_t CResampler::FastSincTablef[256 * 4];		// Cubic spline LUT
+mixsample_t CResampler::FastSincTablef[256 * 4];        // Cubic spline LUT
 #endif // !defined(MPT_INTMIXER)
 #endif // MODPLUG_TRACKER
 
@@ -922,34 +763,28 @@ void CResampler::InitFloatmixerTables()
 
 void CResampler::InitializeTablesFromScratch(bool force)
 {
-
 	bool initParameterIndependentTables = false;
 	if(force)
 	{
 		initParameterIndependentTables = true;
 	}
-	#ifdef MODPLUG_TRACKER
-		if(!StaticTablesInitialized)
-		{
-			initParameterIndependentTables = true;
-		}
-	#endif // MODPLUG_TRACKER
+#ifdef MODPLUG_TRACKER
+	initParameterIndependentTables = !StaticTablesInitialized;
+#endif  // MODPLUG_TRACKER
 
 	MPT_MAYBE_CONSTANT_IF(initParameterIndependentTables)
 	{
 		InitFloatmixerTables();
 
+		blepTables.InitTables();
+
 		getsinc(gKaiserSinc, 9.6377, 0.97);
-		//ericus' downsampling improvement.
-		//getsinc(gDownsample13x, 8.5, 3.0/4.0);
-		//getdownsample2x(gDownsample2x);
 		getsinc(gDownsample13x, 8.5, 0.5);
 		getsinc(gDownsample2x, 2.7625, 0.425);
-		//end ericus' downsampling improvement.
 
-		#ifdef MODPLUG_TRACKER
-			StaticTablesInitialized = true;
-		#endif // MODPLUG_TRACKER
+#ifdef MODPLUG_TRACKER
+		StaticTablesInitialized = true;
+#endif  // MODPLUG_TRACKER
 	}
 
 	if((m_OldSettings == m_Settings) && !force)
@@ -960,7 +795,6 @@ void CResampler::InitializeTablesFromScratch(bool force)
 	m_WindowedFIR.InitTable(m_Settings.gdWFIRCutoff, m_Settings.gbWFIRType);
 
 	m_OldSettings = m_Settings;
-
 }
 
 
@@ -969,7 +803,7 @@ void CResampler::InitializeTablesFromScratch(bool force)
 static const CResampler & GetCachedResampler()
 {
 	static CResampler s_CachedResampler(true);
-	return s_CachedResampler;	
+	return s_CachedResampler;
 }
 
 
@@ -981,6 +815,7 @@ void CResampler::InitializeTablesFromCache()
 	std::copy(s_CachedResampler.gDownsample13x, s_CachedResampler.gDownsample13x + SINC_PHASES*8, gDownsample13x);
 	std::copy(s_CachedResampler.gDownsample2x, s_CachedResampler.gDownsample2x + SINC_PHASES*8, gDownsample2x);
 	std::copy(s_CachedResampler.m_WindowedFIR.lut, s_CachedResampler.m_WindowedFIR.lut + WFIR_LUTLEN*WFIR_WIDTH, m_WindowedFIR.lut);
+	blepTables = s_CachedResampler.blepTables;
 }
 
 #endif // MPT_RESAMPLER_TABLES_CACHED
@@ -995,7 +830,14 @@ struct ResampleCacheInitializer
 		GetCachedResampler();
 	}
 };
+#if MPT_COMPILER_CLANG
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wglobal-constructors"
+#endif // MPT_COMPILER_CLANG
 static ResampleCacheInitializer g_ResamplerCachePrimer;
+#if MPT_COMPILER_CLANG
+#pragma clang diagnostic pop
+#endif // MPT_COMPILER_CLANG
 
 #endif // MPT_RESAMPLER_TABLES_CACHED_ONSTARTUP
 

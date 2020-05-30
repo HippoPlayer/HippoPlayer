@@ -11,6 +11,7 @@
 #include "stdafx.h"
 #include "Sndfile.h"
 #include "ModChannel.h"
+#include "tuning.h"
 
 OPENMPT_NAMESPACE_BEGIN
 
@@ -37,13 +38,16 @@ void ModChannel::Reset(ResetFlags resetMask, const CSoundFile &sndFile, CHANNELI
 		}
 		nTremorCount = 0;
 		nEFxSpeed = 0;
-		proTrackerOffset = 0;
+		prevNoteOffset = 0;
 		lastZxxParam = 0xFF;
 		isFirstTick = false;
+		isPreviewNote = false;
+		rowCommand.Clear();
 	}
 
 	if(resetMask & resetSetPosAdvanced)
 	{
+		increment = SamplePosition(0);
 		nPeriod = 0;
 		position.Set(0);
 		nLength = 0;
@@ -54,22 +58,20 @@ void ModChannel::Reset(ResetFlags resetMask, const CSoundFile &sndFile, CHANNELI
 		pModInstrument = nullptr;
 		nCutOff = 0x7F;
 		nResonance = 0;
-		nFilterMode = 0;
+		nFilterMode = FilterMode::LowPass;
 		rightVol = leftVol = 0;
 		newRightVol = newLeftVol = 0;
 		rightRamp = leftRamp = 0;
-		nVolume = 0;	// Needs to be 0 for SMP_NODEFAULTVOLUME flag
+		nVolume = 0;  // Needs to be 0 for SMP_NODEFAULTVOLUME flag
 		nVibratoPos = nTremoloPos = nPanbrelloPos = 0;
 		nOldHiOffset = 0;
 		nLeftVU = nRightVU = 0;
 
-		//-->Custom tuning related
+		// Custom tuning related
 		m_ReCalculateFreqOnFirstTick = false;
 		m_CalculateFreq = false;
 		m_PortamentoFineSteps = 0;
 		m_PortamentoTickSlide = 0;
-		m_Freq = 0;
-		//<--Custom tuning related.
 	}
 
 	if(resetMask & resetChannelSettings)
@@ -88,7 +90,6 @@ void ModChannel::Reset(ResetFlags resetMask, const CSoundFile &sndFile, CHANNELI
 		nRestorePanOnNewNote = 0;
 		nRestoreCutoffOnNewNote = 0;
 		nRestoreResonanceOnNewNote = 0;
-
 	}
 }
 
@@ -121,13 +122,41 @@ ModCommand::NOTE ModChannel::GetPluginNote(bool realNoteMapping) const
 		// If an arpeggio is playing, this definitely the last playing note, which may be different from the arpeggio base note stored in nNote.
 		return nArpeggioLastNote;
 	}
-	ModCommand::NOTE plugNote = nNote;
+	ModCommand::NOTE plugNote = mpt::saturate_cast<ModCommand::NOTE>(nNote - nTranspose);
 	// Caution: When in compatible mode, ModChannel::nNote stores the "real" note, not the mapped note!
-	if(realNoteMapping && pModInstrument != nullptr && plugNote >= NOTE_MIN && plugNote < (MPT_ARRAY_COUNT(pModInstrument->NoteMap) + NOTE_MIN))
+	if(realNoteMapping && pModInstrument != nullptr && plugNote >= NOTE_MIN && plugNote < (std::size(pModInstrument->NoteMap) + NOTE_MIN))
 	{
 		plugNote = pModInstrument->NoteMap[plugNote - NOTE_MIN];
 	}
 	return plugNote;
+}
+
+
+void ModChannel::SetInstrumentPan(int32 pan, const CSoundFile &sndFile)
+{
+	// IT compatibility: Instrument and sample panning does not override channel panning
+	// Test case: PanResetInstr.it
+	if(sndFile.m_playBehaviour[kITDoNotOverrideChannelPan])
+	{
+		nRestorePanOnNewNote = static_cast<uint16>(nPan + 1);
+		if(dwFlags[CHN_SURROUND])
+			nRestorePanOnNewNote |= 0x8000;
+	}
+	nPan = pan;
+}
+
+
+void ModChannel::RecalcTuningFreq(Tuning::RATIOTYPE vibratoFactor, Tuning::NOTEINDEXTYPE arpeggioSteps, const CSoundFile &sndFile)
+{
+	if(!HasCustomTuning())
+		return;
+
+	ModCommand::NOTE note = ModCommand::IsNote(nNote) ? nNote : nLastNote;
+
+	if(sndFile.m_playBehaviour[kITRealNoteMapping] && note >= NOTE_MIN && note <= NOTE_MAX)
+		note = pModInstrument->NoteMap[note - NOTE_MIN];
+
+	nPeriod = mpt::saturate_round<uint32>((nC5Speed << FREQ_FRACBITS) * vibratoFactor * pModInstrument->pTuning->GetRatio(note - NOTE_MIDDLEC + arpeggioSteps, nFineTune + m_PortamentoFineSteps));
 }
 
 

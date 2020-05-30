@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include "BuildSettings.h"
+
 #include "tuning.h"
 #include <vector>
 #include <string>
@@ -26,7 +28,7 @@ class CTuningCollection
 
 public:
 
-	static const char s_FileExtension[4];
+	static constexpr char s_FileExtension[4] = ".tc";
 
 	// OpenMPT <= 1.26 had to following limits:
 	//  *  255 built-in tunings (only 2 were ever actually provided)
@@ -38,27 +40,33 @@ public:
 	// user to additionally import both built-in tunings.
 	// Older OpenMPT versions will silently skip loading tunings beyond index
 	// 255.
-	static const size_t s_nMaxTuningCount = 255 + 255 + 2;
+	enum : size_t { s_nMaxTuningCount = 255 + 255 + 2 };
 
 public:
 
-	//Note: Given pointer is deleted by CTuningCollection
-	//at some point.
-	bool AddTuning(CTuning *pT);
-	bool AddTuning(std::istream& inStrm);
+	// returns observer ptr if successfull
+	CTuning* AddTuning(std::unique_ptr<CTuning> pT);
+	CTuning* AddTuning(std::istream &inStrm, mpt::Charset defaultCharset);
 	
 	bool Remove(const std::size_t i);
 	bool Remove(const CTuning *pT);
 
 	CTuning& GetTuning(size_t i) {return *m_Tunings.at(i).get();}
 	const CTuning& GetTuning(size_t i) const {return *m_Tunings.at(i).get();}
-	CTuning* GetTuning(const std::string& name);
-	const CTuning* GetTuning(const std::string& name) const;
+	CTuning* GetTuning(const mpt::ustring &name);
+	const CTuning* GetTuning(const mpt::ustring &name) const;
 
 	size_t GetNumTunings() const {return m_Tunings.size();}
 
-	Tuning::SerializationResult Serialize(std::ostream&, const std::string &name) const;
-	Tuning::SerializationResult Deserialize(std::istream&, std::string &name);
+	Tuning::SerializationResult Serialize(std::ostream &oStrm, const mpt::ustring &name) const;
+	Tuning::SerializationResult Deserialize(std::istream &iStrm, mpt::ustring &name, mpt::Charset defaultCharset);
+
+	auto begin() { return m_Tunings.begin(); }
+	auto begin() const { return m_Tunings.begin(); }
+	auto cbegin() { return m_Tunings.cbegin(); }
+	auto end() { return m_Tunings.end(); }
+	auto end() const { return m_Tunings.end(); }
+	auto cend() { return m_Tunings.cend(); }
 
 private:
 
@@ -66,7 +74,7 @@ private:
 
 private:
 
-	Tuning::SerializationResult DeserializeOLD(std::istream&, std::string &name);
+	Tuning::SerializationResult DeserializeOLD(std::istream &inStrm, mpt::ustring &uname, mpt::Charset defaultCharset);
 
 };
 

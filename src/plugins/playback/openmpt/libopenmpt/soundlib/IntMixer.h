@@ -11,6 +11,8 @@
 
 #pragma once
 
+#include "BuildSettings.h"
+
 #include "Resampler.h"
 #include "MixerInterface.h"
 #include "Paula.h"
@@ -49,16 +51,16 @@ struct AmigaBlepInterpolation
 {
 	SamplePosition subIncrement;
 	Paula::State *paula;
+	const Paula::BlepArray *WinSincIntegral;
 	int numSteps;
-	bool filter;
 
-	MPT_FORCEINLINE void Start(ModChannel &chn, const CResampler &)
+	MPT_FORCEINLINE void Start(ModChannel &chn, const CResampler &resampler)
 	{
 		paula = &chn.paulaState;
 		numSteps = paula->numSteps;
-		filter = chn.dwFlags[CHN_AMIGAFILTER];
+		WinSincIntegral = &resampler.blepTables.GetAmigaTable(resampler.m_Settings.emulateAmiga, chn.dwFlags[CHN_AMIGAFILTER]);
 		if(numSteps)
-			subIncrement = chn.increment / paula->numSteps;
+			subIncrement = chn.increment / numSteps;
 	}
 
 	MPT_FORCEINLINE void End(const ModChannel &) { }
@@ -92,8 +94,8 @@ struct AmigaBlepInterpolation
 			paula->remainder.RemoveInt();
 		}
 
-		auto out = paula->OutputSample(filter);
-		for(unsigned int i = 0; i < Traits::numChannelsOut; i++)
+		auto out = paula->OutputSample(*WinSincIntegral);
+		for(int i = 0; i < Traits::numChannelsOut; i++)
 			outSample[i] = out;
 	}
 };
@@ -108,7 +110,7 @@ struct LinearInterpolation
 
 	MPT_FORCEINLINE void operator() (typename Traits::outbuf_t &outSample, const typename Traits::input_t * const MPT_RESTRICT inBuffer, const uint32 posLo)
 	{
-		static_assert(Traits::numChannelsIn <= Traits::numChannelsOut, "Too many input channels");
+		static_assert(static_cast<int>(Traits::numChannelsIn) <= static_cast<int>(Traits::numChannelsOut), "Too many input channels");
 		const typename Traits::output_t fract = posLo >> 18u;
 
 		for(int i = 0; i < Traits::numChannelsIn; i++)
@@ -130,7 +132,7 @@ struct FastSincInterpolation
 
 	MPT_FORCEINLINE void operator() (typename Traits::outbuf_t &outSample, const typename Traits::input_t * const MPT_RESTRICT inBuffer, const uint32 posLo)
 	{
-		static_assert(Traits::numChannelsIn <= Traits::numChannelsOut, "Too many input channels");
+		static_assert(static_cast<int>(Traits::numChannelsIn) <= static_cast<int>(Traits::numChannelsOut), "Too many input channels");
 		const int16 *lut = CResampler::FastSincTable + ((posLo >> 22) & 0x3FC);
 
 		for(int i = 0; i < Traits::numChannelsIn; i++)
@@ -166,7 +168,7 @@ struct PolyphaseInterpolation
 
 	MPT_FORCEINLINE void operator() (typename Traits::outbuf_t &outSample, const typename Traits::input_t * const MPT_RESTRICT inBuffer, const uint32 posLo)
 	{
-		static_assert(Traits::numChannelsIn <= Traits::numChannelsOut, "Too many input channels");
+		static_assert(static_cast<int>(Traits::numChannelsIn) <= static_cast<int>(Traits::numChannelsOut), "Too many input channels");
 		const SINC_TYPE *lut = sinc + ((posLo >> (32 - SINC_PHASES_BITS)) & SINC_MASK) * SINC_WIDTH;
 
 		for(int i = 0; i < Traits::numChannelsIn; i++)
@@ -199,7 +201,7 @@ struct FIRFilterInterpolation
 
 	MPT_FORCEINLINE void operator() (typename Traits::outbuf_t &outSample, const typename Traits::input_t * const MPT_RESTRICT inBuffer, const uint32 posLo)
 	{
-		static_assert(Traits::numChannelsIn <= Traits::numChannelsOut, "Too many input channels");
+		static_assert(static_cast<int>(Traits::numChannelsIn) <= static_cast<int>(Traits::numChannelsOut), "Too many input channels");
 		const int16 * const lut = WFIRlut + ((((posLo >> 16) + WFIR_FRACHALVE) >> WFIR_FRACSHIFT) & WFIR_FRACMASK);
 
 		for(int i = 0; i < Traits::numChannelsIn; i++)
@@ -361,23 +363,26 @@ struct ResonantFilter
 		}
 	}
 
+	// To avoid a precision loss in the state variables especially with quiet samples at low cutoff and high mix rate, we pre-amplify the sample.
+#define MIXING_FILTER_PREAMP 256
 	// Filter values are clipped to double the input range
-#define ClipFilter(x) Clamp<typename Traits::output_t, typename Traits::output_t>(x, int16_min * 2, int16_max * 2)
+#define ClipFilter(x) Clamp<typename Traits::output_t, typename Traits::output_t>(x, int16_min * 2 * MIXING_FILTER_PREAMP, int16_max * 2 * MIXING_FILTER_PREAMP)
 
 	MPT_FORCEINLINE void operator() (typename Traits::outbuf_t &outSample, const ModChannel &chn)
 	{
-		static_assert(Traits::numChannelsIn <= Traits::numChannelsOut, "Too many input channels");
+		static_assert(static_cast<int>(Traits::numChannelsIn) <= static_cast<int>(Traits::numChannelsOut), "Too many input channels");
 
 		for(int i = 0; i < Traits::numChannelsIn; i++)
 		{
-			typename Traits::output_t val = static_cast<typename Traits::output_t>((
-				Util::mul32to64(outSample[i], chn.nFilter_A0) +
+			const auto inputAmp = outSample[i] * MIXING_FILTER_PREAMP;
+			typename Traits::output_t val = static_cast<typename Traits::output_t>(mpt::rshift_signed(
+				Util::mul32to64(inputAmp, chn.nFilter_A0) +
 				Util::mul32to64(ClipFilter(fy[i][0]), chn.nFilter_B0) +
 				Util::mul32to64(ClipFilter(fy[i][1]), chn.nFilter_B1) +
-				(1 << (MIXING_FILTER_PRECISION - 1))) / (1 << MIXING_FILTER_PRECISION));
+				(1 << (MIXING_FILTER_PRECISION - 1)), MIXING_FILTER_PRECISION));
 			fy[i][1] = fy[i][0];
-			fy[i][0] = val - (outSample[i] & chn.nFilter_HP);
-			outSample[i] = val;
+			fy[i][0] = val - (inputAmp & chn.nFilter_HP);
+			outSample[i] = val / MIXING_FILTER_PREAMP;
 		}
 	}
 

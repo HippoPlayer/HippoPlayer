@@ -11,7 +11,7 @@
 #include "stdafx.h"
 #include "Loaders.h"
 #include "ChunkReader.h"
-#include "../common/StringFixer.h"
+#include "../common/mptStringBuffer.h"
 #ifndef NO_PLUGINS
 #include "plugins/DigiBoosterEcho.h"
 #endif // NO_PLUGINS
@@ -39,17 +39,17 @@ struct DBMChunk
 	// 32-Bit chunk identifiers
 	enum ChunkIdentifiers
 	{
-		idNAME	= MAGIC4BE('N','A','M','E'),
-		idINFO	= MAGIC4BE('I','N','F','O'),
-		idSONG	= MAGIC4BE('S','O','N','G'),
-		idINST	= MAGIC4BE('I','N','S','T'),
-		idVENV	= MAGIC4BE('V','E','N','V'),
-		idPENV	= MAGIC4BE('P','E','N','V'),
-		idPATT	= MAGIC4BE('P','A','T','T'),
-		idPNAM	= MAGIC4BE('P','N','A','M'),
-		idSMPL	= MAGIC4BE('S','M','P','L'),
-		idDSPE	= MAGIC4BE('D','S','P','E'),
-		idMPEG	= MAGIC4BE('M','P','E','G'),
+		idNAME	= MagicBE("NAME"),
+		idINFO	= MagicBE("INFO"),
+		idSONG	= MagicBE("SONG"),
+		idINST	= MagicBE("INST"),
+		idVENV	= MagicBE("VENV"),
+		idPENV	= MagicBE("PENV"),
+		idPATT	= MagicBE("PATT"),
+		idPNAM	= MagicBE("PNAM"),
+		idSMPL	= MagicBE("SMPL"),
+		idDSPE	= MagicBE("DSPE"),
+		idMPEG	= MagicBE("MPEG"),
 	};
 
 	uint32be id;
@@ -127,14 +127,14 @@ MPT_BINARY_STRUCT(DBMEnvelope, 136)
 
 
 // Note: Unlike in MOD, 1Fx, 2Fx, 5Fx / 5xF, 6Fx / 6xF and AFx / AxF are fine slides.
-static const ModCommand::COMMAND dbmEffects[] =
+static constexpr ModCommand::COMMAND dbmEffects[] =
 {
 	CMD_ARPEGGIO, CMD_PORTAMENTOUP, CMD_PORTAMENTODOWN, CMD_TONEPORTAMENTO,
 	CMD_VIBRATO, CMD_TONEPORTAVOL, CMD_VIBRATOVOL, CMD_TREMOLO,
 	CMD_PANNING8, CMD_OFFSET, CMD_VOLUMESLIDE, CMD_POSITIONJUMP,
 	CMD_VOLUME, CMD_PATTERNBREAK, CMD_MODCMDEX, CMD_TEMPO,
-	CMD_GLOBALVOLUME, CMD_GLOBALVOLSLIDE, CMD_KEYOFF, CMD_SETENVPOSITION,
-	CMD_CHANNELVOLUME, CMD_CHANNELVOLSLIDE, CMD_NONE, CMD_NONE,
+	CMD_GLOBALVOLUME, CMD_GLOBALVOLSLIDE, CMD_NONE, CMD_NONE,
+	CMD_KEYOFF, CMD_SETENVPOSITION, CMD_NONE, CMD_NONE,
 	CMD_NONE, CMD_PANNINGSLIDE, CMD_NONE, CMD_NONE,
 	CMD_NONE, CMD_NONE, CMD_NONE,
 #ifndef NO_PLUGINS
@@ -196,18 +196,15 @@ static void ConvertDBMEffect(uint8 &command, uint8 &param)
 	case CMD_MODCMDEX:
 		switch(param & 0xF0)
 		{
-		case 0x00:	// set filter
-			command = CMD_NONE;
-			break;
-		case 0x30:	// play backwards
+		case 0x30:	// Play backwards
 			command = CMD_S3MCMDEX;
 			param = 0x9F;
 			break;
-		case 0x40:	// turn off sound in channel (volume / portamento commands after this can't pick up the note anymore)
+		case 0x40:	// Turn off sound in channel (volume / portamento commands after this can't pick up the note anymore)
 			command = CMD_S3MCMDEX;
 			param = 0xC0;
 			break;
-		case 0x50:	// turn on/off channel
+		case 0x50:	// Turn on/off channel
 			// TODO: Apparently this should also kill the playing note.
 			if((param & 0x0F) <= 0x01)
 			{
@@ -215,11 +212,9 @@ static void ConvertDBMEffect(uint8 &command, uint8 &param)
 				param = (param == 0x50) ? 0x00 : 0x40;
 			}
 			break;
-		case 0x60:	// set loop begin / loop
-			// TODO
-			break;
-		case 0x70:	// set offset
-			// TODO
+		case 0x70:	// Coarse offset
+			command = CMD_S3MCMDEX;
+			param = 0xA0 | (param & 0x0F);
 			break;
 		default:
 			// Rest will be converted later from CMD_MODCMDEX to CMD_S3MCMDEX.
@@ -234,7 +229,7 @@ static void ConvertDBMEffect(uint8 &command, uint8 &param)
 	case CMD_KEYOFF:
 		if (param == 0)
 		{
-			// TODO key of at tick 0
+			// TODO key off at tick 0
 		}
 		break;
 
@@ -267,7 +262,7 @@ static void ReadDBMEnvelopeChunk(FileReader chunk, EnvelopeType envType, CSoundF
 				if(dbmEnv.flags & DBMEnvelope::envLoop) mptEnv.dwFlags.set(ENV_LOOP);
 			}
 
-			uint8 numPoints = std::min<uint8>(dbmEnv.numSegments, 31) + 1;
+			uint8 numPoints = std::min(dbmEnv.numSegments.get(), uint8(31)) + 1;
 			mptEnv.resize(numPoints);
 
 			mptEnv.nLoopStart = dbmEnv.loopBegin;
@@ -350,11 +345,16 @@ bool CSoundFile::ReadDBM(FileReader &file, ModLoadingFlags loadFlags)
 	InitializeChannels();
 	m_SongFlags = SONG_ITCOMPATGXX | SONG_ITOLDEFFECTS;
 	m_nChannels = Clamp<uint16, uint16>(infoData.channels, 1, MAX_BASECHANNELS);	// note: MAX_BASECHANNELS is currently 127, but DBPro 2 supports up to 128 channels, DBPro 3 apparently up to 254.
-	m_nInstruments = std::min<INSTRUMENTINDEX>(infoData.instruments, MAX_INSTRUMENTS - 1);
-	m_nSamples = std::min<SAMPLEINDEX>(infoData.samples, MAX_SAMPLES - 1);
-	m_madeWithTracker = mpt::format(MPT_USTRING("DigiBooster Pro %1.%2"))(mpt::ufmt::hex(fileHeader.trkVerHi), mpt::ufmt::hex(fileHeader.trkVerLo));
+	m_nInstruments = std::min(static_cast<INSTRUMENTINDEX>(infoData.instruments), static_cast<INSTRUMENTINDEX>(MAX_INSTRUMENTS - 1));
+	m_nSamples = std::min(static_cast<SAMPLEINDEX>(infoData.samples), static_cast<SAMPLEINDEX>(MAX_SAMPLES - 1));
 	m_playBehaviour.set(kSlidesAtSpeed1);
 	m_playBehaviour.reset(kITVibratoTremoloPanbrello);
+	m_playBehaviour.reset(kITArpeggio);
+
+	m_modFormat.formatName = U_("DigiBooster Pro");
+	m_modFormat.type = U_("dbm");
+	m_modFormat.madeWithTracker = mpt::format(U_("DigiBooster Pro %1.%2"))(mpt::ufmt::hex(fileHeader.trkVerHi), mpt::ufmt::hex(fileHeader.trkVerLo));
+	m_modFormat.charset = mpt::Charset::ISO8859_1;
 
 	// Name chunk
 	FileReader nameChunk = chunks.GetChunk(DBMChunk::idNAME);
@@ -378,10 +378,10 @@ bool CSoundFile::ReadDBM(FileReader &file, ModLoadingFlags loadFlags)
 		if(!Order().empty())
 		{
 			// Add a new sequence for this song
-			if(Order.AddSequence(false) == SEQUENCEINDEX_INVALID)
+			if(Order.AddSequence() == SEQUENCEINDEX_INVALID)
 				break;
 		}
-		Order().SetName(name);
+		Order().SetName(mpt::ToUnicode(mpt::Charset::ISO8859_1, name));
 		ReadOrderFromFile<uint16be>(Order(), songChunk, numOrders);
 #else
 		const ORDERINDEX startIndex = Order().GetLength();
@@ -415,8 +415,8 @@ bool CSoundFile::ReadDBM(FileReader &file, ModLoadingFlags loadFlags)
 			}
 			ModSample &mptSmp = Samples[instrHeader.sample];
 
-			mpt::String::Read<mpt::String::maybeNullTerminated>(mptIns->name, instrHeader.name);
-			mpt::String::Read<mpt::String::maybeNullTerminated>(m_szNames[instrHeader.sample], instrHeader.name);
+			mptIns->name = mpt::String::ReadBuf(mpt::String::maybeNullTerminated, instrHeader.name);
+			m_szNames[instrHeader.sample] = mpt::String::ReadBuf(mpt::String::maybeNullTerminated, instrHeader.name);
 
 			mptIns->nFadeOut = 0;
 			mptIns->nPan = static_cast<uint16>(instrHeader.panning + 128);
@@ -425,7 +425,7 @@ bool CSoundFile::ReadDBM(FileReader &file, ModLoadingFlags loadFlags)
 
 			// Sample Info
 			mptSmp.Initialize();
-			mptSmp.nVolume = std::min<uint16>(instrHeader.volume, 64) * 4u;
+			mptSmp.nVolume = std::min(static_cast<uint16>(instrHeader.volume), uint16(64)) * 4u;
 			mptSmp.nC5Speed = instrHeader.sampleRate;
 
 			if(instrHeader.loopLength && (instrHeader.flags & (DBMInstrument::smpLoop | DBMInstrument::smpPingPongLoop)))
@@ -493,7 +493,7 @@ bool CSoundFile::ReadDBM(FileReader &file, ModLoadingFlags loadFlags)
 					continue;
 				}
 
-				ModCommand dummy;
+				ModCommand dummy = ModCommand::Empty();
 				ModCommand &m = ch <= GetNumChannels() ? patRow[ch - 1] : dummy;
 
 				const uint8 b = chunk.ReadUint8();
@@ -604,12 +604,13 @@ bool CSoundFile::ReadDBM(FileReader &file, ModLoadingFlags loadFlags)
 			plugin.Info.gain = 10;
 			plugin.Info.reserved = 0;
 			plugin.Info.dwOutputRouting = 0;
-			std::fill(plugin.Info.dwReserved, plugin.Info.dwReserved + mpt::size(plugin.Info.dwReserved), 0);
-			mpt::String::Write<mpt::String::nullTerminated>(plugin.Info.szName, "Echo");
-			mpt::String::Write<mpt::String::nullTerminated>(plugin.Info.szLibraryName, "DigiBooster Pro Echo");
+			std::fill(plugin.Info.dwReserved, plugin.Info.dwReserved + std::size(plugin.Info.dwReserved), 0);
+			plugin.Info.szName = "Echo";
+			plugin.Info.szLibraryName = "DigiBooster Pro Echo";
 
 			plugin.pluginData.resize(sizeof(DigiBoosterEcho::PluginChunk));
-			new (plugin.pluginData.data()) DigiBoosterEcho::PluginChunk(settings[1], settings[3], settings[5], settings[7]);
+			DigiBoosterEcho::PluginChunk chunk = DigiBoosterEcho::PluginChunk::Create(settings[1], settings[3], settings[5], settings[7]);
+			new (plugin.pluginData.data()) DigiBoosterEcho::PluginChunk(chunk);
 		}
 	}
 
@@ -619,10 +620,10 @@ bool CSoundFile::ReadDBM(FileReader &file, ModLoadingFlags loadFlags)
 		for(uint32 i = 0; i < 32; i++)
 		{
 			uint32 param = (i * 127u) / 32u;
-			sprintf(m_MidiCfg.szMidiZXXExt[i     ], "F0F080%02X", param);
-			sprintf(m_MidiCfg.szMidiZXXExt[i + 32], "F0F081%02X", param);
-			sprintf(m_MidiCfg.szMidiZXXExt[i + 64], "F0F082%02X", param);
-			sprintf(m_MidiCfg.szMidiZXXExt[i + 96], "F0F083%02X", param);
+			mpt::String::WriteAutoBuf(m_MidiCfg.szMidiZXXExt[i     ]) = mpt::format("F0F080%1")(mpt::fmt::HEX0<2>(param));
+			mpt::String::WriteAutoBuf(m_MidiCfg.szMidiZXXExt[i + 32]) = mpt::format("F0F081%1")(mpt::fmt::HEX0<2>(param));
+			mpt::String::WriteAutoBuf(m_MidiCfg.szMidiZXXExt[i + 64]) = mpt::format("F0F082%1")(mpt::fmt::HEX0<2>(param));
+			mpt::String::WriteAutoBuf(m_MidiCfg.szMidiZXXExt[i + 96]) = mpt::format("F0F083%1")(mpt::fmt::HEX0<2>(param));
 		}
 	}
 #endif // NO_PLUGINS
@@ -664,11 +665,12 @@ bool CSoundFile::ReadDBM(FileReader &file, ModLoadingFlags loadFlags)
 
 		// Read whole MPEG stream into one sample and then split it up.
 		FileReader chunk = mpegChunk.GetChunk(mpegChunk.BytesLeft());
-		if(ReadMP3Sample(0, chunk))
+		if(ReadMP3Sample(0, chunk, true))
 		{
 			ModSample &srcSample = Samples[0];
-			const int8 *smpData = srcSample.pSample8;
-			uint32 predelay = Util::muldiv_unsigned(20116, srcSample.nC5Speed, 100000);
+			const std::byte *smpData = srcSample.sampleb();
+			SmpLength predelay = Util::muldiv_unsigned(20116, srcSample.nC5Speed, 100000);
+			LimitMax(predelay, srcSample.nLength);
 			smpData += predelay * srcSample.GetBytesPerSample();
 			srcSample.nLength -= predelay;
 
@@ -680,10 +682,11 @@ bool CSoundFile::ReadDBM(FileReader &file, ModLoadingFlags loadFlags)
 				if(sample.nLength)
 				{
 					sample.AllocateSample();
-					memcpy(sample.pSample, smpData, sample.GetSampleSizeInBytes());
+					memcpy(sample.sampleb(), smpData, sample.GetSampleSizeInBytes());
 					smpData += sample.GetSampleSizeInBytes();
 					srcSample.nLength -= sample.nLength;
-					uint32 gap = Util::muldiv_unsigned(454, srcSample.nC5Speed, 10000);
+					SmpLength gap = Util::muldiv_unsigned(454, srcSample.nC5Speed, 10000);
+					LimitMax(gap, srcSample.nLength);
 					smpData += gap * srcSample.GetBytesPerSample();
 					srcSample.nLength -= gap;
 				}

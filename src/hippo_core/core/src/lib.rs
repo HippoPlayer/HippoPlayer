@@ -16,7 +16,7 @@ pub mod ffi;
 mod service;
 pub mod service_ffi;
 
-use audio::{HippoAudio, MusicInfo};
+use audio::HippoAudio;
 use core_config::CoreConfig;
 use messages::*;
 use playlist::Playlist;
@@ -46,7 +46,7 @@ pub struct HippoCore {
 }
 
 impl HippoCore {
-    pub fn play_file(&mut self, filename: &str) -> MusicInfo {
+    pub fn play_file(&mut self, filename: &str) {
         let mut buffer = [0; 4096];
         // TODO: Fix error handling here
 
@@ -81,7 +81,7 @@ impl HippoCore {
 
         println!("Unable to find plugin to support {}", filename);
 
-        MusicInfo::default()
+        //MusicInfo::default()
     }
 
     ///
@@ -159,6 +159,7 @@ impl HippoCore {
                     let metadata_message = message.message_as_song_metadata().unwrap();
                     self.playlist.update_current_entry(&metadata_message);
 
+                    // Send playlist reply to frontend
                     self.playlist.current_song_message().map(|reply| {
                         Self::send_msgs(user_data, send_messages, &reply, count, std::usize::MAX);
                     });

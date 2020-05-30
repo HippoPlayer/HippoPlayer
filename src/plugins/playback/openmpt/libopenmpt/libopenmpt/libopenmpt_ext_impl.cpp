@@ -28,10 +28,16 @@ namespace openmpt {
 	module_ext_impl::module_ext_impl( std::istream & stream, std::unique_ptr<log_interface> log, const std::map< std::string, std::string > & ctls ) : module_impl( stream, std::move(log), ctls ) {
 		ctor();
 	}
+	module_ext_impl::module_ext_impl( const std::vector<std::byte> & data, std::unique_ptr<log_interface> log, const std::map< std::string, std::string > & ctls ) : module_impl( data, std::move(log), ctls ) {
+		ctor();
+	}
 	module_ext_impl::module_ext_impl( const std::vector<std::uint8_t> & data, std::unique_ptr<log_interface> log, const std::map< std::string, std::string > & ctls ) : module_impl( data, std::move(log), ctls ) {
 		ctor();
 	}
 	module_ext_impl::module_ext_impl( const std::vector<char> & data, std::unique_ptr<log_interface> log, const std::map< std::string, std::string > & ctls ) : module_impl( data, std::move(log), ctls ) {
+		ctor();
+	}
+	module_ext_impl::module_ext_impl( const std::byte * data, std::size_t size, std::unique_ptr<log_interface> log, const std::map< std::string, std::string > & ctls ) : module_impl( data, size, std::move(log), ctls ) {
 		ctor();
 	}
 	module_ext_impl::module_ext_impl( const std::uint8_t * data, std::size_t size, std::unique_ptr<log_interface> log, const std::map< std::string, std::string > & ctls ) : module_impl( data, size, std::move(log), ctls ) {
@@ -135,7 +141,7 @@ namespace openmpt {
 		if ( factor <= 0.0 || factor > 4.0 ) {
 			throw openmpt::exception("invalid tempo factor");
 		}
-		m_sndFile->m_nTempoFactor = Util::Round<uint32_t>( 65536.0 / factor );
+		m_sndFile->m_nTempoFactor = mpt::saturate_round<uint32_t>( 65536.0 / factor );
 		m_sndFile->RecalculateSamplesPerTick();
 	}
 
@@ -147,7 +153,7 @@ namespace openmpt {
 		if ( factor <= 0.0 || factor > 4.0 ) {
 			throw openmpt::exception("invalid pitch factor");
 		}
-		m_sndFile->m_nFreqFactor = Util::Round<uint32_t>( 65536.0 * factor );
+		m_sndFile->m_nFreqFactor = mpt::saturate_round<uint32_t>( 65536.0 * factor );
 		m_sndFile->RecalculateSamplesPerTick();
 	}
 
@@ -159,7 +165,7 @@ namespace openmpt {
 		if ( volume < 0.0 || volume > 1.0 ) {
 			throw openmpt::exception("invalid global volume");
 		}
-		m_sndFile->m_PlayState.m_nGlobalVolume = Util::Round<uint32_t>( volume * MAX_GLOBAL_VOLUME );
+		m_sndFile->m_PlayState.m_nGlobalVolume = mpt::saturate_round<uint32_t>( volume * MAX_GLOBAL_VOLUME );
 	}
 
 	double module_ext_impl::get_global_volume( ) const {
@@ -173,7 +179,7 @@ namespace openmpt {
 		if ( volume < 0.0 || volume > 1.0 ) {
 			throw openmpt::exception("invalid global volume");
 		}
-		m_sndFile->m_PlayState.Chn[channel].nGlobalVol = Util::Round<std::int32_t>(volume * 64.0);
+		m_sndFile->m_PlayState.Chn[channel].nGlobalVol = mpt::saturate_round<std::int32_t>(volume * 64.0);
 	}
 
 	double module_ext_impl::get_channel_volume( std::int32_t channel ) const {
@@ -269,11 +275,21 @@ namespace openmpt {
 		chn.nMasterChn = 0;	// remove NNA association
 		chn.nNewNote = chn.nLastNote = static_cast<uint8>(note);
 		chn.ResetEnvelopes();
-		m_sndFile->InstrumentChange(&chn, instrument + 1);
+		m_sndFile->InstrumentChange(chn, instrument + 1);
 		chn.nFadeOutVol = 0x10000;
-		m_sndFile->NoteChange(&chn, note, false, true, true);
-		chn.nPan = Util::Round<int32_t>( Clamp( panning * 128.0, -128.0, 128.0 ) + 128.0 );
-		chn.nVolume = Util::Round<int32_t>( Clamp( volume * 256.0, 0.0, 256.0 ) );
+		m_sndFile->NoteChange(chn, note, false, true, true);
+		chn.nPan = mpt::saturate_round<int32_t>( Clamp( panning * 128.0, -128.0, 128.0 ) + 128.0 );
+		chn.nVolume = mpt::saturate_round<int32_t>( Clamp( volume * 256.0, 0.0, 256.0 ) );
+
+		// Remove channel from list of mixed channels to fix https://bugs.openmpt.org/view.php?id=209
+		// This is required because a previous note on the same channel might have just stopped playing,
+		// but the channel is still in the mix list.
+		// Since the channel volume / etc is only updated every tick in CSoundFile::ReadNote, and we
+		// do not want to duplicate mixmode-dependant logic here, CSoundFile::CreateStereoMix may already
+		// try to mix our newly set up channel at volume 0 if we don't remove it from the list.
+		auto mix_begin = std::begin( m_sndFile->m_PlayState.ChnMix );
+		auto mix_end = std::remove( mix_begin, mix_begin + m_sndFile->m_nMixChannels, free_channel );
+		m_sndFile->m_nMixChannels = static_cast<CHANNELINDEX>( std::distance( mix_begin, mix_end ) );
 
 		return free_channel;
 	}

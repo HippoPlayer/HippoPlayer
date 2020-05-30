@@ -59,7 +59,7 @@ struct STPSampleHeader
 	void ConvertToMPT(ModSample &mptSmp) const
 	{
 		mptSmp.nLength = length;
-		mptSmp.nVolume = 4u * std::min<uint16>(volume, 64);
+		mptSmp.nVolume = 4u * std::min(volume.get(), uint8(64));
 
 		mptSmp.nLoopStart = loopStart;
 		mptSmp.nLoopEnd = loopStart + loopLength;
@@ -118,7 +118,7 @@ static void ConvertLoopSlice(ModSample &src, ModSample &dest, SmpLength start, S
 	dest.FreeSample();
 	dest = src;
 	dest.nLength = len;
-	dest.pSample = nullptr;
+	dest.pData.pSample = nullptr;
 
 	if(!dest.AllocateSample())
 	{
@@ -129,7 +129,7 @@ static void ConvertLoopSlice(ModSample &src, ModSample &dest, SmpLength start, S
 	if(len != src.nLength)
 		MemsetZero(dest.cues);
 
-	std::memcpy(dest.pSample8, src.pSample8 + start, len);
+	std::memcpy(dest.sampleb(), src.sampleb() + start, len);
 	dest.uFlags.set(CHN_LOOP, loop);
 	if(loop)
 	{
@@ -150,7 +150,7 @@ static void ConvertLoopSequence(ModSample &smp, STPLoopList &loopList)
 
 	ModSample newSmp = smp;
 	newSmp.nLength = 0;
-	newSmp.pSample = nullptr;
+	newSmp.pData.pSample = nullptr;
 
 	size_t numLoops = loopList.size();
 
@@ -184,11 +184,11 @@ static void ConvertLoopSequence(ModSample &smp, STPLoopList &loopList)
 	{
 		STPLoopInfo &info = loopList[i];
 
-		memcpy(newSmp.pSample8 + start, smp.pSample8 + info.loopStart, info.loopLength);
+		memcpy(newSmp.sampleb() + start, smp.sampleb() + info.loopStart, info.loopLength);
 
 		// update loop info based on position in edited sample
 		info.loopStart = start;
-		if(i > 0 && i <= mpt::size(newSmp.cues))
+		if(i > 0 && i <= std::size(newSmp.cues))
 		{
 			newSmp.cues[i - 1] = start;
 		}
@@ -256,6 +256,10 @@ bool CSoundFile::ReadSTP(FileReader &file, ModLoadingFlags loadFlags)
 
 	InitializeGlobals(MOD_TYPE_STP);
 
+	m_modFormat.formatName = mpt::format(U_("Soundtracker Pro II v%1"))(fileHeader.version);
+	m_modFormat.type = U_("stp");
+	m_modFormat.charset = mpt::Charset::ISO8859_1;
+
 	m_nChannels = 4;
 	m_nSamples = 0;
 
@@ -302,12 +306,12 @@ bool CSoundFile::ReadSTP(FileReader &file, ModLoadingFlags loadFlags)
 			std::string str;
 			// Read path
 			chunk.ReadNullString(str, 257);
-			mpt::String::Copy(mptSmp.filename, str);
+			mptSmp.filename = str;
 			// Ignore flags, they are all not relevant for us
 			chunk.Skip(1);
 			// Read filename / sample text
 			chunk.ReadNullString(str, 31);
-			mpt::String::Copy(m_szNames[actualSmp], str);
+			m_szNames[actualSmp] = str;
 			// Seek to even boundary
 			if(chunk.GetPosition() % 2u)
 				chunk.Skip(1);
@@ -429,13 +433,11 @@ bool CSoundFile::ReadSTP(FileReader &file, ModLoadingFlags loadFlags)
 			{
 				ChannelMemory &chnMem = channelMemory[chn];
 				ModCommand &m = rowBase[chn];
-				uint8 data[4];
-				file.ReadArray(data);
+				const auto [instr, note, command, param] = file.ReadArray<uint8, 4>();
 
-				m.instr   = data[0];
-				m.note    = data[1];
-				m.command = data[2];
-				m.param   = data[3];
+				m.instr   = instr;
+				m.note    = note;
+				m.param   = param;
 
 				if(m.note)
 				{
@@ -447,23 +449,25 @@ bool CSoundFile::ReadSTP(FileReader &file, ModLoadingFlags loadFlags)
 				// and auto global fine volside
 				uint8 swapped = (m.param >> 4) | (m.param << 4);
 
-				if((m.command & 0xF0) == 0xF0)
+				if((command & 0xF0) == 0xF0)
 				{
 					// 12-bit CIA tempo
-					uint16 ciaTempo = (static_cast<uint16>(m.command & 0x0F) << 8) | m.param;
+					uint16 ciaTempo = (static_cast<uint16>(command & 0x0F) << 8) | m.param;
 					if(ciaTempo)
 					{
-						m.param = mpt::saturate_cast<ModCommand::PARAM>(Util::Round(ConvertTempo(ciaTempo).ToDouble()));
+						m.param = mpt::saturate_round<ModCommand::PARAM>(ConvertTempo(ciaTempo).ToDouble());
 						m.command = CMD_TEMPO;
 					} else
 					{
 						m.command = CMD_NONE;
 					}
-				} else switch(m.command)
+				} else switch(command)
 				{
 				case 0x00: // arpeggio
 					if(m.param)
 						m.command = CMD_ARPEGGIO;
+					else
+						m.command = CMD_NONE;
 					break;
 
 				case 0x01: // portamento up
@@ -605,7 +609,7 @@ bool CSoundFile::ReadSTP(FileReader &file, ModLoadingFlags loadFlags)
 						STPLoopList &loopList = loopInfo[m.instr - 1];
 
 						m.param--;
-						if(m.param < std::min(mpt::size(ModSample().cues), loopList.size()))
+						if(m.param < std::min(std::size(ModSample().cues), loopList.size()))
 						{
 							m.volcmd = VOLCMD_OFFSET;
 							m.vol = m.param;
@@ -638,7 +642,7 @@ bool CSoundFile::ReadSTP(FileReader &file, ModLoadingFlags loadFlags)
 						STPLoopList &loopList = loopInfo[m.instr - 1];
 
 						m.param--;
-						if(m.param < std::min(mpt::size(ModSample().cues), loopList.size()))
+						if(m.param < std::min(std::size(ModSample().cues), loopList.size()))
 						{
 							m.volcmd = VOLCMD_OFFSET;
 							m.vol = m.param;

@@ -100,7 +100,7 @@ public:
 		if(WindowsVersion.IsAtLeast(mpt::Windows::Version::Win8))
 		{
 			hasKB2533623 = true;
-		} else if(WindowsVersion.IsAtLeast(mpt::Windows::Version::WinVista))
+		} else
 		{
 			HMODULE hKernel32DLL = LoadLibraryW(L"kernel32.dll");
 			if(hKernel32DLL)
@@ -119,10 +119,10 @@ public:
 			switch(path.GetSearchPath())
 			{
 				case mpt::LibrarySearchPathDefault:
-					hModule = LoadLibraryExW(path.GetFileName().AsNative().c_str(), NULL, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+					hModule = LoadLibraryEx(path.GetFileName().AsNative().c_str(), NULL, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
 					break;
 				case mpt::LibrarySearchPathSystem:
-					hModule = LoadLibraryExW(path.GetFileName().AsNative().c_str(), NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
+					hModule = LoadLibraryEx(path.GetFileName().AsNative().c_str(), NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
 					break;
 #if defined(MODPLUG_TRACKER)
 					// Using restricted search paths applies to potential DLL dependencies
@@ -133,23 +133,23 @@ public:
 					// Just rely on the default search path here.
 				case mpt::LibrarySearchPathApplication:
 					{
-						const mpt::PathString dllPath = mpt::GetAppPath();
+						const mpt::PathString dllPath = mpt::GetExecutablePath();
 						if(!dllPath.empty() && mpt::PathIsAbsolute(dllPath) && dllPath.IsDirectory())
 						{
-							hModule = LoadLibraryW((dllPath + path.GetFileName()).AsNative().c_str());
+							hModule = LoadLibrary((dllPath + path.GetFileName()).AsNative().c_str());
 						}
 					}
 					break;
 				case mpt::LibrarySearchPathFullPath:
-					hModule = LoadLibraryW(path.GetFileName().AsNative().c_str());
+					hModule = LoadLibrary(path.GetFileName().AsNative().c_str());
 					break;
 #else
 					// For libopenmpt, do the safe thing.
 				case mpt::LibrarySearchPathApplication:
-					hModule = LoadLibraryExW(path.GetFileName().AsNative().c_str(), NULL, LOAD_LIBRARY_SEARCH_APPLICATION_DIR);
+					hModule = LoadLibraryEx(path.GetFileName().AsNative().c_str(), NULL, LOAD_LIBRARY_SEARCH_APPLICATION_DIR);
 					break;
 				case mpt::LibrarySearchPathFullPath:
-					hModule = LoadLibraryExW(path.GetFileName().AsNative().c_str(), NULL, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR);
+					hModule = LoadLibraryEx(path.GetFileName().AsNative().c_str(), NULL, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR);
 					break;
 #endif
 				case mpt::LibrarySearchPathInvalid:
@@ -161,14 +161,14 @@ public:
 			switch(path.GetSearchPath())
 			{
 				case mpt::LibrarySearchPathDefault:
-					hModule = LoadLibraryW(path.GetFileName().AsNative().c_str());
+					hModule = LoadLibrary(path.GetFileName().AsNative().c_str());
 					break;
 				case mpt::LibrarySearchPathApplication:
 					{
-						const mpt::PathString dllPath = mpt::GetAppPath();
+						const mpt::PathString dllPath = mpt::GetExecutablePath();
 						if(!dllPath.empty() && mpt::PathIsAbsolute(dllPath) && dllPath.IsDirectory())
 						{
-							hModule = LoadLibraryW((dllPath + path.GetFileName()).AsNative().c_str());
+							hModule = LoadLibrary((dllPath + path.GetFileName()).AsNative().c_str());
 						}
 					}
 					break;
@@ -177,12 +177,12 @@ public:
 						const mpt::PathString dllPath = mpt::GetSystemPath();
 						if(!dllPath.empty() && mpt::PathIsAbsolute(dllPath) && dllPath.IsDirectory())
 						{
-							hModule = LoadLibraryW((dllPath + path.GetFileName()).AsNative().c_str());
+							hModule = LoadLibrary((dllPath + path.GetFileName()).AsNative().c_str());
 						}
 					}
 					break;
 				case mpt::LibrarySearchPathFullPath:
-					hModule = LoadLibraryW(path.GetFileName().AsNative().c_str());
+					hModule = LoadLibrary(path.GetFileName().AsNative().c_str());
 					break;
 				case mpt::LibrarySearchPathInvalid:
 					MPT_ASSERT_NOTREACHED();
@@ -193,6 +193,10 @@ public:
 #endif // MPT_OS_WINDOWS_WINRT
 
 	}
+
+	LibraryHandle(const LibraryHandle &) = delete;
+
+	LibraryHandle & operator=(const LibraryHandle &) = delete;
 
 	~LibraryHandle()
 	{
@@ -236,6 +240,10 @@ public:
 	{
 		return;
 	}
+
+	LibraryHandle(const LibraryHandle &) = delete;
+
+	LibraryHandle & operator=(const LibraryHandle &) = delete;
 
 	~LibraryHandle()
 	{
@@ -286,6 +294,10 @@ public:
 		inited = true;
 		handle = lt_dlopenext(path.GetFileName().AsNative().c_str());
 	}
+
+	LibraryHandle(const LibraryHandle &) = delete;
+
+	LibraryHandle & operator=(const LibraryHandle &) = delete;
 
 	~LibraryHandle()
 	{
@@ -338,6 +350,10 @@ public:
 		handle = dlopen(path.GetFileName().AsNative().c_str(), RTLD_NOW);
 	}
 
+	LibraryHandle(const LibraryHandle &) = delete;
+
+	LibraryHandle & operator=(const LibraryHandle &) = delete;
+
 	~LibraryHandle()
 	{
 		if(IsValid())
@@ -380,6 +396,10 @@ public:
 		MPT_UNREFERENCED_PARAMETER(path);
 		return;
 	}
+
+	LibraryHandle(const LibraryHandle &) = delete;
+
+	LibraryHandle & operator=(const LibraryHandle &) = delete;
 
 	~LibraryHandle()
 	{
@@ -432,15 +452,15 @@ mpt::PathString LibraryPath::GetFileName() const
 mpt::PathString LibraryPath::GetDefaultPrefix()
 {
 	#if MPT_OS_WINDOWS
-		return MPT_PATHSTRING("");
+		return P_("");
 	#elif MPT_OS_ANDROID
-		return MPT_PATHSTRING("lib");
+		return P_("lib");
 	#elif defined(MPT_WITH_LTDL)
-		return MPT_PATHSTRING("lib");
+		return P_("lib");
 	#elif defined(MPT_WITH_DL)
-		return MPT_PATHSTRING("lib");
+		return P_("lib");
 	#else
-		return MPT_PATHSTRING("lib");
+		return P_("lib");
 	#endif
 }
 
@@ -448,13 +468,13 @@ mpt::PathString LibraryPath::GetDefaultPrefix()
 mpt::PathString LibraryPath::GetDefaultSuffix()
 {
 	#if MPT_OS_WINDOWS
-		return MPT_PATHSTRING(".dll");
+		return P_(".dll");
 	#elif MPT_OS_ANDROID
-		return MPT_PATHSTRING(".so");
+		return P_(".so");
 	#elif defined(MPT_WITH_LTDL)
-		return MPT_PATHSTRING("");  // handled by libltdl
+		return P_("");  // handled by libltdl
 	#elif defined(MPT_WITH_DL)
-		return MPT_PATHSTRING(".so");
+		return P_(".so");
 	#else
 		return mpt::PathString();
 	#endif
@@ -479,7 +499,7 @@ LibraryPath LibraryPath::AppDataFullName(const mpt::PathString &fullname, const 
 {
 	if(appdata.empty())
 	{
-		return LibraryPath(mpt::LibrarySearchPathInvalid, MPT_PATHSTRING(""));
+		return LibraryPath(mpt::LibrarySearchPathInvalid, P_(""));
 	}
 	return LibraryPath(mpt::LibrarySearchPathFullPath, appdata.WithTrailingSlash() + fullname + GetDefaultSuffix());
 }
@@ -542,6 +562,12 @@ FuncPtr Library::GetProcAddress(const std::string &symbol) const
 
 
 } // namespace mpt
+
+
+#else // !MPT_ENABLE_DYNBIND
+
+
+MPT_MSVC_WORKAROUND_LNK4221(mptLibrary)
 
 
 #endif // MPT_ENABLE_DYNBIND

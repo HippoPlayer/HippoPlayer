@@ -27,9 +27,9 @@ OPENMPT_NAMESPACE_BEGIN
 // PSM File Header
 struct PSMFileHeader
 {
-	char     formatID[4];	// "PSM " (new format)
-	uint32le fileSize;		// Filesize - 12
-	char     fileInfoID[4];	// "FILE"
+	char     formatID[4];    // "PSM " (new format)
+	uint32le fileSize;       // Filesize - 12
+	char     fileInfoID[4];  // "FILE"
 };
 
 MPT_BINARY_STRUCT(PSMFileHeader, 12)
@@ -40,16 +40,16 @@ struct PSMChunk
 	// 32-Bit chunk identifiers
 	enum ChunkIdentifiers
 	{
-		idTITL	= MAGIC4LE('T','I','T','L'),
-		idSDFT	= MAGIC4LE('S','D','F','T'),
-		idPBOD	= MAGIC4LE('P','B','O','D'),
-		idSONG	= MAGIC4LE('S','O','N','G'),
-		idDATE	= MAGIC4LE('D','A','T','E'),
-		idOPLH	= MAGIC4LE('O','P','L','H'),
-		idPPAN	= MAGIC4LE('P','P','A','N'),
-		idPATT	= MAGIC4LE('P','A','T','T'),
-		idDSAM	= MAGIC4LE('D','S','A','M'),
-		idDSMP	= MAGIC4LE('D','S','M','P'),
+		idTITL	= MagicLE("TITL"),
+		idSDFT	= MagicLE("SDFT"),
+		idPBOD	= MagicLE("PBOD"),
+		idSONG	= MagicLE("SONG"),
+		idDATE	= MagicLE("DATE"),
+		idOPLH	= MagicLE("OPLH"),
+		idPPAN	= MagicLE("PPAN"),
+		idPATT	= MagicLE("PATT"),
+		idDSAM	= MagicLE("DSAM"),
+		idDSMP	= MagicLE("DSMP"),
 	};
 
 	uint32le id;
@@ -71,9 +71,9 @@ MPT_BINARY_STRUCT(PSMChunk, 8)
 // Song Information
 struct PSMSongHeader
 {
-	char  songType[9];		// Mostly "MAINSONG " (But not in Extreme Pinball!)
-	uint8 compression;		// 1 - uncompressed
-	uint8 numChannels;		// Number of channels
+	char  songType[9];  // Mostly "MAINSONG " (But not in Extreme Pinball!)
+	uint8 compression;  // 1 - uncompressed
+	uint8 numChannels;  // Number of channels
 
 };
 
@@ -83,34 +83,36 @@ MPT_BINARY_STRUCT(PSMSongHeader, 11)
 struct PSMSampleHeader
 {
 	uint8le  flags;
-	char     fileName[8];		// Filename of the original module (without extension)
-	char     sampleID[4];		// INS0...INS9 (only last digit of sample ID, i.e. sample 1 and sample 11 are equal)
+	char     fileName[8];    // Filename of the original module (without extension)
+	char     sampleID[4];    // Identifier like "INS0" (only last digit of sample ID, i.e. sample 1 and sample 11 are equal) or "I0  "
 	char     sampleName[33];
-	uint8le  unknown1[6];		// 00 00 00 00 00 FF
+	uint8le  unknown1[6];    // 00 00 00 00 00 FF
 	uint16le sampleNumber;
 	uint32le sampleLength;
 	uint32le loopStart;
-	uint32le loopEnd;			// FF FF FF FF = end of sample
+	uint32le loopEnd;        // FF FF FF FF = end of sample
 	uint8le  unknown3;
-	uint8le  finetune;		// unused? always 0
+	uint8le  finetune;       // unused? always 0
 	uint8le  defaultVolume;
 	uint32le unknown4;
-	uint32le c5Freq;			// MASI ignores the high 16 bits
-	char     padding[19];		// 00 ... 00
+	uint32le c5Freq;         // MASI ignores the high 16 bits
+	char     padding[19];
 
 	// Convert header data to OpenMPT's internal format
 	void ConvertToMPT(ModSample &mptSmp) const
 	{
 		mptSmp.Initialize();
-		mpt::String::Read<mpt::String::maybeNullTerminated>(mptSmp.filename, fileName);
+		mptSmp.filename = mpt::String::ReadBuf(mpt::String::maybeNullTerminated, fileName);
 
 		mptSmp.nC5Speed = c5Freq;
 		mptSmp.nLength = sampleLength;
 		mptSmp.nLoopStart = loopStart;
-		// It is not entirely clear if/when we should add +1 to the loopEnd value.
-		// Sample 8 in the medieval table music of Extreme Pinball and CONVERT.EXE v1.36 suggest that we should do so.
-		// But for other tunes it's not correct, e.g. the OMF 2097 music!
-		mptSmp.nLoopEnd = loopEnd;
+		// Note that we shouldn't add + 1 for MTM conversions here (e.g. the OMF 2097 music),
+		// but I think there is no way to figure out the original format, and in the case of the OMF 2097 soundtrack
+		// it doesn't make a huge audible difference anyway (no chip samples are used).
+		// On the other hand, sample 8 of MUSIC_A.PSM from Extreme Pinball will sound detuned if we don't adjust the loop end here.
+		if(loopEnd)
+			mptSmp.nLoopEnd = loopEnd + 1;
 		mptSmp.nVolume = (defaultVolume + 1) * 2;
 		mptSmp.uFlags.set(CHN_LOOP, (flags & 0x80) != 0);
 		LimitMax(mptSmp.nLoopEnd, mptSmp.nLength);
@@ -124,26 +126,26 @@ MPT_BINARY_STRUCT(PSMSampleHeader, 96)
 struct PSMSinariaSampleHeader
 {
 	uint8le  flags;
-	char     fileName[8];		// Filename of the original module (without extension)
-	char     sampleID[8];		// INS0...INS99999
+	char     fileName[8];  // Filename of the original module (without extension)
+	char     sampleID[8];  // INS0...INS99999
 	char     sampleName[33];
-	uint8le  unknown1[6];		// 00 00 00 00 00 FF
+	uint8le  unknown1[6];  // 00 00 00 00 00 FF
 	uint16le sampleNumber;
 	uint32le sampleLength;
 	uint32le loopStart;
 	uint32le loopEnd;
 	uint16le unknown3;
-	uint8le  finetune;		// Possibly finetune like in PSM16, but sounds even worse than just ignoring it
+	uint8le  finetune;     // Appears to be unused
 	uint8le  defaultVolume;
 	uint32le unknown4;
 	uint16le c5Freq;
-	char     padding[16];		// 00 ... 00
+	char     padding[16];
 
 	// Convert header data to OpenMPT's internal format
 	void ConvertToMPT(ModSample &mptSmp) const
 	{
 		mptSmp.Initialize();
-		mpt::String::Read<mpt::String::maybeNullTerminated>(mptSmp.filename, fileName);
+		mptSmp.filename = mpt::String::ReadBuf(mpt::String::maybeNullTerminated, fileName);
 
 		mptSmp.nC5Speed = c5Freq;
 		mptSmp.nLength = sampleLength;
@@ -163,21 +165,15 @@ struct PSMSubSong // For internal use (pattern conversion)
 {
 	std::vector<uint8> channelPanning, channelVolume;
 	std::vector<bool> channelSurround;
-	uint8 defaultTempo, defaultSpeed;
-	char songName[10];
-	ORDERINDEX startOrder, endOrder, restartPos;
+	ORDERINDEX startOrder = ORDERINDEX_INVALID, endOrder = ORDERINDEX_INVALID, restartPos = 0;
+	uint8 defaultTempo = 125, defaultSpeed = 6;
+	char songName[10] = {};
 
 	PSMSubSong()
-	{
-		channelPanning.assign(MAX_BASECHANNELS, 128);
-		channelVolume.assign(MAX_BASECHANNELS, 64);
-		channelSurround.assign(MAX_BASECHANNELS, false);
-		MemsetZero(songName);
-		defaultTempo = 125;
-		defaultSpeed = 6;
-		startOrder = endOrder = ORDERINDEX_INVALID;
-		restartPos = 0;
-	}
+	    : channelPanning(MAX_BASECHANNELS, 128)
+	    , channelVolume(MAX_BASECHANNELS, 64)
+	    , channelSurround(MAX_BASECHANNELS, false)
+	{ }
 };
 
 
@@ -193,7 +189,7 @@ static uint8 ConvertPSMPorta(uint8 param, bool sinariaFormat)
 }
 
 
-// Read a Pattern ID (something like "P0  " or "P13 " in the old format, or "PATT0   " in Sinaria)
+// Read a Pattern ID (something like "P0  " or "P13 ", or "PATT0   " in Sinaria)
 static PATTERNINDEX ReadPSMPatternIndex(FileReader &file, bool &sinariaFormat)
 {
 	char patternID[5];
@@ -211,12 +207,19 @@ static PATTERNINDEX ReadPSMPatternIndex(FileReader &file, bool &sinariaFormat)
 
 static bool ValidateHeader(const PSMFileHeader &fileHeader)
 {
-	if(std::memcmp(fileHeader.formatID, "PSM ", 4)
-		|| std::memcmp(fileHeader.fileInfoID, "FILE", 4))
+	if(!std::memcmp(fileHeader.formatID, "PSM ", 4)
+		&& !std::memcmp(fileHeader.fileInfoID, "FILE", 4))
 	{
-		return false;
+		return true;
 	}
-	return true;
+#ifdef MPT_PSM_DECRYPT
+	if(!std::memcmp(fileHeader.formatID, "QUP$", 4)
+		&& !std::memcmp(fileHeader.fileInfoID, "OSWQ", 4))
+	{
+		return true;
+	}
+#endif
+	return false;
 }
 
 
@@ -240,7 +243,7 @@ CSoundFile::ProbeResult CSoundFile::ProbeFileHeaderPSM(MemoryFileReader file, co
 	{
 		return ProbeFailure;
 	}
-	if((chunkHeader.id & 0x7f7f7f7fu) != chunkHeader.id) // ASCII?
+	if((chunkHeader.id & 0x7F7F7F7Fu) != chunkHeader.id) // ASCII?
 	{
 		return ProbeFailure;
 	}
@@ -260,7 +263,7 @@ bool CSoundFile::ReadPSM(FileReader &file, ModLoadingFlags loadFlags)
 
 #ifdef MPT_PSM_DECRYPT
 	// CONVERT.EXE /K - I don't think any game ever used this.
-	std::vector<mpt::byte> decrypted;
+	std::vector<std::byte> decrypted;
 	if(!memcmp(fileHeader.formatID, "QUP$", 4)
 		&& !memcmp(fileHeader.fileInfoID, "OSWQ", 4))
 	{
@@ -326,16 +329,16 @@ bool CSoundFile::ReadPSM(FileReader &file, ModLoadingFlags loadFlags)
 		m_nChannels = Clamp(static_cast<CHANNELINDEX>(songHeader.numChannels), m_nChannels, MAX_BASECHANNELS);
 
 		PSMSubSong subsong;
-		mpt::String::Read<mpt::String::nullTerminated>(subsong.songName, songHeader.songType);
+		mpt::String::WriteAutoBuf(subsong.songName) = mpt::String::ReadBuf(mpt::String::nullTerminated, songHeader.songType);
 
 #ifdef MPT_PSM_USE_REAL_SUBSONGS
 		if(!Order().empty())
 		{
 			// Add a new sequence for this subsong
-			if(Order.AddSequence(false) == SEQUENCEINDEX_INVALID)
+			if(Order.AddSequence() == SEQUENCEINDEX_INVALID)
 				break;
 		}
-		Order().SetName(subsong.songName);
+		Order().SetName(mpt::ToUnicode(mpt::Charset::CP437, subsong.songName));
 #endif // MPT_PSM_USE_REAL_SUBSONGS
 
 		// Read "Sub chunks"
@@ -435,19 +438,21 @@ bool CSoundFile::ReadPSM(FileReader &file, ModLoadingFlags loadFlags)
 							// Output of PLAY.EXE: "SMapTabl from pos 0 to pos -1 starting at 0 and adding 1 to it each time"
 							// It appears that this maps e.g. what is "I0" in the file to sample 1.
 							// If we were being fancy, we could implement this, but in practice it won't matter.
-							if (subChunk.ReadUint8() != 0x00 || subChunk.ReadUint8() != 0xFF ||	// "0 to -1" (does not seem to do anything)
-								subChunk.ReadUint8() != 0x00 || subChunk.ReadUint8() != 0x00 ||	// "at 0" (actually this appears to be the adding part - changing this to 0x01 0x00 offsets all samples by 1)
-								subChunk.ReadUint8() != 0x01 || subChunk.ReadUint8() != 0x00)	// "adding 1" (does not seem to do anything)
 							{
-								return false;
+								uint8 mapTable[6];
+								if(!subChunk.ReadArray(mapTable)
+									|| mapTable[0] != 0x00 || mapTable[1] != 0xFF  // "0 to -1" (does not seem to do anything)
+									|| mapTable[2] != 0x00 || mapTable[3] != 0x00  // "at 0" (actually this appears to be the adding part - changing this to 0x01 0x00 offsets all samples by 1)
+									|| mapTable[4] != 0x01 || mapTable[5] != 0x00) // "adding 1" (does not seem to do anything)
+								{
+									return false;
+								}
 							}
 							break;
 
 						case 0x0D: // Channel panning table - can be set using CONVERT.EXE /E
 							{
-								uint8 chn = subChunk.ReadUint8();
-								uint8 pan = subChunk.ReadUint8();
-								uint8 type = subChunk.ReadUint8();
+								const auto [chn, pan, type] = subChunk.ReadArray<uint8, 3>();
 								if(chn < subsong.channelPanning.size())
 								{
 									switch(type)
@@ -480,8 +485,7 @@ bool CSoundFile::ReadPSM(FileReader &file, ModLoadingFlags loadFlags)
 
 						case 0x0E: // Channel volume table (0...255) - can be set using CONVERT.EXE /E, is 255 in all "official" PSMs except for some OMF 2097 tracks
 							{
-								uint8 chn = subChunk.ReadUint8();
-								uint8 vol = subChunk.ReadUint8();
+								const auto [chn, vol] = subChunk.ReadArray<uint8, 2>();
 								if(chn < subsong.channelVolume.size())
 								{
 									subsong.channelVolume[chn] = (vol / 4u) + 1;
@@ -507,8 +511,7 @@ bool CSoundFile::ReadPSM(FileReader &file, ModLoadingFlags loadFlags)
 					if(!subChunk.CanRead(2))
 						break;
 
-					uint8 type = subChunk.ReadUint8();
-					uint8 pan = subChunk.ReadUint8();
+					const auto [type, pan] = subChunk.ReadArray<uint8, 2>();
 					switch(type)
 					{
 					case 0: // use panning
@@ -574,34 +577,28 @@ bool CSoundFile::ReadPSM(FileReader &file, ModLoadingFlags loadFlags)
 				// Original header
 				PSMSampleHeader sampleHeader;
 				if(!chunk.ReadStruct(sampleHeader))
-				{
 					continue;
-				}
 
 				smp = static_cast<SAMPLEINDEX>(sampleHeader.sampleNumber + 1);
 				if(smp > 0 && smp < MAX_SAMPLES)
 				{
 					m_nSamples = std::max(m_nSamples, smp);
-					mpt::String::Read<mpt::String::nullTerminated>(m_szNames[smp], sampleHeader.sampleName);
-
 					sampleHeader.ConvertToMPT(Samples[smp]);
+					m_szNames[smp] = mpt::String::ReadBuf(mpt::String::nullTerminated, sampleHeader.sampleName);
 				}
 			} else
 			{
 				// Sinaria uses a slightly different sample header
 				PSMSinariaSampleHeader sampleHeader;
 				if(!chunk.ReadStruct(sampleHeader))
-				{
 					continue;
-				}
 
 				smp = static_cast<SAMPLEINDEX>(sampleHeader.sampleNumber + 1);
 				if(smp > 0 && smp < MAX_SAMPLES)
 				{
 					m_nSamples = std::max(m_nSamples, smp);
-					mpt::String::Read<mpt::String::nullTerminated>(m_szNames[smp], sampleHeader.sampleName);
-
 					sampleHeader.ConvertToMPT(Samples[smp]);
+					m_szNames[smp] = mpt::String::ReadBuf(mpt::String::nullTerminated, sampleHeader.sampleName);
 				}
 			}
 			if(smp > 0 && smp < MAX_SAMPLES)
@@ -627,7 +624,9 @@ bool CSoundFile::ReadPSM(FileReader &file, ModLoadingFlags loadFlags)
 		ChnSettings[chn].dwFlags.set(CHN_SURROUND, subsongs[0].channelSurround[chn]);
 	}
 
-	m_madeWithTracker = sinariaFormat ? MPT_USTRING("Epic MegaGames MASI (New Version / Sinaria)") : MPT_USTRING("Epic MegaGames MASI (New Version)");
+	m_modFormat.formatName = sinariaFormat ? U_("Epic MegaGames MASI (New Version / Sinaria)") : U_("Epic MegaGames MASI (New Version)");
+	m_modFormat.type = U_("psm");
+	m_modFormat.charset = mpt::Charset::CP437;
 
 	if(!(loadFlags & loadPatternData) || m_nChannels == 0)
 	{
@@ -676,10 +675,9 @@ bool CSoundFile::ReadPSM(FileReader &file, ModLoadingFlags loadFlags)
 
 			while(rowChunk.CanRead(3))
 			{
-				uint8 flags = rowChunk.ReadUint8();
-				uint8 channel = rowChunk.ReadUint8();
+				const auto [flags, channel] = rowChunk.ReadArray<uint8, 2>();
 				// Point to the correct channel
-				ModCommand &m = rowBase[std::min<CHANNELINDEX>(m_nChannels - 1, channel)];
+				ModCommand &m = rowBase[std::min(static_cast<CHANNELINDEX>(m_nChannels - 1), static_cast<CHANNELINDEX>(channel))];
 
 				if(flags & noteFlag)
 				{
@@ -709,17 +707,17 @@ bool CSoundFile::ReadPSM(FileReader &file, ModLoadingFlags loadFlags)
 					// Volume present
 					uint8 vol = rowChunk.ReadUint8();
 					m.volcmd = VOLCMD_VOLUME;
-					m.vol = (MIN(vol, 127) + 1) / 2;
+					m.vol = (std::min(vol, uint8(127)) + 1) / 2;
 				}
 
 				if(flags & effectFlag)
 				{
 					// Effect present - convert
-					m.command = rowChunk.ReadUint8();
-					m.param = rowChunk.ReadUint8();
+					const auto [command, param] = rowChunk.ReadArray<uint8, 2>();
+					m.param = param;
 
 					// This list is annoyingly similar to PSM16, but not quite identical.
-					switch(m.command)
+					switch(command)
 					{
 					// Volslides
 					case 0x01: // fine volslide up
@@ -1003,7 +1001,7 @@ struct PSM16SampleHeader
 	void ConvertToMPT(ModSample &mptSmp) const
 	{
 		mptSmp.Initialize();
-		mpt::String::Read<mpt::String::nullTerminated>(mptSmp.filename, filename);
+		mptSmp.filename = mpt::String::ReadBuf(mpt::String::nullTerminated, filename);
 
 		mptSmp.nLength = length;
 		mptSmp.nLoopStart = loopStart;
@@ -1013,7 +1011,7 @@ struct PSM16SampleHeader
 		mptSmp.nC5Speed = c2freq;
 		mptSmp.Transpose(((finetune ^ 0x08) - 0x78) / (12.0 * 16.0));
 
-		mptSmp.nVolume = std::min<uint8>(volume, 64u) * 4u;
+		mptSmp.nVolume = std::min(volume.get(), uint8(64)) * 4u;
 
 		mptSmp.uFlags.reset();
 		if(flags & PSM16SampleHeader::smp16Bit)
@@ -1118,7 +1116,11 @@ bool CSoundFile::ReadPSM16(FileReader &file, ModLoadingFlags loadFlags)
 
 	// Seems to be valid!
 	InitializeGlobals(MOD_TYPE_PSM);
-	m_madeWithTracker = MPT_USTRING("Epic MegaGames MASI (Old Version)");
+	
+	m_modFormat.formatName = U_("Epic MegaGames MASI (Old Version)");
+	m_modFormat.type = U_("psm");
+	m_modFormat.charset = mpt::Charset::CP437;
+
 	m_nChannels = Clamp(CHANNELINDEX(fileHeader.numChannelsPlay), CHANNELINDEX(fileHeader.numChannelsReal), MAX_BASECHANNELS);
 	m_nSamplePreAmp = fileHeader.masterVolume;
 	if(m_nSamplePreAmp == 255)
@@ -1129,7 +1131,7 @@ bool CSoundFile::ReadPSM16(FileReader &file, ModLoadingFlags loadFlags)
 	m_nDefaultSpeed = fileHeader.songSpeed;
 	m_nDefaultTempo.Set(fileHeader.songTempo);
 
-	mpt::String::Read<mpt::String::spacePadded>(m_songName, fileHeader.songName);
+	m_songName = mpt::String::ReadBuf(mpt::String::spacePadded, fileHeader.songName);
 
 	// Read orders
 	if(fileHeader.orderOffset > 4 && file.Seek(fileHeader.orderOffset - 4) && file.ReadMagic("PORD"))
@@ -1161,13 +1163,13 @@ bool CSoundFile::ReadPSM16(FileReader &file, ModLoadingFlags loadFlags)
 				break;
 			}
 
-			SAMPLEINDEX smp = sampleHeader.sampleNumber;
-			if(smp > 0 && smp < MAX_SAMPLES)
+			const SAMPLEINDEX smp = sampleHeader.sampleNumber;
+			if(smp > 0 && smp < MAX_SAMPLES && !Samples[smp].HasSampleData())
 			{
 				m_nSamples = std::max(m_nSamples, smp);
 
 				sampleHeader.ConvertToMPT(Samples[smp]);
-				mpt::String::Read<mpt::String::nullTerminated>(m_szNames[smp], sampleHeader.name);
+				m_szNames[smp] = mpt::String::ReadBuf(mpt::String::nullTerminated, sampleHeader.name);
 
 				if(loadFlags & loadSampleData)
 				{
@@ -1226,13 +1228,14 @@ bool CSoundFile::ReadPSM16(FileReader &file, ModLoadingFlags loadFlags)
 					continue;
 				}
 
-				ModCommand &m = *Patterns[pat].GetpModCommand(curRow, std::min<CHANNELINDEX>(chnFlag & channelMask, m_nChannels - 1));
+				ModCommand &m = *Patterns[pat].GetpModCommand(curRow, std::min(static_cast<CHANNELINDEX>(chnFlag & channelMask), static_cast<CHANNELINDEX>(m_nChannels - 1)));
 
 				if(chnFlag & noteFlag)
 				{
 					// note + instr present
-					m.note = patternChunk.ReadUint8() + 36;
-					m.instr = patternChunk.ReadUint8();
+					const auto [note, instr] = patternChunk.ReadArray<uint8, 2>();
+					m.note = note + 36;
+					m.instr = instr;
 				}
 				if(chnFlag & volFlag)
 				{
@@ -1243,10 +1246,10 @@ bool CSoundFile::ReadPSM16(FileReader &file, ModLoadingFlags loadFlags)
 				if(chnFlag & effectFlag)
 				{
 					// effect present - convert
-					m.command = patternChunk.ReadUint8();
-					m.param = patternChunk.ReadUint8();
+					const auto [command, param] = patternChunk.ReadArray<uint8, 2>();
+					m.param = param;
 
-					switch(m.command)
+					switch(command)
 					{
 					// Volslides
 					case 0x01: // fine volslide up
