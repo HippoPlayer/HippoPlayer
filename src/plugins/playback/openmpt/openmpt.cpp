@@ -239,7 +239,7 @@ static int openmpt_metadata(const char* filename, const HippoServiceAPI* service
     HippoIoErrorCode res = HippoIo_read_file_to_memory(io_api, filename, &data, &size);
 
     if (res < 0) {
-        return -1;
+        return res;
     }
 
     openmpt::module mod(data, size);
