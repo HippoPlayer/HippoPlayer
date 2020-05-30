@@ -1,10 +1,11 @@
 use std::collections::HashMap;
 use std::ffi::CStr;
-use std::fs;
 use std::fs::File;
+use std::fs;
 use std::os::raw::{c_char, c_void};
 use std::path::Path;
 use std::ptr;
+use std::time::{Duration, Instant};
 
 mod audio;
 mod core_config;
@@ -41,8 +42,9 @@ pub struct HippoCore {
     plugins: Plugins,
     plugin_service: service_ffi::PluginService,
     playlist: Playlist,
-    _current_song_time: f32,
-    _is_playing: bool,
+    current_song_time: f32,
+    start_time: Instant,
+    is_playing: bool,
 }
 
 impl HippoCore {
@@ -70,18 +72,14 @@ impl HippoCore {
                 // This is a bit hacky right now but will do the trick
                 self.audio.stop();
                 self.audio = HippoAudio::new();
-                let info = self
-                    .audio
-                    .start_with_file(&plugin, &self.plugin_service, filename);
+                self.audio.start_with_file(&plugin, &self.plugin_service, filename);
+                self.is_playing = true;
 
-                //self.song_info_view.update_data(filename, &self.plugin_service.get_song_db());
-                return info;
+                return;
             }
         }
 
         println!("Unable to find plugin to support {}", filename);
-
-        //MusicInfo::default()
     }
 
     ///
@@ -113,6 +111,17 @@ impl HippoCore {
     ) {
         let count = count as usize;
 
+        if self.is_playing {
+            let current_time = Instant::now();
+            let delta = (current_time - self.start_time).as_secs_f32();
+            self.start_time = current_time;
+            self.current_song_time -= delta;
+
+            if self.current_song_time <= 0.0 {
+                self.playlist.advance_song(1);
+            }
+        }
+
         // Send the UI messages to playlist, each-other and to the backends
 
         for msg_index in 0..count {
@@ -136,7 +145,6 @@ impl HippoCore {
 
                 // If we have active playbacks we push the ui messages to the messages plugin
                 // instance so the backend can reply to them at some point
-
                 for playback in &mut self.audio.playbacks {
                     playback
                         .write_stream
@@ -158,6 +166,13 @@ impl HippoCore {
                     let message = get_root_as_hippo_message(&metadata);
                     let metadata_message = message.message_as_song_metadata().unwrap();
                     self.playlist.update_current_entry(&metadata_message);
+                    self.current_song_time = metadata_message.length();
+                    self.start_time = Instant::now();
+
+                    // TODO: Use setting
+                    if self.current_song_time == 0.0 {
+                        self.current_song_time = 5.0 * 60.0;
+                    }
 
                     // Send playlist reply to frontend
                     self.playlist.current_song_message().map(|reply| {
@@ -240,8 +255,9 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
         audio: HippoAudio::new(),
         plugin_service: service_ffi::PluginService::new(),
         playlist: Playlist::new(),
-        _current_song_time: 0.0,
-        _is_playing: false,
+        current_song_time: 0.0,
+        start_time: Instant::now(),
+        is_playing: false,
     });
 
     // No need to switch back if we are in the correct spot

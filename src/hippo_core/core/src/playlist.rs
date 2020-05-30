@@ -39,7 +39,7 @@ impl Playlist {
     ///
     /// Advance a song in the songlist
     ///
-    fn advance_song(&mut self, direction: isize) -> Option<Box<[u8]>> {
+    pub fn advance_song(&mut self, direction: isize) -> Option<Box<[u8]>> {
         let count = self.entries.len() as isize;
 
         if count > 0 {
