@@ -31,11 +31,10 @@ typedef struct HippoIoResult {
 } HippoIoResult;
 
 struct HippoApiPrivData;
-typedef int64_t HippoIoErrorCode;
+typedef int32_t HippoIoErrorCode;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//
 typedef struct HippoIoAPI {
 	int (*exists)(struct HippoApiPrivData* priv_data, const char* filename);
 
