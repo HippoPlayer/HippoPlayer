@@ -31,7 +31,6 @@ extern GD3_TAG VGMTag;
 #define FREQ 48000
 #define FRAME_SIZE ((FREQ * 2) / 50)
 
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct VgmReplayerData {
@@ -43,8 +42,8 @@ struct VgmReplayerData {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*
-static const char* vgm_track_info(void* userData) {
-	struct VgmReplayerData* user_data = (struct VgmReplayerData*)userData;
+static const char* vgm_track_info(void* user_data) {
+	struct VgmReplayerData* user_data = (struct VgmReplayerData*)user_data;
 	return user_data->title;
 }
 */
@@ -80,10 +79,10 @@ static int vgm_destroy(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int vgm_open(void* userData, const char* buffer) {
+static int vgm_open(void* user_data, const char* buffer) {
 	// TODO: Add reader functions etc to be used instead of fopen as file may come from zip, etc
 
-	struct VgmReplayerData* replayerData = (struct VgmReplayerData*)userData;
+	struct VgmReplayerData* replayer_data = (struct VgmReplayerData*)user_data;
 
 	if (!OpenVGMFile(buffer)) {
 		printf("Unable to open %s\n", buffer);
@@ -94,29 +93,29 @@ static int vgm_open(void* userData, const char* buffer) {
 	if (VGMTag.strTrackNameE) {
 	    std::wstring_convert<std::codecvt_utf8<wchar_t>> utf8_conv;
 	    std::string utf8_name = utf8_conv.to_bytes(VGMTag.strTrackNameE);
-        strcpy(replayerData->title, utf8_name.data());
+        strcpy(replayer_data->title, utf8_name.data());
 	}
 
-    replayerData->length = VGMHead.lngTotalSamples / (44100 / 2);
-	replayerData->has_data = 1;
+    replayer_data->length = VGMHead.lngTotalSamples / (44100 / 2);
+	replayer_data->has_data = 1;
 
 	return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int vgm_close(void* userData) {
+static int vgm_close(void* user_data) {
 	return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int vgm_read_data(void* userData, void* dest, uint32_t max_samples) {
+static int vgm_read_data(void* user_data, void* dest, uint32_t max_samples) {
 	WAVE_16BS temp_data[FRAME_SIZE * 2];
 
-	struct VgmReplayerData* replayerData = (struct VgmReplayerData*)userData;
+	struct VgmReplayerData* replayer_data = (struct VgmReplayerData*)user_data;
 
-	if (!replayerData->has_data) {
+	if (!replayer_data->has_data) {
 		return 0 ;
 	}
 
@@ -124,7 +123,7 @@ static int vgm_read_data(void* userData, void* dest, uint32_t max_samples) {
 
 	FillBuffer(temp_data, FRAME_SIZE / 2);
 
-	const float scale = 1.0f / 32768.0f;
+	const float scale = 1.0f / 32767.0f;
 
 	for (int i = 0; i < FRAME_SIZE / 2; ++i) {
 		newDest[(i * 2) + 0] = ((float)temp_data[i].Left) * scale;
@@ -160,18 +159,9 @@ HippoProbeResult vgm_probe_can_play(const uint8_t* data, uint32_t data_size, con
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int vgm_seek(void* userData, int ms) {
+static int vgm_seek(void* user_data, int ms) {
 	return 0;
 }
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/*
-static int vgm_length(void* userData) {
-	struct VgmReplayerData* replayerData = (struct VgmReplayerData*)userData;
-	return replayerData->length;
-}
-*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -206,6 +196,4 @@ static HippoPlaybackPlugin g_vgm_plugin = {
 extern "C" HIPPO_EXPORT HippoPlaybackPlugin* hippo_playback_plugin() {
 	return &g_vgm_plugin;
 }
-
-
 

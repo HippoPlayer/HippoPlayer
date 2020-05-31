@@ -319,6 +319,29 @@ SharedLibrary {
 -----------------------------------------------------------------------------------------------------------------------
 
 SharedLibrary {
+	Name = "nsf",
+
+	Includes = {
+	    "src/plugin_api",
+	},
+
+	Sources = {
+        "src/plugins/playback/nsf/vcm/value.cpp",
+        get_c_cpp_src("src/plugins/playback/nsf/xgm"),
+		"src/plugins/playback/nsf/nsf_plugin.cpp",
+	},
+
+	Libs = {
+		{ "Winmm.lib"; Config = "win64-*-*" },
+	},
+
+    Depends = { "zlib" },
+}
+
+
+-----------------------------------------------------------------------------------------------------------------------
+
+SharedLibrary {
 	Name = "TfmxPlugin",
 
 	Includes = {
@@ -494,6 +517,7 @@ Default "openmpt"
 Default(openmpt_cfg)
 
 Default "vgm"
+Default "nsf"
 Default "DummyPlugin"
 Default "MDXPlugin"
 Default "SidPlugin"
