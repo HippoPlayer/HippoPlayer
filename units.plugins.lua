@@ -338,6 +338,32 @@ SharedLibrary {
     Depends = { "zlib" },
 }
 
+-----------------------------------------------------------------------------------------------------------------------
+
+SharedLibrary {
+	Name = "sndh",
+
+	Defines = {
+        "HAVE_CONFIG_H",
+	},
+
+	Includes = {
+	    "src/plugin_api",
+        "src/plugins/playback/sndh/libsc68",
+        "src/plugins/playback/sndh/file68/sc68",
+        "src/plugins/playback/sndh/file68",
+        "src/plugins/playback/sndh/libsc68/sc68",
+        "src/plugins/playback/sndh/libsc68",
+        "src/plugins/playback/sndh/libsc68",
+        "src/plugins/playback/sndh/sc68-libc",
+	},
+
+	Sources = {
+        get_c_cpp_src("src/plugins/playback/sndh"),
+	},
+
+    Depends = { "zlib" },
+}
 
 -----------------------------------------------------------------------------------------------------------------------
 
@@ -518,6 +544,7 @@ Default(openmpt_cfg)
 
 Default "vgm"
 Default "nsf"
+Default "sndh"
 Default "DummyPlugin"
 Default "MDXPlugin"
 Default "SidPlugin"
