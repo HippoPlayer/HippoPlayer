@@ -479,6 +479,7 @@ static int read_header(vfs68_t * const is, unsigned int * hptr)
       return -1;
     }
     if (memcmp(id, file68_idstr_v1, idv1_req)) {
+    	printf("missing 1\n");
       return error68(missing_id);
     }
     TRACE68(file68_cat,"file68: found %s signature\n", "SC68_v1");
@@ -503,6 +504,7 @@ static int read_header(vfs68_t * const is, unsigned int * hptr)
         return -sndh_cc;
       }
     }
+    	printf("missing 2\n");
     return error68(missing_id);
   }
 
