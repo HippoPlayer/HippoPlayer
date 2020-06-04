@@ -29,16 +29,13 @@ static const char* nsf_supported_extensions() {
 
 enum HippoProbeResult nsf_probe_can_play(const uint8_t* data, uint32_t data_size, const char* filename, uint64_t total_size) {
 	if ((data[0] == 'N') && (data[1] == 'E') && (data[2] == 'S') && (data[3] == 'M')) {
-	    printf("nsf supported\n");
 		return HippoProbeResult_Supported;
 	}
 
 	if ((data[0] == 'N') && (data[1] == 'S') && (data[2] == 'F') && (data[3] == 'E')) {
-	    printf("nsf supported\n");
 	    return HippoProbeResult_Supported;
 	}
 
-    printf("nsf unsupported\n");
 	return HippoProbeResult_Unsupported;
 }
 
