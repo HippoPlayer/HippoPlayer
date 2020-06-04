@@ -17,8 +17,8 @@ typedef struct Sc68Plugin {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const char* sc68_supported_extensions() {
-	return "s68,snd,sc68";
+static const char* sc68_plugin_supported_extensions() {
+	return "sc68,snd,sndh";
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -58,7 +58,7 @@ static void init() {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-enum HippoProbeResult sc68_probe_can_play(const uint8_t* data, uint32_t data_size, const char* filename, uint64_t total_size) {
+enum HippoProbeResult sc68_plugin_probe_can_play(const uint8_t* data, uint32_t data_size, const char* filename, uint64_t total_size) {
     // TODO: Proper check.  check file68.c : read_header
     if (data[0] == 'I' && (data[1] | 0x20) == 'c' && (data[2]|0x20) == 'e' && data[3] == '!') {
 		return HippoProbeResult_Supported;
@@ -69,7 +69,7 @@ enum HippoProbeResult sc68_probe_can_play(const uint8_t* data, uint32_t data_siz
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int sc68_metadata(const char* filename, const HippoServiceAPI* service_api) {
+static int sc68_plugin_metadata(const char* filename, const HippoServiceAPI* service_api) {
     sc68_music_info_t info = { 0 };
     void* data = 0;
     uint64_t size = 0;
@@ -93,7 +93,7 @@ static int sc68_metadata(const char* filename, const HippoServiceAPI* service_ap
 
     // TODO: Proper error handling
     if (sc68_load_mem(inst, data, (int)size) < 0) {
-        printf("sc68: Failed load\n");
+        printf("sc68_plugin: Failed load\n");
         return -1;
     }
 
@@ -139,7 +139,7 @@ static int sc68_metadata(const char* filename, const HippoServiceAPI* service_ap
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void* sc68_create(const struct HippoServiceAPI* service_api) {
+static void* sc68_plugin_create(const struct HippoServiceAPI* service_api) {
     init();
 
     sc68_create_t create = { 0 };
@@ -150,7 +150,7 @@ static void* sc68_create(const struct HippoServiceAPI* service_api) {
 
     // TODO: Proper error handling
     if (!instance) {
-        printf("sc68: Failed to create\n");
+        printf("sc68_plugin: Failed to create\n");
         return nullptr;
     }
 
@@ -164,7 +164,7 @@ static void* sc68_create(const struct HippoServiceAPI* service_api) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int sc68_open(void* user_data, const char* buffer) {
+static int sc68_plugin_open(void* user_data, const char* buffer) {
     uint64_t size = 0;
     void* load_data = nullptr;
 	Sc68Plugin* data = (Sc68Plugin*)user_data;
@@ -172,18 +172,18 @@ static int sc68_open(void* user_data, const char* buffer) {
     HippoIoErrorCode res = g_io_api->read_file_to_memory(g_io_api->priv_data, buffer, &load_data, &size);
 
     if (res < 0) {
-        printf("sc68: Failed load file\n");
+        printf("sc68_plugin: Failed load file\n");
         return res;
     }
 
     // TODO: Proper error handling
     if (sc68_load_mem(data->instance, load_data, (int)size) < 0) {
-        printf("sc68: Failed load\n");
+        printf("sc68_plugin: Failed load\n");
         return -1;
     }
 
     if (sc68_process(data->instance, 0, 0) == SC68_ERROR) {
-        printf("sc68: Failed process\n");
+        printf("sc68_plugin: Failed process\n");
         return -1;
     }
 
@@ -192,7 +192,7 @@ static int sc68_open(void* user_data, const char* buffer) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int sc68_close(void* user_data) {
+static int sc68_plugin_close(void* user_data) {
 	Sc68Plugin* plugin = (Sc68Plugin*)user_data;
 
     if (plugin->instance) {
@@ -206,13 +206,13 @@ static int sc68_close(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int sc68_destroy(void* user_data) {
+static int sc68_plugin_destroy(void* user_data) {
 	return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int sc68_read_data(void* user_data, void* dest, uint32_t max_size) {
+static int sc68_plugin_read_data(void* user_data, void* dest, uint32_t max_size) {
 	Sc68Plugin* plugin = (Sc68Plugin*)user_data;
 
 	int16_t data[800 * 2] = { 0 };
@@ -234,13 +234,13 @@ static int sc68_read_data(void* user_data, void* dest, uint32_t max_size) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int sc68_plugin_seek(void* user_data, int ms) {
+static int sc68_plugin_plugin_seek(void* user_data, int ms) {
 	return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void sc68_event(void* user_data, const unsigned char* data, int len) {
+static void sc68_plugin_event(void* user_data, const unsigned char* data, int len) {
     (void)user_data;
     (void)len;
     (void)data;
@@ -248,20 +248,20 @@ static void sc68_event(void* user_data, const unsigned char* data, int len) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static HippoPlaybackPlugin g_sc68_plugin = {
+static HippoPlaybackPlugin g_sc68_plugin_plugin = {
 	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
-	"sc68",
+	"sc68_plugin",
 	"0.0.1",
-	sc68_probe_can_play,
-	sc68_supported_extensions,
-	sc68_create,
-	sc68_destroy,
-	sc68_event,
-	sc68_open,
-	sc68_close,
-	sc68_read_data,
-	sc68_plugin_seek,
-	sc68_metadata,
+	sc68_plugin_probe_can_play,
+	sc68_plugin_supported_extensions,
+	sc68_plugin_create,
+	sc68_plugin_destroy,
+	sc68_plugin_event,
+	sc68_plugin_open,
+	sc68_plugin_close,
+	sc68_plugin_read_data,
+	sc68_plugin_plugin_seek,
+	sc68_plugin_metadata,
 	NULL,
 	NULL,
 };
@@ -269,7 +269,7 @@ static HippoPlaybackPlugin g_sc68_plugin = {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 extern "C" HIPPO_EXPORT HippoPlaybackPlugin* hippo_playback_plugin() {
-	return &g_sc68_plugin;
+	return &g_sc68_plugin_plugin;
 }
 
 
