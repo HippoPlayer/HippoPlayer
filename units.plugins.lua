@@ -340,7 +340,7 @@ SharedLibrary {
 -----------------------------------------------------------------------------------------------------------------------
 
 StaticLibrary {
-	Name = "sndh_file",
+	Name = "sc68_file",
 
 	SourceDir = "src/plugins/playback/sndh",
 
@@ -380,86 +380,8 @@ StaticLibrary {
 
 -----------------------------------------------------------------------------------------------------------------------
 
-Program {
-	Name = "info68",
-
-	Defines = {
-        "HAVE_CONFIG_H",
-	},
-
-	SourceDir = "src/plugins/playback/sndh",
-
-	Includes = {
-	    "src/plugin_api",
-        "src/plugins/playback/sndh/libsc68",
-        "src/plugins/playback/sndh/file68/sc68",
-        "src/plugins/playback/sndh/file68",
-        "src/plugins/playback/sndh/libsc68/sc68",
-        "src/plugins/playback/sndh/libsc68",
-        "src/plugins/playback/sndh/libsc68/emu68",
-	},
-
-	Sources = {
-		"info68/info68.c",
-		"libsc68/emu68/emu68.c",
-		"libsc68/emu68/error68.c",
-		"libsc68/emu68/getea68.c",
-		"libsc68/emu68/inst68.c",
-		"libsc68/emu68/ioplug68.c",
-		"libsc68/emu68/mem68.c",
-		"libsc68/emu68/line0_68.c",
-		"libsc68/emu68/line1_68.c",
-		"libsc68/emu68/line2_68.c",
-		"libsc68/emu68/line3_68.c",
-		"libsc68/emu68/line4_68.c",
-		"libsc68/emu68/line5_68.c",
-		"libsc68/emu68/line6_68.c",
-		"libsc68/emu68/line7_68.c",
-		"libsc68/emu68/line8_68.c",
-		"libsc68/emu68/line9_68.c",
-		"libsc68/emu68/lineA_68.c",
-		"libsc68/emu68/lineB_68.c",
-		"libsc68/emu68/lineC_68.c",
-		"libsc68/emu68/lineD_68.c",
-		"libsc68/emu68/lineE_68.c",
-		"libsc68/emu68/lineF_68.c",
-		"libsc68/emu68/table68.c",
-		"libsc68/dial68/dial68.c",
-		"libsc68/dial68/dial_conf.c",
-		"libsc68/dial68/dial_tsel.c",
-		"libsc68/dial68/dial_finf.c",
-		"libsc68/src/api68.c",
-		"libsc68/src/conf68.c",
-		"libsc68/src/libsc68.c",
-		"libsc68/src/mixer68.c",
-		"libsc68/io68/io68.c",
-		"libsc68/io68/mfp_io.c",
-		"libsc68/io68/mfpemul.c",
-		"libsc68/io68/mw_io.c",
-		"libsc68/io68/mwemul.c",
-		"libsc68/io68/paula_io.c",
-		"libsc68/io68/paulaemul.c",
-		"libsc68/io68/shifter_io.c",
-		"libsc68/io68/ym_envel.c",
-		"libsc68/io68/ym_blep.c",
-		"libsc68/io68/ym_dump.c",
-		"libsc68/io68/ym_io.c",
-		"libsc68/io68/ym_puls.c",
-		"libsc68/io68/ymemul.c",
-		--"unice68/unice68.c",
-		"unice68/unice68_pack.c",
-		"unice68/unice68_unpack.c",
-		"unice68/unice68_version.c",
-		"sndh_plugin.cpp",
-	},
-
-    Depends = { "zlib", "sndh_file" },
-}
-
------------------------------------------------------------------------------------------------------------------------
-
 SharedLibrary {
-	Name = "sndh",
+	Name = "sc68",
 
 	SourceDir = "src/plugins/playback/sndh",
 
@@ -530,7 +452,7 @@ SharedLibrary {
 		"sndh_plugin.cpp",
 	},
 
-    Depends = { "zlib", "sndh_file" },
+    Depends = { "zlib", "sc68_file" },
 }
 
 -----------------------------------------------------------------------------------------------------------------------
@@ -712,7 +634,7 @@ Default(openmpt_cfg)
 
 Default "vgm"
 Default "nsf"
-Default "sndh"
+Default "sc68"
 Default "DummyPlugin"
 Default "MDXPlugin"
 Default "SidPlugin"
@@ -723,7 +645,6 @@ Default "SidPlugin"
 Default "player"
 Default "playlist"
 Default "tracker"
-Default "info68"
 --Default "song_info"
 --Default "TestViewPlugin"
 
