@@ -69,7 +69,9 @@ local macosx = {
 
 local gcc_opts = {
     "-I.",
-    "-Wno-array-bounds", "-Wno-attributes", "-Wno-unused-value",
+    "-Wno-array-bounds",
+    "-Wno-attributes",
+    "-Wno-unused-value",
     "-DOBJECT_DIR=\\\"$(OBJECTDIR)\\\"",
     "-Wall",
     "-fPIC",
@@ -88,6 +90,7 @@ local gcc_env = {
         },
 
         CCOPTS = {
+			"-Werror=incompatible-pointer-types",
             gcc_opts,
         },
 

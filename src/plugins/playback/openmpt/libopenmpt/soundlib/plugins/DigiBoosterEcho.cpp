@@ -27,6 +27,7 @@ DigiBoosterEcho::DigiBoosterEcho(VSTPluginLib &factory, CSoundFile &sndFile, SND
 	, m_bufferSize(0)
 	, m_writePos(0)
 	, m_sampleRate(sndFile.GetSampleRate())
+	, m_chunk(PluginChunk::Default())
 {
 	m_mixBuffer.Initialize(2, 2);
 	InsertIntoFactoryList();
@@ -61,9 +62,9 @@ void DigiBoosterEcho::Process(float *pOutL, float *pOutR, uint32 numFrames)
 		ar += lDelay * m_PCrossPBack;
 
 		// Prevent denormals
-		if(mpt::abs(al) < 1e-24f)
+		if(std::abs(al) < 1e-24f)
 			al = 0.0f;
-		if(mpt::abs(ar) < 1e-24f)
+		if(std::abs(ar) < 1e-24f)
 			ar = 0.0f;
 
 		m_delayLine[m_writePos * 2] = al;
@@ -123,7 +124,7 @@ void DigiBoosterEcho::SetParameter(PlugParamIndex index, PlugParamValue value)
 {
 	if(index < kEchoNumParameters)
 	{
-		m_chunk.param[index] = Util::Round<uint8>(value * 255.0f);
+		m_chunk.param[index] = mpt::saturate_round<uint8>(value * 255.0f);
 		RecalculateEchoParams();
 	}
 }
@@ -198,7 +199,7 @@ CString DigiBoosterEcho::GetParamDisplay(PlugParamIndex param)
 
 IMixPlugin::ChunkData DigiBoosterEcho::GetChunk(bool)
 {
-	auto data = reinterpret_cast<const mpt::byte *>(&m_chunk);
+	auto data = reinterpret_cast<const std::byte *>(&m_chunk);
 	return ChunkData(data, sizeof(m_chunk));
 }
 

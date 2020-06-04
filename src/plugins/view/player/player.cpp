@@ -74,7 +74,6 @@ void PlayerView::prev_song() {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void PlayerView::next_song() {
-	printf("next song\n");
     flatbuffers::FlatBufferBuilder builder(1024);
     builder.Finish(CreateHippoMessageDirect(builder, MessageType_next_song, CreateHippoNextSong(builder).Union()));
     HippoMessageAPI_send(m_message_api, builder.GetBufferPointer(), builder.GetSize());

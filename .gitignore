@@ -2,7 +2,10 @@
 .tundra2*
 t2-output
 playlist.json
+default_playlist.hpl
 .ccls-cache
 src/hippo_core/core/target
+src/hippo_core/config/target
+src/hippo_core/config_test/target
 
 

@@ -114,36 +114,7 @@ void MainWindow::handle_incoming_messages(const unsigned char* data, int len) {
 
 			for (int i = 0, e = urls->Length(); i < e; ++i) {
 			    auto url = urls->Get(i);
-
                 m_playlist_model->add_entry(url);
-
-                /*
-                auto desc = url->description();
-
-				auto title = desc->title();
-				auto duration = desc->duration();
-				auto song_type = desc->song_type();
-
-				printf("added urls\n");
-
-				m_playlist_model->add_entry(QString::fromUtf8(title->c_str(), title->size()),
-				    QStringLiteral("Unknown"), QStringLiteral(""));
-				*/
-
-
-                // Get the position
-                //int row = m_playlist_model->rowCount();
-
-                // Enable add one or more rows
-                //m_playlist_model->insertRows(row, 1);
-
-                // Get the row for Edit mode
-                /*
-                QModelIndex index = m_playlist_model->index(row);
-
-                m_playlist_model->setData(index, QString::fromUtf8(title->c_str(), title->size()), Qt::EditRole);
-                m_playlist_model->setData(index, QByteArray(path->c_str(), path->size()), Qt::UserRole);
-                */
 			}
 
             m_playlist_model->layoutChanged();

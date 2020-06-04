@@ -1,25 +1,14 @@
 use std::collections::HashMap;
 use std::ffi::CStr;
-use std::fs;
 use std::fs::File;
+use std::fs;
 use std::os::raw::{c_char, c_void};
 use std::path::Path;
-
-/*
-use hippo_api;
-use messages;
-use rodio;
-use walkdir;
-
-#[macro_use]
-use serde_derive;
-pub use rmp;
-use rmp_rpc;
-use serde;
-use serde_json;
-*/
+use std::ptr;
+use std::time::{Duration, Instant};
 
 mod audio;
+mod core_config;
 mod playlist;
 mod plugin_handler;
 mod song_db;
@@ -28,7 +17,8 @@ pub mod ffi;
 mod service;
 pub mod service_ffi;
 
-use audio::{HippoAudio, MusicInfo};
+use audio::HippoAudio;
+use core_config::CoreConfig;
 use messages::*;
 use playlist::Playlist;
 use plugin_handler::Plugins;
@@ -47,16 +37,18 @@ pub struct SongDb {
 }
 
 pub struct HippoCore {
+    config: CoreConfig,
     audio: HippoAudio,
     plugins: Plugins,
     plugin_service: service_ffi::PluginService,
     playlist: Playlist,
-    _current_song_time: f32,
-    _is_playing: bool,
+    current_song_time: f32,
+    start_time: Instant,
+    is_playing: bool,
 }
 
 impl HippoCore {
-    pub fn play_file(&mut self, filename: &str) -> MusicInfo {
+    pub fn play_file(&mut self, filename: &str) {
         let mut buffer = [0; 4096];
         // TODO: Fix error handling here
 
@@ -64,16 +56,9 @@ impl HippoCore {
         let mut f = File::open(filename).unwrap();
         let buffer_read_size = f.read(&mut buffer[..]).unwrap();
 
-        // TODO: Proper priority order of plugins. Right now we just put uade as the last one to
-        // check
-
         // find a plugin that supports the file
 
         for plugin in &self.plugins.decoder_plugins {
-            if plugin.plugin_path.rfind("uade").is_some() {
-                continue;
-            }
-
             if plugin.probe_can_play(&buffer, buffer_read_size, filename, metadata.len()) {
                 if self
                     .plugin_service
@@ -87,45 +72,14 @@ impl HippoCore {
                 // This is a bit hacky right now but will do the trick
                 self.audio.stop();
                 self.audio = HippoAudio::new();
-                let info = self
-                    .audio
-                    .start_with_file(&plugin, &self.plugin_service, filename);
+                self.audio.start_with_file(&plugin, &self.plugin_service, filename);
+                self.is_playing = true;
 
-                //self.song_info_view.update_data(filename, &self.plugin_service.get_song_db());
-                return info;
-            }
-        }
-
-        // do the same fo uade
-
-        for plugin in &self.plugins.decoder_plugins {
-            if plugin.plugin_path.rfind("uade").is_none() {
-                continue;
-            }
-
-            if self
-                .plugin_service
-                .get_song_db()
-                .get_data(filename)
-                .is_none()
-            {
-                plugin.get_metadata(&filename, &self.plugin_service);
-            }
-
-            if plugin.probe_can_play(&buffer, buffer_read_size, filename, metadata.len()) {
-                // This is a bit hacky right now but will do the trick
-                self.audio.stop();
-                self.audio = HippoAudio::new();
-                let info = self
-                    .audio
-                    .start_with_file(&plugin, &self.plugin_service, filename);
-                return info;
+                return;
             }
         }
 
         println!("Unable to find plugin to support {}", filename);
-
-        MusicInfo::default()
     }
 
     ///
@@ -138,15 +92,13 @@ impl HippoCore {
         count: usize,
         current_index: usize,
     ) {
-        for msg_index in 0..count {
-            if current_index != msg_index {
-                send_messages(
-                    user_data,
-                    data.as_ptr(),
-                    data.len() as i32,
-                    msg_index as i32,
-                );
-            }
+        for msg_index in (0..count).filter(|v| *v != current_index) {
+            send_messages(
+                user_data,
+                data.as_ptr(),
+                data.len() as i32,
+                msg_index as i32,
+            );
         }
     }
 
@@ -158,6 +110,17 @@ impl HippoCore {
         send_messages: MsgSendCallback,
     ) {
         let count = count as usize;
+
+        if self.is_playing {
+            let current_time = Instant::now();
+            let delta = (current_time - self.start_time).as_secs_f32();
+            self.start_time = current_time;
+            self.current_song_time -= delta;
+
+            if self.current_song_time <= 0.0 {
+                self.playlist.advance_song(1);
+            }
+        }
 
         // Send the UI messages to playlist, each-other and to the backends
 
@@ -182,7 +145,6 @@ impl HippoCore {
 
                 // If we have active playbacks we push the ui messages to the messages plugin
                 // instance so the backend can reply to them at some point
-
                 for playback in &mut self.audio.playbacks {
                     playback
                         .write_stream
@@ -204,7 +166,15 @@ impl HippoCore {
                     let message = get_root_as_hippo_message(&metadata);
                     let metadata_message = message.message_as_song_metadata().unwrap();
                     self.playlist.update_current_entry(&metadata_message);
+                    self.current_song_time = metadata_message.length();
+                    self.start_time = Instant::now();
 
+                    // TODO: Use setting
+                    if self.current_song_time == 0.0 {
+                        self.current_song_time = 5.0 * 60.0;
+                    }
+
+                    // Send playlist reply to frontend
                     self.playlist.current_song_message().map(|reply| {
                         Self::send_msgs(user_data, send_messages, &reply, count, std::usize::MAX);
                     });
@@ -233,14 +203,15 @@ impl HippoCore {
 /// Create new instance of the song db
 #[no_mangle]
 pub extern "C" fn hippo_core_new() -> *const HippoCore {
-    let mut core = Box::new(HippoCore {
-        audio: HippoAudio::new(),
-        plugins: Plugins::new(),
-        plugin_service: service_ffi::PluginService::new(),
-        playlist: Playlist::new(),
-        _current_song_time: -10.0,
-        _is_playing: false,
-    });
+    let config = match CoreConfig::load("data/config/global.cfg") {
+        Ok(v) => v,
+        Err(e) => {
+            println!("Config error: {}", e);
+            return ptr::null();
+        }
+    };
+
+    let mut plugins = Plugins::new();
 
     let current_path = std::env::current_dir().unwrap();
 
@@ -252,7 +223,42 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
 
     println!("The current directory is {}", path.display());
 
-    core.plugins.add_plugins_from_path();
+    plugins.add_plugins_from_path();
+
+    // sort plugins according to priority order
+
+    let plugin_count = plugins.decoder_plugins.len();
+
+    // sort high-prority plugins
+    for (index, name) in config.playback_priority_high.iter().enumerate() {
+        for i in 0..plugin_count {
+            let lower_name = plugins.decoder_plugins[i].plugin_path.to_lowercase();
+            if lower_name.rfind(name).is_some() && plugin_count > index {
+                plugins.decoder_plugins.swap(index, i);
+            }
+        }
+    }
+
+    // sort low-prority plugins
+    for (index, name) in config.playback_priority_low.iter().enumerate() {
+        for i in 0..plugin_count {
+            let lower_name = plugins.decoder_plugins[i].plugin_path.to_lowercase();
+            if lower_name.rfind(name).is_some() && plugin_count > index {
+                plugins.decoder_plugins.swap((plugin_count - 1) - index, i);
+            }
+        }
+    }
+
+    let mut core = Box::new(HippoCore {
+        config,
+        plugins,
+        audio: HippoAudio::new(),
+        plugin_service: service_ffi::PluginService::new(),
+        playlist: Playlist::new(),
+        current_song_time: 0.0,
+        start_time: Instant::now(),
+        is_playing: false,
+    });
 
     // No need to switch back if we are in the correct spot
     if !Path::new("bin").is_dir() {

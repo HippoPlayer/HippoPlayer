@@ -5,73 +5,264 @@ Changelog {#changelog}
 For fully detailed change log, please see the source repository directly. This
 is just a high-level summary.
 
-### libopenmpt 0.3.6 (2018-02-03)
+### libopenmpt 0.5.0 (2020-05-24)
 
- *  [**Sec**] Possible out-of-bounds memory read with malformed STP files.
-    (r9576)
+ *  [**New**] OggMod compressed FastTracker 2 XM (OXM) modules are now
+    supported.
+ *  [**New**] The emulated Amiga type when Amiga resampler emulation is enabled
+    can now be selected via ctl `render.resampler.emulate_amiga_type`. Possible
+    values are: `"auto"`, `"a500"`, `"a1200"`, and an experimental option
+    `"unfiltered"`.
+ *  [**New**] libopenmpt: New API `openmpt::module::get_current_estimated_bpm()`
+    (C++), and `openmpt_module_get_current_estimated_bpm()` (C) which provides
+    accurate beats per minute information for module formats with time signature
+    and an educated guess based on speed and tempo for others.
+ *  [**New**] libopenmpt: New type-aware ctl APIs that do not require memory
+    allocations and are thus realtime-safe:
+    `openmpt::module::ctl_get_boolean()`, `openmpt::module::ctl_get_integer()`,
+    `openmpt::module::ctl_get_floatingpoint()`,
+    `openmpt::module::ctl_get_text()`, `openmpt::module::ctl_set_boolean()`,
+    `openmpt::module::ctl_set_integer()`,
+    `openmpt::module::ctl_set_floatingpoint()` (C++), and
+    `openmpt_module_ctl_get_boolean()`, `openmpt_module_ctl_get_integer()`,
+    `openmpt_module_ctl_get_floatingpoint()`, `openmpt_module_ctl_get_text()`,
+    `openmpt_module_ctl_set_boolean()`, `openmpt_module_ctl_set_integer()`,
+    `openmpt_module_ctl_set_floatingpoint()` (C).
+ *  [**New**] libopenmpt C++ New API `openmpt::is_extension_supported2()` which
+    takes a `std::string_view` parameter instead of `std::string`.
+ *  [**New**] libopenmpt C++: New API
+    `openmpt::module::module(std::vector<std::byte> data)`,
+    `openmpt::module::module(const std::byte * data, std::size_t size)`,
+    `openmpt::module::module(const std::byte * beg, const std::byte * end)`.
+ *  [**New**] libopenmpt C++: New API
+    `openmpt::probe_file_header(flags, const std::byte * data, std::size_t size, filesize)`,
+    `openmpt::probe_file_header(flags, const std::byte * data, std::size_t size)`.
+ *  [**New**] libopenmpt_ext C++: New API
+    `openmpt::module_ext::module_ext(std::vector<std::byte> data)`,
+    `openmpt::module_ext::module_ext(const std::byte * data, std::size_t size)`,
+    `openmpt::module_ext::module_ext(std::vector<std::uint8_t> data)`,
+    `openmpt::module_ext::module_ext(const std::uint8_t * data, std::size_t size)`.
 
- *  [**Bug**] Small memory leak with malformed STP files.
+ *  [**Change**] std::istream based file I/O has been speed up.
+ *  [**Change**] Dependency on iconv on Linux has been removed.
 
- *  STM: Accurate emulation of Scream Tracker 2 tempo mode.
- *  STM: Better support for early format revisions (no such files have been
-    found in the wild, though).
- *  Fine volume slides are now supported when seeking with seek.sync_samples=1
-    enabled.
+ *  [**Regression**] libmodplug: The libmodplug emulation layer has been removed
+    from the libopenmpt tree. Please use the separate `libopenmpt-modplug`
+    package instead.
+ *  [**Regression**] foo_openmpt: foo_openmpt is discontinued. Please use
+    Kode54's fork foo_openmpt54:
+    <https://www.foobar2000.org/components/view/foo_openmpt54>.
+ *  [**Regression**] Support for building with C++11 or C++14 has been removed.
+    C++17 is now required to build libopenmpt.
+ *  [**Regression**] Support for client code using C++11 or C++ 14 has been
+    removed. C++17 is now required to build libopenmpt client applications.
+ *  [**Regression**] Support for Visual Studio 2015 has been removed.
+ *  [**Regression**] Support for GCC 4.8, 4.9, 5, 6 has been removed.
+ *  [**Regression**] Support for Clang 3.6, 3.7, 3.8, 3.9, 4 has been removed.
+ *  [**Regression**] Support for Emscripten versions older than 1.39.1 has been
+    removed.
+ *  [**Regression**] Building with Android NDK older than NDK r18b is not
+    supported any more.
+ *  [**Regression**] openmpt123: Support for SDL1 (but not SDL2) output has been
+    removed.
+ *  [**Regression**] openmpt123: Support for SDL2 older than 2.0.4 has been
+    removed.
+ *  [**Regression**] Windows XP and Windows Vista are no longer supported.
+ *  [**Regression**] It is no longer possible to optionally use iconv for
+    character set conversions.
 
-### libopenmpt 0.3.5 (2018-01-28)
+ *  [**Bug**] openmpt123: openmpt123 now honors the current locale and outputs
+    text appropriately.
+ *  [**Bug**] openmpt123: Piping text output to other than console window
+    targets on Windows has been fixed.
 
- *  [**New**] Support MOD files from the Inconexia demo by Iguana.
- *  [**Bug**] xmp-openmpt: Saved settings were not applied instantly.
+ *  Greatly improved MED import. Synthesized instruments are still not supported
+    but support was added for: Multisampled instruments, delta samples, more
+    pattern commands, Hold and Decay, VSTi and MIDI output, multiple songs and
+    many other small changes.
+ *  Improved OPL channel allocation when more than 18 notes are active, so that
+    channels that have completely faded out are prioritized over channels that
+    have already been released but have not faded out yet.
+ *  Interactively triggering an OPL instrument could cause the first pattern
+    channel to no longer be played back correctly.
+ *  Fix some inaccuracies in OPL emulator.
+ *  Fix overflow of OPL amplification happening at a synth volume level of 510.
+ *  End-of-sample pop reduction of surround channels was applied to front
+    channels instead, causing a pop on the front channels instead of removing it
+    on the back channels.
+ *  IT: Disable retrigger with short notes quirk for modules saved with
+    Chibi Tracker, as it does not implement that quirk.
+ *  IT: Instrument and sample panning should not override channel panning for
+    following notes.
+ *  IT: SBx is now prioritized over Bxx commands that are to the left of it.
+ *  IT: Duplicate Check Type "Sample" should only be applied if the instruments
+    match, too.
+ *  IT: Duplicate Check Type "Note" should compare pattern notes, but it was
+    comparing the new pattern note against the old translated note.
+ *  IT: Various fixes for envelope resetting.
+ *  IT / S3M: When combining SBx and EEx effects, don't skip the first row of
+    the loop like in FastTracker 2.
+ *  S3M: Empty pattern commands now affect effect memory as well.
+ *  S3M: Offset beyond loop end wraps around to loop start like in
+    Scream Tracker 3 + GUS (previously it just keep playing from the loop start,
+    which is neither what GUS nor Sound Blaster drivers do).
+ *  S3M: Notes cannot be retriggered after they have been cut.
+ *  S3M: Fix portamento after note cut (fixes antediluvian_song.s3m).
+ *  S3M / MOD: Previous note offset is no longer used for retriggered notes if
+    there was no instrument number next to the Qxy effect.
+ *  MOD: Sample swapping now also works if the sample that is being swapped from
+    does not loop. Swapping to a non-looped sample now stops playback once the
+    swapped-from sample reaches its (loop) end.
+ *  MOD: Fix early song ending due to ProTracker pattern jump quirk
+    (EEx + Dxx on same row) if infinite looping is disabled.
+    Fixes Haunted Tracks.mod by Triace.
+ *  MOD: Previous note offset is no longer used for retriggered notes if there was no instrument number next to the E9x effect.
+ *  MOD: Vibrato type "ramp down" was upside down.
+ *  XM: If a file contains patterns longer than 1024 rows, they are now clamped
+    to 1024 rows instead of 64 rows.
+ *  XM: Do not reset note-off status on portamento if there is no instrument
+    number.
 
- *  XM E60 loop bug was not considered in song length calucation.
- *  Tighten M15 and MOD file rejection heuristics.
- *  J2B: Ignore frequency limits from file header. Fixes Medivo.j2b, broken
-    since libopenmpt-0.2.6401-beta17.
- *  STM: Last character of sample name was missing.
- *  ParamEq plugin center frequency was not limited correctly.
- *  libopenmpt_ext C API was not included in the documentation.
+ *  mpg123: v1.26rc3.
+ *  ogg: v1.3.4.
+ *  vorbis: v1.3.6.
+ *  zlib: v1.2.11.
+ *  minimp3: commit 55da78cbeea5fb6757f8df672567714e1e8ca3e9 (2020-03-04).
+ *  stb_vorbis: v1.19 commit 37b9b20fdec06c75a0493e0bb59e2d0f288bfb51 (2020-02-05).
+ *  miniz: v2.1.0.
+ *  FLAC: v1.3.3.
+ *  PortAudio: commit 799a6834a58592eadc5712cba73b35956dc51579 (2020-03-26).
 
-### libopenmpt 0.3.4 (2017-12-17)
+### libopenmpt 0.4.0 (2018-12-23)
 
- *  IT: Fix broken volume envelopes with negative values as found in breakdwn.it
-    by Elysis.
-
-### libopenmpt 0.3.3 (2017-11-19)
-
- *  [**New**] foo_openmpt: foo_openmpt now also works on Windows XP.
-
- *  [**Bug**] All VS2015 and VS2017 project files targetting Windows XP did not
-    set compiler option `/Zc:threadSafeInit-` which caused at least the player
-    plugins `in_openmpt` and `xmp-openmpt` to fail to load.
-
-### libopenmpt 0.3.2 (2017-11-04)
-
+ *  [**New**] libopenmpt now includes emulation of the OPL chip and thus plays
+    OPL instruments in S3M, C67 and MPTM files. OPL chip emulation volume can be
+    changed with the new ctl `render.opl.volume_factor`.
+ *  [**New**] libopenmpt now supports CDFM / Composer 670 module files.
  *  [**New**] Autotools `configure` and plain `Makefile` now honor the variable
     `CXXSTDLIB_PCLIBSPRIVATE` which serves the sole purpose of listing the
     standard library (or libraries) required for static linking. The contents of
     this variable will be put in `libopenmpt.pc` `Libs.private` and used for
     nothing else. See \ref libopenmpt_c_staticlinking .
+ *  [**New**] foo_openmpt: foo_openmpt now also works on Windows XP.
+ *  [**New**] libopenmpt Emscripten builds now ship with MP3 support by
+    default, based on minimp3 by Lion (github.com/lieff).
+ *  [**New**] libopenmpt: New ctl `play.at_end` can be used to change what
+    happens when the song end is reached:
+     *  "fadeout": Fades the module out for a short while. Subsequent reads
+        after the fadeout will return 0 rendered frames. This is the default and
+        identical to the behaviour in previous libopenmpt versions. 
+     *  "continue": Returns 0 rendered frames when the song end is reached.
+        Subsequent reads will continue playing from the song start or loop
+        start. This can be used for custom loop logic, such as loop
+        auto-detection and longer fadeouts.
+     *  "stop": Returns 0 rendered frames when the song end is reached.
+        Subsequent reads will return 0 rendered frames.
+ *  [**New**] Add new metadata fields `"originaltype"` and `"originaltype_long"`
+    which allow more clearly reflecting what is going on with converted formats
+    like MO3 and GDM.
+ *  [**New**] `Makefile` `CONFIG=emscripten` now can generate WebAssembly via
+    the additional option `EMSCRIPTEN_TARGET=wasm`.
+ *  [**New**] Compiling for DOS is now experimentally supported via DJGPP GCC
+    7.2 or later.
 
- *  [**Change**] Windows bin and dev release packages now use zip archives
-    instead of 7z archives as it had originally been intended for the 0.3.0
-    release.
- *  [**Change**] openmpt123: The following combinations of options are now
-    deprecated because they made no real sense in the first place:
-    `--render --output`, `--ui --output-type`, `--batch --output-type`
+ *  [**Change**] minimp3: Instead of the LGPL-2.1-licensed minimp3 by KeyJ,
+    libopenmpt now uses the CC0-1.0-licensed minimp3 by Lion (github.com/lieff)
+    as a fallback if libmpg123 is unavailable. The `USE_MINIMP3` `Makefile`
+    option is gone and minimp3 will be used automatically in the `Makefile`
+    build system if libmpg123 is not available.
+ *  [**Change**] openmpt123: openmpt123 now rejects `--output-type` in `--ui`
+    and `--batch` modes and also rejects `--output` in `--render` mode. These
+    combinations of options really made no sense and were rather confusing.
+ *  [**Change**] Android NDK build system now uses libc++ (`c++_shared`) instead
+    of GNU libstdc++ (`gnustl_shared`), as recommended by Android NDK r16b.
+ *  [**Change**] xmp-openmpt: `openmpt-mpg123.dll` is no longer optional and
+    must be placed into the same directory as `xmp-openmpt.dll`.
+ *  [**Change**] in_openmpt: `openmpt-mpg123.dll` is no longer optional and must
+    be placed either into the directory of the player itself or into the same
+    directory as `in_openmpt.dll`. This is dependent on how the player loads its
+    plugins. For WinAMP 5, `openmpt-mpg123.dll` needs to be in the directory
+    which contains `winamp.exe`. `in_openmpt.dll` needs to be in the `Plugins`
+    directory.
+ *  [**Change**] foo_openmpt: foo_openmpt is now packaged as a fb2k-component
+    package for easier installation.
+ *  [**Change**] When building libopenmpt with MinGW-w64, it is now recommended
+    to use the posix thread model (as opposed to the win32 threading model),
+    because the former does support std::mutex while the latter does not. When
+    building with win32 threading model with the Autotools build system, it is
+    recommended to provide the `mingw-std-threads` package. Building libopenmpt
+    with MinGW-w64 without any `std::thread`/`std::mutex` support is deprecated
+    and support for such configurations will be removed in libopenmpt 0.5.
+ *  [**Change**] `Makefile` `CONFIG=emscripten` now has 4 `EMSCRIPTEN_TARGET=`
+    settings: `wasm` generates WebAssembly, `asmjs128m` generates asm.js with a
+    fixed size 128MB heap, `asmjs` generates asm.js with a fixed default size
+    heap (as of Emscripten 1.38.11, this amounts to 16MB), `js` generates
+    JavaScript with dynamic heap growth and with compatibility for older VMs.
+ *  [**Change**] libmodplug: Update public headers to libmodplug 0.8.8.5. This
+    adds support for kind-of automatic MODPLUG_EXPORT decoration on Windows.
 
- *  [**Bug**] libopenmpt did not build on Android NDK 15c (and possibly
-    other versions between 12b and 15c as well).
+ *  [**Regression**] Support for Clang 3.4, 3.5 has been removed.
+ *  [**Regression**] Building with Android NDK older than NDK r16b is not
+    supported any more.
+ *  [**Regression**] Support for Emscripten versions older than 1.38.5 has been
+    removed.
+ *  [**Regression**] Support for libmpg123 older than 1.14.0 has been removed.
+ *  [**Regression**] Using MediaFoundation to decode MP3 samples is no longer
+    supported. Use libmpg123 or minimp3 instead.
+ *  [**Regression**] libmodplug: Support for emulating libmodplug 0.8.7 API/ABI
+    has been removed.
+
+ *  [**Bug**] xmp-openmpt: Sample rate and number of output channels were not
+    applied correctly when using per-file settings.
+ *  [**Bug**] Internal mixer state was not initialized properly when initially
+    rendering in 44100kHz stereo format.
+ *  [**Bug**] openmpt123: Prevent libsdl2 and libsdl from being enabled at the
+    same time because they conflict with each other.
+ *  [**Bug**] libmodplug: Setting `SNDMIX_NORESAMPLING` in the C++ API always
+    resulted in linear interpolation instead of nearest neighbour
 
  *  IT: In Compatible Gxx mode, allow sample changes next to a tone portamento
     effect if a previous sample has already stopped playing.
+ *  IT: Fix broken volume envelopes with negative values as found in breakdwn.it
+    by Elysis.
  *  MOD: Slides and delayed notes are executed on every repetition of a row with
     row delay (fixes "ode to protracker").
+ *  XM: If the sustain point of the panning envelope is reached before key-off,
+    it is never released.
+ *  XM: Do not default recall volume / panning for delayed instrument-less notes
+ *  XM :E60 loop bug was not considered in song length calucation.
+ *  S3M: Notes without instrument number use previous note's sample offset.
+ *  Tighten M15 and MOD file rejection heuristics.
+ *  J2B: Ignore frequency limits from file header. Fixes Medivo.j2b, broken
+    since libopenmpt-0.2.6401-beta17.
+ *  STM: More accurate tempo calculation.
+ *  STM: Better support for early format revisions (no such files have been
+    found in the wild, though).
+ *  STM: Last character of sample name was missing.
+ *  SFX: Work around bad conversions of the "Operation Stealth" soundtrack by
+    turning pattern breaks into note stops.
+ *  IMF: Filter cutoff was upside down and the cutoff range was too small.
+ *  ParamEq plugin center frequency was not limited correctly.
+ *  Keep track of active SFx macro during seeking.
+ *  The "note cut" duplicate note action did not volume-ramp the previously
+    playing sample.
+ *  A song starting with non-existing patterns could not be played.
+ *  DSM: Support restart position and 16-bit samples.
+ *  DTM: Import global volume.
+ *  MOD: Support notes in octave 2, like in FastTracker 2 (fixes DOPE.MOD).
+ *  Do not apply Amiga playback heuristics to MOD files that have clearly been
+    written with a PC tracker.
+ *  MPTM: More logical release node behaviour.
+ *  Subsong search is now less thorough. It could previously find many subsongs
+    that are technically correct (unplayed rows at the beginning of patterns
+    that have been jumped over due to pattern breaks), but so far no real-world
+    module that would require such a thorough subsong detection was found. The
+    old mechanism caused way more false positives than intended with real-world
+    modules, though.
+ *  Restrict the unpacked size of compressed DMF, IT, MDL and MO3 samples to
+    avoid huge allocations with malformed small files.
 
-### libopenmpt 0.3.1 (2017-09-28)
-
- *  [**Bug**] Windows: libopenmpt resource did not compile for release versions.
-
-### libopenmpt 0.3.0 (2017-09-27, not released)
+### libopenmpt 0.3 (2017-09-27)
 
  *  [**New**] New error handling functionality in the C API, which in particular
     allows distinguishing potentially transient out-of-memory errors from parse

@@ -66,6 +66,9 @@ private:
         QString description;
     };
 
+    // TODO: Not using hardcoded value
+    float m_default_length = 5 * 60.0f;
+
     // I really don't like to have this here but will do for now
     HippoCore* m_core = nullptr;
     QVector<PlaylistEntry> m_entries;

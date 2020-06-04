@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include "BuildSettings.h"
+
 #include <vector>
 
 #include "FlagSet.h"
@@ -19,7 +21,7 @@ OPENMPT_NAMESPACE_BEGIN
 
 
 #define MPT_DEPRECATED_PATH
-//#define MPT_DEPRECATED_PATH MPT_DEPRECATED
+//#define MPT_DEPRECATED_PATH [[deprecated]]
 
 
 
@@ -27,7 +29,7 @@ namespace mpt
 {
 
 #if MPT_OS_WINDOWS
-typedef std::wstring RawPathString;
+typedef mpt::winstring RawPathString;
 #else // !MPT_OS_WINDOWS
 typedef std::string RawPathString;
 #endif // if MPT_OS_WINDOWS
@@ -43,7 +45,7 @@ private:
 
 private:
 
-	PathString(const RawPathString & path)
+	explicit PathString(const RawPathString & path)
 		: path(path)
 	{
 		return;
@@ -118,9 +120,9 @@ public:
 	PathString GetDrive() const;		// Drive letter + colon, e.g. "C:" or \\server\\share
 	PathString GetDir() const;			// Directory, e.g. "\OpenMPT\"
 	PathString GetPath() const;			// Drive + Dir, e.g. "C:\OpenMPT\"
-	PathString GetFileName() const;		// File name without extension, e.g. "mptrack"
+	PathString GetFileName() const;		// File name without extension, e.g. "OpenMPT"
 	PathString GetFileExt() const;		// Extension including dot, e.g. ".exe"
-	PathString GetFullFileName() const;	// File name + extension, e.g. "mptrack.exe"
+	PathString GetFullFileName() const;	// File name + extension, e.g. "OpenMPT.exe"
 
 	// Verify if this path represents a valid directory on the file system.
 	bool IsDirectory() const;
@@ -135,6 +137,9 @@ public:
 
 #endif // MODPLUG_TRACKER && MPT_OS_WINDOWS
 
+	static bool IsPathSeparator(RawPathString::value_type c);
+	static RawPathString::value_type GetDefaultPathSeparator();
+
 #if defined(MODPLUG_TRACKER) && MPT_OS_WINDOWS
 
 	// Return the same path string with a different (or appended) extension (including "."), e.g. "foo.bar",".txt" -> "foo.txt" or "C:\OpenMPT\foo",".txt" -> "C:\OpenMPT\foo.txt"
@@ -147,24 +152,18 @@ public:
 
 	bool HasTrailingSlash() const
 	{
-		if(empty())
+		if(path.empty())
+		{
 			return false;
+		}
 		RawPathString::value_type c = path[path.length() - 1];
-#if MPT_OS_WINDOWS
-		return (c == L'\\' || c == L'/');
-#else
-		return (c == '/');
-#endif
+		return IsPathSeparator(c);
 	}
 	mpt::PathString &EnsureTrailingSlash()
 	{
 		if(!path.empty() && !HasTrailingSlash())
 		{
-#if MPT_OS_WINDOWS
-			path += L'\\';
-#else
-			path += '/';
-#endif
+			path += GetDefaultPathSeparator();
 		}
 		return *this;
 	}
@@ -178,7 +177,7 @@ public:
 			{
 				return result;
 			}
-			result = result.AsNative().substr(0, result.AsNative().length() - 1);
+			result = mpt::PathString(result.AsNative().substr(0, result.AsNative().length() - 1));
 		}
 		return result;
 	}
@@ -205,41 +204,27 @@ public:
 #endif
 	// conversions
 #if defined(MPT_ENABLE_CHARSET_LOCALE)
-	MPT_DEPRECATED_PATH std::string ToLocale() const { return mpt::ToCharset(mpt::CharsetLocale, path); }
+	MPT_DEPRECATED_PATH std::string ToLocale() const { return mpt::ToCharset(mpt::Charset::Locale, path); }
 #endif
-	std::string ToUTF8() const { return mpt::ToCharset(mpt::CharsetUTF8, path); }
-	std::wstring ToWide() const { return path; }
+	std::string ToUTF8() const { return mpt::ToCharset(mpt::Charset::UTF8, path); }
+	std::wstring ToWide() const { return mpt::ToWide(path); }
 	mpt::ustring ToUnicode() const { return mpt::ToUnicode(path); }
 #if defined(MPT_ENABLE_CHARSET_LOCALE)
-	MPT_DEPRECATED_PATH static PathString FromLocale(const std::string &path) { return PathString(mpt::ToWide(mpt::CharsetLocale, path)); }
-	static PathString FromLocaleSilent(const std::string &path) { return PathString(mpt::ToWide(mpt::CharsetLocale, path)); }
+	MPT_DEPRECATED_PATH static PathString FromLocale(const std::string &path) { return PathString(mpt::ToWin(mpt::Charset::Locale, path)); }
+	static PathString FromLocaleSilent(const std::string &path) { return PathString(mpt::ToWin(mpt::Charset::Locale, path)); }
 #endif
-	static PathString FromUTF8(const std::string &path) { return PathString(mpt::ToWide(mpt::CharsetUTF8, path)); }
-	static PathString FromWide(const std::wstring &path) { return PathString(path); }
-	static PathString FromUnicode(const mpt::ustring &path) { return PathString(mpt::ToWide(path)); }
+	static PathString FromUTF8(const std::string &path) { return PathString(mpt::ToWin(mpt::Charset::UTF8, path)); }
+	static PathString FromWide(const std::wstring &path) { return PathString(mpt::ToWin(path)); }
+	static PathString FromUnicode(const mpt::ustring &path) { return PathString(mpt::ToWin(path)); }
 	RawPathString AsNative() const { return path; }
 	// Return native string, with possible \\?\ prefix if it exceeds MAX_PATH characters.
 	RawPathString AsNativePrefixed() const;
 	static PathString FromNative(const RawPathString &path) { return PathString(path); }
-#if defined(_MFC_VER)
+#if defined(MPT_WITH_MFC)
 	// CString TCHAR, so this is CHAR or WCHAR, depending on UNICODE
-	MPT_DEPRECATED_PATH CString ToCString() const { return mpt::ToCString(path); }
-	MPT_DEPRECATED_PATH static PathString FromCString(const CString &path) { return PathString(mpt::ToWide(path)); }
-	// Non-warning-generating versions of the above. Use with extra care.
-	CString ToCStringSilent() const { return mpt::ToCString(path); }
-	static PathString FromCStringSilent(const CString &path) { return PathString(mpt::ToWide(path)); }
-	// really special purpose, if !UNICODE, encode unicode in CString as UTF8:
-	static mpt::PathString TunnelOutofCString(const CString &path);
-	static CString TunnelIntoCString(const mpt::PathString &path);
-	// CStringW
-#ifdef UNICODE
-	MPT_DEPRECATED_PATH CString ToCStringW() const { return mpt::ToCString(path); }
-	MPT_DEPRECATED_PATH static PathString FromCStringW(const CString &path) { return PathString(mpt::ToWide(path)); }
-#else
-	CStringW ToCStringW() const { return mpt::ToCStringW(path); }
-	static PathString FromCStringW(const CStringW &path) { return PathString(mpt::ToWide(path)); }
-#endif
-#endif
+	CString ToCString() const { return mpt::ToCString(path); }
+	static PathString FromCString(const CString &path) { return PathString(mpt::ToWin(path)); }
+#endif // MPT_WITH_MFC
 
 	// Convert a path to its simplified form, i.e. remove ".\" and "..\" entries
 	mpt::PathString Simplify() const;
@@ -249,39 +234,39 @@ public:
 	// conversions
 #if defined(MPT_ENABLE_CHARSET_LOCALE)
 	std::string ToLocale() const { return path; }
-	std::string ToUTF8() const { return mpt::ToCharset(mpt::CharsetUTF8, mpt::CharsetLocale, path); }
+	std::string ToUTF8() const { return mpt::ToCharset(mpt::Charset::UTF8, mpt::Charset::Locale, path); }
 #if MPT_WSTRING_CONVERT
-	std::wstring ToWide() const { return mpt::ToWide(mpt::CharsetLocale, path); }
+	std::wstring ToWide() const { return mpt::ToWide(mpt::Charset::Locale, path); }
 #endif
-	mpt::ustring ToUnicode() const { return mpt::ToUnicode(mpt::CharsetLocale, path); }
+	mpt::ustring ToUnicode() const { return mpt::ToUnicode(mpt::Charset::Locale, path); }
 	static PathString FromLocale(const std::string &path) { return PathString(path); }
 	static PathString FromLocaleSilent(const std::string &path) { return PathString(path); }
-	static PathString FromUTF8(const std::string &path) { return PathString(mpt::ToCharset(mpt::CharsetLocale, mpt::CharsetUTF8, path)); }
+	static PathString FromUTF8(const std::string &path) { return PathString(mpt::ToCharset(mpt::Charset::Locale, mpt::Charset::UTF8, path)); }
 #if MPT_WSTRING_CONVERT
-	static PathString FromWide(const std::wstring &path) { return PathString(mpt::ToCharset(mpt::CharsetLocale, path)); }
+	static PathString FromWide(const std::wstring &path) { return PathString(mpt::ToCharset(mpt::Charset::Locale, path)); }
 #endif
-	static PathString FromUnicode(const mpt::ustring &path) { return PathString(mpt::ToCharset(mpt::CharsetLocale, path)); }
+	static PathString FromUnicode(const mpt::ustring &path) { return PathString(mpt::ToCharset(mpt::Charset::Locale, path)); }
 	RawPathString AsNative() const { return path; }
 	RawPathString AsNativePrefixed() const { return path; }
 	static PathString FromNative(const RawPathString &path) { return PathString(path); }
 #else // !MPT_ENABLE_CHARSET_LOCALE
 	std::string ToUTF8() const { return path; }
 #if MPT_WSTRING_CONVERT
-	std::wstring ToWide() const { return mpt::ToWide(mpt::CharsetUTF8, path); }
+	std::wstring ToWide() const { return mpt::ToWide(mpt::Charset::UTF8, path); }
 #endif
-	mpt::ustring ToUnicode() const { return mpt::ToUnicode(mpt::CharsetUTF8, path); }
-	static PathString FromUTF8(const std::string &path) { return path; }
+	mpt::ustring ToUnicode() const { return mpt::ToUnicode(mpt::Charset::UTF8, path); }
+	static PathString FromUTF8(const std::string &path) { return PathString(path); }
 #if MPT_WSTRING_CONVERT
-	static PathString FromWide(const std::wstring &path) { return PathString(mpt::ToCharset(mpt::CharsetUTF8, path)); }
+	static PathString FromWide(const std::wstring &path) { return PathString(mpt::ToCharset(mpt::Charset::UTF8, path)); }
 #endif
-	static PathString FromUnicode(const mpt::ustring &path) { return PathString(mpt::ToCharset(mpt::CharsetUTF8, path)); }
+	static PathString FromUnicode(const mpt::ustring &path) { return PathString(mpt::ToCharset(mpt::Charset::UTF8, path)); }
 	RawPathString AsNative() const { return path; }
 	RawPathString AsNativePrefixed() const { return path; }
 	static PathString FromNative(const RawPathString &path) { return PathString(path); }
 #endif // MPT_ENABLE_CHARSET_LOCALE
 
 	// Convert a path to its simplified form (currently only implemented on Windows)
-	MPT_DEPRECATED mpt::PathString Simplify() const { return path; }
+	[[deprecated]] mpt::PathString Simplify() const { return PathString(path); }
 
 #endif // MPT_OS_WINDOWS
 
@@ -290,7 +275,15 @@ public:
 
 
 #if defined(MPT_ENABLE_CHARSET_LOCALE)
-MPT_DEPRECATED_PATH static inline std::string ToString(const mpt::PathString & x) { return mpt::ToCharset(mpt::CharsetLocale, x.ToUnicode()); }
+#if MPT_OS_WINDOWS
+#ifdef UNICODE
+[[deprecated]] static inline std::string ToString(const mpt::PathString & x) { return mpt::ToCharset(mpt::Charset::Locale, x.ToUnicode()); }
+#else
+MPT_DEPRECATED_PATH static inline std::string ToString(const mpt::PathString & x) { return mpt::ToCharset(mpt::Charset::Locale, x.AsNative()); }
+#endif
+#else
+MPT_DEPRECATED_PATH static inline std::string ToString(const mpt::PathString & x) { return mpt::ToCharset(mpt::Charset::Locale, x.ToUnicode()); }
+#endif
 #endif
 static inline mpt::ustring ToUString(const mpt::PathString & x) { return x.ToUnicode(); }
 #if MPT_WSTRING_FORMAT
@@ -301,19 +294,27 @@ static inline std::wstring ToWString(const mpt::PathString & x) { return x.ToWid
 
 #if MPT_OS_WINDOWS
 
+#ifdef UNICODE
+#define MPT_PATHSTRING_LITERAL(x) ( L ## x )
 #define MPT_PATHSTRING(x) mpt::PathString::FromNative( L ## x )
+#else
+#define MPT_PATHSTRING_LITERAL(x) ( x )
+#define MPT_PATHSTRING(x) mpt::PathString::FromNative( x )
+#endif
 
 #else // !MPT_OS_WINDOWS
 
+#define MPT_PATHSTRING_LITERAL(x) ( x )
 #define MPT_PATHSTRING(x) mpt::PathString::FromNative( x )
 
 #endif // MPT_OS_WINDOWS
 
+#define PC_(x) MPT_PATHSTRING_LITERAL(x)
+#define PL_(x) MPT_PATHSTRING_LITERAL(x)
+#define P_(x) MPT_PATHSTRING(x)
+
 namespace mpt
 {
-
-bool IsPathSeparator(mpt::RawPathString::value_type c);
-
 
 
 bool PathIsAbsolute(const mpt::PathString &path);
@@ -338,8 +339,8 @@ bool DeleteWholeDirectoryTree(mpt::PathString path);
 
 #if defined(MPT_ENABLE_DYNBIND) || defined(MPT_ENABLE_TEMPFILE)
 
-// Returns the application path or an empty string (if unknown), e.g. "C:\mptrack\"
-mpt::PathString GetAppPath();
+// Returns the application executable path or an empty string (if unknown), e.g. "C:\mptrack\"
+mpt::PathString GetExecutablePath();
 
 #endif // MPT_ENABLE_DYNBIND || MPT_ENABLE_TEMPFILE
 
@@ -361,7 +362,7 @@ mpt::PathString GetSystemPath();
 mpt::PathString GetTempDirectory();
 
 // Returns a new unique absolute path.
-mpt::PathString CreateTempFileName(const mpt::PathString &fileNamePrefix = mpt::PathString(), const mpt::PathString &fileNameExtension = MPT_PATHSTRING("tmp"));
+mpt::PathString CreateTempFileName(const mpt::PathString &fileNamePrefix = mpt::PathString(), const mpt::PathString &fileNameExtension = P_("tmp"));
 
 
 
@@ -417,20 +418,20 @@ void SanitizeFilename(mpt::u8string &str);
 template <std::size_t size>
 void SanitizeFilename(char (&buffer)[size])
 {
-	STATIC_ASSERT(size > 0);
+	static_assert(size > 0);
 	SanitizeFilename(buffer, buffer + size);
 }
 
 template <std::size_t size>
 void SanitizeFilename(wchar_t (&buffer)[size])
 {
-	STATIC_ASSERT(size > 0);
+	static_assert(size > 0);
 	SanitizeFilename(buffer, buffer + size);
 }
 
-#if defined(_MFC_VER)
+#if defined(MPT_WITH_MFC)
 void SanitizeFilename(CString &str);
-#endif
+#endif // MPT_WITH_MFC
 
 #endif // MODPLUG_TRACKER
 
@@ -465,7 +466,7 @@ public:
 	}
 	static FileType Any()
 	{
-		return FileType().ShortName(MPT_USTRING("*")).Description(MPT_USTRING("All Files")).AddExtension(MPT_PATHSTRING("*"));
+		return FileType().ShortName(U_("*")).Description(U_("All Files")).AddExtension(P_("*"));
 	}
 public:
 	FileType& ShortName(const mpt::ustring &shortName) { m_ShortName = shortName; return *this; }

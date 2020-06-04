@@ -33,10 +33,10 @@ struct STMSampleHeader
 	void ConvertToMPT(ModSample &mptSmp) const
 	{
 		mptSmp.Initialize();
-		mpt::String::Read<mpt::String::maybeNullTerminated>(mptSmp.filename, filename);
+		mptSmp.filename = mpt::String::ReadBuf(mpt::String::maybeNullTerminated, filename);
 
 		mptSmp.nC5Speed = sampleRate;
-		mptSmp.nVolume = std::min<uint8>(volume, 64) * 4;
+		mptSmp.nVolume = std::min(volume.get(), uint8(64)) * 4;
 		mptSmp.nLength = length;
 		mptSmp.nLoopStart = loopStart;
 		mptSmp.nLoopEnd = loopEnd;
@@ -65,7 +65,7 @@ struct STMFileHeader
 	uint8 filetype;			// 1=song, 2=module (only 2 is supported, of course) :)
 	uint8 verMajor;
 	uint8 verMinor;
-	uint8 initTempo;		// Ticks per row. Keep in mind that effects are only updated on every 16th tick.
+	uint8 initTempo;		// Ticks per row.
 	uint8 numPatterns;		// number of patterns
 	uint8 globalVolume;
 	uint8 reserved[13];
@@ -76,23 +76,25 @@ MPT_BINARY_STRUCT(STMFileHeader, 48)
 
 static bool ValidateHeader(const STMFileHeader &fileHeader)
 {
-	// NOTE: Historically the magic byte check used to be case-insensitive.
-	// Other libraries (mikmod, xmp, Milkyplay) don't do this.
-	// ScreamTracker 2 and 3 do not care about the content of the magic bytes at all.
-	// After reviewing all STM files on ModLand and ModArchive, it was found that the
-	// case-insensitive comparison is most likely not necessary for any files in the wild.
 	if(fileHeader.filetype != 2
-		|| (fileHeader.dosEof != 0x1A && fileHeader.dosEof != 2)	// ST2 ignores this, ST3 doesn't. putup10.stm / putup11.stm have dosEof = 2.
+		|| (fileHeader.dosEof != 0x1A && fileHeader.dosEof != 2)	// ST2 ignores this, ST3 doesn't. Broken versions of putup10.stm / putup11.stm have dosEof = 2.
 		|| fileHeader.verMajor != 2
-		|| fileHeader.verMinor > 21	// ST3 only accepts 0, 10, 20 and 21
-		|| fileHeader.globalVolume > 64
-		|| (std::memcmp(fileHeader.trackername, "!Scream!", 8)
-			&& std::memcmp(fileHeader.trackername, "BMOD2STM", 8)
-			&& std::memcmp(fileHeader.trackername, "WUZAMOD!", 8))
-		)
+		|| (fileHeader.verMinor != 0 && fileHeader.verMinor != 10 && fileHeader.verMinor != 20 && fileHeader.verMinor != 21)
+		|| fileHeader.numPatterns > 64
+		|| (fileHeader.globalVolume > 64 && fileHeader.globalVolume != 0x58))	// 0x58 may be a placeholder value in earlier ST2 versions.
 	{
 		return false;
 	}
+	// Tracker string can be anything really (ST2 and ST3 won't check it),
+	// but we do not want to generate too many false positives here, as
+	// STM already has very few magic bytes anyway.
+	// Magic bytes that have been found in the wild are !Scream!, BMOD2STM, WUZAMOD! and SWavePro.
+	for(uint8 c : fileHeader.trackername)
+	{
+		if(c < 0x20 || c >= 0x7F)
+			return false;
+	}
+
 	return true;
 }
 
@@ -142,10 +144,13 @@ bool CSoundFile::ReadSTM(FileReader &file, ModLoadingFlags loadFlags)
 
 	InitializeGlobals(MOD_TYPE_STM);
 
-	mpt::String::Read<mpt::String::maybeNullTerminated>(m_songName, fileHeader.songname);
+	m_songName = mpt::String::ReadBuf(mpt::String::maybeNullTerminated, fileHeader.songname);
 
-	// Read STM header
-	m_madeWithTracker = mpt::format(MPT_USTRING("Scream Tracker %1.%2"))(fileHeader.verMajor, mpt::ufmt::dec0<2>(fileHeader.verMinor));
+	m_modFormat.formatName = U_("Scream Tracker 2");
+	m_modFormat.type = U_("stm");
+	m_modFormat.madeWithTracker = mpt::format(U_("Scream Tracker %1.%2"))(fileHeader.verMajor, mpt::ufmt::dec0<2>(fileHeader.verMinor));
+	m_modFormat.charset = mpt::Charset::CP437;
+
 	m_nSamples = 31;
 	m_nChannels = 4;
 	m_nMinPeriod = 64;
@@ -160,7 +165,7 @@ bool CSoundFile::ReadSTM(FileReader &file, ModLoadingFlags loadFlags)
 	m_nDefaultTempo = ConvertST2Tempo(initTempo);
 	m_nDefaultSpeed = initTempo >> 4;
 	if(fileHeader.verMinor > 10)
-		m_nDefaultGlobalVolume = fileHeader.globalVolume * 4u;
+		m_nDefaultGlobalVolume = std::min(fileHeader.globalVolume, uint8(64)) * 4u;
 
 	// Setting up channels
 	for(CHANNELINDEX chn = 0; chn < 4; chn++)
@@ -178,7 +183,7 @@ bool CSoundFile::ReadSTM(FileReader &file, ModLoadingFlags loadFlags)
 		if(sampleHeader.zero != 0 && sampleHeader.zero != 46)	// putup10.stm has zero = 46
 			return false;
 		sampleHeader.ConvertToMPT(Samples[smp]);
-		mpt::String::Read<mpt::String::nullTerminated>(m_szNames[smp], sampleHeader.filename);
+		m_szNames[smp] = mpt::String::ReadBuf(mpt::String::maybeNullTerminated, sampleHeader.filename);
 		sampleOffsets[smp - 1] = sampleHeader.offset;
 	}
 
@@ -188,7 +193,7 @@ bool CSoundFile::ReadSTM(FileReader &file, ModLoadingFlags loadFlags)
 	{
 		if(pat == 99 || pat == 255)	// 99 is regular, sometimes a single 255 entry can be found too
 			pat = Order.GetInvalidPatIndex();
-		else if(pat > 99)
+		else if(pat > 63)
 			return false;
 	}
 
@@ -211,7 +216,7 @@ bool CSoundFile::ReadSTM(FileReader &file, ModLoadingFlags loadFlags)
 		ORDERINDEX breakPos = ORDERINDEX_INVALID;
 		ROWINDEX breakRow = 63;	// Candidate row for inserting pattern break
 	
-		for(int i = 0; i < 64 * 4; i++, m++)
+		for(unsigned int i = 0; i < 64 * 4; i++, m++)
 		{
 			uint8 note = file.ReadUint8(), insvol, volcmd, cmdinf;
 			switch(note)
@@ -225,9 +230,13 @@ bool CSoundFile::ReadSTM(FileReader &file, ModLoadingFlags loadFlags)
 				m->note = NOTE_NOTECUT;
 				continue;
 			default:
-				insvol = file.ReadUint8();
-				volcmd = file.ReadUint8();
-				cmdinf = file.ReadUint8();
+				{
+				uint8 patData[3];
+				file.ReadArray(patData);
+				insvol = patData[0];
+				volcmd = patData[1];
+				cmdinf = patData[2];
+				}
 				break;
 			}
 
@@ -249,7 +258,7 @@ bool CSoundFile::ReadSTM(FileReader &file, ModLoadingFlags loadFlags)
 				m->vol = vol;
 			}
 
-			static const EffectCommand stmEffects[] =
+			static constexpr EffectCommand stmEffects[] =
 			{
 				CMD_NONE,        CMD_SPEED,          CMD_POSITIONJUMP, CMD_PATTERNBREAK,   // .ABC
 				CMD_VOLUMESLIDE, CMD_PORTAMENTODOWN, CMD_PORTAMENTOUP, CMD_TONEPORTAMENTO, // DEFG
@@ -265,16 +274,22 @@ bool CSoundFile::ReadSTM(FileReader &file, ModLoadingFlags loadFlags)
 			{
 			case CMD_VOLUMESLIDE:
 				// Lower nibble always has precedence, and there are no fine slides.
-				if(m->param & 0x0F) m->param &= 0x0F;
-				else m->param &= 0xF0;
+				if(m->param & 0x0F)
+					m->param &= 0x0F;
+				else
+					m->param &= 0xF0;
 				break;
 
 			case CMD_PATTERNBREAK:
 				m->param = (m->param & 0xF0) * 10 + (m->param & 0x0F);
-				if(breakRow > m->param)
+				if(breakPos != ORDERINDEX_INVALID && m->param == 0)
 				{
-					breakRow = m->param;
+					// Merge Bxx + C00 into just Bxx
+					m->command = CMD_POSITIONJUMP;
+					m->param = static_cast<ModCommand::PARAM>(breakPos);
+					breakPos = ORDERINDEX_INVALID;
 				}
+				LimitMax(breakRow, i / 4u);
 				break;
 
 			case CMD_POSITIONJUMP:
@@ -309,7 +324,7 @@ bool CSoundFile::ReadSTM(FileReader &file, ModLoadingFlags loadFlags)
 				m->param >>= 4;
 #endif // MODPLUG_TRACKER
 
-				MPT_FALLTHROUGH;
+				[[fallthrough]];
 
 			default:
 				// Anything not listed above is a no-op if there's no value.

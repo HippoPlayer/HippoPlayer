@@ -39,10 +39,8 @@ impl Playlist {
     ///
     /// Advance a song in the songlist
     ///
-    fn advance_song(&mut self, direction: isize) -> Option<Box<[u8]>> {
+    pub fn advance_song(&mut self, direction: isize) -> Option<Box<[u8]>> {
         let count = self.entries.len() as isize;
-
-        println!("advance song");
 
         if count > 0 {
             let new_song = (self.current_song + direction) % count;
@@ -134,41 +132,41 @@ impl Playlist {
     ///
     ///
     pub fn current_song_message(&self) -> Option<Box<[u8]>> {
-        if !self.entries.is_empty() {
-            let entry = &self.entries[self.current_song as usize];
-
-            let mut builder = messages::FlatBufferBuilder::new_with_capacity(8192);
-            let title = builder.create_string(&entry.title);
-            let song_type = builder.create_string(&entry.song_type);
-
-            let song_desc = HippoSongDescription::create(
-                &mut builder,
-                &HippoSongDescriptionArgs {
-                    authoring_tool: None,
-                    artist: None,
-                    date: None,
-                    title: Some(title),
-                    song_type: Some(song_type),
-                    duration: entry.duration,
-                },
-            );
-
-            let select_song = HippoSelectSong::create(
-                &mut builder,
-                &HippoSelectSongArgs {
-                    description: Some(song_desc),
-                    playlist_index: self.current_song as i32,
-                },
-            );
-
-            Some(HippoMessage::create_def(
-                builder,
-                MessageType::select_song,
-                select_song.as_union_value(),
-            ))
-        } else {
-            None
+        if self.entries.is_empty() {
+            return None;
         }
+
+        let entry = &self.entries[self.current_song as usize];
+
+        let mut builder = messages::FlatBufferBuilder::new_with_capacity(8192);
+        let title = builder.create_string(&entry.title);
+        let song_type = builder.create_string(&entry.song_type);
+
+        let song_desc = HippoSongDescription::create(
+            &mut builder,
+            &HippoSongDescriptionArgs {
+                authoring_tool: None,
+                artist: None,
+                date: None,
+                title: Some(title),
+                song_type: Some(song_type),
+                duration: entry.duration,
+            },
+        );
+
+        let select_song = HippoSelectSong::create(
+            &mut builder,
+            &HippoSelectSongArgs {
+                description: Some(song_desc),
+                playlist_index: self.current_song as i32,
+            },
+        );
+
+        Some(HippoMessage::create_def(
+            builder,
+            MessageType::select_song,
+            select_song.as_union_value(),
+        ))
     }
 
     ///
@@ -195,7 +193,7 @@ impl Playlist {
                             path: file.to_owned(),
                             title: base.to_string_lossy().to_string(),
                             song_type: String::new(),
-                            duration: -1.0, // negative is used to indicate no durion
+                            duration: 0.0,
                         });
                     }
                 }
@@ -248,14 +246,7 @@ impl Playlist {
         let playlist_index = select_song.playlist_index() as usize;
 
         if playlist_index < self.entries.len() {
-            //if self.entries[playlist_index].path == path_name {
             new_song_id = Some(playlist_index);
-        /*
-        } else {
-            println!("Warning: Requested song {} at index {} but song is {} that doesn't match",
-                path_name, playlist_index, self.entries[playlist_index].path);
-        }
-        */
         } else {
             println!("Warning: Tried to select song at {} - {} but not enough entries in the playlist {}",
                 playlist_index, path_name, self.entries.len());

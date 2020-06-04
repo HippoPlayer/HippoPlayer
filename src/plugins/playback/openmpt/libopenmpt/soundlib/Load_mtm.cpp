@@ -54,12 +54,12 @@ struct MTMSampleHeader
 		{
 			mptSmp.nLength = length;
 			mptSmp.nLoopStart = loopStart;
-			mptSmp.nLoopEnd = loopEnd;
+			mptSmp.nLoopEnd = std::max(loopEnd.get(), uint32(1)) - 1;
 			LimitMax(mptSmp.nLoopEnd, mptSmp.nLength);
 			if(mptSmp.nLoopStart + 4 >= mptSmp.nLoopEnd) mptSmp.nLoopStart = mptSmp.nLoopEnd = 0;
 			if(mptSmp.nLoopEnd) mptSmp.uFlags.set(CHN_LOOP);
-			mptSmp.nFineTune = MOD2XMFineTune(finetune);
-			mptSmp.nC5Speed = ModSample::TransposeToFrequency(0, mptSmp.nFineTune);
+			mptSmp.nFineTune = finetune; // Uses MOD units but allows the full int8 range rather than just -8...+7 so we keep the value as-is and convert it during playback
+			mptSmp.nC5Speed = ModSample::TransposeToFrequency(0, finetune * 16);
 
 			if(attribute & 0x01)
 			{
@@ -134,10 +134,14 @@ bool CSoundFile::ReadMTM(FileReader &file, ModLoadingFlags loadFlags)
 	}
 
 	InitializeGlobals(MOD_TYPE_MTM);
-	mpt::String::Read<mpt::String::maybeNullTerminated>(m_songName, fileHeader.songName);
+	m_songName = mpt::String::ReadBuf(mpt::String::maybeNullTerminated, fileHeader.songName);
 	m_nSamples = fileHeader.numSamples;
 	m_nChannels = fileHeader.numChannels;
-	m_madeWithTracker = mpt::format(MPT_USTRING("MultiTracker %1.%2"))(fileHeader.version >> 4, fileHeader.version & 0x0F);
+	
+	m_modFormat.formatName = U_("MultiTracker");
+	m_modFormat.type = U_("mtm");
+	m_modFormat.madeWithTracker = mpt::format(U_("MultiTracker %1.%2"))(fileHeader.version >> 4, fileHeader.version & 0x0F);
+	m_modFormat.charset = mpt::Charset::CP437;
 
 	// Reading instruments
 	for(SAMPLEINDEX smp = 1; smp <= GetNumSamples(); smp++)
@@ -145,7 +149,7 @@ bool CSoundFile::ReadMTM(FileReader &file, ModLoadingFlags loadFlags)
 		MTMSampleHeader sampleHeader;
 		file.ReadStruct(sampleHeader);
 		sampleHeader.ConvertToMPT(Samples[smp]);
-		mpt::String::Read<mpt::String::maybeNullTerminated>(m_szNames[smp], sampleHeader.samplename);
+		m_szNames[smp] = mpt::String::ReadBuf(mpt::String::maybeNullTerminated, sampleHeader.samplename);
 	}
 
 	// Setting Channel Pan Position
@@ -186,13 +190,13 @@ bool CSoundFile::ReadMTM(FileReader &file, ModLoadingFlags loadFlags)
 			ModCommand *m = Patterns[pat].GetpModCommand(0, chn);
 			for(ROWINDEX row = 0; row < rowsPerPat; row++, m += GetNumChannels())
 			{
-				uint8 data[3];
-				tracks.ReadArray(data);
+				const auto [noteInstr, instrCmd, par] = tracks.ReadArray<uint8, 3>();
 
-				if(data[0] & 0xFC) m->note = (data[0] >> 2) + 36 + NOTE_MIN;
-				m->instr = ((data[0] & 0x03) << 4) | (data[1] >> 4);
-				uint8 cmd = data[1] & 0x0F;
-				uint8 param = data[2];
+				if(noteInstr & 0xFC)
+					m->note = (noteInstr >> 2) + 36 + NOTE_MIN;
+				m->instr = ((noteInstr & 0x03) << 4) | (instrCmd >> 4);
+				uint8 cmd = instrCmd & 0x0F;
+				uint8 param = par;
 				if(cmd == 0x0A)
 				{
 					if(param & 0xF0) param &= 0xF0; else param &= 0x0F;
@@ -200,11 +204,25 @@ bool CSoundFile::ReadMTM(FileReader &file, ModLoadingFlags loadFlags)
 				{
 					// No 8xx panning in MultiTracker, only E8x
 					cmd = param = 0;
+				} else if(cmd == 0x0E)
+				{
+					// MultiTracker does not support these commands
+					switch(param & 0xF0)
+					{
+					case 0x00:
+					case 0x30:
+					case 0x40:
+					case 0x60:
+					case 0x70:
+					case 0xF0:
+						cmd = param = 0;
+						break;
+					}
 				}
-				m->command = cmd;
-				m->param = param;
 				if(cmd != 0 || param != 0)
 				{
+					m->command = cmd;
+					m->param = param;
 					ConvertModCommand(*m);
 #ifdef MODPLUG_TRACKER
 					m->Convert(MOD_TYPE_MTM, MOD_TYPE_S3M, *this);

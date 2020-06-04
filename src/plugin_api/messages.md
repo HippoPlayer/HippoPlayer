@@ -58,7 +58,7 @@ Reply that files actually got added with list of added files
   [strings..]   - string : List of strings to be added to the playlist
 ```
 
-## hippo_playlist_select_song (notifcation)
+## hippo_playlist_select_song (notification)
 
 Selects a song from the playlist and starts playing
 
@@ -68,11 +68,11 @@ Selects a song from the playlist and starts playing
   [url]     - string (filename/url) name of the url to play
 ```
 
-## hippo_playlist_next_song (notifcation)
+## hippo_playlist_next_song (notification)
 
 Selects the next song in the playlist (will loop around to first entry if user has settings to allow so)
 
-## hippo_playlist_prev_song (notifcation)
+## hippo_playlist_prev_song (notification)
 
 Selects the previous song in the playlist (will loop around to first entry if user has settings to allow so)
 

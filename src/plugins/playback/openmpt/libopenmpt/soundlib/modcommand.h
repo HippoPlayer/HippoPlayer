@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include "BuildSettings.h"
+
 #include "Snd_defs.h"
 #include "../common/misc_util.h"
 
@@ -18,88 +20,92 @@ OPENMPT_NAMESPACE_BEGIN
 class CSoundFile;
 
 // Note definitions
-#define NOTE_NONE			(ModCommand::NOTE(0))
-#define NOTE_MIN			(ModCommand::NOTE(1))
-#define NOTE_MAX			(ModCommand::NOTE(120)) // Defines maximum notevalue(with index starting from 1) as well as maximum number of notes.
-#define NOTE_MIDDLEC		(ModCommand::NOTE(5 * 12 + NOTE_MIN))
-#define NOTE_KEYOFF			(ModCommand::NOTE(0xFF)) // 255
-#define NOTE_NOTECUT		(ModCommand::NOTE(0xFE)) // 254
-#define NOTE_FADE			(ModCommand::NOTE(0xFD)) // 253, IT's action for illegal notes - DO NOT SAVE AS 253 as this is IT's internal representation of "no note"!
-#define NOTE_PC				(ModCommand::NOTE(0xFC)) // 252, Param Control 'note'. Changes param value on first tick.
-#define NOTE_PCS			(ModCommand::NOTE(0xFB)) // 251, Param Control (Smooth) 'note'. Interpolates param value during the whole row.
-#define NOTE_MAX_SPECIAL	NOTE_KEYOFF
-#define NOTE_MIN_SPECIAL	NOTE_PCS
+enum : uint8 // ModCommand::NOTE
+{
+	NOTE_NONE        = 0,    // Empty note cell
+	NOTE_MIN         = 1,    // Minimum note value
+	NOTE_MAX         = 120,  // Maximum note value
+	NOTE_MIDDLEC     = (5 * 12 + NOTE_MIN),
+	NOTE_KEYOFF      = 0xFF, // === (Note Off, releases envelope / fades samples, stops plugin note)
+	NOTE_NOTECUT     = 0xFE, // ^^^ (Cuts sample / stops all plugin notes)
+	NOTE_FADE        = 0xFD, // ~~~ (Fades samples, stops plugin note)
+	NOTE_PC          = 0xFC, // Param Control 'note'. Changes param value on first tick.
+	NOTE_PCS         = 0xFB, // Param Control (Smooth) 'note'. Interpolates param value during the whole row.
+	NOTE_MIN_SPECIAL = NOTE_PCS,
+	NOTE_MAX_SPECIAL = NOTE_KEYOFF,
+};
 
 
 // Volume Column commands
 enum VolumeCommand : uint8
 {
-	VOLCMD_NONE				= 0,
-	VOLCMD_VOLUME			= 1,
-	VOLCMD_PANNING			= 2,
-	VOLCMD_VOLSLIDEUP		= 3,
-	VOLCMD_VOLSLIDEDOWN		= 4,
-	VOLCMD_FINEVOLUP		= 5,
-	VOLCMD_FINEVOLDOWN		= 6,
-	VOLCMD_VIBRATOSPEED		= 7,
-	VOLCMD_VIBRATODEPTH		= 8,
-	VOLCMD_PANSLIDELEFT		= 9,
-	VOLCMD_PANSLIDERIGHT	= 10,
-	VOLCMD_TONEPORTAMENTO	= 11,
-	VOLCMD_PORTAUP			= 12,
-	VOLCMD_PORTADOWN		= 13,
-	VOLCMD_DELAYCUT			= 14, //currently unused
-	VOLCMD_OFFSET			= 15,
-	MAX_VOLCMDS				= 16
+	VOLCMD_NONE           = 0,
+	VOLCMD_VOLUME         = 1,
+	VOLCMD_PANNING        = 2,
+	VOLCMD_VOLSLIDEUP     = 3,
+	VOLCMD_VOLSLIDEDOWN   = 4,
+	VOLCMD_FINEVOLUP      = 5,
+	VOLCMD_FINEVOLDOWN    = 6,
+	VOLCMD_VIBRATOSPEED   = 7,
+	VOLCMD_VIBRATODEPTH   = 8,
+	VOLCMD_PANSLIDELEFT   = 9,
+	VOLCMD_PANSLIDERIGHT  = 10,
+	VOLCMD_TONEPORTAMENTO = 11,
+	VOLCMD_PORTAUP        = 12,
+	VOLCMD_PORTADOWN      = 13,
+	VOLCMD_DELAYCUT       = 14, //currently unused
+	VOLCMD_OFFSET         = 15,
+	MAX_VOLCMDS
 };
 
 
 // Effect column commands
 enum EffectCommand : uint8
 {
-	CMD_NONE				= 0,
-	CMD_ARPEGGIO			= 1,
-	CMD_PORTAMENTOUP		= 2,
-	CMD_PORTAMENTODOWN		= 3,
-	CMD_TONEPORTAMENTO		= 4,
-	CMD_VIBRATO				= 5,
-	CMD_TONEPORTAVOL		= 6,
-	CMD_VIBRATOVOL			= 7,
-	CMD_TREMOLO				= 8,
-	CMD_PANNING8			= 9,
-	CMD_OFFSET				= 10,
-	CMD_VOLUMESLIDE			= 11,
-	CMD_POSITIONJUMP		= 12,
-	CMD_VOLUME				= 13,
-	CMD_PATTERNBREAK		= 14,
-	CMD_RETRIG				= 15,
-	CMD_SPEED				= 16,
-	CMD_TEMPO				= 17,
-	CMD_TREMOR				= 18,
-	CMD_MODCMDEX			= 19,
-	CMD_S3MCMDEX			= 20,
-	CMD_CHANNELVOLUME		= 21,
-	CMD_CHANNELVOLSLIDE		= 22,
-	CMD_GLOBALVOLUME		= 23,
-	CMD_GLOBALVOLSLIDE		= 24,
-	CMD_KEYOFF				= 25,
-	CMD_FINEVIBRATO			= 26,
-	CMD_PANBRELLO			= 27,
-	CMD_XFINEPORTAUPDOWN	= 28,
-	CMD_PANNINGSLIDE		= 29,
-	CMD_SETENVPOSITION		= 30,
-	CMD_MIDI				= 31,
-	CMD_SMOOTHMIDI			= 32,
-	CMD_DELAYCUT			= 33,
-	CMD_XPARAM				= 34,
-	CMD_NOTESLIDEUP			= 35, // IMF Gxy / PTM Jxy (Slide y notes up every x ticks)
-	CMD_NOTESLIDEDOWN		= 36, // IMF Hxy / PTM Kxy (Slide y notes down every x ticks)
-	CMD_NOTESLIDEUPRETRIG	= 37, // PTM Lxy (Slide y notes up every x ticks + retrigger note)
-	CMD_NOTESLIDEDOWNRETRIG	= 38, // PTM Mxy (Slide y notes down every x ticks + retrigger note)
-	CMD_REVERSEOFFSET		= 39, // PTM Nxx Revert sample + offset
-	CMD_DBMECHO				= 40, // DBM enable/disable echo
-	CMD_OFFSETPERCENTAGE	= 41, // PLM Percentage Offset
-	MAX_EFFECTS				= 42
+	CMD_NONE                = 0,
+	CMD_ARPEGGIO            = 1,
+	CMD_PORTAMENTOUP        = 2,
+	CMD_PORTAMENTODOWN      = 3,
+	CMD_TONEPORTAMENTO      = 4,
+	CMD_VIBRATO             = 5,
+	CMD_TONEPORTAVOL        = 6,
+	CMD_VIBRATOVOL          = 7,
+	CMD_TREMOLO             = 8,
+	CMD_PANNING8            = 9,
+	CMD_OFFSET              = 10,
+	CMD_VOLUMESLIDE         = 11,
+	CMD_POSITIONJUMP        = 12,
+	CMD_VOLUME              = 13,
+	CMD_PATTERNBREAK        = 14,
+	CMD_RETRIG              = 15,
+	CMD_SPEED               = 16,
+	CMD_TEMPO               = 17,
+	CMD_TREMOR              = 18,
+	CMD_MODCMDEX            = 19,
+	CMD_S3MCMDEX            = 20,
+	CMD_CHANNELVOLUME       = 21,
+	CMD_CHANNELVOLSLIDE     = 22,
+	CMD_GLOBALVOLUME        = 23,
+	CMD_GLOBALVOLSLIDE      = 24,
+	CMD_KEYOFF              = 25,
+	CMD_FINEVIBRATO         = 26,
+	CMD_PANBRELLO           = 27,
+	CMD_XFINEPORTAUPDOWN    = 28,
+	CMD_PANNINGSLIDE        = 29,
+	CMD_SETENVPOSITION      = 30,
+	CMD_MIDI                = 31,
+	CMD_SMOOTHMIDI          = 32,
+	CMD_DELAYCUT            = 33,
+	CMD_XPARAM              = 34,
+	CMD_NOTESLIDEUP         = 35, // IMF Gxy / PTM Jxy (Slide y notes up every x ticks)
+	CMD_NOTESLIDEDOWN       = 36, // IMF Hxy / PTM Kxy (Slide y notes down every x ticks)
+	CMD_NOTESLIDEUPRETRIG   = 37, // PTM Lxy (Slide y notes up every x ticks + retrigger note)
+	CMD_NOTESLIDEDOWNRETRIG = 38, // PTM Mxy (Slide y notes down every x ticks + retrigger note)
+	CMD_REVERSEOFFSET       = 39, // PTM Nxx Revert sample + offset
+	CMD_DBMECHO             = 40, // DBM enable/disable echo
+	CMD_OFFSETPERCENTAGE    = 41, // PLM Percentage Offset
+	CMD_DUMMY               = 42,
+	MAX_EFFECTS
 };
 
 
@@ -126,10 +132,10 @@ public:
 
 	// Defines the maximum value for column data when interpreted as 2-byte value
 	// (for example volcmd and vol). The valid value range is [0, maxColumnValue].
-	static const int maxColumnValue = 999;
+	static constexpr int maxColumnValue = 999;
 
 	// Returns empty modcommand.
-	static ModCommand Empty() { ModCommand m = { 0, 0, VOLCMD_NONE, CMD_NONE, 0, 0 }; return m; }
+	static ModCommand Empty() { return ModCommand(); }
 
 	bool operator==(const ModCommand& mc) const
 	{
@@ -165,8 +171,8 @@ public:
 	bool IsInstrPlug() const { return IsPcNote(); }
 
 	// Returns true if and only if note is NOTE_PC or NOTE_PCS.
-	bool IsPcNote() const { return note == NOTE_PC || note == NOTE_PCS; }
-	static bool IsPcNote(const NOTE note_id) { return note_id == NOTE_PC || note_id == NOTE_PCS; }
+	bool IsPcNote() const { return IsPcNote(note); }
+	static bool IsPcNote(NOTE note) { return note == NOTE_PC || note == NOTE_PCS; }
 
 	// Returns true if and only if note is a valid musical note.
 	bool IsNote() const { return IsInRange(note, NOTE_MIN, NOTE_MAX); }
@@ -209,12 +215,12 @@ public:
 	static bool CombineEffects(uint8 &eff1, uint8 &param1, uint8 &eff2, uint8 &param2);
 
 public:
-	uint8 note;
-	uint8 instr;
-	uint8 volcmd;
-	uint8 command;
-	uint8 vol;
-	uint8 param;
+	uint8 note = NOTE_NONE;
+	uint8 instr = 0;
+	uint8 volcmd = VOLCMD_NONE;
+	uint8 command = CMD_NONE;
+	uint8 vol = 0;
+	uint8 param = 0;
 };
 
 OPENMPT_NAMESPACE_END

@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include "BuildSettings.h"
+
 #ifndef NO_PLUGINS
 
 #include "PlugInterface.h"
@@ -17,7 +19,7 @@
 
 OPENMPT_NAMESPACE_BEGIN
 
-class LFOPlugin : public IMixPlugin
+class LFOPlugin final : public IMixPlugin
 {
 	friend class LFOPluginEditor;
 
@@ -47,7 +49,7 @@ protected:
 		kNumWaveforms
 	};
 
-	std::vector<mpt::byte> m_chunkData;
+	std::vector<std::byte> m_chunkData;
 
 	// LFO parameters
 	float m_amplitude, m_offset, m_frequency;
@@ -64,7 +66,7 @@ protected:
 	mpt::fast_prng m_PRNG;
 
 #ifdef MODPLUG_TRACKER
-	static const int WM_PARAM_UDPATE = WM_USER + 500;
+	enum : int { WM_PARAM_UDPATE = WM_USER + 500 };
 #endif
 
 public:
@@ -83,13 +85,13 @@ public:
 
 	// MIDI event handling (mostly passing it through to the follow-up plugin)
 	bool MidiSend(uint32 midiCode) override;
-	bool MidiSysexSend(const void *message, uint32 length) override;
-	void MidiCC(uint8 nMidiCh, MIDIEvents::MidiCC nController, uint8 nParam, CHANNELINDEX trackChannel) override;
-	void MidiPitchBend(uint8 nMidiCh, int32 increment, int8 pwd) override;
-	void MidiVibrato(uint8 nMidiCh, int32 depth, int8 pwd) override;
-	void MidiCommand(uint8 nMidiCh, uint8 nMidiProg, uint16 wMidiBank, uint16 note, uint16 vol, CHANNELINDEX trackChannel) override;
+	bool MidiSysexSend(mpt::const_byte_span sysex) override;
+	void MidiCC(MIDIEvents::MidiCC nController, uint8 nParam, CHANNELINDEX trackChannel) override;
+	void MidiPitchBend(int32 increment, int8 pwd, CHANNELINDEX trackChannel) override;
+	void MidiVibrato(int32 depth, int8 pwd, CHANNELINDEX trackChannel) override;
+	void MidiCommand(const ModInstrument &instr, uint16 note, uint16 vol, CHANNELINDEX trackChannel) override;
 	void HardAllNotesOff() override;
-	bool IsNotePlaying(uint32 note, uint32 midiChn, uint32 trackerChn) override;
+	bool IsNotePlaying(uint32 note, CHANNELINDEX trackerChn) override;
 
 	int32 GetNumPrograms() const override { return 0; }
 	int32 GetCurrentProgram() override { return 0; }
@@ -142,8 +144,8 @@ protected:
 	IMixPlugin *GetOutputPlugin() const;
 
 public:
-	static LFOWaveform ParamToWaveform(float param) { return static_cast<LFOWaveform>(Util::Round<int>(param * 32.0f)); }
-	static float WaveformToParam(LFOWaveform waveform) { return waveform / 32.0f; }
+	static LFOWaveform ParamToWaveform(float param) { return static_cast<LFOWaveform>(mpt::saturate_round<int>(param * 32.0f)); }
+	static float WaveformToParam(LFOWaveform waveform) { return static_cast<int>(waveform) / 32.0f; }
 };
 
 OPENMPT_NAMESPACE_END

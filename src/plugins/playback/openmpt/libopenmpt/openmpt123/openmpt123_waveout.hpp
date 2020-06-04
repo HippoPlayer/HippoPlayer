@@ -18,7 +18,7 @@
 namespace openmpt123 {
 
 struct waveout_exception : public exception {
-	waveout_exception() throw() : exception( "waveout" ) { }
+	waveout_exception() : exception( "waveout" ) { }
 };
 
 class waveout_stream_raii : public write_buffers_interface {
@@ -157,21 +157,21 @@ private:
 		write_or_wait();
 	}
 public:
-	void write( const std::vector<float*> buffers, std::size_t frames ) {
+	void write( const std::vector<float*> buffers, std::size_t frames ) override {
 		write_buffers( buffers, frames );
 	}
-	void write( const std::vector<std::int16_t*> buffers, std::size_t frames ) {
+	void write( const std::vector<std::int16_t*> buffers, std::size_t frames ) override {
 		write_buffers( buffers, frames );
 	}
-	bool pause() {
+	bool pause() override {
 		waveOutPause( waveout );
 		return true;
 	}
-	bool unpause() {
+	bool unpause() override {
 		waveOutRestart( waveout );
 		return true;
 	}
-	bool sleep( int ms ) {
+	bool sleep( int ms ) override {
 		Sleep( ms );
 		return true;
 	}

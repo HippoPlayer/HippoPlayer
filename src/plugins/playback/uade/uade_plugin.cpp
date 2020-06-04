@@ -139,9 +139,7 @@ static int uade_open(void* user_data, const char* buffer) {
 	if (uade_play(buffer, -1, plugin->state) == 1) {
 	    // we can only get this data when it started playing :(
         const struct uade_song_info* song_info = uade_get_song_info(plugin->state);
-
         float length = (float)song_info->duration;
-        length = length == 0.0f ? -1.0f : length;
 
         std::vector<flatbuffers::Offset<flatbuffers::String>> instruments;
         std::vector<flatbuffers::Offset<flatbuffers::String>> samples;

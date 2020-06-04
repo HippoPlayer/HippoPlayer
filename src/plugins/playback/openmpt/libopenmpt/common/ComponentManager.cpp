@@ -190,8 +190,8 @@ std::string ComponentFactoryBase::GetSettingsKey() const
 void ComponentFactoryBase::PreConstruct() const
 {
 	MPT_LOG(LogInformation, "Components", 
-		mpt::format(MPT_USTRING("Constructing Component %1"))
-			( mpt::ToUnicode(mpt::CharsetASCII, m_ID)
+		mpt::format(U_("Constructing Component %1"))
+			( mpt::ToUnicode(mpt::Charset::ASCII, m_ID)
 			)
 		);
 }
@@ -233,7 +233,7 @@ static ComponentListEntry * & ComponentListHead()
 
 bool ComponentListPush(ComponentListEntry *entry)
 {
-	MPT_LOCK_GUARD<mpt::mutex> guard(ComponentListMutex());
+	mpt::lock_guard<mpt::mutex> guard(ComponentListMutex());
 	entry->next = ComponentListHead();
 	ComponentListHead() = entry;
 	return true;
@@ -245,7 +245,7 @@ static std::shared_ptr<ComponentManager> g_ComponentManager;
 
 void ComponentManager::Init(const IComponentManagerSettings &settings)
 {
-	MPT_LOG(LogInformation, "Components", MPT_USTRING("Init"));
+	MPT_LOG(LogInformation, "Components", U_("Init"));
 	// cannot use make_shared because the constructor is private
 	g_ComponentManager = std::shared_ptr<ComponentManager>(new ComponentManager(settings));
 }
@@ -253,7 +253,7 @@ void ComponentManager::Init(const IComponentManagerSettings &settings)
 
 void ComponentManager::Release()
 {
-	MPT_LOG(LogInformation, "Components", MPT_USTRING("Release"));
+	MPT_LOG(LogInformation, "Components", U_("Release"));
 	g_ComponentManager = nullptr;
 }
 
@@ -267,7 +267,7 @@ std::shared_ptr<ComponentManager> ComponentManager::Instance()
 ComponentManager::ComponentManager(const IComponentManagerSettings &settings)
 	: m_Settings(settings)
 {
-	MPT_LOCK_GUARD<mpt::mutex> guard(ComponentListMutex());
+	mpt::lock_guard<mpt::mutex> guard(ComponentListMutex());
 	for(ComponentListEntry *entry = ComponentListHead(); entry; entry = entry->next)
 	{
 		entry->reg(*this);
@@ -292,7 +292,7 @@ void ComponentManager::Register(const IComponentFactory &componentFactory)
 
 void ComponentManager::Startup()
 {
-	MPT_LOG(LogDebug, "Components", MPT_USTRING("Startup"));
+	MPT_LOG(LogDebug, "Components", U_("Startup"));
 	if(m_Settings.LoadOnStartup())
 	{
 		for(auto &it : m_Components)
@@ -313,6 +313,10 @@ void ComponentManager::Startup()
 
 bool ComponentManager::IsComponentBlocked(const std::string &settingsKey) const
 {
+	if(settingsKey.empty())
+	{
+		return false;
+	}
 	return m_Settings.IsBlocked(settingsKey);
 }
 
