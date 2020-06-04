@@ -342,15 +342,15 @@ SharedLibrary {
 StaticLibrary {
 	Name = "sc68_file",
 
-	SourceDir = "src/plugins/playback/sndh",
+	SourceDir = "src/plugins/playback/sc68",
 
 	Defines = {
         "HAVE_CONFIG_H",
 	},
 
 	Includes = {
-        "src/plugins/playback/sndh/file68/sc68",
-        "src/plugins/playback/sndh/unice68",
+        "src/plugins/playback/sc68/file68/sc68",
+        "src/plugins/playback/sc68/unice68",
 	},
 
 	Sources = {
@@ -383,7 +383,7 @@ StaticLibrary {
 SharedLibrary {
 	Name = "sc68",
 
-	SourceDir = "src/plugins/playback/sndh",
+	SourceDir = "src/plugins/playback/sc68",
 
 	Defines = {
         "HAVE_CONFIG_H",
@@ -391,12 +391,12 @@ SharedLibrary {
 
 	Includes = {
 	    "src/plugin_api",
-        "src/plugins/playback/sndh/libsc68",
-        "src/plugins/playback/sndh/file68/sc68",
-        "src/plugins/playback/sndh/file68",
-        "src/plugins/playback/sndh/libsc68/sc68",
-        "src/plugins/playback/sndh/libsc68",
-        "src/plugins/playback/sndh/libsc68/emu68",
+        "src/plugins/playback/sc68/libsc68",
+        "src/plugins/playback/sc68/file68/sc68",
+        "src/plugins/playback/sc68/file68",
+        "src/plugins/playback/sc68/libsc68/sc68",
+        "src/plugins/playback/sc68/libsc68",
+        "src/plugins/playback/sc68/libsc68/emu68",
 	},
 
 	Sources = {
@@ -449,7 +449,7 @@ SharedLibrary {
 		"unice68/unice68_pack.c",
 		"unice68/unice68_unpack.c",
 		"unice68/unice68_version.c",
-		"sndh_plugin.cpp",
+		"sc68_plugin.cpp",
 	},
 
     Depends = { "zlib", "sc68_file" },
