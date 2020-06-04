@@ -262,9 +262,6 @@ io68_t * ymio_create(emu68_t * const emu68, ym_parms_t * const parms)
       ymio->io = ym_io;
       ym_setup(&ymio->ym, parms);
 
-      printf("emu68->clock   %d\n", emu68->clock);
-      printf("ymio->ym.clock %d\n", ymio->ym.clock);
-
       if (emu68->clock > ymio->ym.clock) {
         numerator = emu68->clock;
         denominator = ymio->ym.clock;
@@ -274,8 +271,6 @@ io68_t * ymio_create(emu68_t * const emu68, ym_parms_t * const parms)
         denominator = emu68->clock;
         s = 1;
       }
-
-	  printf("denominator %d\n", denominator);
 
       quotient = numerator / denominator;
 

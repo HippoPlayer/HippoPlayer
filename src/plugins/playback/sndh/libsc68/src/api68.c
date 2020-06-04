@@ -2360,7 +2360,6 @@ int sc68_music_info(sc68_t * sc68, sc68_music_info_t * info, int track,
   int loaded;
 
   d = get_dt(sc68, &track, disk);
-  printf("d %p\n", d);
   if (!d || !info)
     return error_add(sc68, "libsc68: %s\n", "invalid parameter");
 

@@ -195,8 +195,6 @@ int ym_init(int * argc, char ** argv)
   default_parms.clock    = YM_CLOCK_ATARIST;
   default_parms.hz       = SPR_DEF;
 
-  printf("ym_init\n");
-
   /* Register ym options */
   option68_append(opts,sizeof(opts)/sizeof(*opts));
 
@@ -545,9 +543,6 @@ int ym_setup(ym_t * const ym, ym_parms_t * const parms)
   default:
     p->clock = default_parms.clock;
   }
-
-  printf(YMHD "setup -- engine:%d rate:%d clock:%d level:%d\n",
-         p->engine,p->hz,p->clock,256);
 
   if (ym) {
     ym->ymout5      = ymout5;

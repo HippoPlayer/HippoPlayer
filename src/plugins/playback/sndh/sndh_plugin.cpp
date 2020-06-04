@@ -29,10 +29,12 @@ static sc68_init_t s_init;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#ifdef DEBUG
 static void msg(const int cat, void* cookie, const char * fmt, va_list list) {
-  vfprintf(stdout,fmt,list);
-  fflush(stdout);
+    vfprintf(stdout,fmt,list);
+    fflush(stdout);
 }
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -46,11 +48,11 @@ static void init() {
 
     s_init.argc = sizeof(argv)/sizeof(*argv);
     s_init.argv = argv;
+#ifdef DEBUG
     s_init.msg_handler = (sc68_msg_t)msg;
+#endif
 
-    int res = sc68_init(&s_init);
-    printf("sc68_init %d\n", res);
-
+    sc68_init(&s_init);
     s_init_done = true;
 }
 
@@ -89,18 +91,15 @@ static int sndh_metadata(const char* filename, const HippoServiceAPI* service_ap
     create.sampling_rate = SAMPLE_RATE;
     sc68_t* inst = sc68_create(&create);
 
-
     // TODO: Proper error handling
-    if (!sc68_load_mem(inst, data, (int)size)) {
+    if (sc68_load_mem(inst, data, (int)size) < 0) {
         printf("SNDH: Failed load\n");
         return -1;
     }
 
-    /*
-    int ret = sc68_music_info(inst, &info, 0, 0);
+    int ret = sc68_music_info(inst, &info, 1, 0);
     int length = sc68_cntl(inst, SC68_GET_LEN);
-
-    printf("ret %d\n", ret);
+    (void)ret;
 
     std::vector<flatbuffers::Offset<flatbuffers::String>> instruments;
     std::vector<flatbuffers::Offset<flatbuffers::String>> samples;
@@ -133,7 +132,6 @@ static int sndh_metadata(const char* filename, const HippoServiceAPI* service_ap
     // Make sure to free the buffer before we leave
     HippoIo_free_file_to_memory(io_api, data);
     sc68_destroy(inst);
-    */
 
 	return 0;
 }
@@ -179,13 +177,8 @@ static int sndh_open(void* user_data, const char* buffer) {
     }
 
     // TODO: Proper error handling
-    if (!sc68_load_mem(data->instance, buffer, (int)size)) {
+    if (sc68_load_mem(data->instance, load_data, (int)size) < 0) {
         printf("SNDH: Failed load\n");
-        return -1;
-    }
-
-    if (sc68_play(data->instance, SC68_CUR_TRACK, SC68_DEF_LOOP) < 0) {
-        printf("SNDH: Failed play\n");
         return -1;
     }
 
@@ -232,11 +225,11 @@ static int sndh_read_data(void* user_data, void* dest, uint32_t max_size) {
 	float* new_dest = (float*)dest;
 	const float scale = 1.0f / 32767.0f;
 
-	for (int i = 0; i < n; ++i) {
+	for (int i = 0; i < n * 2; ++i) {
 		new_dest[i] = ((float)data[i]) * scale;
 	}
 
-	return n;
+	return n * 2;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

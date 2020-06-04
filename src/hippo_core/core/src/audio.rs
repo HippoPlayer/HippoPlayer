@@ -40,6 +40,12 @@ impl HippoPlayback {
         let _open_state =
             unsafe { ((plugin.plugin_funcs).open)(ptr_user_data, c_filename.as_ptr()) };
 
+        /*
+        if open_state < 0 {
+            return None;
+        }
+        */
+
         let rb = RingBuffer::<Box<[u8]>>::new(256);
         let (prod, cons) = rb.split();
 
