@@ -98,7 +98,7 @@ static int sc68_plugin_metadata(const char* filename, const HippoServiceAPI* ser
     }
 
     int ret = sc68_music_info(inst, &info, 1, 0);
-    int length = sc68_cntl(inst, SC68_GET_LEN);
+    int length = info.trk.time_ms;
     (void)ret;
 
     std::vector<flatbuffers::Offset<flatbuffers::String>> instruments;
