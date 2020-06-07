@@ -128,14 +128,14 @@ Program {
 -----------------------------------------------------------------------------------------------------------------------
 
 SharedLibrary {
-	Name = "HivelyPlugin",
+	Name = "hively",
 
 	Includes = {
 	    "src/plugin_api",
 	},
 
 	Sources = {
-		"src/plugins/playback/hively/HivelyPlugin.cpp",
+		"src/plugins/playback/hively/hively_plugin.cpp",
 		"src/plugins/playback/hively/replayer/hvl_replay.c"
 	},
 
@@ -183,7 +183,7 @@ SharedLibrary {
 		"src/plugins/playback/openmpt/libopenmpt/libopenmpt/libopenmpt_cxx.cpp",
 		"src/plugins/playback/openmpt/libopenmpt/libopenmpt/libopenmpt_impl.cpp",
 		"src/plugins/playback/openmpt/libopenmpt/libopenmpt/libopenmpt_ext_impl.cpp",
-		"src/plugins/playback/openmpt/openmpt.cpp",
+		"src/plugins/playback/openmpt/openmpt_plugin.cpp",
 	},
 
 	Libs = {
@@ -458,7 +458,7 @@ SharedLibrary {
 -----------------------------------------------------------------------------------------------------------------------
 
 SharedLibrary {
-	Name = "TfmxPlugin",
+	Name = "tfmx",
 
 	Includes = {
 	    "src/plugin_api",
@@ -490,7 +490,7 @@ SharedLibrary {
 -----------------------------------------------------------------------------------------------------------------------
 
 SharedLibrary {
-	Name = "MDXPlugin",
+	Name = "mdx",
 
 	Includes = {
 	    "src/plugin_api",
@@ -504,7 +504,7 @@ SharedLibrary {
 -----------------------------------------------------------------------------------------------------------------------
 
 SharedLibrary {
-	Name = "SidPlugin",
+	Name = "sid",
 	Defines = {
 		"HAVE_CXX11",
 		"PACKAGE_NAME=\"\"",
@@ -626,8 +626,8 @@ Default "flatc"
 
 -- Decoders
 
-Default "TfmxPlugin"
-Default "HivelyPlugin"
+Default "tfmx"
+Default "hively"
 
 Default "openmpt"
 Default(openmpt_cfg)
@@ -636,8 +636,8 @@ Default "vgm"
 Default "nsf"
 Default "sc68"
 Default "DummyPlugin"
-Default "MDXPlugin"
-Default "SidPlugin"
+Default "mdx"
+Default "sid"
 
 -- Views
 
