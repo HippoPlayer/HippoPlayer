@@ -4,6 +4,7 @@
 #include <string.h>
 extern "C" {
 #include "libsc68/sc68/sc68.h"
+#include "file68/sc68/file68.h"
 }
 
 #define SAMPLE_RATE 48000
@@ -59,12 +60,13 @@ static void init() {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 enum HippoProbeResult sc68_plugin_probe_can_play(const uint8_t* data, uint32_t data_size, const char* filename, uint64_t total_size) {
-    // TODO: Proper check.  check file68.c : read_header
-    if (data[0] == 'I' && (data[1] | 0x20) == 'c' && (data[2]|0x20) == 'e' && data[3] == '!') {
-		return HippoProbeResult_Supported;
+    init();
+
+    if (file68_verify_header((void*)data, (int)data_size) == -1) {
+	    return HippoProbeResult_Unsupported;
     }
 
-	return HippoProbeResult_Unsupported;
+	return HippoProbeResult_Supported;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

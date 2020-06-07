@@ -879,6 +879,23 @@ disk68_t * file68_load_mem(const void * buffer, int len)
   return d;
 }
 
+int file68_verify_header(const void* buffer, int len) {
+  unsigned int h = 0;
+  int ret = -1;
+
+  vfs68_t* is = uri68_vfs("mem:", 1, 2, buffer, len);
+
+  if (vfs68_open(is) == 0) {
+  	ret = read_header(is, &h);
+  	vfs68_destroy(is);
+  }
+
+  if (ret == -1) {
+    return -1;
+  } else {
+    return 0;
+  }
+}
 
 static int sndh_flags(hwflags68_t * hw, const char * b, int len)
 {
