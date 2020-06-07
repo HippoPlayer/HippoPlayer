@@ -250,7 +250,6 @@ static int           sc68_id;        /* counter for auto generated name */
 static volatile int  sc68_init_flag; /* Library init flag     */
 static int           sc68_spr_def = SPR_DEF;
 static int           dbg68k;
-static const char    not_available[] = SC68_NOFILENAME;
 static char          appname[16] = "sc68";
 static char          sc68_errstr[ERRMAX];
 
