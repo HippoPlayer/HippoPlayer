@@ -45,7 +45,7 @@ jobs:
 
   # Build macOS
   build_macOS:
-    runs-on: macos
+    runs-on: macOS
     steps:
     - uses: actions/checkout@v2
     - name: Install Qt
