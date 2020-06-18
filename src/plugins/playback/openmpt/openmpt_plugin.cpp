@@ -232,6 +232,7 @@ static int openmpt_seek(void* user_data, int ms) {
 static int openmpt_metadata(const char* filename, const HippoServiceAPI* service_api) {
     void* data = 0;
     uint64_t size = 0;
+    int i = 0;
 
     const HippoIoAPI* io_api = HippoServiceAPI_get_io_api(service_api, HIPPO_FILE_API_VERSION);
     const HippoMetadataAPI* metadata_api = HippoServiceAPI_get_metadata_api(service_api, HIPPO_METADATA_API_VERSION);
@@ -241,45 +242,33 @@ static int openmpt_metadata(const char* filename, const HippoServiceAPI* service
     if (res < 0) {
         return res;
     }
-
+    /*
     openmpt::module mod(data, size);
-    float length = mod.get_duration_seconds();
 
-    std::vector<flatbuffers::Offset<flatbuffers::String>> instruments;
-    std::vector<flatbuffers::Offset<flatbuffers::String>> samples;
+    auto index =  HippoMetadata_create_index(metadata_api, filename);
 
-    flatbuffers::FlatBufferBuilder builder(4096);
+    metadata_api->set_tag(index, HippoMetadata_TitleTag, mod.get_metadata("title").c_str());
+    metadata_api->set_tag(index, HippoMetadata_SongTypeTag, mod.get_metadata("type_long").c_str());
+    metadata_api->set_tag(index, HippoMetadata_AuthoringToolTag, mod.get_metadata("tracker").c_str());
+    metadata_api->set_tag(index, HippoMetadata_ArtistTag, mod.get_metadata("artist").c_str());
+    metadata_api->set_tag(index, HippoMetadata_DateTag, mod.get_metadata("date").c_str());
+    metadata_api->set_tag(index, HippoMetadata_MessageTag, mod.get_metadata("message").c_str());
+    metadata_api->set_tag_f64(index, HippoMetadata_LengthTag, mod.get_duration_seconds());
 
-    auto url = builder.CreateString(filename);
-    auto title = builder.CreateString(mod.get_metadata("title").c_str());
-    auto song_type = builder.CreateString(mod.get_metadata("type_long").c_str());
-    auto authoring_tool = builder.CreateString(mod.get_metadata("tracker").c_str());
-    auto artist = builder.CreateString(mod.get_metadata("artist").c_str());
-    auto date = builder.CreateString(mod.get_metadata("date").c_str());
-    auto message = builder.CreateString(mod.get_metadata("message_raw").c_str());
-
-	for (const auto& sample : mod.get_sample_names()) {
-        samples.push_back(builder.CreateString(sample.c_str()));
+	for (i = 0, const auto& sample : mod.get_sample_names()) {
+	    char tag_name[32] = { 0 };
+	    sprintf("%%04d", HippoMetadata_SubsongTag, i);
+        metadata_api->set_tag(index, tag_name, sample.c_str());
+        ++i;
 	}
 
-	for (const auto& instrument : mod.get_instrument_names()) {
-	    instruments.push_back(builder.CreateString(instrument.c_str()));
+	for (i = 0, const auto& instrument : mod.get_instrument_names()) {
+	    char tag_name[32] = { 0 };
+	    sprintf("%%04d", HippoMetadata_InstrumentsTag, i);
+        metadata_api->set_tag(index, tag_name, sample.c_str());
+        ++i;
 	}
-
-    builder.Finish(CreateHippoMessageDirect(builder, MessageType_song_metadata,
-        CreateHippoSongMetadata(builder,
-            url,
-            title,
-            song_type,
-            length,
-            authoring_tool,
-            artist,
-            date,
-            message,
-            builder.CreateVector(samples),
-            builder.CreateVector(instruments)).Union()));
-
-    HippoMetadata_set_data(metadata_api, filename, builder.GetBufferPointer(), builder.GetSize());
+	*/
 
     // Make sure to free the buffer before we leave
     HippoIo_free_file_to_memory(io_api, data);
