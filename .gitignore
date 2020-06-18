@@ -7,5 +7,6 @@ default_playlist.hpl
 src/hippo_core/core/target
 src/hippo_core/config/target
 src/hippo_core/config_test/target
+src/hippo_core/song_db/target
 
 
