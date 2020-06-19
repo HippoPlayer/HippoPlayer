@@ -212,4 +212,19 @@ mod tests {
         	assert_eq!(my_title, statement.read::<String>(0).unwrap());
         }
     }
+
+    #[test]
+    fn test_set_tag_float() {
+        let db = SongDb::new(":memory:").unwrap();
+        let url_id = db.create_url("this/is/some/path").unwrap();
+        db.set_tag_float(url_id, "length", 2.0).unwrap();
+
+        let query = format!("SELECT length FROM urls WHERE pk=={}", url_id);
+
+        let mut statement = db.connection.prepare(query).unwrap();
+
+        while let sqlite::State::Row = statement.next().unwrap() {
+        	assert_eq!(2.0, statement.read::<f64>(0).unwrap());
+        }
+    }
 }
