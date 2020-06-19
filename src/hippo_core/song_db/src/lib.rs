@@ -49,13 +49,16 @@ impl SongDb {
         connection.execute(CREATE_SUB_SONGS_TABLE)?;
         connection.execute(CREATE_SAMPLES_TABLE)?;
         connection.execute(CREATE_INSTRUMENTS_TABLE)?;
+        println!("new raw db {:?}", connection.as_raw());
         Ok(SongDb { connection })
     }
+
 
     ///
     /// Create an url and insert it into the urls table
     ///
     pub fn create_url(&self, url: &str) -> Result<u64, Error> {
+        println!("create_url raw db {:?}", self.connection.as_raw());
         // TODO: Batch
         let url_id = XXH3_64::hash(url.as_bytes());
         let t = format!(
@@ -64,6 +67,27 @@ impl SongDb {
         );
         self.connection.execute(t)?;
         Ok(url_id)
+    }
+
+    pub fn set_tag_string(&self, url_id: u64, key: &str, data: &str) -> Result<(), Error> {
+        println!("set tag {} - {} : {}", url_id, key, data);
+        // TODO: Batch
+        let t = format!(
+            "UPDATE urls SET {} = \"{}\" where pk == {}",
+            key, data, url_id
+        );
+        self.connection.execute(t)?;
+        Ok(())
+    }
+
+    pub fn set_tag_float(&self, url_id: u64, key: &str, data: f32) -> Result<(), Error> {
+        // TODO: Batch
+        let t = format!(
+            "UPDATE urls SET {} = \"{}\" where pk == {}",
+            key, data, url_id
+        );
+        self.connection.execute(t)?;
+        Ok(())
     }
 
     pub fn add_sub_song(&self, url_id: u64, name: &str, length: f64) -> Result<(), Error> {
@@ -96,22 +120,29 @@ impl SongDb {
         Ok(())
     }
 
-    pub fn set_tag_string(&self, url_id: u64, key: &str, data: &str) -> Result<(), Error> {
-    	// TODO: Batch
-        let t = format!("UPDATE urls SET {} = \"{}\" where pk == {}", key, data, url_id);
-        self.connection.execute(t)?;
-        Ok(())
-    }
+    pub fn is_present(&self, _url: &str) -> bool {
+        /*
+        let url_id = XXH3_64::hash(url.as_bytes());
+        let query = format!("SELECT pk FROM urls WHERE pk=={}", url_id);
 
-    pub fn set_tag_float(&self, url_id: u64, key: &str, data: f32) -> Result<(), Error> {
-    	// TODO: Batch
-        let t = format!("UPDATE urls SET {} = \"{}\" where pk == {}", key, data, url_id);
-        self.connection.execute(t)?;
-        Ok(())
+        let mut count = 0;
+        let mut statement = self.connection.prepare(query).unwrap();
+
+        if sqlite::State::Row == statement.next().unwrap() {
+            count = 1;
+        }
+
+        if count == 1 { true } else { false }
+        */
+        false
     }
 }
 
-/// C interface exposed to plugins
+impl Drop for SongDb {
+    fn drop(&mut self) {
+        println!("Dropped song db");
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -209,7 +240,7 @@ mod tests {
         let mut statement = db.connection.prepare(query).unwrap();
 
         while let sqlite::State::Row = statement.next().unwrap() {
-        	assert_eq!(my_title, statement.read::<String>(0).unwrap());
+            assert_eq!(my_title, statement.read::<String>(0).unwrap());
         }
     }
 
@@ -224,7 +255,18 @@ mod tests {
         let mut statement = db.connection.prepare(query).unwrap();
 
         while let sqlite::State::Row = statement.next().unwrap() {
-        	assert_eq!(2.0, statement.read::<f64>(0).unwrap());
+            assert_eq!(2.0, statement.read::<f64>(0).unwrap());
         }
+    }
+
+    #[test]
+    fn test_is_present() {
+        let path = "this/is/some/path";
+
+        let db = SongDb::new(":memory:").unwrap();
+        db.create_url(path).unwrap();
+
+        assert_eq!(db.is_present(path), true);
+        assert_eq!(db.is_present("not/present"), false);
     }
 }

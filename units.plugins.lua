@@ -622,22 +622,22 @@ SharedLibrary {
 
 -- Tools
 
-Default "flatc"
+-- Default "flatc"
 
 -- Decoders
 
-Default "tfmx"
-Default "hively"
+-- Default "tfmx"
+-- Default "hively"
 
 Default "openmpt"
 Default(openmpt_cfg)
 
-Default "vgm"
-Default "nsf"
-Default "sc68"
-Default "DummyPlugin"
-Default "mdx"
-Default "sid"
+-- Default "vgm"
+-- Default "nsf"
+-- Default "sc68"
+-- Default "DummyPlugin"
+-- Default "mdx"
+-- Default "sid"
 
 -- Views
 

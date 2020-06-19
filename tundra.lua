@@ -165,7 +165,7 @@ Build {
     Units = {
         "units.hippoplayer.lua",
         "units.plugins.lua",
-        "units.uade_plugin.lua",
+        -- "units.uade_plugin.lua",
     },
 
     Configs = {

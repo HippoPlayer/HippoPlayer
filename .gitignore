@@ -4,9 +4,12 @@ t2-output
 playlist.json
 default_playlist.hpl
 .ccls-cache
+songdb.db
 src/hippo_core/core/target
 src/hippo_core/config/target
 src/hippo_core/config_test/target
 src/hippo_core/song_db/target
+src/hippo_core/core/Cargo.lock
+src/hippo_core/song_db/Cargo.lock
 
 

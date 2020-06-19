@@ -83,28 +83,55 @@ typedef uint64_t HippoMetadataId;
 #define HippoMetadata_LengthTag "length"
 #define HippoMetadata_SamplesTag "sample_"
 #define HippoMetadata_InstrumentsTag "instrument_"
-#define HippoMetadata_SubsongTag "subsong_"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef struct HippoMetadataAPI {
 	struct HippoMetadataAPIPrivData* priv_data;
 
-    HippoMetadataId (*create_song)(struct HippoMetadataAPIPrivData* priv_data, const char* url);
-    HippoMetadataId (*create_sub_song)(struct HippoMetadataAPIPrivData* priv_data, HippoMetadataId parent_id, const char* id);
+    HippoMetadataId (*create_url)(
+        struct HippoMetadataAPIPrivData* priv_data,
+        const char* url);
 
-    void (*set_tag)(struct HippoMetadataAPIPrivData* priv_data, HippoMetadataId id, const char* tag, const char* data);
-    void (*set_tag_f64)(struct HippoMetadataAPIPrivData* priv_data, HippoMetadataId id, const char* tag, double d);
+    void (*set_tag)(
+        struct HippoMetadataAPIPrivData* priv_data,
+        HippoMetadataId id,
+        const char* tag,
+        const char* data);
+
+    void (*set_tag_f64)(
+        struct HippoMetadataAPIPrivData* priv_data,
+        HippoMetadataId id,
+        const char* tag,
+        double d);
+
+    void (*add_sub_song)(
+        struct HippoMetadataAPIPrivData* priv_data,
+        HippoMetadataId parent_id,
+        const char* name,
+        float length);
+
+    void (*add_sample)(
+        struct HippoMetadataAPIPrivData* priv_data,
+        HippoMetadataId parent_id,
+        const char* text);
+
+    void (*add_instrument)(
+        struct HippoMetadataAPIPrivData* priv_data,
+        HippoMetadataId parent_id,
+        const char* text);
 
 } HippoMetadataAPI;
 
 #define HIPPO_METADATA_API_VERSION 1
 
-#define HippoMetadata_create_index(api, url) api->set_data(api->priv_data, url)
-#define HippoMetadata_create_sub_song(api, url) api->set_data(api->priv_data, url)
+#define HippoMetadata_create_url(api, url) api->create_url(api->priv_data, url)
+#define HippoMetadata_set_tag(api, id, tag, data) api->set_tag(api->priv_data, id, tag, data)
+#define HippoMetadata_set_tag_f64(api, id, tag, data) api->set_tag_f64(api->priv_data, id, tag, data)
 
-#define HippoMetadata_set_tag(api, id, tag, data) api->set_data(api->priv_data, id, tag, data)
-#define HippoMetadata_set_f64(api, id, tag, data) api->set_data(api->priv_data, id, tag, data)
+#define HippoMetadata_add_sub_song(api, url, name, len) api->add_sub_song(api->priv_data, url, name, len)
+#define HippoMetadata_add_sample(api, url, text) api->add_sample(api->priv_data, url, text)
+#define HippoMetadata_add_instrument(api, url, text) api->add_instrument(api->priv_data, url, text)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
