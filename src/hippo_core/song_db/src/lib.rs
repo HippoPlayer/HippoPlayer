@@ -1,5 +1,4 @@
 use sqlite::Error;
-use xxhrs::XXH3_64;
 
 const CREATE_URLS_TABLE: &str = "
         CREATE TABLE IF NOT EXISTS urls(
@@ -68,7 +67,7 @@ impl SongDb {
     /// Create an url and insert it into the urls table
     ///
     pub fn create_url(&self, url: &str) -> Result<u64, Error> {
-        let url_id = XXH3_64::hash(url.as_bytes());
+        let url_id = xxh3::hash(url.as_bytes());
         let t = format!(
             "INSERT or IGNORE into urls (pk, path) VALUES({}, \"{}\")",
             url_id, url
@@ -123,7 +122,7 @@ impl SongDb {
     }
 
     pub fn is_present(&self, url: &str) -> bool {
-        let url_id = XXH3_64::hash(url.as_bytes());
+        let url_id = xxh3::hash(url.as_bytes());
         let query = format!("SELECT pk FROM urls WHERE pk=={}", url_id);
 
         let mut count = 0;
