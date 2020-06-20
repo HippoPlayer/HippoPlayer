@@ -121,6 +121,40 @@ impl SongDb {
         Ok(())
     }
 
+    ///
+    /// Get tag for a url
+    ///
+    pub fn get_tag(&self, tag: &str, url: &str) -> Option<String> {
+        let url_id = xxh3::hash(url.as_bytes());
+
+        let query = format!("SELECT {} FROM urls WHERE pk=={}", tag, url_id);
+        let mut statement = self.connection.prepare(query).unwrap();
+
+        if sqlite::State::Row == statement.next().unwrap() {
+            let entry = statement.read::<String>(0).unwrap();
+            Some(entry)
+        } else {
+            None
+        }
+    }
+
+    ///
+    /// Get tag for a url
+    ///
+    pub fn get_tag_f64(&self, tag: &str, url: &str) -> Option<f64> {
+        let url_id = xxh3::hash(url.as_bytes());
+
+        let query = format!("SELECT {} FROM urls WHERE pk=={}", tag, url_id);
+        let mut statement = self.connection.prepare(query).unwrap();
+
+        if sqlite::State::Row == statement.next().unwrap() {
+            let entry = statement.read::<f64>(0).unwrap();
+            Some(entry)
+        } else {
+            None
+        }
+    }
+
     pub fn is_present(&self, url: &str) -> bool {
         let url_id = xxh3::hash(url.as_bytes());
         let query = format!("SELECT pk FROM urls WHERE pk=={}", url_id);

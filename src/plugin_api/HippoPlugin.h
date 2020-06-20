@@ -105,7 +105,7 @@ typedef struct HippoMetadataAPI {
         const char* tag,
         double d);
 
-    void (*add_sub_song)(
+    void (*add_subsong)(
         struct HippoMetadataAPIPrivData* priv_data,
         HippoMetadataId parent_id,
         const char* name,
@@ -129,7 +129,7 @@ typedef struct HippoMetadataAPI {
 #define HippoMetadata_set_tag(api, id, tag, data) api->set_tag(api->priv_data, id, tag, data)
 #define HippoMetadata_set_tag_f64(api, id, tag, data) api->set_tag_f64(api->priv_data, id, tag, data)
 
-#define HippoMetadata_add_sub_song(api, url, name, len) api->add_sub_song(api->priv_data, url, name, len)
+#define HippoMetadata_add_subsong(api, url, name, len) api->add_subsong(api->priv_data, url, name, len)
 #define HippoMetadata_add_sample(api, url, text) api->add_sample(api->priv_data, url, text)
 #define HippoMetadata_add_instrument(api, url, text) api->add_instrument(api->priv_data, url, text)
 

@@ -155,15 +155,13 @@ impl HippoCore {
 
             if let Some(song) = new_song {
                 self.play_file(&song);
-
                 self.current_song_time = 5.0 * 60.0;
 
-                /*
-                if let Some(metadata) = self.plugin_service.get_song_db().get_data(&song) {
-                    let message = get_root_as_hippo_message(&metadata);
-                    let metadata_message = message.message_as_song_metadata().unwrap();
-                    self.playlist.update_current_entry(&metadata_message);
-                    self.current_song_time = metadata_message.length();
+                let song_db = self.plugin_service.get_song_db();
+
+                if self.plugin_service.get_song_db().is_present(&song) {
+                    self.current_song_time = song_db.get_tag_f64("length", &song).unwrap() as f32;
+                    self.playlist.update_current_entry(song_db, &song);
                     self.start_time = Instant::now();
 
                     // TODO: Use setting
@@ -176,7 +174,6 @@ impl HippoCore {
                         Self::send_msgs(user_data, send_messages, &reply, count, std::usize::MAX);
                     });
                 }
-                */
             }
         }
 
