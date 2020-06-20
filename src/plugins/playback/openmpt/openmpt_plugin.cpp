@@ -10,28 +10,16 @@
 const int MAX_EXT_COUNT = 16 * 1024;
 static char s_supported_extensions[MAX_EXT_COUNT];
 
-// TODO: move to local
 static const HippoIoAPI* g_io_api = nullptr;
-static const HippoMetadataAPI* g_metadata_api = nullptr;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct OpenMptData {
     openmpt::module* mod = 0;
     const HippoMessageAPI* message_api;
-    std::string song_title;
+    float length = 0.0f;
     void* song_data = 0;
-    float length;
 };
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/*
-static const char* openmpt_track_info(void* userData) {
-    OpenMptData* data = (OpenMptData*)userData;
-	return data->song_title.c_str();
-}
-*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -46,7 +34,6 @@ static const char* openmpt_supported_extensions() {
 	size_t count = ext_list.size();
 
 	for (size_t i = 0; i < count; ++i) {
-		//strcat_s(s_supported_extensions, MAX_EXT_COUNT, ext_list[i].c_str());
 		strcat(s_supported_extensions, ext_list[i].c_str());
 		if (i != count - 1) {
 			strcat(s_supported_extensions, ",");
@@ -62,7 +49,6 @@ static void* openmpt_create(const HippoServiceAPI* service_api) {
     OpenMptData* user_data = new OpenMptData;
 
     g_io_api = HippoServiceAPI_get_io_api(service_api, 1);
-    g_metadata_api = HippoServiceAPI_get_metadata_api(service_api, 1);
     user_data->message_api = HippoServiceAPI_get_message_api(service_api, 1);
 
 	return (void*)user_data;
@@ -173,7 +159,6 @@ static int openmpt_open(void* user_data, const char* filename) {
     }
 
     replayer_data->mod = new openmpt::module(replayer_data->song_data, size);
-    replayer_data->song_title = replayer_data->mod->get_metadata("title");
     replayer_data->length = replayer_data->mod->get_duration_seconds();
 
 	return 0;
@@ -260,6 +245,12 @@ static int openmpt_metadata(const char* filename, const HippoServiceAPI* service
 
 	for (const auto& instrument : mod.get_instrument_names()) {
     	HippoMetadata_add_instrument(metadata_api, index, instrument.c_str());
+	}
+
+	printf("sub songs %d\n", mod.get_num_subsongs());
+
+	for (const auto& name : mod.get_subsong_names()) {
+	    printf("sub song names \"%s\"\n", name.c_str());
 	}
 
     // Make sure to free the buffer before we leave
