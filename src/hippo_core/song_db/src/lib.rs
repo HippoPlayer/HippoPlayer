@@ -1,4 +1,3 @@
-use sqlite;
 use sqlite::Error;
 use xxhrs::XXH3_64;
 
@@ -49,17 +48,26 @@ impl SongDb {
         connection.execute(CREATE_SUB_SONGS_TABLE)?;
         connection.execute(CREATE_SAMPLES_TABLE)?;
         connection.execute(CREATE_INSTRUMENTS_TABLE)?;
-        println!("new raw db {:?}", connection.as_raw());
+        connection.execute("PRAGMA journal_mode=WAL")?; // for less trafic to disk
         Ok(SongDb { connection })
     }
 
+    pub fn begin_transaction(&self) {
+        if let Err(e) = self.connection.execute("BEGIN TRANSACTION;") {
+            println!("begin transacation failed: {}", e);
+        }
+    }
+
+    pub fn commit(&self) {
+        if let Err(e) = self.connection.execute("COMMIT;") {
+            println!("commit failed: {}", e);
+        }
+    }
 
     ///
     /// Create an url and insert it into the urls table
     ///
     pub fn create_url(&self, url: &str) -> Result<u64, Error> {
-        println!("create_url raw db {:?}", self.connection.as_raw());
-        // TODO: Batch
         let url_id = XXH3_64::hash(url.as_bytes());
         let t = format!(
             "INSERT or IGNORE into urls (pk, path) VALUES({}, \"{}\")",
@@ -70,8 +78,6 @@ impl SongDb {
     }
 
     pub fn set_tag_string(&self, url_id: u64, key: &str, data: &str) -> Result<(), Error> {
-        println!("set tag {} - {} : {}", url_id, key, data);
-        // TODO: Batch
         let t = format!(
             "UPDATE urls SET {} = \"{}\" where pk == {}",
             key, data, url_id
@@ -81,7 +87,6 @@ impl SongDb {
     }
 
     pub fn set_tag_float(&self, url_id: u64, key: &str, data: f32) -> Result<(), Error> {
-        // TODO: Batch
         let t = format!(
             "UPDATE urls SET {} = \"{}\" where pk == {}",
             key, data, url_id
@@ -91,7 +96,6 @@ impl SongDb {
     }
 
     pub fn add_sub_song(&self, url_id: u64, name: &str, length: f64) -> Result<(), Error> {
-        // TODO: Batch
         let t = format!(
             "INSERT or IGNORE into sub_songs (url_id, title, length) VALUES({}, \"{}\", {})",
             url_id, name, length
@@ -101,7 +105,6 @@ impl SongDb {
     }
 
     pub fn add_sample(&self, url_id: u64, sample_text: &str) -> Result<(), Error> {
-        // TODO: Batch
         let t = format!(
             "INSERT into samples (url_id, text) VALUES({}, \"{}\")",
             url_id, sample_text
@@ -111,7 +114,6 @@ impl SongDb {
     }
 
     pub fn add_instrument(&self, url_id: u64, instrument_text: &str) -> Result<(), Error> {
-        // TODO: Batch
         let t = format!(
             "INSERT into instruments (url_id, text) VALUES({}, \"{}\")",
             url_id, instrument_text
@@ -120,8 +122,7 @@ impl SongDb {
         Ok(())
     }
 
-    pub fn is_present(&self, _url: &str) -> bool {
-        /*
+    pub fn is_present(&self, url: &str) -> bool {
         let url_id = XXH3_64::hash(url.as_bytes());
         let query = format!("SELECT pk FROM urls WHERE pk=={}", url_id);
 
@@ -132,9 +133,7 @@ impl SongDb {
             count = 1;
         }
 
-        if count == 1 { true } else { false }
-        */
-        false
+        count == 1
     }
 }
 

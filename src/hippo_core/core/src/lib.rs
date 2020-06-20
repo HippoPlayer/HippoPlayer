@@ -55,12 +55,12 @@ impl HippoCore {
 
         for plugin in &self.plugins.decoder_plugins {
             if plugin.probe_can_play(&buffer, buffer_read_size, url, metadata.len()) {
-                if !self
-                    .plugin_service
-                    .get_song_db()
-                    .is_present(url)
-                {
+                let song_db = self.plugin_service.get_song_db();
+
+                if !song_db.is_present(url) {
+                    song_db.begin_transaction();
                     plugin.get_metadata(&url, &self.plugin_service);
+                    song_db.commit();
                 }
 
                 // This is a bit hacky right now but will do the trick
@@ -156,6 +156,8 @@ impl HippoCore {
             if let Some(song) = new_song {
                 self.play_file(&song);
 
+                self.current_song_time = 5.0 * 60.0;
+
                 /*
                 if let Some(metadata) = self.plugin_service.get_song_db().get_data(&song) {
                     let message = get_root_as_hippo_message(&metadata);
@@ -244,6 +246,11 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
         }
     }
 
+    // No need to switch back if we are in the correct spot
+    if !Path::new("bin").is_dir() {
+        std::env::set_current_dir(current_path).unwrap();
+    }
+
     let song_db = Box::into_raw(Box::new(SongDb::new("songdb.db").unwrap()));
 
     let mut core = Box::new(HippoCore {
@@ -257,11 +264,6 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
         is_playing: false,
         song_db,
     });
-
-    // No need to switch back if we are in the correct spot
-    if !Path::new("bin").is_dir() {
-        std::env::set_current_dir(current_path).unwrap();
-    }
 
     // it's ok to allow this function to fail if we have no playlist
     core.playlist.load("default_playlist.hpl").ok();
