@@ -72,6 +72,7 @@ jobs:
         set QT5_BIN=%Qt5_DIR%/bin
         echo %QT5_BIN%
     - name: Build Release
+      shell: cmd
       run: bin\windows\tundra2.exe win64-msvc-debug
 
 
