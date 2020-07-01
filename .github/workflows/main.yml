@@ -71,9 +71,12 @@ jobs:
 #        echo "Testing 2"
 #        set QT5_BIN=%Qt5_DIR%/bin
 #        echo %QT5_BIN%
-    - name: Build Release
-      shell: cmd
-      run: C:\\Program\ Files\ (x86)\\Microsoft\ Visual\ Studio\\2019\\Enterprise\\MSBuild\\Current\\Bin\\amd64\\msbuild src/external/tundra/vs2017/Tundra.sln "/property:Configuration=Release"
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v1.0.0
+    - name: Build tundra
+      run: |
+        msbuild src/external/tundra/vs2017/Tundra.sln' "/property:Configuration=Release"
+        src/external/tundra/vs2017/x64/Release/tundra2.exe
 #bin\windows\tundra2.exe win64-msvc-debug
 
 
