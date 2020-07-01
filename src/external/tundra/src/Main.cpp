@@ -305,7 +305,7 @@ int main(int argc, char* argv[])
       CroakErrno("couldn't set job info");
 
     if (!CreateProcessA(NULL, GetCommandLineA(), NULL, NULL, TRUE, CREATE_BREAKAWAY_FROM_JOB|CREATE_NEW_PROCESS_GROUP|CREATE_SUSPENDED, NULL, NULL, &startup_info, &proc_info))
-      CroakErrno("CreateProcess() failed");
+      CroakErrno("CreateProcess() failed for %s error %d", GetCommandLineA(), GetLastError());
 
     AssignProcessToJobObject(job_handle, proc_info.hProcess);
     ResumeThread(proc_info.hThread);
