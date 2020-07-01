@@ -73,6 +73,8 @@ jobs:
 #        echo %QT5_BIN%
     - name: Build Release
       shell: cmd
-      run: bin\windows\tundra2.exe win64-msvc-debug
+      run: msbuild src\external\tundra\vs2017\Tundra.sln /property:Configuration=Release
+#bin\windows\tundra2.exe win64-msvc-debug
+
 
 
