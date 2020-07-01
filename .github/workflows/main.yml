@@ -62,22 +62,17 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2
-#    - name: Install Qt
-#      uses: jurplel/install-qt-action@v2
-#    - name: Env test
-#      run: |
-#        echo "Testing"
-#        echo %Qt5_DIR%
-#        echo "Testing 2"
-#        set QT5_BIN=%Qt5_DIR%/bin
-#        echo %QT5_BIN%
-    - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@v1.0.0
-    - name: Build tundra
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v2
+    - name: Env test
       run: |
-        msbuild src/external/tundra/vs2017/Tundra.sln "/property:Configuration=Release"
-        src/external/tundra/vs2017/x64/Release/tundra2.exe
-#bin\windows\tundra2.exe win64-msvc-debug
+        echo "Testing"
+        echo %Qt5_DIR%
+        echo "Testing 2"
+        set QT5_BIN=%Qt5_DIR%/bin
+        echo %QT5_BIN%
+    - name: Build code
+      run: bin\windows\tundra2.exe --unprotected win64-msvc-debug
 
 
 
