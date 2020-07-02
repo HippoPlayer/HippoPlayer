@@ -359,12 +359,8 @@ void MainWindow::setup_default_plugins() {
 	// TODO: Use names instead of index
 	QWidget* player = create_plugin_by_index(0);
 	QWidget* playlist = create_plugin_by_index(1);
-	QWidget* tracker = create_plugin_by_index(2);
 
 	m_docking_manager->addToolWindow(player, ToolWindowManager::EmptySpace);
-
-	m_docking_manager->addToolWindow(tracker,
-			ToolWindowManager::AreaReference(ToolWindowManager::RightOf, m_docking_manager->areaOf(player)));
 
 	m_docking_manager->addToolWindow(playlist,
 			ToolWindowManager::AreaReference(ToolWindowManager::BottomOf, m_docking_manager->areaOf(player)));
