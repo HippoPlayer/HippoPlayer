@@ -65,8 +65,12 @@ jobs:
     - name: Install Qt
       uses: jurplel/install-qt-action@v2
     - name: Build code test
+      shell: cmd
       run: |
         set QT5_BIN=%Qt5_DIR%/bin
         set QT5_INC=%Qt5_DIR%/include
         set QT5_LIB=%Qt5_DIR%/lib
+        echo %QT5_BIN%
+        echo %QT5_INC%
+        echo %QT5_LIB%
         bin\windows\tundra2.exe --unprotected win64-msvc-debug
