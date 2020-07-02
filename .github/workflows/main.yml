@@ -64,15 +64,9 @@ jobs:
     - uses: actions/checkout@v2
     - name: Install Qt
       uses: jurplel/install-qt-action@v2
-    - name: Env test
+    - name: Build code test
       run: |
-        echo "Testing"
-        echo %Qt5_DIR%
-        echo "Testing 2"
         set QT5_BIN=%Qt5_DIR%/bin
-        echo %QT5_BIN%
-    - name: Build code
-      run: bin\windows\tundra2.exe --unprotected win64-msvc-debug
-
-
-
+        set QT5_INC=%Qt5_DIR%/include
+        set QT5_LIB=%Qt5_DIR%/lib
+        bin\windows\tundra2.exe --unprotected win64-msvc-debug
