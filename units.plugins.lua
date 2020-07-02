@@ -165,7 +165,8 @@ SharedLibrary {
 
     Env = {
        CXXOPTS = {
-			{ "-std=c++17"; Config = { "mac-*-*, linux-*-*" } },
+			{ "-std=c++17"; Config = "linux-*-*" },
+			{ "-std=c++17"; Config = "mac-*-*" },
 			{ "/std:c++17"; Config = "win64-*-*" },
 		},
     },
