@@ -150,6 +150,7 @@ static int hively_metadata(const char* filename, const HippoServiceAPI* service_
 	struct hvl_tune* tune = hvl_LoadTuneMemory((uint8_t*) data, (int)size, FREQ, 0);
 
     // TODO: Calculate len
+    /*
     float length = 0.0f;
 
     std::vector<flatbuffers::Offset<flatbuffers::String>> instruments;
@@ -185,6 +186,7 @@ static int hively_metadata(const char* filename, const HippoServiceAPI* service_
             builder.CreateVector(instruments)).Union()));
 
     HippoMetadata_set_data(metadata_api, filename, builder.GetBufferPointer(), builder.GetSize());
+    */
 
     // Make sure to free the buffer before we leave
     HippoIo_free_file_to_memory(io_api, data);
