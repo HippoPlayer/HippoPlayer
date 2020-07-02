@@ -214,6 +214,18 @@ static int openmpt_seek(void* user_data, int ms) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+const char* filename_from_path(const char* path) {
+   for(size_t i = strlen(path) - 1;  i > 0; i--) {
+      if (path[i] == '/') {
+         return &path[i+1];
+      }
+   }
+
+   return path;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static int openmpt_metadata(const char* filename, const HippoServiceAPI* service_api) {
     void* data = 0;
     uint64_t size = 0;
@@ -230,8 +242,18 @@ static int openmpt_metadata(const char* filename, const HippoServiceAPI* service
     openmpt::module mod(data, size);
 
     auto index = HippoMetadata_create_url(metadata_api, filename);
+    char title[512] = { 0 };
 
-    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_TitleTag, mod.get_metadata("title").c_str());
+    const auto& mod_title = mod.get_metadata("title");
+
+    if (mod_title != "") {
+        strcpy(title, mod_title.c_str());
+    } else {
+        const char* file_title = filename_from_path(filename);
+        strcpy(title, file_title);
+    }
+
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_TitleTag, title);
     HippoMetadata_set_tag(metadata_api, index, HippoMetadata_SongTypeTag, mod.get_metadata("type_long").c_str());
     HippoMetadata_set_tag(metadata_api, index, HippoMetadata_AuthoringToolTag, mod.get_metadata("tracker").c_str());
     HippoMetadata_set_tag(metadata_api, index, HippoMetadata_ArtistTag, mod.get_metadata("artist").c_str());
@@ -247,11 +269,25 @@ static int openmpt_metadata(const char* filename, const HippoServiceAPI* service
     	HippoMetadata_add_instrument(metadata_api, index, instrument.c_str());
 	}
 
-	printf("sub songs %d\n", mod.get_num_subsongs());
+	const int subsong_count = mod.get_num_subsongs();
 
-	for (const auto& name : mod.get_subsong_names()) {
-	    printf("sub song names \"%s\"\n", name.c_str());
-	}
+	if (subsong_count > 1) {
+	    int i = 0;
+        for (const auto& name : mod.get_subsong_names()) {
+            char subsong_name[1024] = { 0 };
+
+            if (name != "") {
+                sprintf(subsong_name, "%s - %s (%d/%d)", title, name.c_str(), i + 1, subsong_count);
+            } else {
+                sprintf(subsong_name, "%s (%d/%d)", title, i + 1, subsong_count);
+            }
+
+            mod.select_subsong(i);
+            HippoMetadata_add_subsong(metadata_api, index, subsong_name, mod.get_duration_seconds());
+
+            ++i;
+        }
+    }
 
     // Make sure to free the buffer before we leave
     HippoIo_free_file_to_memory(io_api, data);
