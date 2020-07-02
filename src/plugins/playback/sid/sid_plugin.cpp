@@ -43,28 +43,9 @@ enum HippoProbeResult sid_probe_can_play(const uint8_t* data, uint32_t data_size
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/*
-static const char* sid_track_info(void* user_data) {
-	struct SidReplayerData* plugin = (struct SidReplayerData*)user_data;
-
-	if (plugin->tune) {
-	    const SidTuneInfo* info = plugin->tune->getInfo();
-        unsigned int info_count = info->numberOfInfoStrings();
-
-        // 0 is titile
-        if (info_count > 0) {
-            return info->infoString(0);
-        }
-	}
-
-    return  "Default: <unknwon>";
-}
-*/
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static const char* sid_supported_extensions() {
-	return "sid";
+	return "sid,psid";
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -74,7 +55,7 @@ static void* sid_create(const struct HippoServiceAPI* service_api) {
 
     data->engine.setRoms(nullptr, nullptr, nullptr);
 
-	data->rs = new ReSIDfpBuilder("HippoPlayer");
+	data->rs = new ReSIDfpBuilder("hippo_player");
     // Get the number of SIDs supported by the engine
     unsigned int max_sids = data->engine.info().maxsids();
 
@@ -82,9 +63,10 @@ static void* sid_create(const struct HippoServiceAPI* service_api) {
     data->rs->create(max_sids);
 
     // Check if builder is ok
-    if (!data->rs->getStatus())
-    {
+    if (!data->rs->getStatus()) {
         printf("SidPlugin error %s\n", data->rs->error());
+        delete data->rs;
+        delete data;
         return 0;
     }
 
@@ -107,9 +89,8 @@ static int sid_open(void* user_data, const char* buffer) {
 
 	SidTune* tune = new SidTune(buffer);
 
-    // CHeck if the tune is valid
-    if (!tune->getStatus())
-    {
+    // Check if the tune is valid
+    if (!tune->getStatus()) {
         printf("SidPlugin: tune status %s\n", tune->statusString());
         return -1;
     }
@@ -128,15 +109,13 @@ static int sid_open(void* user_data, const char* buffer) {
     cfg.sidEmulation = data->rs;
     cfg.defaultSidModel = SidConfig::MOS8580;
 
-    if (!data->engine.config(cfg))
-    {
+    if (!data->engine.config(cfg)) {
         printf("Engine error %s\n", data->engine.error());
         return 0;
     }
 
     // Load tune into engine
-    if (!data->engine.load(data->tune))
-    {
+    if (!data->engine.load(data->tune)) {
         printf("Engine error %s\n", data->engine.error());
         return 0;
     }
@@ -168,7 +147,7 @@ static int sid_read_data(void* user_data, void* dest, uint32_t max_samples) {
 
 	data->engine.play(temp_data, FRAME_SIZE / 2);
 
-	const float scale = 1.0f / 32768.0f;
+	const float scale = 1.0f / 32767.0f;
 
 	for (int i = 0; i < FRAME_SIZE / 2; ++i) {
 		const float v = ((float)temp_data[i]) * scale;
