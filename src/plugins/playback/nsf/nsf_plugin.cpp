@@ -61,6 +61,7 @@ static int nsf_metadata(const char* filename, const HippoServiceAPI* service_api
         return -1;
     }
 
+    /*
     // Validate this is correct
     int length = nsf.time_in_ms < 0 ? nsf.default_playtime : nsf.time_in_ms;
 
@@ -91,6 +92,7 @@ static int nsf_metadata(const char* filename, const HippoServiceAPI* service_api
             builder.CreateVector(instruments)).Union()));
 
     HippoMetadata_set_data(metadata_api, filename, builder.GetBufferPointer(), builder.GetSize());
+    */
 
     // Make sure to free the buffer before we leave
     HippoIo_free_file_to_memory(io_api, data);

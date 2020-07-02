@@ -20,7 +20,7 @@ namespace xgm
 
         va_start (argl, format);
         _vsnprintf (buf, 1024, format, argl);
-        OutputDebugString (buf);
+        OutputDebugStringA (buf);
         va_end (argl);
     }
   };

@@ -152,11 +152,11 @@ namespace vcm
     // thread safety
     Configuration()
     {
-      VCM_MUTEX_INIT(mutex);
+      //VCM_MUTEX_INIT(mutex);
     }
     ~Configuration()
     {
-      VCM_MUTEX_DESTROY(mutex);
+      //VCM_MUTEX_DESTROY(mutex);
     }
 
     // 値を読む．無ければエラー．
