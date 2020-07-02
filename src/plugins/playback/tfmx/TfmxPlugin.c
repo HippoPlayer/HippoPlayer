@@ -13,12 +13,9 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const char* getFileNameFromPath(const char* path)
-{
-   for(size_t i = strlen(path) - 1;  i > 0; i--)
-   {
-      if (path[i] == '/')
-      {
+const char* getFileNameFromPath(const char* path) {
+   for(size_t i = strlen(path) - 1;  i > 0; i--) {
+      if (path[i] == '/') {
          return &path[i+1];
       }
    }
