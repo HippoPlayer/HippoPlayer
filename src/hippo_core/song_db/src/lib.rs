@@ -170,12 +170,6 @@ impl SongDb {
     }
 }
 
-impl Drop for SongDb {
-    fn drop(&mut self) {
-        println!("Dropped song db");
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
