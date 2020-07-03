@@ -121,6 +121,22 @@ typedef struct HippoMetadataAPI {
         HippoMetadataId parent_id,
         const char* text);
 
+    // gets type\ndata\n for the url, ends with \n\n
+    const char* (*get_metadata)(
+        struct HippoMetadataAPIPrivData* priv_data,
+        const char* url);
+
+    // gets samples for the url, ends with \n\n
+    const char* (*get_samples)(
+        struct HippoMetadataAPIPrivData* priv_data,
+        const char* url);
+
+    // gets samples for the url, ends with \n\n
+    const char* (*get_instruments)(
+        struct HippoMetadataAPIPrivData* priv_data,
+        const char* url);
+
+
 } HippoMetadataAPI;
 
 #define HIPPO_METADATA_API_VERSION 1
