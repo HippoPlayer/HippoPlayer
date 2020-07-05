@@ -63,6 +63,8 @@ impl HippoCore {
                     song_db.commit();
                 }
 
+                //song_db.get_metadata(&url);
+
                 // This is a bit hacky right now but will do the trick
                 self.audio.stop();
                 self.audio = HippoAudio::new();

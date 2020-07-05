@@ -318,6 +318,18 @@ bool MainWindow::load_plugins(const QString& plugin_dir) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+QWidget* MainWindow::create_plugin_by_name(const QString& plugin_name) {
+    for (int i = 0, e = m_plugin_types.length(); i < e; ++i) {
+        if (m_plugin_types[i].plugin_name == plugin_name) {
+            return create_plugin_by_index(i);
+        }
+    }
+
+    return nullptr;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 QWidget* MainWindow::create_plugin_by_index(int index) {
     if (index >= m_plugin_types.length()) {
         return nullptr;
@@ -356,11 +368,14 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void MainWindow::setup_default_plugins() {
-	// TODO: Use names instead of index
-	QWidget* player = create_plugin_by_index(0);
-	QWidget* playlist = create_plugin_by_index(1);
+	QWidget* player = create_plugin_by_name(QStringLiteral("Player"));
+	QWidget* playlist = create_plugin_by_name(QStringLiteral("Playlist"));
+	QWidget* music_info = create_plugin_by_name(QStringLiteral("Music Info"));
 
 	m_docking_manager->addToolWindow(player, ToolWindowManager::EmptySpace);
+
+	m_docking_manager->addToolWindow(music_info,
+			ToolWindowManager::AreaReference(ToolWindowManager::RightOf, m_docking_manager->areaOf(player)));
 
 	m_docking_manager->addToolWindow(playlist,
 			ToolWindowManager::AreaReference(ToolWindowManager::BottomOf, m_docking_manager->areaOf(player)));

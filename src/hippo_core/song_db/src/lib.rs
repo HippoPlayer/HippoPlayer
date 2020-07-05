@@ -1,4 +1,5 @@
-use sqlite::Error;
+use sqlite::{Error, State};
+
 
 const CREATE_URLS_TABLE: &str = "
         CREATE TABLE IF NOT EXISTS urls(
@@ -12,7 +13,7 @@ const CREATE_URLS_TABLE: &str = "
             date STRING,
             genre STRING,
             message STRING,
-            length REAL,
+            length STRING,
             ripper STRING,
             extra_data BLOB)";
 
@@ -20,7 +21,7 @@ const CREATE_SUB_SONGS_TABLE: &str = "
         CREATE TABLE IF NOT EXISTS sub_songs(
             url_id INTEGER,
             title STRING,
-            length REAL,
+            length STRING,
             extra_data BLOB)";
 
 const CREATE_SAMPLES_TABLE: &str = "
@@ -34,7 +35,12 @@ const CREATE_INSTRUMENTS_TABLE: &str = "
             text STRING)";
 
 pub struct SongDb {
+    /// sqlite database
     pub connection: sqlite::Connection,
+    /// Caching when getting metadata
+    pub query_data: Vec<String>,
+    pub cached_samples: Vec<String>,
+    pub cached_instruments: Vec<String>,
 }
 
 impl SongDb {
@@ -43,12 +49,23 @@ impl SongDb {
     ///
     pub fn new(path: &str) -> Result<SongDb, Error> {
         let connection = sqlite::open(path)?;
+        let mut query_data = Vec::with_capacity(1024);
+        let mut cached_samples = Vec::with_capacity(1024);
+        let mut cached_instruments = Vec::with_capacity(1024);
+
+        // TODO: Better way to do this
+        for i in 0..1024 {
+            query_data.push(String::new());
+            cached_samples.push(String::new());
+            cached_instruments.push(String::new());
+        }
+
         connection.execute(CREATE_URLS_TABLE)?;
         connection.execute(CREATE_SUB_SONGS_TABLE)?;
         connection.execute(CREATE_SAMPLES_TABLE)?;
         connection.execute(CREATE_INSTRUMENTS_TABLE)?;
         connection.execute("PRAGMA journal_mode=WAL")?; // for less trafic to disk
-        Ok(SongDb { connection })
+        Ok(SongDb { connection, query_data, cached_samples, cached_instruments })
     }
 
     pub fn begin_transaction(&self) {
@@ -167,6 +184,67 @@ impl SongDb {
         }
 
         count == 1
+    }
+
+    pub fn begin_get_all(&mut self, url: &str) -> u32 {
+        let url_id = xxh3::hash(url.as_bytes());
+
+        let query = format!("SELECT * FROM urls WHERE pk=={}", url_id);
+        let mut statement = self.connection.prepare(query).unwrap();
+        let count = statement.names().len();
+        let mut total_count = 0;
+
+        if sqlite::State::Row == statement.next().unwrap() {
+            // loop from 1 to skip pk (primary key for the database)
+            for i in 1..count {
+                match statement.read::<String>(i) {
+                    Ok(v) => {
+                        self.query_data[(total_count * 2) + 0].clear();
+                        self.query_data[(total_count * 2) + 1].clear();
+                        self.query_data[(total_count * 2) + 0].push_str(statement.name(i));
+                        self.query_data[(total_count * 2) + 1].push_str(&v);
+                        total_count += 1;
+                    },
+                    _ => (),
+                }
+            }
+        }
+
+        {
+            let query = format!("SELECT text from samples where url_id={}", url_id);
+            let mut statement = self.connection.prepare(query).unwrap();
+
+            // TODO: Optimize
+            self.cached_samples.clear();
+
+            while let State::Row = statement.next().unwrap() {
+                self.cached_samples.push(statement.read::<String>(0).unwrap());
+            }
+        }
+
+        {
+            let query = format!("SELECT text from instruments where url_id={}", url_id);
+            let mut statement = self.connection.prepare(query).unwrap();
+
+            // TODO: Optimize
+            self.cached_instruments.clear();
+
+            while let State::Row = statement.next().unwrap() {
+                self.cached_instruments.push(statement.read::<String>(0).unwrap());
+            }
+        }
+
+        total_count as u32
+    }
+
+    pub fn get_all_entry_name(&self, index: u32, len: *mut i32) -> *const u8 {
+        let bytes = self.query_data[((index as usize) * 2) + 0].as_bytes();
+        unsafe { *len = bytes.len() as i32; }
+        bytes.as_ptr()
+    }
+
+    pub fn end_get_all() {
+
     }
 }
 

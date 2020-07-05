@@ -283,7 +283,7 @@ pub type HippoMetadataId = u64;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct HippoMetadataAPI {
-    pub priv_data: *const HippoMetadataAPIPrivData,
+    pub priv_data: *mut HippoMetadataAPIPrivData,
     pub create_url: ::std::option::Option<
         unsafe extern "C" fn(
             priv_data: *mut HippoMetadataAPIPrivData,
@@ -306,7 +306,7 @@ pub struct HippoMetadataAPI {
             d: f64,
         ),
     >,
-    pub add_sub_song: ::std::option::Option<
+    pub add_subsong: ::std::option::Option<
         unsafe extern "C" fn(
             priv_data: *mut HippoMetadataAPIPrivData,
             parent_id: HippoMetadataId,
@@ -327,6 +327,40 @@ pub struct HippoMetadataAPI {
             parent_id: HippoMetadataId,
             text: *const ::std::os::raw::c_char,
         ),
+    >,
+    pub begin_get_all: ::std::option::Option<
+        unsafe extern "C" fn(
+            priv_data: *mut HippoMetadataAPIPrivData,
+            url: *const ::std::os::raw::c_char,
+        ) -> ::std::os::raw::c_int,
+    >,
+    pub end_get_all:
+        ::std::option::Option<unsafe extern "C" fn(priv_data: *mut HippoMetadataAPIPrivData)>,
+    pub get_all_entry: ::std::option::Option<
+        unsafe extern "C" fn(
+            priv_data: *mut HippoMetadataAPIPrivData,
+            entry: ::std::os::raw::c_int,
+            name: *mut *const ::std::os::raw::c_char,
+            data: *mut *const ::std::os::raw::c_char,
+            len_name: *mut ::std::os::raw::c_int,
+            len_data: *mut ::std::os::raw::c_int,
+        ) -> ::std::os::raw::c_int,
+    >,
+    pub get_all_sample: ::std::option::Option<
+        unsafe extern "C" fn(
+            priv_data: *mut HippoMetadataAPIPrivData,
+            entry: ::std::os::raw::c_int,
+            text: *mut *const ::std::os::raw::c_char,
+            text_len: *mut ::std::os::raw::c_int,
+        ) -> ::std::os::raw::c_int,
+    >,
+    pub get_all_instrument: ::std::option::Option<
+        unsafe extern "C" fn(
+            priv_data: *mut HippoMetadataAPIPrivData,
+            entry: ::std::os::raw::c_int,
+            text: *mut *const ::std::os::raw::c_char,
+            text_len: *mut ::std::os::raw::c_int,
+        ) -> ::std::os::raw::c_int,
     >,
 }
 pub const HippoSettingResult_HippoSettingsResult_Ok: HippoSettingResult = 0;

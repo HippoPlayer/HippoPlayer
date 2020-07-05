@@ -619,6 +619,27 @@ SharedLibrary {
 }
 
 -----------------------------------------------------------------------------------------------------------------------
+
+SharedLibrary {
+	Name = "music_info",
+	Sources = {
+	    "src/plugins/view/music_info/music_info.cpp",
+        gen_moc("src/plugins/view/music_info/music_info.h"),
+	},
+
+	Libs = {
+		{ "wsock32.lib", "kernel32.lib", "user32.lib", "gdi32.lib", "Comdlg32.lib",
+		  "Advapi32.lib", "Qt5Guid.lib", "Qt5Cored.lib", "Qt5Widgetsd.lib"; Config = "win64-*-*" },
+	},
+
+    Frameworks = { "Cocoa", "QtWidgets", "QtGui", "QtCore" },
+
+	Depends = { "flatbuffers_lib" },
+}
+
+
+
+-----------------------------------------------------------------------------------------------------------------------
 -- Default plugins
 -----------------------------------------------------------------------------------------------------------------------
 
@@ -646,7 +667,9 @@ Default(openmpt_cfg)
 --Default "playlist"
 Default "player"
 Default "playlist"
-Default "tracker"
+Default "music_info"
+
+--Default "tracker"
 --Default "song_info"
 --Default "TestViewPlugin"
 

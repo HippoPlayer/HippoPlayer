@@ -90,10 +90,12 @@ impl Playlist {
                 let path_name = builder.create_string(&entry.path);
                 let title_name = builder.create_string(&entry.title);
                 let song_type = builder.create_string(&entry.song_type);
+                let path = builder.create_string(&entry.path);
 
                 let song_desc = HippoSongDescription::create(
                     &mut builder,
                     &HippoSongDescriptionArgs {
+                        path: Some(path),
                         authoring_tool: None,
                         artist: None,
                         date: None,
@@ -142,10 +144,12 @@ impl Playlist {
         let mut builder = messages::FlatBufferBuilder::new_with_capacity(8192);
         let title = builder.create_string(&entry.title);
         let song_type = builder.create_string(&entry.song_type);
+        let path = builder.create_string(&entry.path);
 
         let song_desc = HippoSongDescription::create(
             &mut builder,
             &HippoSongDescriptionArgs {
+                path: Some(path),
                 authoring_tool: None,
                 artist: None,
                 date: None,

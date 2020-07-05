@@ -121,21 +121,32 @@ typedef struct HippoMetadataAPI {
         HippoMetadataId parent_id,
         const char* text);
 
-    // gets type\ndata\n for the url, ends with \n\n
-    const char* (*get_metadata)(
+    int (*begin_get_all)(
         struct HippoMetadataAPIPrivData* priv_data,
         const char* url);
 
-    // gets samples for the url, ends with \n\n
-    const char* (*get_samples)(
-        struct HippoMetadataAPIPrivData* priv_data,
-        const char* url);
+    void (*end_get_all)(
+        struct HippoMetadataAPIPrivData* priv_data);
 
-    // gets samples for the url, ends with \n\n
-    const char* (*get_instruments)(
+    int (*get_all_entry)(
         struct HippoMetadataAPIPrivData* priv_data,
-        const char* url);
+        int entry,
+        const char** name,
+        const char** data,
+        int* len_name,
+        int* len_data);
 
+    int (*get_all_sample)(
+        struct HippoMetadataAPIPrivData* priv_data,
+        int entry,
+        const char** text,
+        int* text_len);
+
+    int (*get_all_instrument)(
+        struct HippoMetadataAPIPrivData* priv_data,
+        int entry,
+        const char** text,
+        int* text_len);
 
 } HippoMetadataAPI;
 
@@ -148,6 +159,12 @@ typedef struct HippoMetadataAPI {
 #define HippoMetadata_add_subsong(api, url, name, len) api->add_subsong(api->priv_data, url, name, len)
 #define HippoMetadata_add_sample(api, url, text) api->add_sample(api->priv_data, url, text)
 #define HippoMetadata_add_instrument(api, url, text) api->add_instrument(api->priv_data, url, text)
+
+#define HippoMetadata_begin_get_all(api, url) api->begin_get_all(api->priv_data, url)
+#define HippoMetadata_end_all(api) api->begin_get_all(api->priv_data)
+#define HippoMetadata_get_all_entry(api, index, name, data, name_len, data_len) api->get_all_entry(api->priv_data, index, name, data, name_len, data_len)
+#define HippoMetadata_get_all_sample(api, index, text, text_len) api->get_all_sample(api->priv_data, index, text, text_len)
+#define HippoMetadata_get_all_instrument(api, index, text, text_len) api->get_all_instrument(api->priv_data, index, text, text_len)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
