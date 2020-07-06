@@ -447,7 +447,7 @@ SharedLibrary {
 		"libsc68/io68/ym_io.c",
 		"libsc68/io68/ym_puls.c",
 		"libsc68/io68/ymemul.c",
-		"unice68/unice68.c",
+		--"unice68/unice68.c",
 		"unice68/unice68_pack.c",
 		"unice68/unice68_unpack.c",
 		"unice68/unice68_version.c",
@@ -649,18 +649,18 @@ SharedLibrary {
 
 -- Decoders
 
--- Default "tfmx"
--- Default "hively"
+Default "tfmx"
+Default "hively"
 
 Default "openmpt"
 Default(openmpt_cfg)
 
--- Default "vgm"
--- Default "nsf"
--- Default "sc68"
+Default "vgm"
+Default "nsf"
+Default "sc68"
 -- Default "DummyPlugin"
--- Default "mdx"
--- Default "sid"
+Default "mdx"
+Default "sid"
 
 -- Views
 
@@ -674,7 +674,6 @@ Default "music_info"
 --Default "TestViewPlugin"
 
 -- Default "FutureComposerPlugin"
--- Default "TfmxPlugin"
 --
 -- vim: ts=4:sw=4:sts=4
 

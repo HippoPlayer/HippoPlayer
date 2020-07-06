@@ -141,33 +141,10 @@ static int uade_open(void* user_data, const char* buffer) {
         const struct uade_song_info* song_info = uade_get_song_info(plugin->state);
         float length = (float)song_info->duration;
 
-        std::vector<flatbuffers::Offset<flatbuffers::String>> instruments;
-        std::vector<flatbuffers::Offset<flatbuffers::String>> samples;
-
-        flatbuffers::FlatBufferBuilder builder(4096);
-
-        auto url = builder.CreateString(buffer);
-        auto title = builder.CreateString(song_info->modulename);
-        auto song_type = builder.CreateString(song_info->playername);
-        auto authoring_tool = builder.CreateString(song_info->playername);
-        auto artist = builder.CreateString("");
-        auto date = builder.CreateString("");
-        auto message = builder.CreateString("");
-
-        builder.Finish(CreateHippoMessageDirect(builder, MessageType_song_metadata,
-            CreateHippoSongMetadata(builder,
-                url,
-                title,
-                song_type,
-                length,
-                authoring_tool,
-                artist,
-                date,
-                message,
-                builder.CreateVector(samples),
-                builder.CreateVector(instruments)).Union()));
-
-        HippoMetadata_set_data(plugin->metadata_api, buffer, builder.GetBufferPointer(), builder.GetSize());
+        HippoMetadataId index = HippoMetadata_create_url(plugin->metadata_api, buffer);
+        HippoMetadata_set_tag(plugin->metadata_api, index, HippoMetadata_TitleTag, song_info->modulename); 
+        HippoMetadata_set_tag(plugin->metadata_api, index, HippoMetadata_SongTypeTag, song_info->playername); 
+        HippoMetadata_set_tag(plugin->metadata_api, index, HippoMetadata_AuthoringToolTag, song_info->playername); 
 
 		return 1;
 	}

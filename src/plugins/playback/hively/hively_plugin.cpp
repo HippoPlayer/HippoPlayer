@@ -150,57 +150,26 @@ static int hively_metadata(const char* filename, const HippoServiceAPI* service_
 	struct hvl_tune* tune = hvl_LoadTuneMemory((uint8_t*) data, (int)size, FREQ, 0);
 
     // TODO: Calculate len
-    /*
     float length = 0.0f;
-
-    std::vector<flatbuffers::Offset<flatbuffers::String>> instruments;
-    std::vector<flatbuffers::Offset<flatbuffers::String>> samples;
-
-    flatbuffers::FlatBufferBuilder builder(4096);
 
     const char* tool = is_ahx ? "AHX Tracker" : "Hively Tracker";
 
-    auto url = builder.CreateString(filename);
-    auto title = builder.CreateString(tune->ht_Name);
-    auto song_type = builder.CreateString(tool);
-    auto authoring_tool = builder.CreateString(tool);
-    auto artist = builder.CreateString("");
-    auto date = builder.CreateString("");
-    auto message = builder.CreateString("");
+    HippoMetadataId index = HippoMetadata_create_url(metadata_api, filename);
+
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_TitleTag, tune->ht_Name);
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_SongTypeTag, tool); 
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_AuthoringToolTag, tool); 
+    HippoMetadata_set_tag_f64(metadata_api, index, HippoMetadata_LengthTag, length); 
 
     for (int i = 0; i < tune->ht_InstrumentNr; ++i) {
-	    instruments.push_back(builder.CreateString(tune->ht_Instruments[i].ins_Name));
-    }
-
-    builder.Finish(CreateHippoMessageDirect(builder, MessageType_song_metadata,
-        CreateHippoSongMetadata(builder,
-            url,
-            title,
-            song_type,
-            length,
-            authoring_tool,
-            artist,
-            date,
-            message,
-            builder.CreateVector(samples),
-            builder.CreateVector(instruments)).Union()));
-
-    HippoMetadata_set_data(metadata_api, filename, builder.GetBufferPointer(), builder.GetSize());
-    */
+        HippoMetadata_add_instrument(metadata_api, index, tune->ht_Instruments[i].ins_Name);
+	}
 
     // Make sure to free the buffer before we leave
     HippoIo_free_file_to_memory(io_api, data);
 
     return 0;
 }
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/*
-static int hively_length(void* user_data) {
-	return -10;
-}
-*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

@@ -5,7 +5,9 @@
 #define HAVE_ASSERT_H 1
 
 /* Define to 1 if you have the `basename' function. */
+#ifnded _WIN32
 #define HAVE_BASENAME 1
+#endif
 
 /* Define to 1 if you have the <ctype.h> header file. */
 #define HAVE_CTYPE_H 1

@@ -95,7 +95,6 @@ static int sc68_plugin_metadata(const char* filename, const HippoServiceAPI* ser
 
     // TODO: Proper error handling
     if (sc68_load_mem(inst, data, (int)size) < 0) {
-        printf("sc68_plugin: Failed load\n");
         return -1;
     }
 
@@ -103,41 +102,24 @@ static int sc68_plugin_metadata(const char* filename, const HippoServiceAPI* ser
     int length = info.trk.time_ms;
     (void)ret;
 
-    std::vector<flatbuffers::Offset<flatbuffers::String>> instruments;
-    std::vector<flatbuffers::Offset<flatbuffers::String>> samples;
+    HippoMetadataId index = HippoMetadata_create_url(metadata_api, filename);
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_TitleTag, info.title ? info.title : ""); 
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_SongTypeTag, info.format); 
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_AuthoringToolTag, info.converter); 
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_ArtistTag, info.artist); 
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_DateTag, info.year); 
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_MessageTag, info.ripper); 
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_AlbumTag, info.album); 
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_GenreTag, info.genre); 
+    HippoMetadata_set_tag_f64(metadata_api, index, HippoMetadata_LengthTag, length / 1000); 
 
-    flatbuffers::FlatBufferBuilder builder(4096);
-
-    auto url = builder.CreateString(filename);
-    auto title = builder.CreateString(info.title ? info.title : "");
-    auto song_type = builder.CreateString(info.format);
-    auto authoring_tool = builder.CreateString(info.converter);
-    auto artist = builder.CreateString(info.artist);
-    auto date = builder.CreateString(info.year);
-    auto message = builder.CreateString(info.genre);
-
-    builder.Finish(CreateHippoMessageDirect(builder, MessageType_song_metadata,
-        CreateHippoSongMetadata(builder,
-            url,
-            title,
-            song_type,
-            length / 1000,
-            authoring_tool,
-            artist,
-            date,
-            message,
-            builder.CreateVector(samples),
-            builder.CreateVector(instruments)).Union()));
-
-    HippoMetadata_set_data(metadata_api, filename, builder.GetBufferPointer(), builder.GetSize());
+    sc68_destroy(inst);
 
     // Make sure to free the buffer before we leave
     HippoIo_free_file_to_memory(io_api, data);
-    sc68_destroy(inst);
 
 	return 0;
 }
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

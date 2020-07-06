@@ -196,7 +196,7 @@ Build {
     },
 
     Variants = { "debug", "release" },
-    SubVariants = { "default", "asan" },
+    SubVariants = { "default" },
 }
 
 -- vim: ts=4:sw=4:sts=4

@@ -69,6 +69,7 @@ MainWindow::MainWindow(HippoCore* core) : QMainWindow(0), m_core(core) {
         m_docking_manager->addDockWidget(ads::TopDockWidgetArea, DockWidget);
         */
 
+
     /*
     QVBoxLayout* layout = new QVBoxLayout;
 
@@ -83,7 +84,7 @@ MainWindow::MainWindow(HippoCore* core) : QMainWindow(0), m_core(core) {
 
     create_menus();
 
-    resize(2840, 1600);
+    //resize(2840, 1600);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

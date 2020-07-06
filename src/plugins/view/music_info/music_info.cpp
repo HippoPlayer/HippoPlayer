@@ -30,6 +30,8 @@ void MusicInfoView::create_label_text(const QString& label_name, const QString& 
     auto label_text = new QLabel(label_name);
     auto line = new QLineEdit(text);
 
+    line->setReadOnly(true);
+
     layout->addWidget(label_text);
     layout->addWidget(line);
 
@@ -139,12 +141,14 @@ void MusicInfoView::select_song(const HippoSelectSong* msg) {
         QTextCursor cursor = instruments->textCursor();
         cursor.movePosition(QTextCursor::Start);
         instruments->setTextCursor(cursor);
+        instruments->setReadOnly(true);
     }
 
     if (samples) {
         QTextCursor cursor = samples->textCursor();
         cursor.movePosition(QTextCursor::Start);
         samples->setTextCursor(cursor);
+        instruments->setReadOnly(true);
     }
 }
 

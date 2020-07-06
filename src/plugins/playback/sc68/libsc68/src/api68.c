@@ -1058,8 +1058,8 @@ int sc68_init(sc68_init_t * init)
 
   /* Get application name. */
   appname[0] = 0;
-  if (init->argc > 0 && init->argv)
-    appname_from_path(init->argv[0], appname, sizeof(appname));
+  //if (init->argc > 0 && init->argv)
+  //  appname_from_path(init->argv[0], appname, sizeof(appname));
   if (!appname[0])
     strcpy(appname,"sc68");
   if (init->argc > 0 && init->argv)
