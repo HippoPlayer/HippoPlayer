@@ -37,7 +37,7 @@
 #include "dial68/dial68.h"
 
 #ifndef HAVE_BASENAME
-#include "libc68.h"
+//#include "libc68.h"
 #endif
 
 /* libsc68 emulators includes */
@@ -345,6 +345,7 @@ static inline int trk_can_asid(const music68_t * const m)
 #ifndef EXTENSION_SEP
 # define EXTENSION_SEP '.'
 #endif
+/*
 static void appname_from_path(char *path, char * appname, int max)
 {
   char * e, *s;
@@ -363,6 +364,7 @@ static void appname_from_path(char *path, char * appname, int max)
   strncpy(appname, s, len);
   appname[len] = 0;
 }
+*/
 
 
 /***********************************************************************
