@@ -3,16 +3,17 @@
 #include <string.h>
 #include <adplug.h>
 #include <emuopl.h>
+#include <wemuopl.h>
 #include <silentopl.h>
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // This is a adplug plugin used as a reference and not inteded to do anything
 
 struct AdplugPlugin {
-    //AdplugPlugin() : emu_opl(48000, true, true) { }
-    AdplugPlugin() : emu_opl(48000, true, false) { }
+    AdplugPlugin() : emu_opl(48000, true, true) { }
     CPlayer* player = nullptr;
-    CEmuopl emu_opl;
+    CWemuopl emu_opl;
+    int to_add = 0;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -85,16 +86,19 @@ static inline int min_t(int a, int b) {
     return a < b ? a : b;
 }
 
+static inline int max_t(int a, int b) {
+    return a > b ? a : b;
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int adplug_read_data(void* user_data, void* dest, uint32_t max_size) {
 	AdplugPlugin* plugin = (AdplugPlugin*)user_data;
 
-    int toadd = 0;
     int i = 0;
     int towrite = 0;
     char* sndbufpos = nullptr;
-	const int buffer_size = 512;
+	const int buffer_size = 2048;
 	const int sampsize = 4; // 16-bit & stereo
 	const int freq = 48000;
 	char sndbuf[buffer_size * sampsize * 2] = { 0 };
@@ -102,37 +106,27 @@ static int adplug_read_data(void* user_data, void* dest, uint32_t max_size) {
 	float* new_dest = (float*)dest;
 
     // fill sound buffer
-    towrite = buffer_size * 2;
+    towrite = buffer_size;
     sndbufpos = sndbuf;
 
-    printf("start....\n");
-
     while (towrite > 0) {
-        while (toadd < 0) {
-            toadd += freq;
+        while (plugin->to_add < 0) {
+            plugin->to_add += freq;
             plugin->player->update();
-            printf("update %f\n", plugin->player->getrefresh());
         }
-        int t0 = (int)(toadd / plugin->player->getrefresh() + 4) & ~3;
-        i = min_t(towrite, (int)(toadd / plugin->player->getrefresh() + 4) & ~3);
-        printf("i %d - %d\n", i, t0);
+        i = min_t(towrite, (int)(plugin->to_add / plugin->player->getrefresh() + 4) & ~3);
         plugin->emu_opl.update((short *)sndbufpos, i);
-        sndbufpos += i * sampsize;
-        towrite -= i;
-        printf("to write %d\n", towrite);
-        toadd -= (int)(plugin->player->getrefresh() * i);
+        sndbufpos += i * sampsize; towrite -= i;
+        i = (int)(plugin->player->getrefresh() * i);
+        plugin->to_add -= (int)max_t(1, i);
     }
-
-    printf("end--\n");
 
 	const float scale = 1.0f / 32767.0f;
 
 	int16_t* t = (int16_t*)&sndbuf[0];
 
 	for (i = 0; i < buffer_size * 2; ++i) {
-	    //uint32_t fetch_offset = uint32_t(i) & ~1;
-		//new_dest[i] = ((float)t[fetch_offset]) * scale;
-		new_dest[i] = ((float)t[i / 2]) * scale;
+		new_dest[i] = ((float)t[i]) * scale;
 	}
 
 	return buffer_size * 2;
@@ -166,7 +160,7 @@ static int adplug_metadata(const char* url, const HippoServiceAPI* service_api) 
     // TODO: Sub-song support
     // TODO: This function is quite heavy (it will play the song to the end to figure out the length) maybe
     //       We should do this async instead and update the length later?
-    HippoMetadata_set_tag_f64(metadata_api, index, HippoMetadata_LengthTag, p->songlength());
+    HippoMetadata_set_tag_f64(metadata_api, index, HippoMetadata_LengthTag, p->songlength() / 1000);
 
 	for (int i = 0, c = p->getinstruments(); i < c; ++i) {
     	HippoMetadata_add_instrument(metadata_api, index, p->getinstrument(i).c_str());
