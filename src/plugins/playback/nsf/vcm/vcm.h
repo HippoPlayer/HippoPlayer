@@ -59,15 +59,15 @@ static char *vcm_itoa(int value, char *str, int base) {
 
 namespace vcm
 {
-  // ’l
+  // ï¿½l
   class Value
   {
   public:
-    // ‘®«
-    std::string data;    // ’lc‚Ç‚ñ‚ÈŒ^‚Å‚àí‚É•¶š—ñ‚Æ‚µ‚Ä•Û‘¶
-    bool update;         // ƒAƒbƒvƒf[ƒg‚³‚ê‚½‚È‚çtrue
+    // ï¿½ï¿½ï¿½ï¿½
+    std::string data;    // ï¿½lï¿½cï¿½Ç‚ï¿½ÈŒ^ï¿½Å‚ï¿½ï¿½ï¿½É•ï¿½ï¿½ï¿½ï¿½ï¿½Æ‚ï¿½ï¿½Ä•Û‘ï¿½
+    bool update;         // ï¿½Aï¿½bï¿½vï¿½fï¿½[ï¿½gï¿½ï¿½ï¿½ê‚½ï¿½È‚ï¿½true
 
-    // ‘€ì
+    // ï¿½ï¿½ï¿½ï¿½
     Value();
     Value(const char *);
     Value(const std::string &);
@@ -87,7 +87,7 @@ namespace vcm
     void SetStr( const char * );
   };
 
-  // ƒRƒ“ƒtƒBƒOƒŒ[ƒVƒ‡ƒ“–{‘Ì‚Ì’è‹`
+  // ï¿½Rï¿½ï¿½ï¿½tï¿½Bï¿½Oï¿½ï¿½ï¿½[ï¿½Vï¿½ï¿½ï¿½ï¿½ï¿½{ï¿½Ì‚Ì’ï¿½`
   class ObserverI
   {
   public:
@@ -159,7 +159,7 @@ namespace vcm
       //VCM_MUTEX_DESTROY(mutex);
     }
 
-    // ’l‚ğ“Ç‚ŞD–³‚¯‚ê‚ÎƒGƒ‰[D
+    // ï¿½lï¿½ï¿½Ç‚ŞDï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÎƒGï¿½ï¿½ï¿½[ï¿½D
     Value &operator[]( const std::string id )
     {
       MutexGuard mg_(this);
@@ -169,7 +169,7 @@ namespace vcm
       else
         return it->second;
     }
-    // ’l‚ğì‚é d•¡‚µ‚Äì‚ë‚¤‚Æ‚·‚é‚Æ false ‚ª‹A‚Á‚Ä¸”s
+    // ï¿½lï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½dï¿½ï¿½ï¿½ï¿½ï¿½Äï¿½ë‚¤ï¿½Æ‚ï¿½ï¿½ï¿½ï¿½ false ï¿½ï¿½ï¿½Aï¿½ï¿½ï¿½Äï¿½ï¿½s
     bool CreateValue( const std::string id, const Value &value )
     {
       MutexGuard mg_(this);
@@ -182,13 +182,13 @@ namespace vcm
         return true;
       }
     }
-    // ’l‚ğƒZƒbƒg‚·‚éD–³‚¯‚ê‚Îì‚éD
+    // ï¿½lï¿½ï¿½ï¿½Zï¿½bï¿½gï¿½ï¿½ï¿½ï¿½Dï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îï¿½ï¿½D
     inline void SetValue( const std::string id, const Value &value )
     {
       MutexGuard mg_(this);
       data[id] = value;
     }
-    // ’l‚ğ“Ç‚ŞD–³‚¯‚ê‚Î©“®“I‚Éì¬‚³‚ê‚éD
+    // ï¿½lï¿½ï¿½Ç‚ŞDï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îï¿½ï¿½ï¿½ï¿½Iï¿½Éì¬ï¿½ï¿½ï¿½ï¿½ï¿½D
     inline Value &GetValue( const std::string id )
     {
       MutexGuard mg_(this);
