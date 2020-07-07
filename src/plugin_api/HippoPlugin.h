@@ -168,42 +168,6 @@ typedef struct HippoMetadataAPI {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define HIPPO_SETTINGS_API_VERSION 1
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-typedef enum HippoSettingResult {
-	HippoSettingsResult_Ok = 0,
-	HippoSettingsResult_SettingNotFound = 1,
-	HippoSettingsResult_KeyNotFound = 2,
-	HippoSettingsResult_InvalidType = 3,
-} HippoSettingResult;
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-typedef struct HippoSettingsAPI {
-    // Private internal data
-	struct HippoSettingsAPI* priv_data;
-	HippoSettingResult (*get_int)(
-	    struct HippoMessageAPI* handle,
-	    void* user_data,
-	    const char* setting,
-	    const char* key,
-        int* res);
-	HippoSettingResult (*get_float)(
-	    struct HippoMessageAPI* handle,
-	    void* user_data,
-	    const char* setting,
-	    const char* key,
-        float* res);
-} HippoSettingsAPI;
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-#define HIPPO_SETTINGS_API_VERSION 1
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 typedef enum HippoSettingResult {
 	HippoSettingsResult_Ok = 0,
 	HippoSettingsResult_SettingNotFound = 1,
