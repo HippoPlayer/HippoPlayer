@@ -157,9 +157,9 @@ static int hively_metadata(const char* filename, const HippoServiceAPI* service_
     HippoMetadataId index = HippoMetadata_create_url(metadata_api, filename);
 
     HippoMetadata_set_tag(metadata_api, index, HippoMetadata_TitleTag, tune->ht_Name);
-    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_SongTypeTag, tool); 
-    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_AuthoringToolTag, tool); 
-    HippoMetadata_set_tag_f64(metadata_api, index, HippoMetadata_LengthTag, length); 
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_SongTypeTag, tool);
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_AuthoringToolTag, tool);
+    HippoMetadata_set_tag_f64(metadata_api, index, HippoMetadata_LengthTag, length);
 
     for (int i = 0; i < tune->ht_InstrumentNr; ++i) {
         HippoMetadata_add_instrument(metadata_api, index, tune->ht_Instruments[i].ins_Name);
@@ -195,7 +195,6 @@ static HippoPlaybackPlugin g_hively_plugin = {
 	hively_read_data,
 	hively_seek,
 	hively_metadata,
-	NULL,
 	NULL,
 };
 
