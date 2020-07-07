@@ -65,11 +65,11 @@ static int nsf_metadata(const char* filename, const HippoServiceAPI* service_api
     int length = nsf.time_in_ms < 0 ? nsf.default_playtime : nsf.time_in_ms;
 
     HippoMetadataId index = HippoMetadata_create_url(metadata_api, filename);
-    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_TitleTag, nsf.title); 
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_TitleTag, nsf.title);
     HippoMetadata_set_tag(metadata_api, index, HippoMetadata_SongTypeTag, "NES Music");
-    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_ArtistTag, nsf.artist); 
-    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_MessageTag, nsf.copyright); 
-    HippoMetadata_set_tag_f64(metadata_api, index, HippoMetadata_LengthTag, (float)length); 
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_ArtistTag, nsf.artist);
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_MessageTag, nsf.copyright);
+    HippoMetadata_set_tag_f64(metadata_api, index, HippoMetadata_LengthTag, 0);
 
     // Make sure to free the buffer before we leave
     HippoIo_free_file_to_memory(io_api, data);
