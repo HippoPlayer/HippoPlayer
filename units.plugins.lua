@@ -478,6 +478,30 @@ SharedLibrary {
 -----------------------------------------------------------------------------------------------------------------------
 
 SharedLibrary {
+	Name = "adplug",
+
+	Includes = {
+	    "src/plugin_api",
+	    "src/plugins/playback/adplug/adplug_lib/libbinio/src",
+	    "src/plugins/playback/adplug/adplug_lib/src",
+	},
+
+	Defines = {
+        { "stricmp=strcasecmp" ; Config = { "linux-*-*", "mac*-*-*" } },
+	},
+
+	Sources = {
+		get_c_cpp_src("src/plugins/playback/adplug"),
+	},
+
+	Libs = {
+		{ "Wsock32.lib" ; Config = "win64-*-*" },
+	},
+}
+
+-----------------------------------------------------------------------------------------------------------------------
+
+SharedLibrary {
 	Name = "DummyPlugin",
 
 	Includes = {
@@ -658,9 +682,9 @@ Default(openmpt_cfg)
 Default "vgm"
 Default "nsf"
 Default "sc68"
--- Default "DummyPlugin"
 Default "mdx"
 Default "sid"
+Default "adplug"
 
 -- Views
 
