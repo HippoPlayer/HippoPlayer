@@ -170,7 +170,7 @@ Build {
 
     Configs = {
         Config { Name = "macosx-clang", DefaultOnHost = "macosx", Inherit = macosx, Tools = { "clang-osx", "rust", "qt" } },
-        Config { Name = "win64-msvc", DefaultOnHost = { "windows" }, Inherit = win64, Tools = { "msvc-vs2017", "rust", "qt" } },
+        Config { Name = "win64-msvc", DefaultOnHost = { "windows" }, Inherit = win64, Tools = { "msvc-vs2019", "rust", "qt" } },
         Config { Name = "linux-gcc", DefaultOnHost = { "linux" }, Inherit = gcc_env, Tools = { "gcc", "rust", "qt" } },
         Config { Name = "linux-clang", DefaultOnHost = { "linux" }, Inherit = gcc_env, Tools = { "clang", "rust", "qt" } },
     },
@@ -196,7 +196,7 @@ Build {
     },
 
     Variants = { "debug", "release" },
-    SubVariants = { "default", "asan" },
+    SubVariants = { "default" },
 }
 
 -- vim: ts=4:sw=4:sts=4

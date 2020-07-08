@@ -483,6 +483,11 @@ FILE68_API
 void file68_shutdown(void);
 
 /**
+ * Check if we can play this file
+ */
+int file68_verify_header(const void* buffer, int len);
+
+/**
  * @}
  */
 

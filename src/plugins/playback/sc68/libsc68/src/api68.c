@@ -37,7 +37,7 @@
 #include "dial68/dial68.h"
 
 #ifndef HAVE_BASENAME
-#include "libc68.h"
+//#include "libc68.h"
 #endif
 
 /* libsc68 emulators includes */
@@ -250,7 +250,6 @@ static int           sc68_id;        /* counter for auto generated name */
 static volatile int  sc68_init_flag; /* Library init flag     */
 static int           sc68_spr_def = SPR_DEF;
 static int           dbg68k;
-static const char    not_available[] = SC68_NOFILENAME;
 static char          appname[16] = "sc68";
 static char          sc68_errstr[ERRMAX];
 
@@ -346,6 +345,7 @@ static inline int trk_can_asid(const music68_t * const m)
 #ifndef EXTENSION_SEP
 # define EXTENSION_SEP '.'
 #endif
+/*
 static void appname_from_path(char *path, char * appname, int max)
 {
   char * e, *s;
@@ -364,6 +364,7 @@ static void appname_from_path(char *path, char * appname, int max)
   strncpy(appname, s, len);
   appname[len] = 0;
 }
+*/
 
 
 /***********************************************************************
@@ -1059,8 +1060,8 @@ int sc68_init(sc68_init_t * init)
 
   /* Get application name. */
   appname[0] = 0;
-  if (init->argc > 0 && init->argv)
-    appname_from_path(init->argv[0], appname, sizeof(appname));
+  //if (init->argc > 0 && init->argv)
+  //  appname_from_path(init->argv[0], appname, sizeof(appname));
   if (!appname[0])
     strcpy(appname,"sc68");
   if (init->argc > 0 && init->argv)

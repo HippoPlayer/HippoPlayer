@@ -6,9 +6,9 @@ name: CI
 # events but only for the master branch
 on:
   push:
-    branches: [ dev-ci ]
+    branches: [ master, dev ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, dev ]
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -45,7 +45,7 @@ jobs:
 
   # Build macOS
   build_macOS:
-    runs-on: macos
+    runs-on: macOS-latest
     steps:
     - uses: actions/checkout@v2
     - name: Install Qt
@@ -58,20 +58,19 @@ jobs:
         scripts/mac_build_release.sh
 
 # Build Windows
-#  build_windows:
-#    runs-on: windows-latest
-#    steps:
-#    - uses: actions/checkout@v2
-#    - name: Install Qt
-#      uses: jurplel/install-qt-action@v2
-#    - name: Env test
-#      run: |
-#        echo "Testing"
-#        echo %Qt5_DIR%
-#        echo "Testing 2"
-#        set QT5_BIN=%Qt5_DIR%/bin
-#        echo %QT5_BIN%
-#    - name: Build Release
-#      run: bin\windows\tundra2.exe win64-msvc-debug
-
-
+  build_windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v2
+    - name: Build code test
+      shell: cmd
+      run: |
+        set QT5_BIN=%Qt5_DIR%/bin
+        set QT5_INC=%Qt5_DIR%/include
+        set QT5_LIB=%Qt5_DIR%/lib
+        echo %QT5_BIN%
+        echo %QT5_INC%
+        echo %QT5_LIB%
+        bin\windows\tundra2.exe --unprotected win64-msvc-debug

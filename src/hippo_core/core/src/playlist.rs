@@ -5,6 +5,7 @@ use std::fs::File;
 use std::io;
 use std::io::{BufReader, BufWriter};
 use std::path::Path;
+use song_db::SongDb;
 
 ///
 /// Metadata for each entry. We will likely stuff more things here later on.
@@ -57,19 +58,19 @@ impl Playlist {
         //self.current_song_message()
     }
 
-    pub fn update_current_entry(&mut self, metadata: &HippoSongMetadata) {
+    pub fn update_current_entry(&mut self, song_db: &SongDb, url: &str) {
         let entry = &mut self.entries[self.current_song as usize];
 
-        metadata.title().map(|title| {
+        song_db.get_tag("title", url).map(|title| {
             if title != "" {
-                entry.title = title.to_owned();
+                entry.title = title;
             }
         });
 
-        entry.duration = metadata.length();
-        metadata
-            .song_type()
-            .map(|song_type| entry.song_type = song_type.to_owned());
+        entry.duration = song_db.get_tag_f64("length", url).unwrap() as f32;
+        song_db
+            .get_tag("song_type", url)
+            .map(|song_type| entry.song_type = song_type);
     }
 
     ///
@@ -89,10 +90,12 @@ impl Playlist {
                 let path_name = builder.create_string(&entry.path);
                 let title_name = builder.create_string(&entry.title);
                 let song_type = builder.create_string(&entry.song_type);
+                let path = builder.create_string(&entry.path);
 
                 let song_desc = HippoSongDescription::create(
                     &mut builder,
                     &HippoSongDescriptionArgs {
+                        path: Some(path),
                         authoring_tool: None,
                         artist: None,
                         date: None,
@@ -141,10 +144,12 @@ impl Playlist {
         let mut builder = messages::FlatBufferBuilder::new_with_capacity(8192);
         let title = builder.create_string(&entry.title);
         let song_type = builder.create_string(&entry.song_type);
+        let path = builder.create_string(&entry.path);
 
         let song_desc = HippoSongDescription::create(
             &mut builder,
             &HippoSongDescriptionArgs {
+                path: Some(path),
                 authoring_tool: None,
                 artist: None,
                 date: None,

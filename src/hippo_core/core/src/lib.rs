@@ -1,17 +1,16 @@
-use std::collections::HashMap;
 use std::ffi::CStr;
 use std::fs::File;
 use std::fs;
 use std::os::raw::{c_char, c_void};
 use std::path::Path;
 use std::ptr;
-use std::time::{Duration, Instant};
+use std::time::Instant;
+use song_db::SongDb;
 
 mod audio;
 mod core_config;
 mod playlist;
 mod plugin_handler;
-mod song_db;
 
 pub mod ffi;
 mod service;
@@ -31,55 +30,52 @@ type MsgGetCallback =
 type MsgSendCallback =
     extern "C" fn(user_data: *const c_void, data: *const u8, len: i32, index: i32);
 
-#[derive(Default, Debug)]
-pub struct SongDb {
-    data: HashMap<String, String>,
-}
-
 pub struct HippoCore {
     config: CoreConfig,
     audio: HippoAudio,
     plugins: Plugins,
     plugin_service: service_ffi::PluginService,
     playlist: Playlist,
+    song_db: *const SongDb,
     current_song_time: f32,
     start_time: Instant,
     is_playing: bool,
 }
 
 impl HippoCore {
-    pub fn play_file(&mut self, filename: &str) {
+    pub fn play_file(&mut self, url: &str) {
         let mut buffer = [0; 4096];
         // TODO: Fix error handling here
 
-        let metadata = fs::metadata(filename).unwrap();
-        let mut f = File::open(filename).unwrap();
+        let metadata = fs::metadata(url).unwrap();
+        let mut f = File::open(url).unwrap();
         let buffer_read_size = f.read(&mut buffer[..]).unwrap();
 
         // find a plugin that supports the file
 
         for plugin in &self.plugins.decoder_plugins {
-            if plugin.probe_can_play(&buffer, buffer_read_size, filename, metadata.len()) {
-                if self
-                    .plugin_service
-                    .get_song_db()
-                    .get_data(filename)
-                    .is_none()
-                {
-                    plugin.get_metadata(&filename, &self.plugin_service);
+            if plugin.probe_can_play(&buffer, buffer_read_size, url, metadata.len()) {
+                let song_db = self.plugin_service.get_song_db();
+
+                if !song_db.is_present(url) {
+                    song_db.begin_transaction();
+                    plugin.get_metadata(&url, &self.plugin_service);
+                    song_db.commit();
                 }
+
+                //song_db.get_metadata(&url);
 
                 // This is a bit hacky right now but will do the trick
                 self.audio.stop();
                 self.audio = HippoAudio::new();
-                self.audio.start_with_file(&plugin, &self.plugin_service, filename);
+                self.audio.start_with_file(&plugin, &self.plugin_service, url);
                 self.is_playing = true;
 
                 return;
             }
         }
 
-        println!("Unable to find plugin to support {}", filename);
+        println!("Unable to find plugin to support {}", url);
     }
 
     ///
@@ -161,12 +157,13 @@ impl HippoCore {
 
             if let Some(song) = new_song {
                 self.play_file(&song);
+                self.current_song_time = 5.0 * 60.0;
 
-                if let Some(metadata) = self.plugin_service.get_song_db().get_data(&song) {
-                    let message = get_root_as_hippo_message(&metadata);
-                    let metadata_message = message.message_as_song_metadata().unwrap();
-                    self.playlist.update_current_entry(&metadata_message);
-                    self.current_song_time = metadata_message.length();
+                let song_db = self.plugin_service.get_song_db();
+
+                if self.plugin_service.get_song_db().is_present(&song) {
+                    self.current_song_time = song_db.get_tag_f64("length", &song).unwrap() as f32;
+                    self.playlist.update_current_entry(song_db, &song);
                     self.start_time = Instant::now();
 
                     // TODO: Use setting
@@ -200,7 +197,6 @@ impl HippoCore {
     }
 }
 
-/// Create new instance of the song db
 #[no_mangle]
 pub extern "C" fn hippo_core_new() -> *const HippoCore {
     let config = match CoreConfig::load("data/config/global.cfg") {
@@ -249,21 +245,24 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
         }
     }
 
-    let mut core = Box::new(HippoCore {
-        config,
-        plugins,
-        audio: HippoAudio::new(),
-        plugin_service: service_ffi::PluginService::new(),
-        playlist: Playlist::new(),
-        current_song_time: 0.0,
-        start_time: Instant::now(),
-        is_playing: false,
-    });
-
     // No need to switch back if we are in the correct spot
     if !Path::new("bin").is_dir() {
         std::env::set_current_dir(current_path).unwrap();
     }
+
+    let song_db = Box::into_raw(Box::new(SongDb::new("songdb.db").unwrap()));
+
+    let mut core = Box::new(HippoCore {
+        config,
+        plugins,
+        audio: HippoAudio::new(),
+        plugin_service: service_ffi::PluginService::new(song_db),
+        playlist: Playlist::new(),
+        current_song_time: 0.0,
+        start_time: Instant::now(),
+        is_playing: false,
+        song_db,
+    });
 
     // it's ok to allow this function to fail if we have no playlist
     core.playlist.load("default_playlist.hpl").ok();
@@ -275,6 +274,7 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
 #[no_mangle]
 pub extern "C" fn hippo_core_drop(core: *mut HippoCore) {
     let mut core = unsafe { Box::from_raw(core) };
+    let _ = unsafe { Box::from_raw(core.song_db as *mut SongDb) };
 
     core.audio.stop();
     core.playlist
@@ -297,8 +297,9 @@ pub unsafe extern "C" fn hippo_play_file(_core: *mut HippoCore, filename: *const
 }
 
 #[no_mangle]
-pub extern "C" fn hippo_service_api_new() -> *const ffi::HippoServiceAPI {
-    PluginService::new_c_api()
+pub unsafe extern "C" fn hippo_service_api_new(_core: *mut HippoCore) -> *const ffi::HippoServiceAPI {
+    let core = &mut *_core;
+    PluginService::new_c_api(core.song_db)
 }
 
 #[no_mangle]

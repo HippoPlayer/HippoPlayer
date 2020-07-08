@@ -10,6 +10,7 @@ crate-type = ["dylib"]
 [dependencies]
 anyhow = "1.0"
 config = { path = "../config" }
+song_db = { path = "../song_db" }
 dynamic_reload = "0.4.0"
 messages = { path = "../messages" }
 ringbuf = "0.2"

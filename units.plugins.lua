@@ -128,14 +128,14 @@ Program {
 -----------------------------------------------------------------------------------------------------------------------
 
 SharedLibrary {
-	Name = "HivelyPlugin",
+	Name = "hively",
 
 	Includes = {
 	    "src/plugin_api",
 	},
 
 	Sources = {
-		"src/plugins/playback/hively/HivelyPlugin.cpp",
+		"src/plugins/playback/hively/hively_plugin.cpp",
 		"src/plugins/playback/hively/replayer/hvl_replay.c"
 	},
 
@@ -166,6 +166,8 @@ SharedLibrary {
     Env = {
        CXXOPTS = {
 			{ "-std=c++17"; Config = "linux-*-*" },
+			{ "-std=c++17"; Config = "mac*-*-*" },
+			{ "/std:c++17"; Config = "win64-*-*" },
 		},
     },
 
@@ -183,7 +185,7 @@ SharedLibrary {
 		"src/plugins/playback/openmpt/libopenmpt/libopenmpt/libopenmpt_cxx.cpp",
 		"src/plugins/playback/openmpt/libopenmpt/libopenmpt/libopenmpt_impl.cpp",
 		"src/plugins/playback/openmpt/libopenmpt/libopenmpt/libopenmpt_ext_impl.cpp",
-		"src/plugins/playback/openmpt/openmpt.cpp",
+		"src/plugins/playback/openmpt/openmpt_plugin.cpp",
 	},
 
 	Libs = {
@@ -445,7 +447,7 @@ SharedLibrary {
 		"libsc68/io68/ym_io.c",
 		"libsc68/io68/ym_puls.c",
 		"libsc68/io68/ymemul.c",
-		"unice68/unice68.c",
+		--"unice68/unice68.c",
 		"unice68/unice68_pack.c",
 		"unice68/unice68_unpack.c",
 		"unice68/unice68_version.c",
@@ -458,7 +460,7 @@ SharedLibrary {
 -----------------------------------------------------------------------------------------------------------------------
 
 SharedLibrary {
-	Name = "TfmxPlugin",
+	Name = "tfmx",
 
 	Includes = {
 	    "src/plugin_api",
@@ -466,6 +468,30 @@ SharedLibrary {
 
 	Sources = {
 		get_c_cpp_src("src/plugins/playback/tfmx"),
+	},
+
+	Libs = {
+		{ "Wsock32.lib" ; Config = "win64-*-*" },
+	},
+}
+
+-----------------------------------------------------------------------------------------------------------------------
+
+SharedLibrary {
+	Name = "adplug",
+
+	Includes = {
+	    "src/plugin_api",
+	    "src/plugins/playback/adplug/adplug_lib/libbinio/src",
+	    "src/plugins/playback/adplug/adplug_lib/src",
+	},
+
+	Defines = {
+        { "stricmp=strcasecmp" ; Config = { "linux-*-*", "mac*-*-*" } },
+	},
+
+	Sources = {
+		get_c_cpp_src("src/plugins/playback/adplug"),
 	},
 
 	Libs = {
@@ -490,7 +516,7 @@ SharedLibrary {
 -----------------------------------------------------------------------------------------------------------------------
 
 SharedLibrary {
-	Name = "MDXPlugin",
+	Name = "mdx",
 
 	Includes = {
 	    "src/plugin_api",
@@ -504,7 +530,7 @@ SharedLibrary {
 -----------------------------------------------------------------------------------------------------------------------
 
 SharedLibrary {
-	Name = "SidPlugin",
+	Name = "sid",
 	Defines = {
 		"HAVE_CXX11",
 		"PACKAGE_NAME=\"\"",
@@ -617,17 +643,38 @@ SharedLibrary {
 }
 
 -----------------------------------------------------------------------------------------------------------------------
+
+SharedLibrary {
+	Name = "music_info",
+	Sources = {
+	    "src/plugins/view/music_info/music_info.cpp",
+        gen_moc("src/plugins/view/music_info/music_info.h"),
+	},
+
+	Libs = {
+		{ "wsock32.lib", "kernel32.lib", "user32.lib", "gdi32.lib", "Comdlg32.lib",
+		  "Advapi32.lib", "Qt5Guid.lib", "Qt5Cored.lib", "Qt5Widgetsd.lib"; Config = "win64-*-*" },
+	},
+
+    Frameworks = { "Cocoa", "QtWidgets", "QtGui", "QtCore" },
+
+	Depends = { "flatbuffers_lib" },
+}
+
+
+
+-----------------------------------------------------------------------------------------------------------------------
 -- Default plugins
 -----------------------------------------------------------------------------------------------------------------------
 
 -- Tools
 
-Default "flatc"
+-- Default "flatc"
 
 -- Decoders
 
-Default "TfmxPlugin"
-Default "HivelyPlugin"
+Default "tfmx"
+Default "hively"
 
 Default "openmpt"
 Default(openmpt_cfg)
@@ -635,21 +682,22 @@ Default(openmpt_cfg)
 Default "vgm"
 Default "nsf"
 Default "sc68"
-Default "DummyPlugin"
-Default "MDXPlugin"
-Default "SidPlugin"
+Default "mdx"
+Default "sid"
+Default "adplug"
 
 -- Views
 
 --Default "playlist"
 Default "player"
 Default "playlist"
-Default "tracker"
+Default "music_info"
+
+--Default "tracker"
 --Default "song_info"
 --Default "TestViewPlugin"
 
 -- Default "FutureComposerPlugin"
--- Default "TfmxPlugin"
 --
 -- vim: ts=4:sw=4:sts=4
 

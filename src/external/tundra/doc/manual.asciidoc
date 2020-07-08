@@ -1,0 +1,1552 @@
+
+The Tundra Build System
+=======================
+Andreas Fredriksson <dep@defmacro.se>
+
+== Introduction
+
+Tundra is a high-performance code build system designed to give the best
+possible incremental build times even for very large software projects.
+
+Its design was motivated by the games industry where projects are huge and
+iterative rebuilding common. In games, teams of 20-30 developers working on the
+same multi-MLOC codebase is not uncommon. Each second spent by a build system
+not building wastes productivity, especially when there are thousands of builds
+every day!
+
+=== Design Philosphy
+
+Here are some philosophical ideas and how they have influenced the design of
+Tundra.
+
+==== Simple is Fast
+
+There are two parts to Tundra: a flexible Lua configuration front-end which
+makes dependency graphs and a very fast build engine that only executes
+commands. The Lua front-end only runs when needed (such as when files have been
+added, or Lua files changed). The build engine can therefore run unimpeded when
+the programmer is iterating on a build problem.
+
+The code has no external dependencies. Tundra uses Lua 5.1 (which is customized
+slightly.)
+
+==== Support just enough
+
+Many modern build systems can sync code from a plethora of version control
+systems, download files from HTTP and lots lots more. Tundra doesn't do any of
+those things. It is a relatively simple command execution platform with a Lua
+configuration front-end. A smaller scope means Tundra is easier to optimize.
+
+==== Utilize multi-core hardware
+
+It is important that a build system can run multiple jobs at once. But it is
+equally important to utilize all cores to do other things like file signing and
+implicit dependency scanning. Tundra is one of very few (if any) build systems
+that do this whenever possible. This design gives a nice speedup to incremental
+builds where most of the time is spent signing and checking file metadata.
+
+==== Reliably support code generation
+
+Tundra is designed around the concept of build passes, which segment the input
+dependency graph into serialized regions. Dependencies (even implicit
+dependencies) can only point to nodes in the same or earlier passes. This
+design makes it easy to reliably support code generation scenarios of arbitrary
+complexity while still supporting fully multi-threaded execution whenever
+possible.
+
+Many build systems have problems running a mix of code generation and regular
+build workloads in parallel, because compilation steps might covertly try to
+include generated files via `#include` statements. Instead of solving this
+problem by exhaustively mapping out `#include` statements, Tundra forces you to
+segment the order of code generation and compilation steps explicitly. This
+divides the problem into two separate workloads that can execute fully in
+parallel without unintended side effects.
+
+==== Separate configuration and building
+
+By default Tundra uses Lua as its scripting language, which gives it a
+high-performance, powerful data collection front-end for free. However, to get
+the maximum speed from builds, all build actions are carried out in
+multi-threaded native code.
+
+It is also possible to use a custom configuration program to generate low-level
+input for the build engine via a JSON data file.
+
+This clear separation between configuration and building ensures that build
+speed is unaffected by bad scripting and it is easier to diagnose why a build
+runs slowly.
+
+==== Don't guess
+
+Tundra doesn't go out of its way to support auto-configuration of toolsets or
+guessing what compiler you want to use. It assumes you can list the
+configurations you care for up front. This speeds up incremental builds as no
+time is wasted scanning for tools in the environment every time.
+
+For a game project, there may be millions of builds between adding a new
+platform or configuration to a build system. Tools are also very brittle and
+need a specific configuration to produce working builds. The time it will take
+to support a new toolset will offset the time it takes to tell the build
+system about it by several orders of magnitude.
+
+== Hello, world
+
+A Tundra project requires the file +tundra.lua+ which specifies what build
+configurations are available for the project. It is analogous to a +Makefile+.
+Here is a sample minimal +tundra.lua+ file that creates a configuration
++macosx-gcc+ which pulls in the stock +gcc+ toolset. We also say that this
+configuration is to be the default if nothing is specified when Tundra is run
+on Mac OS X:
+
+[source,lua]
+-------------------------------------------------------------------------------
+Build {
+    Units = function()
+        local hello = Program {
+            Name = "HelloWorld",
+            Sources = { "hello.c" },
+        }
+        Default(hello)
+    end,
+    Configs = {
+        Config {
+            Name = "macosx-gcc",
+            DefaultOnHost = "macosx",
+            Tools = { "gcc" },
+        },
+    },
+}
+-------------------------------------------------------------------------------
+
+The funny `Units` function specifies the available targets using the "unit
+syntax", a set of keywords and conventions designed to describe build target in
+a high-level manner. This data will typically be big for bigger projects so
+it can also be put in a separate file, in which case Units can be set to a
+string which is taken as a filename.
+
+If we now run Tundra on this input, it will build our +HelloWorld+ executable.
+The output path shows that tundra has defaulted the variant to `debug` and the
+subvariant to `default`.
+
+[source, sh]
+-------------------------------------------------------------------------------
+$ tundra2
+Cc hello.c
+Program t2-output/macosx-gcc-debug-default/HelloWorld
+*** build success, 2 jobs run
+-------------------------------------------------------------------------------
+
+The next mandatory step is of course to display the famous greeting:
+
+[source, sh]
+-------------------------------------------------------------------------------
+$ t2-output/macosx-gcc-debug-default/HelloWorld
+hello, world
+-------------------------------------------------------------------------------
+
+More examples can be found in the `examples` directory in the Tundra
+distribution.
+
+== Installation
+
+=== Installing a binary package
+
+Binary packages for Windows are available, see the root `README.md` file of the
+Tundra github page.
+
+Both installers and zip files are available. Choose the installer for a fully
+automated setup, including adding Tundra to your `PATH`. The binary zips are
+useful for DIY installs or to check into source control.
+
+=== Installing from source
+
+Tundra can be obtained from the official GIT repository:
+`git://github.com:deplinenoise/tundra.git`. Tundra uses Google's test framework
+for the unit tests, which must be made available via the Git submodule
+mechanism:
+
+[source, sh]
+-------------------------------------------------------------------------------
+$ git submodule init
+$ git submodule update
+-------------------------------------------------------------------------------
+
+* On Windows, there are two options for building:
+
+  ** Use Visual Studio 2012. The solution file is `vs2012/Tundra.sln`.
+	 After building you will need to copy `vs2012/x64/Release/*.exe` to a `bin`
+     directory of your choice. Copy the `scripts` directory so that is lives next
+     to your `bin` directory.
+
+  ** Use MinGW. It should be enough to build using `mingw32-make`. The resulting
+     binary ends up in `build`, and can be installed next to a `scripts` directory
+     as desired. It is also possible to run this binary right away as it will find
+     the `scripts` directory automatically from this location. This can be convenient
+     if you plan to hack on Tundra a lot.
+
+* On Mac OS X and other Unix-like platforms, use GNU Make.
+
+  ** Type `make` to build an optimized version
+  ** Type `make CHECKED=yes` to build a debug version.
+     Do this if you're hacking on the C++ core.
+  ** Type `make install` to install Tundra into `/usr/local`
+     (you can override the path with `PREFIX=/path`)
+  ** Type `make uninstall` to uninstall Tundra
+
+  ** Cross compilation for Windows is also supported:
+    *** Type `make CROSSMINGW=yes` to build a windows version
+    *** Type `make CROSSMINGW=yes installer` to build a windows installer
+    *** Type `make CROSSMINGW=yes windows-zip` to build a windows binary zip
+
+* On FreeBSD you might need to rebuild world with the option
+  `WITH_LIBCPLUSPLUS=yes` added to `/etc/src.conf` in order to have LLVM's libc++
+  available, or hack the `Makefile` a bit.
+
+==== Running the tests
+
+To test the native code, run `build/t2-unittest`.
+
+To test the Lua scripts, run `build/t2-lua selftest`.
+
+To test the build system for regression, run `./run-tests.pl build/tundra2`.
+The regression test suite currently only works on Intel-based UNIX-like
+platforms. You will need to have `yasm` installed for the assembly include
+scanning tests to work.
+
+== A bit of Tundra nomenclature
+
+Here are some terms and definitions used in Tundra and elsewhere in this document:
+
+- *configuration* - A two-tuple value separated with a dash; usually in the
+  format `host-toolset`. Two common examples are `win32-msvc` and `linux-gcc`.
+  Configurations can load one or more toolsets.
+
+- *variant* - A variant of a configuration; such as a with or without debugging
+  information. Variants serve as tags to filter settings against. By default,
+  tundra provides three variants: `debug`, `production` and `release` but these
+  can be overridden as desired.
+
+- *subvariant* - An additional axis of separation that is orthagonal to
+  variants but serve the same purpose. By default there is only one subvariant
+  called `default`. Tundra itself uses two subvariants to select between build with
+  Lua files embedded (`standalone`) or with Lua files in the file system (`dev`).
+
+- *build id* - A four-tuple `host-toolset-variant-subvariant` used to fully
+  identify a build. Available through `BUILD_ID` in the unit environment.
+
+- *unit* - A high-level declaration of a piece of software. Unit declarations
+  appear as a syntactic elements in unit input files. Static and dynamic
+  libraries, programs and .NET assemblies are examples of units. Unit
+  declarations are passed through the `nodegen` layer to produce dependency
+  graphs from the declarations.
+
+- *environment* - A data structure with key-value mappings used to track
+  configuration data inside Tundra. Sometimes refers to the OS environment.
+
+- *toolset* - A set of commands (e.g. compiler, linker and so on) that can be
+  used to produce output files. Multiple toolsets can be loaded into a single
+  configuration as long as there is no overlap in their settings, that is, a .NET
+  toolset like `mono` can coexists with something like `gcc`, but you can't have
+  two `gcc`-style toolsets loaded into the same configuration at once. Use different
+  configurations for that.
+
+== How Tundra works
+
+A Tundra build is more complex compared to a traditional build system such as
+Make, mostly for performance reasons:
+
+- The main program (`tundra2`) is run
+- The driver will check to see if the DAG data is up to date
+- If it is not, the DAG generator (by default `t2-lua`) is called automatically
+  * Run the project's +tundra.lua+ script to set options
+  * Load toolsets, syntax files and other information as required by the configuration script
+  * Run the referred +Units+ file (or function) in syntax mode to define the project's build units
+  * Evaluate the unit declarations and generate DAG nodes
+  * The DAG is saved off to a JSON file for compilation into binary data for future builds
+- The `tundra2` driver picks up the updated DAG data
+- Any stale output files that are no longer mentioned are deleted
+- Command line targets are analyzed to figure out what to build
+- The build engine runs
+- The build state is saved for subsequent runs
+
+== The tundra.lua file
+
+The file +tundra.lua+ is read by Tundra when you invoke it. This is a regular
+Lua source file. Its purpose is to call the global +Build+ function with a
+declarative input describing the build session to Tundra. The following
+sections are a reference of what you can place in the +Build+ block.
+Declarations within the block can appear in any order.
+
+.Build block synopsis
+[source,lua]
+---------------------------------------------------
+Build {
+    -- Required
+    Units = "...",
+    Configs = { ... },
+
+    -- Optional
+    Variants = { ... },
+    DefaultVariant = "...",
+    SubVariants = { ... },
+    DefaultSubVariant = "...",
+    ScriptDirs = { ... },
+    SyntaxExtensions = { ... },
+    Passes = { ... },
+    ContentDigestExtensions { ... },
+    Options = { ... },
+}
+---------------------------------------------------
+
+=== Units (required)
+
+The build block must be either a function, the (string) filename of a
+secondary file containing unit declarations, or a table of
+file/functions.
+
+Each file/function is separate because it uses a custom, extensible
+syntax set which is suitable to define build system input. A common
+name for external unit files is +"units.lua"+, but any valid filename
+is OK.
+
+If not specified, unit definitions will be loaded from a +"units.lua"+ file.
+
+=== Configs (required)
+
+The +Configs+ key should be set to an array of configurations this build system
+supports. Each configuration is in turn a `Config` table.
+
+==== Config
+
+Config blocks describe configuration parameters that apply to all units in the
+build for that configuration, such as include paths, libraries and so on.
+
+.Config Synopsis
+[source,lua]
+-------------------------------------------------------------------------------
+Config {
+    -- Required
+    Name = "...-...",
+    Tools = { ... },
+    SupportedHosts = { "..." },
+
+    -- Optional
+    DefaultOnHost = "..." ,
+    Inherit = ...,
+    Env = { ... },
+    ReplaceEnv = { ... },
+    Virtual = ...,
+    SubConfigs = { ... },
+}
+-------------------------------------------------------------------------------
+
+==== Config Name property (required)
+
+The name of this configuration. Configuration names must be formatted in a
+dashed `platform-toolset` format. These two tokens form the first two in the
+quad `platform-toolset-variant-subvariant` system Tundra uses to id builds.
+
+==== Config SupportedHosts property (required)
+
+The host platforms that this configuration will be generated for. Example
+platform names are `linux` and `windows`.
+
+==== Config Tools property (optional)
+
+A list of tools this configuration uses. A tool specification is either a
+string, indicating that the defaults for that tool are to be used, or a table
+`{ "toolname"; Foo=1, Bar=".." }` passing arbitrary options to the tool to
+configure it. Tools are loaded from the tool directory list.
+
+Projects can add their own tool script directories via a +ScriptDirs+ array
+property in the +Build+ block.
+
+.Config Tools Synopsis
+[source,lua]
+-------------------------------------------------------------------------------
+Tools = {
+    "foo",
+    ...
+    { "qux"; Foo = 10, Bar = "some value" },
+    ...
+}
+-------------------------------------------------------------------------------
+
+==== Config DefaultOnHost property (optional)
+
+If present, this config will be built by default when the host platform matches
+the pattern. This is convenient to have the host's native configuration build
+in the default variant when you just type `tundra` in the shell. This property
+can also be a table of patterns to match multiple host operating systems,
+useful for example if multiple host operating systems can build a common
+cross compilation config and you want that configuration to be the default
+across all hosts.
+
+If no `DefaultOnHost` properties are set, nothing will build by default and a
+configuration must be specified on the command line.
+
+==== Config Env property (optional)
+
+If present, must be set to a table of key-value bindings to append to the
+environment for this configuration. This typically includes things such as
+include paths (`CPPPATH`), C preprocessor defines (`CPPDEFS`) and C compiler
+options (`CCOPTS`).
+
+.Config Env Synopsis
+[source,lua]
+-----------------------------------------------------------------------------
+Config {
+    Name = "foo-bar",
+    Env = {
+        CPPDEFS = { "FOO", "BAR=BAZ" },
+        CCOPTS = "-frobnicate",
+    },
+  },
+}
+-----------------------------------------------------------------------------
+
+==== Config ReplaceEnv property (optional)
+
+Just like the Env block describe above, but replaces the settings rather than
+appending them to the environment.
+
+.Config ReplaceEnv Synopsis
+[source,lua]
+-----------------------------------------------------------------------------
+Config {
+    Name = "foo-bar",
+    Tools = { "gcc" },
+    ReplaceEnv = {
+        CC = "/my/other/gcc",
+    },
+  },
+}
+-----------------------------------------------------------------------------
+
+==== Config Inherit property (optional)
+
+If present, must be set to a table. This table will be scanned for values if
+they are not present in the Config table itself. This is useful to group common
+settings between configs in external tables. These external tables can also
+inherit settings further by applying a new `Inherit` property.
+
+.Inherit Synopsis
+[source,lua]
+-----------------------------------------------------------------------------
+local foo_common = { ... }
+local bar_common = { ..., Inherit = foo_common, }
+
+Build {
+  Configs = {
+    Config { ..., Inherit = foo_common, ... },
+    Config { ..., Inherit = bar_common, ... },
+    ...
+  },
+}
+-----------------------------------------------------------------------------
+
+==== Config Virtual property (optional)
+
+If specified, and set to `true`, this configuration is marked as virtual and
+cannot be built directly from the command line. This is useful for
+configurations that only work as subconfigurations in a cross-compilation
+scenario.
+
+==== Config SubConfigs property (optional)
+
+If present, must be set to a mapping of identifiers to configuration names. The
+named subconfigurations will be selectable via these identifiers using the
+`SubConfig` selector in units. This feature enables multi-toolset builds; that
+is, building parts of a program with different C compilers, or
+cross-compilation where some parts of the build must be built with the target
+compiler and some with the host compiler.
+
+.Config SubConfigs Synopsis
+[source,lua]
+-----------------------------------------------------------------------------
+Configs = {
+    Config {
+        Name = "foo-bar",
+        Virtual = true,
+    },
+    Config {
+        Name = "foo-baz",
+        Virtual = true,
+    },
+    ...,
+    Config {
+        Name = "foo-qux",
+        SubConfigs = {
+            abc = "foo-bar",
+            def = "foo-baz",
+            ...
+        }
+    }
+    ...
+}
+-----------------------------------------------------------------------------
+
+=== Variants (optional)
+
+Specifies a list of variants and their options. If present, these variants
+completely replace Tundra's built-in variants. There must be atleast one
+variant. A variant consists of a required `Name` property and an optional
+`Options` table.
+
+.Variants synopsis
+[source,lua]
+---------------------------------------------------
+Variants = {
+    { Name = "...", Options = { ... } }
+}
+---------------------------------------------------
+
+==== Variant Options
+
+Previously, the only currently recognized option was `GeneratePdb',
+which caused the MSVC toolset to generate debugging files in PDB format.
+
+This option has however been superseded by the environment variable GENERATE_PDB.
+If you wish to generate PDB files for all your targets, set the GENERATE_PDB variable
+to anything but `0`.
+
+=== Passes (optional)
+
+The build block can contain an array of passes which can be used to place
+barriers between groups of build jobs. This is required if files are generated
+that can be discovered only as implicit dependencies. Passes have two
+properties, `Name` and `BuildOrder`, both of which are required. Passes are
+ordered with the lowest `BuildOrder` first.
+
+.Passes Synopsis
+[source,lua]
+-------------------------------------------------------------------------------
+Build {
+    ...
+    Passes = {
+        Foo = { Name="...", BuildOrder = 1 },
+        Bar = { Name="...", BuildOrder = 2 },
+        ...
+    },
+   ...
+}
+-------------------------------------------------------------------------------
+
+=== ContentDigestExtensions (optional)
+
+By default Tundra computes signatures using file timestamps. If a timestamp has
+changed, Tundra will consider the targets out of date. Sometimes it's useful to
+only consider a file changed when its content changes and ignore the timestamp.
+This often comes up in builds that generate lots of source files.
+
+The `ContentDigestExtensions` block can contain an array of file extensions.
+Files that end in these extensions will be signed using a SHA-1 digest of their
+contents instead of the traditional timestamp.
+
+In this example, we're specifying that C and C++ source files should be signed
+using a hash of their contents rather than their timestamps. This means you can
+`touch` them all you want and no rebuild will occur, you'll need to actually
+modify their contents to make that happen:
+
+.ContentDigestExtensions Synopsis
+[source,lua]
+-------------------------------------------------------------------------------
+Build {
+    ...
+    ContentDigestExtensions = {
+      ".c", ".h", ".cpp", ".hpp",
+    },
+   ...
+}
+-------------------------------------------------------------------------------
+
+=== Options (optional)
+
+The `Options` block is used to set advanced build engine options.
+
+Currently the only options is `MaxExpensiveJobs` which limits the maximum
+number of concurrent "expensive" jobs. If your build includes heavy link steps
+which might trash the system's virtual memory reserves when run concurrently,
+this option will constrain the parallelism of those jobs, and your swap file
+will thank you.
+
+To flag a DAG node as expensive, pass `Expensive=true` to the dag node creator.
+Currently linking programs and shared libraries is considered expensive by
+default.
+
+If `MaxExpensiveJobs` is not specified, Tundra will run as many expensive jobs
+as there are build threads -- that is, there's no limit.
+
+.Options Synopsis
+[source,lua]
+-------------------------------------------------------------------------------
+Build {
+    ...
+    Options = {
+      MaxExpensiveJobs = 2,
+    },
+   ...
+}
+-------------------------------------------------------------------------------
+
+
+== Unit Syntax
+
+This section describes the default syntax elements that are available for use
+in the units file. You can add your own unit syntax via extension.
+
+=== Configuration Filtering
+
+It is often desirable to include various bits of data for a certain
+configuration only, for example to include a source file only in the debug
+build of a program, or to include certain libraries only for a specific
+toolset. Tundra has a general mechanism called configuration filtering which
+supports this.
+
+Configuration filtering uses the key-value part of a list to introduce a key
+`Config` into the list. The `Config` key can be set to either a single pattern
+string or a list of patters. The items in the list will then be included only
+when one of the config patterns match:
+
+.Configuration Filtering
+[source,lua]
+-------------------------------------------------------------------------------
+... { "foo.c"; Config = "*-*-debug" } ...
+... { "bar.c", "qux.c"; Config = { "*-foo-*", "*-bar-*" } ...
+-------------------------------------------------------------------------------
+
+In order to combine multiple options all filtered lists can be nested
+arbitrarily; the filtering process flattens these lists. The following example
+results in `foo.c` always being included, while `bar.c` is only included in
+debug builds, and `foo-gcc.c` is included if the toolset matches `gcc` or
+`mingw`. So for the `linux-gcc-debug` configuration all three files will be
+included.
+
+.Configuration Filtering Flattening
+[source,lua]
+-------------------------------------------------------------------------------
+{ "foo.c",
+    { "bar.c"; Config = "*-*-debug" },
+    { "foo-gcc.c"; Config = { "*-gcc-*", "*-mingw-*" },
+}
+-------------------------------------------------------------------------------
+
+=== Native Units
+
+Native units are implemented by the `tundra.syntax.native` module in
+conjunction with a toolset script (such as `gcc`, `msvc`, and others) and
+provide support for building shared and static libraries as well as executables
+with C, C++ and Objective-C tools. These unit types are selected through the
+following keywords:
+
+- `Program` - specifies a program
+- `StaticLibrary` - specifies a static library (archive)
+- `SharedLibrary` - specifies a shared library (dll)
+- `ExternalLibrary` - specifies an "external library" (a collection of settings)
+- `ObjGroup` - a set of object files (a static library, without the library part)
+
+All these follow the same synopsis:
+
+.Native Unit Synopsis
+[source,lua]
+-------------------------------------------------------------------------------
+<unit type> {
+    -- required
+    Name = "...",
+
+    -- optional
+    Config = ...,
+    Target = ...,
+    Propagate = { ... },
+    SourceDir = "...",
+    Sources = { ... },      -- config filtered
+    Depends = { ... },      -- config filtered
+    Defines = { ... },      -- config filtered
+    Libs = { ... },         -- config filtered
+    Frameworks = { ... },   -- config filtered
+}
+-------------------------------------------------------------------------------
+
+==== Native Unit Name property (required)
+
+The `Name` property must always be set to a unique name. These names are
+exposed on the command line (e.g. +tundra foo+ will build the unit `foo`) and
+are also used as stems when computing output filenames. For example, a
+`Program` unit `bar` might end up as `bar.exe` on Windows.
+
+Stay away from funny characters in the names, alphanumeric is a safe bet.
+
+==== Native Unit Config property
+
+Specifies what configuration(s) this unit will be present in. Configuration
+pattern matching is applied as usual. For example, to include a unit only in
+debug, you could say: +Config = "\*-\*-debug"+ and to include a unit only for two
+toolsets you could say +Config = { "foo-bar-\*", "baz-qux-*" }+.
+
+When a unit is filtered out like this it is replaced by a null node in the DAG,
+but it will still be present so there's no need to remove it from depenency
+lists.
+
+==== Native Unit Propagate property
+
+A nested block of settings to be propagated onto units that depend on this
+unit. This is mostly useful for the `ExternalLibrary` unit type which serves as
+a bag of settings, but it can occasionally be useful with other unit types such
+as shared libraries to push say a certain define into the compilation options
+of everyone who links to this library. The propagate block can contain `Libs`,
+`Defines`, and so on.
+
+.Native Unit Propagate synopsis
+[source,lua]
+---------------------------------------------------
+<unit type> {
+    ...
+    Propagate = {
+        ...
+        Key = { Value, Value, ... },
+    }
+}
+---------------------------------------------------
+
+For example, to push a define `ZLIB_DLL` onto users of a library, one might use
+the following:
+
+[source,lua]
+---------------------------------------------------
+SharedLibrary {
+    Name = "zlib",
+    Sources = { ... },
+    Propagate = {
+        Defines = { "ZLIB_DLL" },
+    }
+}
+---------------------------------------------------
+
+==== Native Unit SourceDir property
+
+If present, specifies a prefix to be applied to all files in the `Sources` list.
+
+==== Native Unit Sources property
+
+An arbitrarily nested list of source files and filters. Elements in the lists
+can be either strings which are taken to be source files, or nodes, in which
+case their output files are used. It is therefore possible to call source
+generators in this block and then include their output files as inputs directly
+to the unit.
+
+==== Native Unit Depends property
+
+A list of unit names which are the dependencies of this unit. Depending on a
+library unit has the side effect of linking with that archive. All `Propagate`
+blocks from dependencies will be applied to the depending unit.
+
+==== Native Unit Defines property
+
+A list of C preprocessor defines (strings), either of the style `"FOO"` or `"FOO=BAR"`.
+
+==== Native Unit Libs property
+
+A list of external libraries to be fed to the linker. Typically very platform
+specific and thus it is common that every lib is wrapped in a configuration
+block, like this:
+
+[source,lua]
+-------------------------------------------------------------------------------
+Libs = {
+    { "kernel32.lib"; Config = { "win32-*-*", "win64-*-*" } },
+    { "pthread", "m"; Config = "linux-*-*" },
+}
+-------------------------------------------------------------------------------
+
+==== Native Unit Frameworks property
+
+This is a Mac OS X-only feature to specify frameworks to include from and link
+against. Currently these is no way to select a version, so the list includes
+only framework names as strings.
+
+=== C# Units
+
+Tundra has basic support for building C# .NET assemblies. The following unit types
+are supported:
+
+- `CSharpExe` - Builds a C# executable
+- `CSharpLib` - Builds a C# library (dll)
+
+.C# Unit Synopsis
+[source,lua]
+-------------------------------------------------------------------------------
+<unit type> {
+    -- required
+    Name = "...",
+
+    -- optional
+    Config = ...,
+    SourceDir = "...",
+    References = { ... },   -- config filtered
+    Sources = { ... },      -- config filtered
+    Depends = { ... },      -- config filtered
+}
+-------------------------------------------------------------------------------
+
+=== Rust Units
+
+Tundra has basic support for Rust programs, crates and shared libraries. The following unit types
+are supported:
+
+- `RustProgram` - Builds a Rust executable
+- `RustCrate` - Builds a Rust create
+- `RustSharedLibrary` - Builds a Rust library (dll)
+
+.Rust Unit Synopsis
+[source,lua]
+-------------------------------------------------------------------------------
+<unit type> {
+    -- required
+    Name = "...", -- name must match name in Cargo.toml
+    CargoConfig = "...",
+    Sources = { ..., "path/to/project/build.rs" },
+    -- optional
+    Depends = { ... },      -- config filtered
+}
+-------------------------------------------------------------------------------
+
+Tundra will call Cargo to build Rust projects so a Cargo.toml needs to be
+configured (which is the standard way to setup Rust projects) Cargo doesn't support
+command-line args for linking libs so Tundra will set some env variables that
+a Cargo build script that will use to link with the correct libs.
+
+The build.rs will need to look like this (if you use your own the following code
+needs to be added)
+
+.Rust build.rs Synopsis
+-------------------------------------------------------------------------------
+use std::env;
+
+fn main() {
+    let tundra_dir = env::var("TUNDRA_OBJECTDIR").unwrap_or("".to_string());
+    let libs = env::var("TUNDRA_STATIC_LIBS").unwrap_or("".to_string());
+
+    let native_libs = libs.split(" ");
+
+    println!("cargo:rustc-link-search=native={}", tundra_dir);
+
+    for lib in native_libs {
+        println!("cargo:rustc-link-lib=static={}", lib);
+        println!("cargo:rerun-if-changed={}", lib);
+    }
+}
+-------------------------------------------------------------------------------
+
+It is also possible to override the Cargo command line and add flags to rustc
+
+[source,lua]
+-------------------------------------------------------------------------------
+Env = {
+	-- Extra cargo options
+	RUST_CARGO_OPTS = {
+		{ "..."; Config = "..." },
+	},
+	-- Extra flags for rustc, this shows how to prefer-dynamic linking
+	RUST_OPTS = "-C prefer-dynamic"
+}
+-------------------------------------------------------------------------------
+
+This can be useful for using Cargo's built-in support for testing or enabling
+more verbose output for example.
+
+In the examples/rust directory in the Tundra distribution there is examples
+that shows how this is used in practice.
+
+Notice about Windows: Due to a bug that was detected in Cargo when implementing
+this feature Rust 1.7+ (Beta) is required on Windows.
+
+=== Syntax Extensions
+
+Tundra provides a small set of syntax extensions by default. To use syntax
+extensions, simply `require` their Lua package names in your `units.lua` or
+`tundra.lua` file. To add your own directories to the `require` search path,
+refer to the `ScriptDirs` option.
+
+==== File Globbing
+
+The `tundra.syntax.glob` extension provides file globbing (pattern matching
+over filenames.) It is a convenient way to use the filesystem as the index of
+what files to build rather than to manually type every file out in the
+`Sources` list. You can also combine the two for greater control by mixing
+globs and filenames.
+
+Globs come in two versions, `Glob` and `FGlob`.
+
+.Glob Synopsis
+[source,lua]
+-------------------------------------------------------------------------------
+Glob {
+    -- required
+    Dir = "...",
+    Extensions = { ".ext", ... },
+    -- optional
+    Recursive = false, -- default: true
+}
+-------------------------------------------------------------------------------
+
+`Glob` works by scanning `Dir` for files matching any of the extensions passed
+in the `Extensions` list. By default, it will recurse into subdirectories, but
+you can disable this behaviour by passing +Recursive = false+. In this example
+we're getting all `.c` and `.cpp` files from `my_dir`.
+
+.Glob Example
+[source,lua]
+-------------------------------------------------------------------------------
+Program {
+    ...
+    Sources = { Glob { Dir = "my_dir", Extensions = { ".c", ".cpp" } } },
+    ...
+}
+-------------------------------------------------------------------------------
+
+Sometimes you want to get the files from the file system but some of them are
+only to be compiled for specific configurations. A common scenario is when
+there are platform-specific subdirectories with source files for that platform
+only. `FGlob` extends `Glob` and adds a list of filters to apply after the file
+list has been retrieved:
+
+.FGlob Synopsis
+[source,lua]
+-------------------------------------------------------------------------------
+FGlob {
+    -- required
+    Dir = "...",
+    Extensions = { ".ext", ... },
+    Filters = {
+        { Pattern = "...", Config = "..." },
+        ...
+    },
+    -- optional
+    Recursive = false, -- default: true
+}
+-------------------------------------------------------------------------------
+
+The `Pattern` attributes are regular Lua patterns that are matched against the
+relative filename returned by the glob. To make patterns portable (and to save
+typing), globs always return their filenames with forward slashes. In this
+example, we're tagging files in the `debug` directory for a specific
+configuration only, and we're tagging files with `win32` anywhere in the
+filename for that platform:
+
+.FGlob Example
+[source,lua]
+-------------------------------------------------------------------------------
+Program {
+    ...
+    Sources = {
+        FGlob {
+            Dir = "my_dir",
+            Extensions = { ".c", ".cpp" },
+            Filters = {
+                { Pattern = "/debug/"; Config = "*-*-debug" },
+                { Pattern = "win32"; Config = "win32-*-*" },
+                { Pattern = "[/\\]_[^/\\]*$"; Config = "ignore" },
+            }
+        }
+    },
+    ...
+}
+-------------------------------------------------------------------------------
+
+If you wish to exclude files based on a pattern you can specify a configuration
+that doesn't exist. In the above example the pattern `[/\\]_[^/\\]*$` will ignore all
+files where the file name starts with `_`.
+
+The initial seperator is necessary as tundra passes the full path before
+applying the filter (note: we need a character class that matches both POSIX and
+Win32 style paths if we want this to work on all platforms).
+
+Lua patterns are not regular expressions but they are closely related. Instead
+of using backslash, `%` is used to reference predefined character classes or
+escape reserved characters but there's no support for repetitions of captures
+or alternations.
+
+==== Parser Generation (Bison & Flex)
+
+To run `bison` and `flex` to generate parsers and lexers, import the
+`tundra.syntax.bison` syntax extension. The extension doesn't assume any
+particular name or path to either `bison` or `flex` so you must define them
+through the environment:
+
+.Bison/Flex Example
+[source,lua]
+-------------------------------------------------------------------------------
+...
+Env = {
+    BISON = "bison", -- specify your own path if needed
+    BISONOPT = "", -- specify addtional options if needed
+    FLEX = "flex", -- specify your own path if needed
+    FLEXOPT = "", -- specify addtional options if needed
+},
+
+...
+
+Program {
+    ...
+    Sources = {
+        Bison { Source="grammar.y", TokenDefines = true, Pass = "SomePass" },
+        Flex { Source="lexer.l", Pass = "SomePass" },
+    },
+    ...
+}
+-------------------------------------------------------------------------------
+
+Both generators take `Source` and `Pass` arguments which are self-explanatory.
+The `TokenDefines` option controls whether bison should generate an additonal
+header with token defines. This must be controlled by the generator so that
+Tundra knows about this additional output file.
+
+=== Functional Composition
+
+Because unit keywords map to Lua functions, you can easily create
+convenience functions on top of them. For example, say that you have many
+different static libraries, each following the exact same pattern. Rather than
+repeating all those declarations, use a function to remove the duplication:
+
+.Unit Function Wrapper Example
+[source,lua]
+-------------------------------------------------------------------------------
+
+local function dolib(name)
+    return StaticLibrary {
+        Name = name,
+        Sources = { Glob { Dir = name, Extensions = { ".c" } } },
+    }
+end
+
+-- we can now say:
+
+dolib "foo"
+dolib "bar"
+dolib "baz"
+
+-- or even:
+
+for _, name in ipairs { "foo", "bar", "baz" } do
+    dolib(name)
+end
+
+-------------------------------------------------------------------------------
+
+=== Unit Return Values
+
+Whenever you invoke a unit function such as `StaticLibrary`, the return value
+is a data structure that can be used wherever a name or reference to that
+library is required. This removes the need to use strings. You should prefer
+this style as it is less error prone and slightly faster.
+
+.Unit Return Value Example
+[source,lua]
+-------------------------------------------------------------------------------
+
+local mylib = StaticLibrary { ... }
+local otherlib = StaticLibrary { ... }
+
+Program {
+    Name = "main",
+    -- ...
+    Depends = { mylib, otherlib },
+}
+
+-------------------------------------------------------------------------------
+
+
+== The Environment
+
+Tundra uses a hierarchical key-value environment to store information used to
+build the commands to run. This design shares some properties with both
+Makefile and Jam variables and the SCons environment.
+
+Values are always stored as lists (in this way the environment is similar to
+Jam variables).
+
+Environment strings are typically set in the `tundra.lua` file and in toolset
+scripts but can also be set freely on units (which have their own environments
+derived from the global one.)
+
+=== The basic environment
+
+With no tools or platform settings loaded, the following keys are always available:
+
+- +OBJECTROOT+ - specifies the directory in which variant-specific build
+  directories will be created (default: +tundra-output+)
+
+- +SEP+ - The path separator used on the host platform
+
+=== Interpolation
+
+Basic interpolation is written +$(FOO)+ and just fetches the value associated
+with +FOO+ from the environment structure. If +FOO+ is bound to multiple
+values, they are joined together with spaces.
+
+=== Interpolation Options
+
+Tundra includes a number of interpolation shortcuts to build strings from the
+environment. For example, to construct a list of include paths
+from a environment variable +CPPPATH+, you can say +$(CPPPATH:p-I)+.
+
+.Interpolation Syntax
+[width="90%",cols="4,9",options="header"]
+|=============================================================================
+|Syntax                 |Effect
+|+$(VAR:f)+             |Convert to forward slashes (+/+)
+|+$(VAR:b)+             |Convert to backward slashes (+\+)
+|+$(VAR:n)+             |Convert to native path slashes for host platform
+|+$(VAR:u)+             |Convert to upper case
+|+$(VAR:l)+             |Convert to lower case
+|+$(VAR:B)+             |*filenames*: Only keep the base part of a filename (w/o extension)
+|+$(VAR:F)+             |*filenames*: Only keep the filename (w/o dir)
+|+$(VAR:D)+             |*filenames*: Only keep the directory
+|+$(VAR:p<prefix>)+     |Prefix all values with the string +<prefix>+
+|+$(VAR:s<suffix>)+     |Suffix all values with the string +<suffix>+
+|+$(VAR:[<index>])+     |Select the item at the (one-based) +index+
+|+$(VAR:j<sep>)+        |Join all values with +<sep>+ as a separator rather than space
+|+$(VAR:A<suffix>)+     |Suffix all values with +<suffix>+ unless it is already there
+|+$(VAR:P<prefix>)+     |Prefix all values with +<prefix>+ unless it is already there
+|=============================================================================
+
+These interpolation options can be combined arbitrarily by tacking on several
+options. If an option parameter contains a colon the colon must be escaped with
+a backslash or it will be taken as the start of the next interpolation option.
+
+=== Interpolation Examples
+
+Assume there is an environment with the following bindings:
+
+[width="90%",cols="1,9"]
+|=============================================================================
+|+FOO+              |+"String"+
+|+BAR+              |+{ "A", "B", "C" }+
+|=============================================================================
+
+Then interpolating the following strings will give the associated result:
+
+[width="90%",cols="4,9",options="header"]
+|=============================================================================
+|Expression             |Resulting String
+|`$(FOO)`               |`String`
+|`$(FOO:u)`             |`STRING`
+|`$(FOO:l)`             |`string`
+|`$(FOO:p__)`           |`__String`
+|`$(FOO:p__:s__)`       |`__String__`
+|`$(BAR)`               |`A B C`
+|`$(BAR:u)`             |`A B C`
+|`$(BAR:l)`             |`a b c`
+|`$(BAR:p__)`           |`__A __B __C`
+|`$(BAR:p__:s__:j!)`    |`__A__!__B__!__C__`
+|`$(BAR:p\::s!)`        |`:A! :B! :C!`
+|`$(BAR:AC)`            |`AC BC C`
+|=============================================================================
+
+=== Nested Interpolation
+
+Nested interpolation is possible, but should be used with care as it can be
+hard to debug and understand. Here's an example of how the generic C toolchain
+inserts compiler options dependening on what variant is currently active:
+
+`$(CCOPTS_$(CURRENT_VARIANT:u))`
+
+This works becase the inner expansion will evalate `CURRENT_VARIANT` first
+(say, it has the value +debug+). That value is then converted to upper-case and
+spliced into the former which yields a new expression `$(CCOPTS_DEBUG)` which
+is then expanded in turn.
+
+Used with care this is a powerful way of letting users customize variables per
+configuration and then glue everything together with a simple template.
+
+== Environment Variables
+
+These environment variables apply to C-based toolsets:
+
+- `CPPPATH` - A list of search directories for include files
+- `CPPDEFS` - A list of preprocessor definitions
+- `LIBS` - A list of libraries to link with
+- `LIBPATH` -  A list of search directories for library files
+- `CC` - The C compiler
+- `CXX` - The C++ compiler
+- `LIB` - The program that makes static libraries (archives)
+- `LD` - The linker
+- `CCOPTS` - Common C compiler options for all configurations
+- `CCOPTS_<config>` - Compiler C options for variant `<config>`, such as `CCOPTS_DEBUG`, `CCOPTS_RELEASE`.
+- `CXXOPTS` - Common C++ compiler options for all configurations
+- `CXXOPTS_<config>` - Compiler C++ options for variant `<config>`, such as `CXXOPTS_DEBUG`, `CXXOPTS_RELEASE`.
+- `CCCOM` - Command line for C compilation
+- `CXXCOM` - Command line for C++ compilation
+- `PCHCOMPILE` - Command line for precompiled header compilation
+- `PROGOPTS` - Options specific to linking programs
+- `PROGCOM` - Command line to link a program
+- `LIBOPTS` - Options specific to creating a static library (archive)
+- `LIBCOM` - Command line to create a static library (archive)
+- `SHLIBOPTS` - Options specific to creating a shared library
+- `SHLIBCOM` - Command line to create a shared library
+- `FRAMEWORKS` - (OS X) Frameworks to include and link with
+- `AUX_FILES_PROGRAM`, `AUX_FILES_SHAREDLIBRARY` - List of patterns that expand to auxilliary files to clean for programs, shared libraries. Useful to clean up debug and map files.
+
+These environment variables apply to .NET-based toolsets:
+
+- `CSC` - The C# compiler
+- `CSC_WARNING_LEVEL` - The C# warning level
+- `CSLIBS` - Assembly references
+- `CSRESOURCES` - Resource file references
+- `CSCOPTS` - Common options
+- `CSPROGSUFFIX` - The suffix of generated programs, by default `.exe`
+- `CSLIBSUFFIX` - The suffix of generated libraries, by default`.dll`
+- `CSRESGEN` - The resource compiler
+- `CSCLIBCOM` - Command line to generate a library
+- `CSCEXECOM` - Command line to generate an executable
+
+== Toolsets
+
+This section tries to document the stock toolsets that come included with Tundra.
+
+=== generic-cpp
+
+This isn't really a toolset you would import explicity, it is a base layer the
+other tools drag in to set up defaults. It has functionality to set up
+preprocessor scanners, registers functions to implicitly compile source files
+to object files and such. All other C toolsets import this toolset.
+
+=== gcc
+
+The `gcc` toolset is a simple GCC toolset that only uses basic options and does
+nothing fancy. It is suitable for run-of-the-mill UNIX clones such as Linux,
+BSD but also works well for command-line programs on Mac OS X.
+
+It formats include paths with `-I`, preprocessor defines with `-D` and so on.
+It tries to run `ar` to create static libraries and there is no support for
+dynamic libraries.
+
+=== gcc-osx and clang-osx
+
+`gcc-osx` extends the `gcc` toolset by adding Mac OS X specific options for
+frameworks and shared libraries (dylib). `clang-osx` is just like `gcc-osx` but
+uses the CLang frontend rather than GCC.
+
+=== msvc
+
+This toolset uses a `cl.exe` from the environment. It is suitable for direct
+use if you want to run with a local MSVC compiler that is already in your path.
+
+=== msvc-vs2008
+
+This toolset imports the `msvc` toolset but can locate and set up the Visual
+Studio 2008 compiler from the registry and explicitly select between 32 and
+64-bit versions of the compilers. This gives two advantages:
+
+- You can just run tundra without setting up the environment with a compiler
+  (e.g. through the "Visual Studio Command Prompt" shortcut)
+- You can build for multiple target architectures at the same time, for example
+  build both x86 and x64 code in batch.
+
+This toolset supports two options:
+
+- `HostArch`: one of `x86`, `x64` or `itanium`; selects the host architecture
+  of the compiler binaries. Defaults to x64 on 64-bit machines, x86 on 32-bit
+  machines.
+- `TargetArch`: one of `x86`, `x64` or `itanium`; selects the target architecture
+  of the compiler binaries. Defaults to `x86`.
+
+Here's an example of how this toolset can be configured for an explicit target
+architecture:
+
+[source,lua]
+-------------------------------------------------------------------------------
+    Tools = {
+        { "msvc-vs2008"; TargetArch = "itanium", HostArch = "x86" },
+        -- ...
+    }
+-------------------------------------------------------------------------------
+
+== Extending Tundra
+
+Tundra can be extended in three ways:
+
+- By adding a toolset, you can teach Tundra how to invoke a variation of a
+  standard toolchain, such as C/C++ or .NET. A toolset configures the
+  environment for building.
+
+- By adding syntactic extensions that aid in writing `units.lua` input. A good
+  example of this is the `Glob` helper which transforms a directory and a set
+  of file extensions into a list of source files. Syntactic helpers like `Glob`
+  operate transparently and you can always get the same results by hand.
+
+- By adding unit extensions that implement build actions. Unit extensions can
+  range from simple (running a single custom action) to complex (multiple
+  nested steps that pipe build results between each other).
+
+=== Adding toolsets
+
+Toolsets configure a variation of an existing toolset implementation. Currently
+the following toolset types can be created:
+
+[width="90%",cols="2,4,5,3",options="header"]
+|=============================================================================
+|Language     |Base toolset         |Unit driver                | Examples
+|Assembly     |`generic-asm.lua`    |`tundra.nodegen.native`    | `yasm`
+|C and C++    |`generic-cpp.lua`    |`tundra.nodegen.native`    | `gcc`, `msvc`
+|.NET         |`generic-dotnet.lua` |`tundra.nodegen.dotnet`    | `mono`, `dotnet`
+|=============================================================================
+
+Toolset creation typically involves deriving from a base toolset script that
+provides you with the common glue for that toolchain type. For example, the
+`generic-cpp.lua` script sets up the implicit build actions for C and C++
+files, knows how to configure header scanning and so on. The derived toolset in
+the C family mostly configure the environment and possibly query the machine
+for compiler/tool locations.
+
+Assembly language is currently implemented as an implicit make action that can
+convert assembly files to object files, and this needs a C toolset for linking
+as well. It is typically the case that you combine C and Assembly anyway, so
+this is rarely a problem. If you new toolset is designed to interop with other
+native tools, this might be one way to do it.
+
+If you are trying to add a completely new language toolchain, you will probably
+have to implement a new unit extension set for that toolchain too. This
+extension would provide the right primitives to work with your toolset, much
+like `StaticLibrary` and `Program` are appropriate for the native toolchain.
+
+=== Adding syntax extensions
+
+Syntax extensions are a convenience to the build file writer.
+
+==== Lua syntax modules
+
+Here is a skeleton syntax extension module to start from:
+
+.Syntax Script Template
+[source,lua]
+-------------------------------------------------------------------------------
+module(..., package.seeall)
+
+local decl = require "tundra.decl"
+
+local function foo(args)
+    return {
+        -- Replacement data goes here
+        C = args.A + args.B
+    }
+end
+
+-- Add functions to the parser, you can add more than one here
+decl.add_function("Foo", foo)
+-------------------------------------------------------------------------------
+
+Basically the functions you add work as macro transformers. After loading the
+syntax extension above, `Foo` is exposed as a call to your function. The
+parsing frontend will substitute whatever you return from `foo` for the call's
+body. Using the above example `Foo { A = 1, B = 2 }` will be replaced by
+`{ C = 3 }`.
+
+=== Using DefRule to define custom build rules
+
+DefRule is a declarative way to introduce new DAG-building primitives,
+typically by calling out to external tools. Here is a simple example, taken
+from the `generator-simple` example:
+
+.DefRule example
+[source,lua]
+-------------------------------------------------------------------------------
+local common = {
+    Env = {
+        GENSCRIPT = "generate-file.py",
+    },
+}
+
+Build {
+    Units = function()
+
+        -- A rule to call out to a python file generator.
+        DefRule {
+            Name               = "GenerateFile",
+            Pass               = "CodeGeneration",
+            ConfigInvariant    = true,
+            Command            = "python $(GENSCRIPT) $(<) $(@)",
+            ImplicitInputs     = { "$(GENSCRIPT)" },
+            Blueprint = {
+                Input  = { Type = "string", Required = true },
+                Output = { Type = "string", Required = true },
+            },
+            Setup = function (env, data)
+                return {
+                    InputFiles  = { data.Input },
+                    OutputFiles = { "$(OBJECTROOT)/" .. data.Output },
+                }
+            end,
+        }
+
+        local testprog = Program {
+            Name = "testprog",
+            Sources = {
+                "main.c",
+                -- Generate a source file, feed the .c file back into the unit
+                GenerateFile {
+                    Input = "data.txt",
+                    Output = "data.c"
+                },
+            }
+        }
+        Default(testprog)
+    end,
+
+    Passes = {
+        CodeGeneration = { Name="Generate sources", BuildOrder = 1 },
+    },
+
+    Configs = {
+      -- ...
+    },
+}
+
+-------------------------------------------------------------------------------
+
+=== Adding unit extensions
+
+Unit extensions hook capture data during parsing which can later be transformed
+into DAG nodes for building. These are more complex than `DefRule` invocations,
+but can do anything.
+
+To create one, start with this template script:
+
+.Unit Script Template
+[source,lua]
+-------------------------------------------------------------------------------
+module(..., package.seeall)
+
+local nodegen = require "tundra.nodegen"
+
+-- Create a metatable for this evaluator
+local _mt = nodegen.create_eval_subclass {}
+
+-- Describe the syntactic form of the unit. This describes the data that is
+-- passed into create_dag below after checking.
+local blueprint = {
+    Bar = {
+        Type = "string",
+        Help = "The all-important Bar string",
+        Required = true
+    },
+    Sources = {
+        Type = "source_list",
+        Help = "List of sources",
+        Required = true
+    },
+    Frob = {
+        Type = "filter_table",
+        Help = "Optional bag of data"
+    },
+    -- ...
+}
+
+-- This function will be called once for every invocation, for each
+-- configuration in the build.
+--
+-- env - The unit's private environment
+-- data - Transformed invocation data according to blueprint
+-- deps - Dependencies picked up through invocation
+--        (e.g. nested build jobs from sources and such)
+function _mt:create_dag(env, data, deps)
+    return env:make_node {
+        Label = "Foo $(@)",
+        Action = "$(MYACTION)",
+        Inputs = ...,
+        Outputs = ...,
+        ImplicitInputs = ...,
+        Dependencies = deps,
+    }
+end
+
+-- Add evaluator
+nodegen.add_evaluator("Foo", _mt, blueprint)
+-------------------------------------------------------------------------------
+
+In the metatable passed to `nodegen.create_eval_subclass` you can tag on a few
+additional parameter that control the data transformation functionality in the
+underlying layer.
+
+If you include a key `DeclToEnvMappings`, the nodegen will accept shortcut
+mappings directly to environment data. This is how `Defines` maps to `CPPDEFS`
+in the native toolset, for example.
+
+[source,lua]
+-------------------------------------------------------------------------------
+local _native_mt = nodegen.create_eval_subclass {
+    DeclToEnvMappings = {
+        Libs = "LIBS",
+        Defines = "CPPDEFS",
+        Includes = "CPPPATH",
+        Frameworks = "FRAMEWORKS",
+        LibPaths = "LIBPATH",
+    },
+}
+-------------------------------------------------------------------------------
+
+The blueprint mechanism saves you from having to validate user input in your
+build function. In addition to the keys you list for your unit, the following
+keys are always added for consistency:
+
+[width="90%",cols="4,9",options="header"]
+|=============================================================================
+|Key            |Description
+|`Propagate`    |Implements environment/keyword propagation to dependencies
+|`Env`          |Environment data to append
+|`ReplaceEnv`   |Environment data to replace
+|`Depends`      |List of unit dependencies
+|`Pass`         |The pass the unit should build in
+|`SourceDir`    |An alternate source directory, used for all `source_list` data
+|`Config`       |Configuration filter
+|`SubConfigs`   |Sub-configuration filter
+|=============================================================================
+
+This means you should never list them in your blueprint as they are always
+added to all units. They are handled internally in the `nodegen` layer but you
+are welcome to reading the data in your `create_dag` implementation, especially
+`Pass` and `Depends` are often useful.
+
+When filling in your data blueprint, the following types are supported:
+
+[width="90%",cols="4,9",options="header"]
+|=============================================================================
+|Type name      |Accepted values
+|`string`       |Any string value
+|`boolean`      |Boolean `true` or `false`
+|`table`        |Any table value, or single string which will be wrapped in table
+|`filter_table` |Table which will be configuration filtered
+|`source_list`  |Table which is taken to contain source files (implicit actions will be run).
+                 Pass in the name of an environment variable in `ExtensionKey` to control which
+                 source extensions are accepted. Other source files will be discarded.
+|`pass`         |A valid pass name string
+|`depends`      |A list of names or unit references
+|=============================================================================
+
+Data is transformed before being passed to the `create_dag` function:
+
+- `filter_table` data is filtered for the current build id (`BUILD_ID` in the env).
+- `source_list` data becomes a list of filenames that might have been derived through
+  multiple steps of implicit compilation steps. If other nodes are involved in
+  producing these files, they will appear in the `deps` parameter.
+- `pass` data becomes a guaranteed valid pass object, or `nil` meaning the
+  default pass. This is intended so you can just send it straight through to
+  `env:make_node`.
+- `depends` data is transformed into a list of unit data references.
+
+The new unit we have defined above can now be used like this wherever a unit is
+called for:
+
+.Unit Usage Example
+[source,lua]
+-------------------------------------------------------------------------------
+
+local f = Foo {
+    Bar = "meh",
+    Sources = { ... },
+    -- ...
+}
+
+-------------------------------------------------------------------------------
+
+// vim: set syntax=asciidoc ts=4 expandtab

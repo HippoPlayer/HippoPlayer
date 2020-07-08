@@ -68,31 +68,103 @@ enum HippoMetadataResult {
 	HippoMetadataResult_UnableToMakeQuery = -1,
 };
 
+typedef uint64_t HippoMetadataId;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#define HippoMetadata_TitleTag "title"
+#define HippoMetadata_SongTypeTag "song_type"
+#define HippoMetadata_AuthoringToolTag "authoring_tool"
+#define HippoMetadata_ArtistTag "artist"
+#define HippoMetadata_AlbumTag "album"
+#define HippoMetadata_DateTag "date"
+#define HippoMetadata_GenreTag "genre"
+#define HippoMetadata_MessageTag "message"
+#define HippoMetadata_LengthTag "length"
+#define HippoMetadata_SamplesTag "sample_"
+#define HippoMetadata_InstrumentsTag "instrument_"
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef struct HippoMetadataAPI {
 	struct HippoMetadataAPIPrivData* priv_data;
 
-    void (*set_data)(
-		struct HippoMetadataAPIPrivData* priv_data,
-		const char* resource,
-		const unsigned char* data,
-		int len);
-
-    const unsigned char* (*get_data)(
+    HippoMetadataId (*create_url)(
         struct HippoMetadataAPIPrivData* priv_data,
-        const char* resource);
+        const char* url);
+
+    void (*set_tag)(
+        struct HippoMetadataAPIPrivData* priv_data,
+        HippoMetadataId id,
+        const char* tag,
+        const char* data);
+
+    void (*set_tag_f64)(
+        struct HippoMetadataAPIPrivData* priv_data,
+        HippoMetadataId id,
+        const char* tag,
+        double d);
+
+    void (*add_subsong)(
+        struct HippoMetadataAPIPrivData* priv_data,
+        HippoMetadataId parent_id,
+        const char* name,
+        float length);
+
+    void (*add_sample)(
+        struct HippoMetadataAPIPrivData* priv_data,
+        HippoMetadataId parent_id,
+        const char* text);
+
+    void (*add_instrument)(
+        struct HippoMetadataAPIPrivData* priv_data,
+        HippoMetadataId parent_id,
+        const char* text);
+
+    int (*begin_get_all)(
+        struct HippoMetadataAPIPrivData* priv_data,
+        const char* url);
+
+    void (*end_get_all)(
+        struct HippoMetadataAPIPrivData* priv_data);
+
+    int (*get_all_entry)(
+        struct HippoMetadataAPIPrivData* priv_data,
+        int entry,
+        const char** name,
+        const char** data,
+        int* len_name,
+        int* len_data);
+
+    int (*get_all_sample)(
+        struct HippoMetadataAPIPrivData* priv_data,
+        int entry,
+        const char** text,
+        int* text_len);
+
+    int (*get_all_instrument)(
+        struct HippoMetadataAPIPrivData* priv_data,
+        int entry,
+        const char** text,
+        int* text_len);
 
 } HippoMetadataAPI;
 
 #define HIPPO_METADATA_API_VERSION 1
 
-#define HippoMetadata_set_data(api, resource, data, len) api->set_data(api->priv_data, resource, data, len)
-#define HippoMetadata_get_data(api, resource) api->get_data(api->priv_data, resource)
+#define HippoMetadata_create_url(api, url) api->create_url(api->priv_data, url)
+#define HippoMetadata_set_tag(api, id, tag, data) api->set_tag(api->priv_data, id, tag, data)
+#define HippoMetadata_set_tag_f64(api, id, tag, data) api->set_tag_f64(api->priv_data, id, tag, data)
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#define HippoMetadata_add_subsong(api, url, name, len) api->add_subsong(api->priv_data, url, name, len)
+#define HippoMetadata_add_sample(api, url, text) api->add_sample(api->priv_data, url, text)
+#define HippoMetadata_add_instrument(api, url, text) api->add_instrument(api->priv_data, url, text)
 
-#define HIPPO_SETTINGS_API_VERSION 1
+#define HippoMetadata_begin_get_all(api, url) api->begin_get_all(api->priv_data, url)
+#define HippoMetadata_end_all(api) api->begin_get_all(api->priv_data)
+#define HippoMetadata_get_all_entry(api, index, name, data, name_len, data_len) api->get_all_entry(api->priv_data, index, name, data, name_len, data_len)
+#define HippoMetadata_get_all_sample(api, index, text, text_len) api->get_all_sample(api->priv_data, index, text, text_len)
+#define HippoMetadata_get_all_instrument(api, index, text, text_len) api->get_all_instrument(api->priv_data, index, text, text_len)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

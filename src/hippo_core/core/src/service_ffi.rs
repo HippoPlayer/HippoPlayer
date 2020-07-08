@@ -1,6 +1,5 @@
 use crate::ffi;
 use crate::service::{FileWrapper, IoApi, MessageApi};
-use crate::song_db::SongDb;
 use std::collections::HashMap;
 use std::ffi::CStr;
 use std::io::Read;
@@ -8,6 +7,7 @@ use std::mem::transmute;
 use std::os::raw::{c_char, c_void};
 use std::ptr;
 use std::slice;
+use song_db::*;
 
 extern "C" fn file_exists_wrapper(priv_data: *mut ffi::HippoApiPrivData, target: *const i8) -> i32 {
     let file_api: &mut IoApi = unsafe { &mut *(priv_data as *mut IoApi) };
@@ -20,7 +20,7 @@ extern "C" fn file_read_to_memory_wrapper(
     filename: *const i8,
     target: *mut *mut c_void,
     target_size: *mut u64,
-) -> i64 {
+) -> i32 {
     let file_api: &mut IoApi = unsafe { &mut *(priv_data as *mut IoApi) };
     let name = unsafe { CStr::from_ptr(filename as *const c_char) };
     let fname = &name.to_string_lossy();
@@ -57,7 +57,7 @@ extern "C" fn file_read_to_memory_wrapper(
 extern "C" fn file_free_to_memory_wrapper(
     _priv_data: *mut ffi::HippoApiPrivData,
     _handle: *mut c_void,
-) -> i64 {
+) -> i32 {
     // implicitly dropped
     //let _: Box<[u8]> = unsafe { transmute(handle) };
     0
@@ -67,7 +67,7 @@ extern "C" fn file_open_wrapper(
     priv_data: *mut ffi::HippoApiPrivData,
     target: *const i8,
     handle: *mut *mut c_void,
-) -> i64 {
+) -> i32 {
     let file_api: &mut IoApi = unsafe { &mut *(priv_data as *mut IoApi) };
     let filename = unsafe { CStr::from_ptr(target as *const c_char) };
 
@@ -90,12 +90,12 @@ extern "C" fn file_open_wrapper(
     }
 }
 
-extern "C" fn file_close_wrapper(_handle: ffi::HippoIoHandle) -> i64 {
+extern "C" fn file_close_wrapper(_handle: ffi::HippoIoHandle) -> i32 {
     // close here
     0
 }
 
-extern "C" fn file_size_wrapper(handle: ffi::HippoIoHandle, size: *mut u64) -> i64 {
+extern "C" fn file_size_wrapper(handle: ffi::HippoIoHandle, size: *mut u64) -> i32 {
     let file_wrapper: &mut FileWrapper = unsafe { &mut *(handle as *mut FileWrapper) };
     // TODO: Error handling
 
@@ -109,7 +109,7 @@ extern "C" fn file_read_wrapper(
     handle: ffi::HippoIoHandle,
     dest_data: *mut c_void,
     size: u64,
-) -> i64 {
+) -> i32 {
     let file_wrapper: &mut FileWrapper = unsafe { &mut *(handle as *mut FileWrapper) };
     // TODO: Error handling
 
@@ -124,7 +124,7 @@ extern "C" fn file_seek_wrapper(
     handle: ffi::HippoIoHandle,
     _seek_type: u32,
     _seek_step: i64,
-) -> i64 {
+) -> i32 {
     let _file_wrapper: &mut FileWrapper = unsafe { &mut *(handle as *mut FileWrapper) };
     0
 }
@@ -142,7 +142,7 @@ extern "C" fn get_metadata_api(
     _version: i32,
 ) -> *const ffi::HippoMetadataAPI {
     let service_api: &mut ServiceApi = unsafe { &mut *(priv_data as *mut ServiceApi) };
-    service_api.get_c_metadatao_api()
+    service_api.get_c_metadata_api()
 }
 
 extern "C" fn get_message_api(
@@ -153,40 +153,201 @@ extern "C" fn get_message_api(
     service_api.get_c_message_api()
 }
 
-extern "C" fn metadata_set_data(
-    priv_data: *mut ffi::HippoMetadataAPIPrivData,
-    resource: *const i8,
-    data: *const u8,
-    len: i32,
-) {
-    let song_db: &mut SongDb = unsafe { &mut *(priv_data as *mut SongDb) };
-    let data = unsafe { slice::from_raw_parts(data, len as usize) };
-
-    // TODO: Use CFixedString
-    let res = unsafe { CStr::from_ptr(resource as *const c_char) };
-    song_db.set_data(&res.to_string_lossy(), data.to_vec().into_boxed_slice());
-}
-
-extern "C" fn metadata_get_data(
-    priv_data: *mut ffi::HippoMetadataAPIPrivData,
-    resource: *const i8,
-) -> *const u8 {
-    let song_db: &SongDb = unsafe { &*(priv_data as *const SongDb) };
-
-    // TODO: Use CFixedString
-    let res = unsafe { CStr::from_ptr(resource as *const c_char) };
-    if let Some(data) = song_db.get_data(&res.to_string_lossy()) {
-        data.as_ptr()
-    } else {
-        ptr::null()
-    }
-}
-
 extern "C" fn message_api_send(priv_data: *mut ffi::HippoMessageAPI, data: *const u8, len: i32) {
     let message_api: &mut MessageApi = unsafe { &mut *(priv_data as *mut MessageApi) };
     let data = unsafe { slice::from_raw_parts(data, len as usize) };
     message_api.send(data.to_vec().into_boxed_slice());
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Wrappers for Metadata API
+//
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+extern "C" fn metadata_create_url(priv_data: *mut ffi::HippoMetadataAPIPrivData, url: *const i8) -> u64 {
+    let song_db: &mut SongDb = unsafe { &mut *(priv_data as *mut SongDb) };
+    let url_str = unsafe { CStr::from_ptr(url) };
+
+    match song_db.create_url(&url_str.to_string_lossy()) {
+        Ok(v) => v,
+        Err(err) => {
+            println!("SongDb: create_url failed: {}", err);
+            0
+        }
+    }
+}
+
+extern "C" fn metadata_set_tag(
+    priv_data: *mut ffi::HippoMetadataAPIPrivData,
+    url: u64,
+    tag: *const c_char,
+    data: *const c_char,
+) {
+    let song_db: &mut SongDb = unsafe { &mut *(priv_data as *mut SongDb) };
+
+    let tag_str = unsafe { CStr::from_ptr(tag) };
+    let data_str = unsafe { CStr::from_ptr(data) };
+
+    match song_db.set_tag_string(url, &tag_str.to_string_lossy(), &data_str.to_string_lossy()) {
+        Err(err) => println!("SongDb: set_tag_string failed: {}", err),
+        _ => (),
+    }
+}
+
+extern "C" fn metadata_set_tag_f64(
+    priv_data: *mut ffi::HippoMetadataAPIPrivData,
+    url: u64,
+    tag: *const c_char,
+    data: f64
+) {
+    let song_db: &mut SongDb = unsafe { &mut *(priv_data as *mut SongDb) };
+    let tag_str = unsafe { CStr::from_ptr(tag) };
+
+    match song_db.set_tag_float(url, &tag_str.to_string_lossy(), data as f32) {
+        Err(err) => println!("SongDb: set_tag_f64 failed: {}", err),
+        _ => (),
+    }
+}
+
+extern "C" fn metadata_add_sub_song(
+    priv_data: *mut ffi::HippoMetadataAPIPrivData,
+    url: u64,
+    name: *const c_char,
+    length: f32
+) {
+    let song_db: &mut SongDb = unsafe { &mut *(priv_data as *mut SongDb) };
+    let name_str = unsafe { CStr::from_ptr(name) };
+
+    match song_db.add_sub_song(url, &name_str.to_string_lossy(), length as f64) {
+        Err(err) => println!("SongDb: add_sub_song failed: {}", err),
+        _ => (),
+    }
+}
+
+extern "C" fn metadata_add_sample(
+    priv_data: *mut ffi::HippoMetadataAPIPrivData,
+    url: u64,
+    text: *const c_char
+) {
+    let song_db: &mut SongDb = unsafe { &mut *(priv_data as *mut SongDb) };
+    let text_str = unsafe { CStr::from_ptr(text) };
+
+    match song_db.add_sample(url, &text_str.to_string_lossy()) {
+        Err(err) => println!("SongDb: add_sample failed: {}", err),
+        _ => (),
+    }
+}
+
+extern "C" fn metadata_add_instrument(
+    priv_data: *mut ffi::HippoMetadataAPIPrivData,
+    url: u64,
+    text: *const c_char
+) {
+    let song_db: &mut SongDb = unsafe { &mut *(priv_data as *mut SongDb) };
+    let text_str = unsafe { CStr::from_ptr(text) };
+
+    match song_db.add_instrument(url, &text_str.to_string_lossy()) {
+        Err(err) => println!("SongDb: add_instrument failed: {}", err),
+        _ => (),
+    }
+}
+
+extern "C" fn metadata_begin_get_all(
+    priv_data: *mut ffi::HippoMetadataAPIPrivData,
+    url: *const c_char
+) -> ::std::os::raw::c_int {
+    let song_db: &mut SongDb = unsafe { &mut *(priv_data as *mut SongDb) };
+    let text_str = unsafe { CStr::from_ptr(url) };
+
+    song_db.begin_get_all(&text_str.to_string_lossy()) as _
+}
+
+extern "C" fn metadata_end_get_all(_priv_data: *mut ffi::HippoMetadataAPIPrivData) { }
+
+extern "C" fn metadata_get_all_entry(
+    priv_data: *mut ffi::HippoMetadataAPIPrivData,
+    entry: ::std::os::raw::c_int,
+    name: *mut *const ::std::os::raw::c_char,
+    data: *mut *const ::std::os::raw::c_char,
+    len_name: *mut ::std::os::raw::c_int,
+    len_data: *mut ::std::os::raw::c_int
+) -> ::std::os::raw::c_int {
+    let song_db: &SongDb = unsafe { &*(priv_data as *const SongDb) };
+    let index = (entry * 2) as usize;
+
+    if index < song_db.query_data.len() {
+        let d0 = song_db.query_data[index + 0].as_bytes();
+        let d1 = song_db.query_data[index + 1].as_bytes();
+        unsafe {
+            *name = d0.as_ptr() as *const i8;
+            *data = d1.as_ptr() as *const i8;
+            *len_name = d0.len() as _;
+            *len_data = d1.len() as _;
+        }
+        1
+    } else {
+        unsafe {
+            *len_name = 0;
+            *len_data = 0;
+            *name = std::ptr::null();
+            *data = std::ptr::null();
+        }
+
+        0
+    }
+}
+
+extern "C" fn metadata_get_all_sample(
+    priv_data: *mut ffi::HippoMetadataAPIPrivData,
+    entry: ::std::os::raw::c_int,
+    text: *mut *const ::std::os::raw::c_char,
+    text_len: *mut ::std::os::raw::c_int
+) -> ::std::os::raw::c_int {
+    let song_db: &SongDb = unsafe { &*(priv_data as *const SongDb) };
+    let index = entry as usize;
+
+    if index < song_db.cached_samples.len() {
+        let d0 = song_db.cached_samples[index].as_bytes();
+        unsafe {
+            *text = d0.as_ptr() as _;
+            *text_len = d0.len() as _;
+        }
+        1
+    } else {
+        unsafe {
+            *text = std::ptr::null();
+            *text_len = 0;
+        }
+        0
+    }
+}
+
+extern "C" fn metadata_get_all_instrument(
+    priv_data: *mut ffi::HippoMetadataAPIPrivData,
+    entry: ::std::os::raw::c_int,
+    text: *mut *const ::std::os::raw::c_char,
+    text_len: *mut ::std::os::raw::c_int
+) -> ::std::os::raw::c_int {
+    let song_db: &SongDb = unsafe { &*(priv_data as *const SongDb) };
+    let index = entry as usize;
+
+    if index < song_db.cached_instruments.len() {
+        let d0 = song_db.cached_instruments[index].as_bytes();
+        unsafe {
+            *text = d0.as_ptr() as _;
+            *text_len = d0.len() as _;
+        }
+        1
+    } else {
+        unsafe {
+            *text = std::ptr::null();
+            *text_len = 0;
+        }
+        0
+    }
+}
+
 
 pub struct ServiceApi {
     pub c_io_api: *const ffi::HippoIoAPI,
@@ -210,7 +371,7 @@ impl ServiceApi {
         self.c_io_api
     }
 
-    fn get_c_metadatao_api(&self) -> *const ffi::HippoMetadataAPI {
+    fn get_c_metadata_api(&self) -> *const ffi::HippoMetadataAPI {
         self.c_metadata_api
     }
 
@@ -219,7 +380,7 @@ impl ServiceApi {
     }
 
     fn get_song_db(&self) -> &SongDb {
-        let metadata_api = self.get_c_metadatao_api();
+        let metadata_api = self.get_c_metadata_api();
         let song_db: &SongDb = unsafe { &*((*metadata_api).priv_data as *const SongDb) };
         song_db
     }
@@ -246,7 +407,7 @@ impl ServiceApi {
         Self::get_message_api_from_c_api_mut(self.c_message_api)
     }
 
-    fn new() -> ServiceApi {
+    fn new(song_db: *const SongDb) -> ServiceApi {
         // setup IO services
 
         let io_api: *mut ffi::HippoApiPrivData = unsafe {
@@ -271,13 +432,19 @@ impl ServiceApi {
 
         // Metadata service
 
-        let metadata_api =
-            Box::into_raw(Box::new(SongDb::new())) as *mut ffi::HippoMetadataAPIPrivData;
-
         let c_metadata_api = Box::new(ffi::HippoMetadataAPI {
-            priv_data: metadata_api,
-            set_data: Some(metadata_set_data),
-            get_data: Some(metadata_get_data),
+            priv_data: song_db as *mut ffi::HippoMetadataAPIPrivData,
+            create_url: Some(metadata_create_url),
+            set_tag: Some(metadata_set_tag),
+            set_tag_f64: Some(metadata_set_tag_f64),
+            add_subsong: Some(metadata_add_sub_song),
+            add_sample: Some(metadata_add_sample),
+            add_instrument: Some(metadata_add_instrument),
+            begin_get_all: Some(metadata_begin_get_all),
+            end_get_all: Some(metadata_end_get_all),
+            get_all_entry: Some(metadata_get_all_entry),
+            get_all_sample: Some(metadata_get_all_sample),
+            get_all_instrument: Some(metadata_get_all_instrument),
         });
 
         let c_metadata_api: *const ffi::HippoMetadataAPI = unsafe { transmute(c_metadata_api) };
@@ -295,14 +462,14 @@ pub struct PluginService {
 }
 
 impl PluginService {
-    pub fn new() -> PluginService {
+    pub fn new(song_db: *const SongDb) -> PluginService {
         PluginService {
-            c_service_api: Self::new_c_api(),
+            c_service_api: Self::new_c_api(song_db),
         }
     }
 
-    pub fn new_c_api() -> *const ffi::HippoServiceAPI {
-        let service_api = Box::into_raw(Box::new(ServiceApi::new()));
+    pub fn new_c_api(song_db: *const SongDb) -> *const ffi::HippoServiceAPI {
+        let service_api = Box::into_raw(Box::new(ServiceApi::new(song_db)));
 
         let c_service_api = Box::new(ffi::HippoServiceAPI {
             get_io_api: Some(get_io_api_wrapper),

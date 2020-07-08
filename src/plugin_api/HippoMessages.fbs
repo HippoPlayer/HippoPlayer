@@ -31,6 +31,7 @@ table HippoRequestAddUrls {
 }
 
 table HippoSongDescription {
+  path: string;
   title: string;
   duration: float;
   song_type: string;

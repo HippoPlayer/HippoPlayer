@@ -7,7 +7,9 @@
 #define HAVE_ASSERT_H 1
 
 /* Define to 1 if you have the `basename' function. */
+#ifndef _WIN32
 #define HAVE_BASENAME 1
+#endif
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1

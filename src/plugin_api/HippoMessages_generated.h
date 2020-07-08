@@ -456,13 +456,17 @@ inline flatbuffers::Offset<HippoRequestAddUrls> CreateHippoRequestAddUrlsDirect(
 
 struct HippoSongDescription FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_TITLE = 4,
-    VT_DURATION = 6,
-    VT_SONG_TYPE = 8,
-    VT_ARTIST = 10,
-    VT_DATE = 12,
-    VT_AUTHORING_TOOL = 14
+    VT_PATH = 4,
+    VT_TITLE = 6,
+    VT_DURATION = 8,
+    VT_SONG_TYPE = 10,
+    VT_ARTIST = 12,
+    VT_DATE = 14,
+    VT_AUTHORING_TOOL = 16
   };
+  const flatbuffers::String *path() const {
+    return GetPointer<const flatbuffers::String *>(VT_PATH);
+  }
   const flatbuffers::String *title() const {
     return GetPointer<const flatbuffers::String *>(VT_TITLE);
   }
@@ -483,6 +487,8 @@ struct HippoSongDescription FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_PATH) &&
+           verifier.VerifyString(path()) &&
            VerifyOffset(verifier, VT_TITLE) &&
            verifier.VerifyString(title()) &&
            VerifyField<float>(verifier, VT_DURATION) &&
@@ -501,6 +507,9 @@ struct HippoSongDescription FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table
 struct HippoSongDescriptionBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
+  void add_path(flatbuffers::Offset<flatbuffers::String> path) {
+    fbb_.AddOffset(HippoSongDescription::VT_PATH, path);
+  }
   void add_title(flatbuffers::Offset<flatbuffers::String> title) {
     fbb_.AddOffset(HippoSongDescription::VT_TITLE, title);
   }
@@ -533,6 +542,7 @@ struct HippoSongDescriptionBuilder {
 
 inline flatbuffers::Offset<HippoSongDescription> CreateHippoSongDescription(
     flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<flatbuffers::String> path = 0,
     flatbuffers::Offset<flatbuffers::String> title = 0,
     float duration = 0.0f,
     flatbuffers::Offset<flatbuffers::String> song_type = 0,
@@ -546,17 +556,20 @@ inline flatbuffers::Offset<HippoSongDescription> CreateHippoSongDescription(
   builder_.add_song_type(song_type);
   builder_.add_duration(duration);
   builder_.add_title(title);
+  builder_.add_path(path);
   return builder_.Finish();
 }
 
 inline flatbuffers::Offset<HippoSongDescription> CreateHippoSongDescriptionDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
+    const char *path = nullptr,
     const char *title = nullptr,
     float duration = 0.0f,
     const char *song_type = nullptr,
     const char *artist = nullptr,
     const char *date = nullptr,
     const char *authoring_tool = nullptr) {
+  auto path__ = path ? _fbb.CreateString(path) : 0;
   auto title__ = title ? _fbb.CreateString(title) : 0;
   auto song_type__ = song_type ? _fbb.CreateString(song_type) : 0;
   auto artist__ = artist ? _fbb.CreateString(artist) : 0;
@@ -564,6 +577,7 @@ inline flatbuffers::Offset<HippoSongDescription> CreateHippoSongDescriptionDirec
   auto authoring_tool__ = authoring_tool ? _fbb.CreateString(authoring_tool) : 0;
   return CreateHippoSongDescription(
       _fbb,
+      path__,
       title__,
       duration,
       song_type__,

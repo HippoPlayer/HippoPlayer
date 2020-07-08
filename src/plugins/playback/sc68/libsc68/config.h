@@ -7,7 +7,9 @@
 #define HAVE_ASSERT_H 1
 
 /* Define to 1 if you have the `basename' function. */
+#ifdef _WIN32
 #define HAVE_BASENAME 1
+#endif
 
 /* Define to 1 if you have the <ctype.h> header file. */
 #define HAVE_CTYPE_H 1
@@ -34,7 +36,7 @@
 #define HAVE_INTTYPES_H 1
 
 /* Define to 1 if you have the <libgen.h> header file. */
-#define HAVE_LIBGEN_H 1
+//#define HAVE_LIBGEN_H 1
 
 /* Define to 1 if you have the <limits.h> header file. */
 #define HAVE_LIMITS_H 1
@@ -88,7 +90,9 @@
 #define HAVE_UINTMAX_T 1
 
 /* Define to 1 if you have the <unistd.h> header file. */
+#ifndef _WIN32
 #define HAVE_UNISTD_H 1
+#endif
 
 /* Define to 1 if the system has the type `unsigned long long int'. */
 #define HAVE_UNSIGNED_LONG_LONG_INT 1
