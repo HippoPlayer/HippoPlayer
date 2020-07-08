@@ -1,3 +1,0 @@
-This example is for Mac OS X.
-
-It builds a 32-bit program that calls puts() with a greeting from assembler.
