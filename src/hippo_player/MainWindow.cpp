@@ -111,14 +111,17 @@ void MainWindow::handle_incoming_messages(const unsigned char* data, int len) {
     switch (message->message_type())
 	{
     	case MessageType_reply_added_urls: {
-			auto urls = message->message_as_reply_added_urls()->urls();
+    	    auto reply_msg = message->message_as_reply_added_urls();
+			auto urls = reply_msg->urls();
 
-			printf("more urls!\n");
+			m_playlist_model->begin_insert(reply_msg->index(), 0);
 
 			for (int i = 0, e = urls->Length(); i < e; ++i) {
 			    auto url = urls->Get(i);
-                m_playlist_model->add_entry(url);
+                m_playlist_model->insert_entry(url);
 			}
+
+			m_playlist_model->end_insert();
 
             m_playlist_model->layoutChanged();
 
@@ -127,7 +130,6 @@ void MainWindow::handle_incoming_messages(const unsigned char* data, int len) {
 
         case MessageType_select_song:
         {
-            printf("--- select song\n");
             auto msg = message->message_as_select_song();
             m_playlist_model->update_index(msg);
             break;
