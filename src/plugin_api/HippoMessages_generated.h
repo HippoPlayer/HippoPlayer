@@ -702,13 +702,18 @@ inline flatbuffers::Offset<HippoSelectSong> CreateHippoSelectSong(
 
 struct HippoReplyAddedUrls FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_URLS = 4
+    VT_INDEX = 4,
+    VT_URLS = 6
   };
+  int32_t index() const {
+    return GetField<int32_t>(VT_INDEX, 0);
+  }
   const flatbuffers::Vector<flatbuffers::Offset<HippoUrlEntry>> *urls() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<HippoUrlEntry>> *>(VT_URLS);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
+           VerifyField<int32_t>(verifier, VT_INDEX) &&
            VerifyOffset(verifier, VT_URLS) &&
            verifier.VerifyVector(urls()) &&
            verifier.VerifyVectorOfTables(urls()) &&
@@ -719,6 +724,9 @@ struct HippoReplyAddedUrls FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table 
 struct HippoReplyAddedUrlsBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
+  void add_index(int32_t index) {
+    fbb_.AddElement<int32_t>(HippoReplyAddedUrls::VT_INDEX, index, 0);
+  }
   void add_urls(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<HippoUrlEntry>>> urls) {
     fbb_.AddOffset(HippoReplyAddedUrls::VT_URLS, urls);
   }
@@ -736,18 +744,22 @@ struct HippoReplyAddedUrlsBuilder {
 
 inline flatbuffers::Offset<HippoReplyAddedUrls> CreateHippoReplyAddedUrls(
     flatbuffers::FlatBufferBuilder &_fbb,
+    int32_t index = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<HippoUrlEntry>>> urls = 0) {
   HippoReplyAddedUrlsBuilder builder_(_fbb);
   builder_.add_urls(urls);
+  builder_.add_index(index);
   return builder_.Finish();
 }
 
 inline flatbuffers::Offset<HippoReplyAddedUrls> CreateHippoReplyAddedUrlsDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
+    int32_t index = 0,
     const std::vector<flatbuffers::Offset<HippoUrlEntry>> *urls = nullptr) {
   auto urls__ = urls ? _fbb.CreateVector<flatbuffers::Offset<HippoUrlEntry>>(*urls) : 0;
   return CreateHippoReplyAddedUrls(
       _fbb,
+      index,
       urls__);
 }
 

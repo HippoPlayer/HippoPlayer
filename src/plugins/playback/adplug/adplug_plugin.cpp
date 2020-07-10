@@ -50,7 +50,7 @@ static void* adplug_create(const struct HippoServiceAPI* services) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int adplug_open(void* user_data, const char* url) {
+static int adplug_open(void* user_data, const char* url, int subsong) {
 	AdplugPlugin* plugin = (AdplugPlugin*)user_data;
 
     // TODO: File io api

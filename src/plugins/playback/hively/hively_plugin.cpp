@@ -56,7 +56,7 @@ static int hively_destroy(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int hively_open(void* user_data, const char* filename) {
+static int hively_open(void* user_data, const char* filename, int subsong) {
     uint64_t size = 0;
 	struct HivelyReplayerData* data = (struct HivelyReplayerData*)user_data;
 

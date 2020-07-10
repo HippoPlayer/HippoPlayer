@@ -101,7 +101,7 @@ static char* get_dirname(const char* src, char* dir_output)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int mdx_plugin_open(void* user_data, const char* buffer) {
+static int mdx_plugin_open(void* user_data, const char* buffer, int subsong) {
 	char dir_name[4096];
 	MDXPlugin* plugin = (MDXPlugin*)user_data;
 

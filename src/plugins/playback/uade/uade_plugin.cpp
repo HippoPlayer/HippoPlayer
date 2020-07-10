@@ -131,7 +131,7 @@ static void* uade_create(const struct HippoServiceAPI* services) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int uade_open(void* user_data, const char* buffer) {
+static int uade_open(void* user_data, const char* buffer, int subsong) {
 	UadePlugin* plugin = (UadePlugin*)user_data;
 
 	plugin->state = create_uade_state(1);
@@ -142,9 +142,9 @@ static int uade_open(void* user_data, const char* buffer) {
         float length = (float)song_info->duration;
 
         HippoMetadataId index = HippoMetadata_create_url(plugin->metadata_api, buffer);
-        HippoMetadata_set_tag(plugin->metadata_api, index, HippoMetadata_TitleTag, song_info->modulename); 
-        HippoMetadata_set_tag(plugin->metadata_api, index, HippoMetadata_SongTypeTag, song_info->playername); 
-        HippoMetadata_set_tag(plugin->metadata_api, index, HippoMetadata_AuthoringToolTag, song_info->playername); 
+        HippoMetadata_set_tag(plugin->metadata_api, index, HippoMetadata_TitleTag, song_info->modulename);
+        HippoMetadata_set_tag(plugin->metadata_api, index, HippoMetadata_SongTypeTag, song_info->playername);
+        HippoMetadata_set_tag(plugin->metadata_api, index, HippoMetadata_AuthoringToolTag, song_info->playername);
 
 		return 1;
 	}

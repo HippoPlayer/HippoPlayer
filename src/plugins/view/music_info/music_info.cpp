@@ -148,7 +148,7 @@ void MusicInfoView::select_song(const HippoSelectSong* msg) {
         QTextCursor cursor = samples->textCursor();
         cursor.movePosition(QTextCursor::Start);
         samples->setTextCursor(cursor);
-        instruments->setReadOnly(true);
+        samples->setReadOnly(true);
     }
 }
 

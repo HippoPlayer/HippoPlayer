@@ -79,7 +79,7 @@ static int vgm_destroy(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int vgm_open(void* user_data, const char* buffer) {
+static int vgm_open(void* user_data, const char* buffer, int subsong) {
 	// TODO: Add reader functions etc to be used instead of fopen as file may come from zip, etc
 
 	struct VgmReplayerData* replayer_data = (struct VgmReplayerData*)user_data;

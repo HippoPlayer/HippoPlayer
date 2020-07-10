@@ -113,6 +113,8 @@ void MainWindow::handle_incoming_messages(const unsigned char* data, int len) {
     	case MessageType_reply_added_urls: {
 			auto urls = message->message_as_reply_added_urls()->urls();
 
+			printf("more urls!\n");
+
 			for (int i = 0, e = urls->Length(); i < e; ++i) {
 			    auto url = urls->Get(i);
                 m_playlist_model->add_entry(url);

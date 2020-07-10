@@ -103,15 +103,15 @@ static int sc68_plugin_metadata(const char* filename, const HippoServiceAPI* ser
     (void)ret;
 
     HippoMetadataId index = HippoMetadata_create_url(metadata_api, filename);
-    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_TitleTag, info.title ? info.title : ""); 
-    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_SongTypeTag, info.format); 
-    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_AuthoringToolTag, info.converter); 
-    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_ArtistTag, info.artist); 
-    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_DateTag, info.year); 
-    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_MessageTag, info.ripper); 
-    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_AlbumTag, info.album); 
-    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_GenreTag, info.genre); 
-    HippoMetadata_set_tag_f64(metadata_api, index, HippoMetadata_LengthTag, length / 1000); 
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_TitleTag, info.title ? info.title : "");
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_SongTypeTag, info.format);
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_AuthoringToolTag, info.converter);
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_ArtistTag, info.artist);
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_DateTag, info.year);
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_MessageTag, info.ripper);
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_AlbumTag, info.album);
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_GenreTag, info.genre);
+    HippoMetadata_set_tag_f64(metadata_api, index, HippoMetadata_LengthTag, length / 1000);
 
     sc68_destroy(inst);
 
@@ -148,7 +148,7 @@ static void* sc68_plugin_create(const struct HippoServiceAPI* service_api) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int sc68_plugin_open(void* user_data, const char* buffer) {
+static int sc68_plugin_open(void* user_data, const char* buffer, int subsong) {
     uint64_t size = 0;
     void* load_data = nullptr;
 	Sc68Plugin* data = (Sc68Plugin*)user_data;

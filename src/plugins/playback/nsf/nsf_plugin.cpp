@@ -89,7 +89,7 @@ static void* nsf_create(const struct HippoServiceAPI* service_api) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int nsf_open(void* user_data, const char* buffer) {
+static int nsf_open(void* user_data, const char* buffer, int subsong) {
     uint64_t size = 0;
     void* load_data = nullptr;
 	NsfPlugin* data = (NsfPlugin*)user_data;

@@ -1,4 +1,4 @@
-use std::ffi::CStr;
+//use std::ffi::CStr;
 use std::fs::File;
 use std::fs;
 use std::os::raw::{c_char, c_void};
@@ -43,39 +43,62 @@ pub struct HippoCore {
 }
 
 impl HippoCore {
-    pub fn play_file(&mut self, url: &str) {
+    /// Play a file. Url is the thing to play (often a filename) and playlist_index is
+    /// is the index into the playlist. This is needed in case we want to add more songs to the playlist
+    /// (such as subsongs) and the playlist doesn't have to search for the file
+    pub fn play_file(&mut self, url: &str, playlist_index: usize) -> String {
         let mut buffer = [0; 4096];
-        // TODO: Fix error handling here
+        // TODO: Use Cow
+        let url_no_sub;
 
-        let metadata = fs::metadata(url).unwrap();
-        let mut f = File::open(url).unwrap();
+        if let Some(separator) = url.find('|') {
+            url_no_sub = url[..separator].to_owned();
+        } else {
+            url_no_sub = url.to_owned();
+        }
+
+        // TODO: Fix error handling here
+        // TODO: cleanup
+        // TODO: Store the player to use for subsongs as we know it already?
+
+        let metadata = fs::metadata(&url_no_sub).unwrap();
+        let mut f = File::open(&url_no_sub).unwrap();
         let buffer_read_size = f.read(&mut buffer[..]).unwrap();
+        let song_db = self.plugin_service.get_song_db();
 
         // find a plugin that supports the file
 
         for plugin in &self.plugins.decoder_plugins {
-            if plugin.probe_can_play(&buffer, buffer_read_size, url, metadata.len()) {
-                let song_db = self.plugin_service.get_song_db();
-
+            if plugin.probe_can_play(&buffer, buffer_read_size, &url_no_sub, metadata.len()) {
                 if !song_db.is_present(url) {
                     song_db.begin_transaction();
                     plugin.get_metadata(&url, &self.plugin_service);
                     song_db.commit();
                 }
 
-                //song_db.get_metadata(&url);
-
                 // This is a bit hacky right now but will do the trick
                 self.audio.stop();
                 self.audio = HippoAudio::new();
-                self.audio.start_with_file(&plugin, &self.plugin_service, url);
                 self.is_playing = true;
 
-                return;
+                // TODO: Config if this should be expanded async or not
+                // TODO: Move to somewhere else?
+                if let Some(subsongs) = song_db.get_subsongs(url) {
+                    // if we have sub-songs we will add them here and also change
+                    // the current file to be a "subsong (the first one)"
+                    self.playlist.insert_subsongs(playlist_index, &subsongs, url);
+                    // add |0 at the end of url to mark it as a subsong
+                    let sub_url = format!("{}|0", url);
+                    self.audio.start_with_file(&plugin, &self.plugin_service, &sub_url);
+                    return sub_url;
+                } else {
+                    self.audio.start_with_file(&plugin, &self.plugin_service, url);
+                    return url.to_owned();
+                }
             }
         }
 
-        println!("Unable to find plugin to support {}", url);
+        String::new()
     }
 
     ///
@@ -153,17 +176,21 @@ impl HippoCore {
         // If current song has been updated with messages above we try starting playing the new one
 
         if self.playlist.is_current_song_updated() {
+            self.playlist.dump_first();
             let new_song = self.playlist.get_current_song();
 
             if let Some(song) = new_song {
-                self.play_file(&song);
+                let songname = self.play_file(&song.0, song.1);
                 self.current_song_time = 5.0 * 60.0;
+                self.playlist.dump_first();
 
                 let song_db = self.plugin_service.get_song_db();
+                self.playlist.dump_first();
 
-                if self.plugin_service.get_song_db().is_present(&song) {
-                    self.current_song_time = song_db.get_tag_f64("length", &song).unwrap() as f32;
-                    self.playlist.update_current_entry(song_db, &song);
+                if self.plugin_service.get_song_db().is_present(&song.0) {
+                    self.playlist.dump_first();
+                    self.current_song_time = song_db.get_tag_f64("length", &songname).unwrap() as f32;
+                    self.playlist.update_current_entry(song_db, &songname);
                     self.start_time = Instant::now();
 
                     // TODO: Use setting
@@ -178,6 +205,11 @@ impl HippoCore {
                 }
             }
         }
+
+        // if new subsongs has been inserted we need to send it to the frontend
+        self.playlist.inserted_subsongs().map(|reply| {
+            Self::send_msgs(user_data, send_messages, &reply, count, std::usize::MAX);
+        });
 
         // send the messages from the backends to the UI
 
@@ -288,11 +320,13 @@ pub extern "C" fn hippo_core_drop(core: *mut HippoCore) {
 
 /// Update the song db with a new entry
 #[no_mangle]
-pub unsafe extern "C" fn hippo_play_file(_core: *mut HippoCore, filename: *const c_char) {
-    let core = &mut *_core;
-    let slice = CStr::from_ptr(filename);
+pub unsafe extern "C" fn hippo_play_file(_core: *mut HippoCore, _filename: *const c_char) {
+    //let core = &mut *_core;
+    //let slice = CStr::from_ptr(filename);
 
-    core.play_file(slice.to_str().unwrap());
+    println!("trying to play unspported callback");
+
+    //core.play_file(slice.to_str().unwrap(), 0);
     //println!("filename to play returned: {}", slice.to_str().unwrap());
 }
 

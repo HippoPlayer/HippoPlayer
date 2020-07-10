@@ -86,13 +86,13 @@ static int tfmx_destroy(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int tfmx_open(void* user_data, const char* buffer) {
+static int tfmx_open(void* user_data, const char* buffer, int subsong) {
 	TfmxReplayerData* plugin = (TfmxReplayerData*)user_data;
 
 	if (LoadTFMXFile((char*)buffer) != 0)
 	    return -1;
 
-	TFMXSetSubSong(0);
+	TFMXSetSubSong(subsong);
     TFMXRewind();
 
     plugin->name = strdup(getFileNameFromPath(buffer));

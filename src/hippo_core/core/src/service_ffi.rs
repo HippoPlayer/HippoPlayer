@@ -213,13 +213,14 @@ extern "C" fn metadata_set_tag_f64(
 extern "C" fn metadata_add_sub_song(
     priv_data: *mut ffi::HippoMetadataAPIPrivData,
     url: u64,
+    index: i32,
     name: *const c_char,
     length: f32
 ) {
     let song_db: &mut SongDb = unsafe { &mut *(priv_data as *mut SongDb) };
     let name_str = unsafe { CStr::from_ptr(name) };
 
-    match song_db.add_sub_song(url, &name_str.to_string_lossy(), length as f64) {
+    match song_db.add_sub_song(url, index, &name_str.to_string_lossy(), length as f64) {
         Err(err) => println!("SongDb: add_sub_song failed: {}", err),
         _ => (),
     }

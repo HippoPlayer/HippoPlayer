@@ -1124,11 +1124,17 @@ impl<'a> HippoReplyAddedUrls<'a> {
         args: &'args HippoReplyAddedUrlsArgs<'args>) -> flatbuffers::WIPOffset<HippoReplyAddedUrls<'bldr>> {
       let mut builder = HippoReplyAddedUrlsBuilder::new(_fbb);
       if let Some(x) = args.urls { builder.add_urls(x); }
+      builder.add_index(args.index);
       builder.finish()
     }
 
-    pub const VT_URLS: flatbuffers::VOffsetT = 4;
+    pub const VT_INDEX: flatbuffers::VOffsetT = 4;
+    pub const VT_URLS: flatbuffers::VOffsetT = 6;
 
+  #[inline]
+  pub fn index(&self) -> i32 {
+    self._tab.get::<i32>(HippoReplyAddedUrls::VT_INDEX, Some(0)).unwrap()
+  }
   #[inline]
   pub fn urls(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<HippoUrlEntry<'a>>>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<HippoUrlEntry<'a>>>>>(HippoReplyAddedUrls::VT_URLS, None)
@@ -1136,12 +1142,14 @@ impl<'a> HippoReplyAddedUrls<'a> {
 }
 
 pub struct HippoReplyAddedUrlsArgs<'a> {
+    pub index: i32,
     pub urls: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<HippoUrlEntry<'a >>>>>,
 }
 impl<'a> Default for HippoReplyAddedUrlsArgs<'a> {
     #[inline]
     fn default() -> Self {
         HippoReplyAddedUrlsArgs {
+            index: 0,
             urls: None,
         }
     }
@@ -1151,6 +1159,10 @@ pub struct HippoReplyAddedUrlsBuilder<'a: 'b, 'b> {
   start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
 impl<'a: 'b, 'b> HippoReplyAddedUrlsBuilder<'a, 'b> {
+  #[inline]
+  pub fn add_index(&mut self, index: i32) {
+    self.fbb_.push_slot::<i32>(HippoReplyAddedUrls::VT_INDEX, index, 0);
+  }
   #[inline]
   pub fn add_urls(&mut self, urls: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<HippoUrlEntry<'b >>>>) {
     self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(HippoReplyAddedUrls::VT_URLS, urls);

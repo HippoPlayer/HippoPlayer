@@ -84,7 +84,7 @@ static int sid_destroy(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int sid_open(void* user_data, const char* buffer) {
+static int sid_open(void* user_data, const char* buffer, int subsong) {
 	SidReplayerData* data = (SidReplayerData*)user_data;
 
 	SidTune* tune = new SidTune(buffer);
@@ -98,7 +98,7 @@ static int sid_open(void* user_data, const char* buffer) {
     data->tune = tune;
 
     // Select default song
-    tune->selectSong(0);
+    tune->selectSong(subsong);
 
     // Configure the engine
     SidConfig cfg;

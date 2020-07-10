@@ -20,6 +20,7 @@ const CREATE_URLS_TABLE: &str = "
 const CREATE_SUB_SONGS_TABLE: &str = "
         CREATE TABLE IF NOT EXISTS sub_songs(
             url_id INTEGER,
+            sub_index INTEGER,
             title STRING,
             length STRING,
             extra_data BLOB)";
@@ -54,7 +55,7 @@ impl SongDb {
         let mut cached_instruments = Vec::with_capacity(1024);
 
         // TODO: Better way to do this
-        for i in 0..1024 {
+        for _ in 0..1024 {
             query_data.push(String::new());
             cached_samples.push(String::new());
             cached_instruments.push(String::new());
@@ -111,11 +112,12 @@ impl SongDb {
         Ok(())
     }
 
-    pub fn add_sub_song(&self, url_id: u64, name: &str, length: f64) -> Result<(), Error> {
+    pub fn add_sub_song(&self, url_id: u64, index: i32, name: &str, length: f64) -> Result<(), Error> {
         let t = format!(
-            "INSERT or IGNORE into sub_songs (url_id, title, length) VALUES({}, \"{}\", {})",
-            url_id, name, length
+            "INSERT or IGNORE into sub_songs (url_id, sub_index, title, length) VALUES({}, {}, \"{}\", {})",
+            url_id, index, name, length
         );
+        println!("add sub song {}", t);
         self.connection.execute(t)?;
         Ok(())
     }
@@ -138,14 +140,32 @@ impl SongDb {
         Ok(())
     }
 
+    fn get_statement(&self, tag: &str, url: &str) -> sqlite::Statement {
+    	// bad hack!
+    	if let Some(subsong) = url.find('|') {
+			let query;
+        	let url_id = xxh3::hash(&url[..subsong].as_bytes());
+            let index = *&url[subsong + 1..].parse::<i32>().unwrap();
+
+			// hack
+			if tag != "length" && tag != "title" {
+				query = format!("SELECT {} FROM urls WHERE pk=={}", tag, url_id);
+			} else {
+        		query = format!("SELECT {} FROM sub_songs WHERE url_id=={} AND sub_index=={}", tag, url_id, index);
+			}
+        	self.connection.prepare(query).unwrap()
+    	} else {
+        	let url_id = xxh3::hash(url.as_bytes());
+			let query = format!("SELECT {} FROM urls WHERE pk=={}", tag, url_id);
+			self.connection.prepare(query).unwrap()
+    	}
+    }
+
     ///
     /// Get tag for a url
     ///
     pub fn get_tag(&self, tag: &str, url: &str) -> Option<String> {
-        let url_id = xxh3::hash(url.as_bytes());
-
-        let query = format!("SELECT {} FROM urls WHERE pk=={}", tag, url_id);
-        let mut statement = self.connection.prepare(query).unwrap();
+        let mut statement = self.get_statement(tag, url);
 
         if sqlite::State::Row == statement.next().unwrap() {
             let entry = statement.read::<String>(0).unwrap();
@@ -159,20 +179,23 @@ impl SongDb {
     /// Get tag for a url
     ///
     pub fn get_tag_f64(&self, tag: &str, url: &str) -> Option<f64> {
-        let url_id = xxh3::hash(url.as_bytes());
-
-        let query = format!("SELECT {} FROM urls WHERE pk=={}", tag, url_id);
-        let mut statement = self.connection.prepare(query).unwrap();
+        let mut statement = self.get_statement(tag, url);
 
         if sqlite::State::Row == statement.next().unwrap() {
             let entry = statement.read::<f64>(0).unwrap();
             Some(entry)
         } else {
-            None
+        	None
         }
     }
 
     pub fn is_present(&self, url: &str) -> bool {
+    	// `|` is used as sub-song separator. If this is in the database it's already present
+    	// as the data has been changed from doing a database query
+		if url.find('|').is_some() {
+			return true;
+		}
+
         let url_id = xxh3::hash(url.as_bytes());
         let query = format!("SELECT pk FROM urls WHERE pk=={}", url_id);
 
@@ -184,6 +207,20 @@ impl SongDb {
         }
 
         count == 1
+    }
+
+    pub fn get_subsongs(&self, url: &str) -> Option<Vec<String>> {
+        let url_id = xxh3::hash(url.as_bytes());
+        let query = format!("SELECT title FROM sub_songs WHERE url_id=={}", url_id);
+        let mut statement = self.connection.prepare(query).unwrap();
+
+        let mut subsongs = Vec::new();
+
+		while let State::Row = statement.next().unwrap() {
+			subsongs.push(statement.read::<String>(0).unwrap());
+		}
+
+		if subsongs.is_empty() { None } else { Some(subsongs) }
     }
 
     pub fn begin_get_all(&mut self, url: &str) -> u32 {
@@ -315,7 +352,7 @@ mod tests {
     fn test_add_sub_song() {
         let db = SongDb::new(":memory:").unwrap();
         let url_id = db.create_url("this/is/some/path").unwrap();
-        db.add_sub_song(url_id, "test title", 1.0).unwrap();
+        db.add_sub_song(url_id, "test title", 0, 1.0).unwrap();
     }
 
     #[test]

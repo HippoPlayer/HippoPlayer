@@ -147,7 +147,7 @@ static void send_pattern_data(struct OpenMptData* replayer_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int openmpt_open(void* user_data, const char* filename) {
+static int openmpt_open(void* user_data, const char* filename, int subsong) {
     uint64_t size = 0;
 	struct OpenMptData* replayer_data = (struct OpenMptData*)user_data;
 
@@ -160,6 +160,7 @@ static int openmpt_open(void* user_data, const char* filename) {
 
     replayer_data->mod = new openmpt::module(replayer_data->song_data, size);
     replayer_data->length = replayer_data->mod->get_duration_seconds();
+    replayer_data->mod->select_subsong(subsong);
 
 	return 0;
 }
@@ -282,8 +283,10 @@ static int openmpt_metadata(const char* filename, const HippoServiceAPI* service
                 sprintf(subsong_name, "%s (%d/%d)", title, i + 1, subsong_count);
             }
 
+            printf("subsong name %s\n", subsong_name);
+
             mod.select_subsong(i);
-            HippoMetadata_add_subsong(metadata_api, index, subsong_name, mod.get_duration_seconds());
+            HippoMetadata_add_subsong(metadata_api, index, i, subsong_name, mod.get_duration_seconds());
 
             ++i;
         }
