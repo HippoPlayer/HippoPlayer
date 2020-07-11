@@ -23,6 +23,7 @@ pub struct Playlist {
     entries: Vec<PlaylistEntry>,
     current_song: isize,
     new_song: bool,
+    new_subsongs: Option<(usize, usize)>,
 }
 
 impl Playlist {
@@ -34,6 +35,7 @@ impl Playlist {
             entries: Vec::new(),
             current_song: 0,
             new_song: false,
+            new_subsongs: None,
         }
     }
 
@@ -58,6 +60,44 @@ impl Playlist {
         //self.current_song_message()
     }
 
+    /// Insert subsongs into the playlist
+    pub fn insert_subsongs(&mut self, playlist_index: usize, subsongs: &[String], url: &str) {
+        // first entry in the list shouldn't be add, we will just update the url
+        // and update the title
+
+        let main_entry = &mut self.entries[playlist_index];
+        main_entry.path = format!("{}|0", url);
+        main_entry.title = subsongs[0].to_owned();
+
+        println!("updating main {} - {} index {}", main_entry.path, main_entry.title, playlist_index);
+
+        let mut playlist_entries = Vec::with_capacity(subsongs.len() - 1);
+
+        for (i, subsong) in subsongs.iter().enumerate().skip(1) {
+            playlist_entries.push(PlaylistEntry {
+                path: format!("{}|{}", url, i),
+                title: subsong.to_owned(),
+                duration: 0.0,
+                song_type: String::new()
+            });
+        }
+
+        let start_index = playlist_index + 1;
+        let end_index = start_index + subsongs.len() - 1;
+
+        self.entries.splice(start_index..start_index, playlist_entries.iter().cloned());
+        self.new_subsongs = Some((start_index, end_index));
+    }
+
+    pub fn inserted_subsongs(&mut self) -> Option<Box<[u8]>> {
+        if let Some(subsongs) = self.new_subsongs {
+            self.new_subsongs = None;
+            self.create_update_message(subsongs.0, Some(subsongs.1))
+        } else {
+            None
+        }
+    }
+
     pub fn update_current_entry(&mut self, song_db: &SongDb, url: &str) {
         let entry = &mut self.entries[self.current_song as usize];
 
@@ -76,15 +116,19 @@ impl Playlist {
     ///
     /// Used if the playlist has been updated or just loaded.
     ///
-    pub fn create_update_message(&self, index_start: usize) -> Option<Box<[u8]>> {
-        let count = self.entries.len();
+    pub fn create_update_message(&self, index_start: usize, index_end: Option<usize>) -> Option<Box<[u8]>> {
+        let mut end = self.entries.len();
 
-        if index_start == count {
+        if let Some(index) = index_end {
+            end = index;
+        }
+
+        if index_start == end {
             None
         } else {
-            let entries = &self.entries[index_start..count];
+            let entries = &self.entries[index_start..end];
             let mut builder = messages::FlatBufferBuilder::new_with_capacity(8192);
-            let mut out_ent = Vec::with_capacity(count - index_start);
+            let mut out_ent = Vec::with_capacity(end - index_start);
 
             for entry in entries {
                 let path_name = builder.create_string(&entry.path);
@@ -119,6 +163,7 @@ impl Playlist {
             let added_urls = HippoReplyAddedUrls::create(
                 &mut builder,
                 &HippoReplyAddedUrlsArgs {
+                    index: index_start as i32,
                     urls: Some(urls_vec),
                 },
             );
@@ -138,7 +183,6 @@ impl Playlist {
         if self.entries.is_empty() {
             return None;
         }
-
         let entry = &self.entries[self.current_song as usize];
 
         let mut builder = messages::FlatBufferBuilder::new_with_capacity(8192);
@@ -194,22 +238,33 @@ impl Playlist {
                     // Assume files now and if we can't create a file from the path we drop it
                     let filename = Path::new(&file);
                     if let Some(base) = filename.file_stem() {
+                        // this is a bit of hack for mod and mdat files that may start with mod. or mdat.
+                        let mut title = filename.file_name().unwrap().to_string_lossy().to_string();
+
+                        if title.starts_with("mdat.") {
+                            title = title[5..].to_owned();
+                        } else if title.starts_with("mod.") {
+                            title = title[4..].to_owned();
+                        } else {
+                            title = base.to_string_lossy().to_string();
+                        }
+
                         self.entries.push(PlaylistEntry {
                             path: file.to_owned(),
-                            title: base.to_string_lossy().to_string(),
                             song_type: String::new(),
                             duration: 0.0,
+                            title,
                         });
                     }
                 }
 
-                self.create_update_message(index_start)
+                self.create_update_message(index_start, None)
             }
 
             MessageType::request_select_song => self.select_song(msg),
             MessageType::next_song => self.advance_song(1),
             MessageType::prev_song => self.advance_song(-1),
-            MessageType::request_added_urls => self.create_update_message(0),
+            MessageType::request_added_urls => self.create_update_message(0, None),
             _ => None,
         }
     }
@@ -284,9 +339,10 @@ impl Playlist {
     ///
     /// Get the current song
     ///
-    pub fn get_current_song(&mut self) -> Option<String> {
+    pub fn get_current_song(&mut self) -> Option<(String, usize)> {
         if !self.entries.is_empty() {
-            Some(self.entries[self.current_song as usize].path.to_owned())
+            let index = self.current_song as usize;
+            Some((self.entries[index].path.to_owned(), index))
         } else {
             None
         }

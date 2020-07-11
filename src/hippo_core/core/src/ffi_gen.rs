@@ -310,6 +310,7 @@ pub struct HippoMetadataAPI {
         unsafe extern "C" fn(
             priv_data: *mut HippoMetadataAPIPrivData,
             parent_id: HippoMetadataId,
+            index: i32,
             name: *const ::std::os::raw::c_char,
             length: f32,
         ),
@@ -478,6 +479,7 @@ pub struct HippoPlaybackPlugin {
         unsafe extern "C" fn(
             user_data: *mut ::std::os::raw::c_void,
             buffer: *const ::std::os::raw::c_char,
+            subsong: ::std::os::raw::c_int,
         ) -> ::std::os::raw::c_int,
     >,
     pub close: ::std::option::Option<

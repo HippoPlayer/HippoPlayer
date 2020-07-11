@@ -9,22 +9,44 @@
 
 #include <thread>
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void get_file_stem(char* dest, const char* path) {
+    const char* end_path = nullptr;
+
+	for(size_t i = strlen(path) - 1;  i > 0; i--) {
+		if (path[i] == '/') {
+            end_path = &path[i+1];
+            break;
+		}
+    }
+
+    strcpy(dest, end_path);
+
+    for(size_t i = strlen(dest) - 1;  i > 0; i--) {
+        if (dest[i] == '.') {
+            dest[i] = 0;
+            break;
+        }
+    }
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static std::thread* s_uade_thread = nullptr;
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 extern "C" void uade_run_thread(void (*f)(void*), void* data) {
-    printf("Starting thread\n");
     s_uade_thread = new std::thread(f, data);
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 extern "C" void uade_wait_thread() {
     if (s_uade_thread) {
         s_uade_thread->join();
     }
-
-    printf("ended thread\n");
 
     delete s_uade_thread;
     s_uade_thread = nullptr;
@@ -66,43 +88,6 @@ static const char* uade_supported_extensions() {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const char* getFileNameFromPath(const char* path)
-{
-   for(size_t i = strlen(path) - 1;  i > 0; i--)
-   {
-      if (path[i] == '/')
-      {
-         return &path[i+1];
-      }
-   }
-
-   return path;
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/*
-static const char* uade_track_info(void* user_data) {
-	UadePlugin* plugin = (UadePlugin*)user_data;
-
-    const struct uade_song_info* song_info = uade_get_song_info(plugin->state);
-
-    if (!song_info) {
-    	return "unknown";
-    }
-
-    if (song_info->modulename[0] == 0) {
-		sprintf(s_player_name, "%s (%s)", getFileNameFromPath(song_info->modulefname), song_info->playername);
-    } else {
-		sprintf(s_player_name, "%s (%s)", song_info->modulename, song_info->playername);
-    }
-
-	return s_player_name;
-}
-*/
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 enum HippoProbeResult uade_probe_can_play(const uint8_t* data, uint32_t data_size, const char* filename, uint64_t total_size) {
     enum HippoProbeResult supported = HippoProbeResult_Unsupported;
 
@@ -131,25 +116,16 @@ static void* uade_create(const struct HippoServiceAPI* services) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int uade_open(void* user_data, const char* buffer) {
+static int uade_open(void* user_data, const char* buffer, int subsong) {
 	UadePlugin* plugin = (UadePlugin*)user_data;
 
 	plugin->state = create_uade_state(1);
 
-	if (uade_play(buffer, -1, plugin->state) == 1) {
-	    // we can only get this data when it started playing :(
-        const struct uade_song_info* song_info = uade_get_song_info(plugin->state);
-        float length = (float)song_info->duration;
-
-        HippoMetadataId index = HippoMetadata_create_url(plugin->metadata_api, buffer);
-        HippoMetadata_set_tag(plugin->metadata_api, index, HippoMetadata_TitleTag, song_info->modulename); 
-        HippoMetadata_set_tag(plugin->metadata_api, index, HippoMetadata_SongTypeTag, song_info->playername); 
-        HippoMetadata_set_tag(plugin->metadata_api, index, HippoMetadata_AuthoringToolTag, song_info->playername); 
-
+	if (uade_play(buffer, subsong, plugin->state) == 1) {
 		return 1;
 	}
 
-	return 0;
+	return -1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -202,29 +178,50 @@ static int uade_plugin_seek(void* user_data, int ms) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/*
-static int uade_length(void* user_data) {
-	UadePlugin* plugin = (UadePlugin*)user_data;
+static int uade_metadata(const char* filename, const HippoServiceAPI* service_api) {
+	auto state = create_uade_state(1);
 
-	if (!plugin->state) {
-	    return -10;
+    // TODO: Use io functions
+	if (uade_play(filename, -1, state) != 1) {
+	    uade_stop(state);
+        uade_cleanup_state(state, 0);
+	    return -1;
 	}
 
-    const struct uade_song_info* song_info = uade_get_song_info(plugin->state);
+    const HippoMetadataAPI* metadata_api = HippoServiceAPI_get_metadata_api(service_api, HIPPO_METADATA_API_VERSION);
 
-    if (!song_info) {
-        return -10;
+    const struct uade_song_info* song_info = uade_get_song_info(state);
+    float length = (float)song_info->duration;
+
+    char title[1024] = { 0 };
+
+    if (strlen(song_info->modulename) > 1) {
+        strcpy(title, song_info->modulename);
+    } else {
+        get_file_stem(title, filename);
     }
 
-    printf("uade: length %f\n", song_info->duration);
+    HippoMetadataId index = HippoMetadata_create_url(metadata_api, filename);
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_TitleTag, title);
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_SongTypeTag, song_info->playername);
+    HippoMetadata_set_tag_f64(metadata_api, index, HippoMetadata_LengthTag, length);
 
-    if (song_info->duration > 0.0) {
-        return (int)song_info->duration;
+    int sub_min = song_info->subsongs.min;
+    int sub_max = song_info->subsongs.max;
+
+    if ((sub_max - sub_min) > 1) {
+        for (int i = sub_min; i < sub_max; ++i) {
+            char subsong_name[1024] = { 0 };
+            sprintf(subsong_name, "%s (%d/%d)", title, i, sub_max);
+            HippoMetadata_add_subsong(metadata_api, index, i, subsong_name, 0.0f);
+        }
     }
 
-	return -10;
+	uade_stop(state);
+    uade_cleanup_state(state, 0);
+
+	return 1;
 }
-*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -249,7 +246,7 @@ static HippoPlaybackPlugin g_uade_plugin = {
 	uade_close,
 	uade_read_data,
 	uade_plugin_seek,
-	NULL,
+	uade_metadata,
 	NULL,
 	NULL,
 };

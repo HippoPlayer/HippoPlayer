@@ -18,6 +18,7 @@ void TFMXQuit();
 
 /* Per-module info */
 void tfmx_fill_module_info(char *textBuffer);
+void tfmx_fill_text_info(char* text_buffer);
 int TFMXGetSubSongs();
 
 /* TFMX player settings read/write */

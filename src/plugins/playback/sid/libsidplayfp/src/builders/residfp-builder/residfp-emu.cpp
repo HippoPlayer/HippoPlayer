@@ -233,11 +233,13 @@ void ReSIDfp::clock()
     m_accessClk += cycles;
     m_bufferpos += m_sid.clock(cycles, m_buffer+m_bufferpos);
 
+    /*
     for (int i = 0; i < 3; ++i) {
         unsigned int freq = m_sid.voice[i].get()->wave()->freq;
         printf("%s ", get_note_from_freq(freq));
     }
     printf("\n");
+    */
 
     //double clock = double(m_accessClk);
     //double PAL = 985248.0;

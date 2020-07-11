@@ -49,7 +49,10 @@ public:
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
     bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex());
     void update_index(const HippoSelectSong* select_song);
-    void add_entry(const HippoUrlEntry* msg);
+
+    void begin_insert(int index, int count);
+    void insert_entry(const HippoUrlEntry* msg);
+    void end_insert();
 
     /*
     inline void add_entry(QString title, QString duration, QString description) {
@@ -69,7 +72,10 @@ private:
     // TODO: Not using hardcoded value
     float m_default_length = 5 * 60.0f;
 
+    int m_insert_index = 0;
+    std::vector<PlaylistEntry> m_temp_insert;
+
     // I really don't like to have this here but will do for now
     HippoCore* m_core = nullptr;
-    QVector<PlaylistEntry> m_entries;
+    std::vector<PlaylistEntry> m_entries;
 };

@@ -120,7 +120,14 @@ extern int HippoCore_load() {
 	const char* core_name = "hippo_core.dll";
 #else
 	// temp temp
+#if defined(HIPPO_DEBUG)
 	const char* core_name = "t2-output/linux-gcc-debug-default/libhippo_core.so";
+#elif defined(HIPPO_RELEASE)
+	const char* core_name = "t2-output/linux-gcc-release-default/libhippo_core.so";
+#else
+#error "unsupported config"
+#endif
+
 #endif
 
 	void* core_handle = dlopen(core_name, RTLD_NOW);

@@ -26,7 +26,7 @@ pub struct HippoPlaybackPluginFFI {
     pub destroy: unsafe extern "C" fn(user_data: *mut c_void) -> i32,
     pub event: Option<unsafe extern "C" fn(user_data: *mut c_void, data: *const u8, len: i32)>,
 
-    pub open: unsafe extern "C" fn(user_data: *mut c_void, buffer: *const c_char) -> i32,
+    pub open: unsafe extern "C" fn(user_data: *mut c_void, buffer: *const c_char, subsong: i32) -> i32,
     pub close: unsafe extern "C" fn(user_data: *mut c_void) -> i32,
     pub read_data: unsafe extern "C" fn(
         user_data: *mut c_void,

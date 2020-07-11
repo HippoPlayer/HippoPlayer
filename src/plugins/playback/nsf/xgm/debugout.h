@@ -35,4 +35,7 @@ namespace xgm
 #endif
 #endif
 
+#undef DEBUG_OUT
+#define DEBUG_OUT(...)
+
 #endif

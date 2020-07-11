@@ -7,6 +7,28 @@
 #include <silentopl.h>
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void get_file_stem(char* dest, const char* path) {
+    const char* end_path = nullptr;
+
+	for(size_t i = strlen(path) - 1;  i > 0; i--) {
+		if (path[i] == '/') {
+            end_path = &path[i+1];
+            break;
+		}
+    }
+
+    strcpy(dest, end_path);
+
+    for(size_t i = strlen(dest) - 1;  i > 0; i--) {
+        if (dest[i] == '.') {
+            dest[i] = 0;
+            break;
+        }
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // This is a adplug plugin used as a reference and not inteded to do anything
 
 struct AdplugPlugin {
@@ -26,12 +48,9 @@ static const char* adplug_supported_extensions() {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 enum HippoProbeResult adplug_probe_can_play(const uint8_t* data, uint32_t data_size, const char* filename, uint64_t total_size) {
-    printf("adplug_probe_can_play\n");
     // TODO: Provide provide custom FILE api so we can read from memory
     CSilentopl silent;
     CPlayer* p = CAdPlug::factory(filename, &silent);
-
-    printf("player %p\n", p);
 
     if (!p) {
         return HippoProbeResult_Unsupported;
@@ -50,7 +69,7 @@ static void* adplug_create(const struct HippoServiceAPI* services) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int adplug_open(void* user_data, const char* url) {
+static int adplug_open(void* user_data, const char* url, int subsong) {
 	AdplugPlugin* plugin = (AdplugPlugin*)user_data;
 
     // TODO: File io api
@@ -59,6 +78,8 @@ static int adplug_open(void* user_data, const char* url) {
     if (!plugin->player) {
         return 0;
     }
+
+    plugin->player->rewind(subsong);
 
 	return 1;
 }
@@ -152,18 +173,39 @@ static int adplug_metadata(const char* url, const HippoServiceAPI* service_api) 
     const HippoMetadataAPI* metadata_api = HippoServiceAPI_get_metadata_api(service_api, HIPPO_METADATA_API_VERSION);
     HippoMetadataId index = HippoMetadata_create_url(metadata_api, url);
 
-    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_TitleTag, p->gettitle().c_str());
+    char title[4096] = { 0 };
+
+    const char* meta_title = p->gettitle().c_str();
+
+    // make sure the title actually conists of some chars
+    if (strlen(meta_title) < 2) {
+        get_file_stem(title, url);
+    } else {
+        strcpy(title, meta_title);
+    }
+
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_TitleTag, title);
     HippoMetadata_set_tag(metadata_api, index, HippoMetadata_SongTypeTag, p->gettype().c_str());
     HippoMetadata_set_tag(metadata_api, index, HippoMetadata_ArtistTag, p->getauthor().c_str());
     HippoMetadata_set_tag(metadata_api, index, HippoMetadata_MessageTag, p->getdesc().c_str());
 
-    // TODO: Sub-song support
     // TODO: This function is quite heavy (it will play the song to the end to figure out the length) maybe
     //       We should do this async instead and update the length later?
     HippoMetadata_set_tag_f64(metadata_api, index, HippoMetadata_LengthTag, p->songlength() / 1000);
 
 	for (int i = 0, c = p->getinstruments(); i < c; ++i) {
     	HippoMetadata_add_instrument(metadata_api, index, p->getinstrument(i).c_str());
+	}
+
+	const int subsongs_count = p->getsubsongs();
+
+	if (subsongs_count > 1) {
+        for (int i = 0; i < subsongs_count; ++i) {
+            char subsong_name[1024] = { 0 };
+	        auto len = p->songlength(i);
+            sprintf(subsong_name, "%s (%d/%d)", title, i + 1, subsongs_count);
+            HippoMetadata_add_subsong(metadata_api, index, i, subsong_name, len / 1000);
+        }
 	}
 
 	return 1;

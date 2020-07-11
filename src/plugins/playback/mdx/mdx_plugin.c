@@ -14,10 +14,24 @@
 char* sj2utf8(const char* input);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static char* get_dirname(const char* src, char* dir_output) {
+	int len = (int)strlen(src);
+
+	for (int i = len - 1; i != 0; --i) {
+		if (src[i] == '/' || src[i] == '\\') {
+			strncpy(dir_output, src, i);
+			return dir_output;
+		}
+	}
+
+	return dir_output;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // This is a mdx_plugin plugin used as a reference and not inteded to do anything
 
 typedef struct MDXPlugin {
-	char title[4096];
 	t_mdxmini mdx_tune;
 } MDXPlugin;
 
@@ -26,36 +40,6 @@ typedef struct MDXPlugin {
 static const char* mdx_plugin_supported_extensions() {
 	return "mdx";
 }
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-const char* getFileNameFromPath(const char* path)
-{
-   for(size_t i = strlen(path) - 1;  i > 0; i--)
-   {
-      if (path[i] == '/')
-      {
-         return &path[i+1];
-      }
-   }
-
-   return path;
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/*
-static const char* mdx_plugin_track_info(void* user_data) {
-	MDXPlugin* plugin = (MDXPlugin*)user_data;
-	return plugin->title;
-
-	// Not working correct so using filename for now
-
-	//mdx_get_title(&plugin->mdx_tune, temp_title);
-	//return sj2utf8(temp_title);
-}
-*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // I haven't found any way to probe the MDX file so have to do with extension compare :/
@@ -72,6 +56,7 @@ enum HippoProbeResult mdx_plugin_probe_can_play(const uint8_t* data, uint32_t da
 	return HippoProbeResult_Unsupported;
 }
 
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void* mdx_plugin_create(const struct HippoServiceAPI* services) {
@@ -85,31 +70,16 @@ static void* mdx_plugin_create(const struct HippoServiceAPI* services) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static char* get_dirname(const char* src, char* dir_output)
-{
-	int len = (int)strlen(src);
-
-	for (int i = len - 1; i != 0; --i) {
-		if (src[i] == '/' || src[i] == '\\') {
-			strncpy(dir_output, src, i);
-			return dir_output;
-		}
-	}
-
-	return dir_output;
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static int mdx_plugin_open(void* user_data, const char* buffer) {
+static int mdx_plugin_open(void* user_data, const char* buffer, int subsong) {
 	char dir_name[4096];
 	MDXPlugin* plugin = (MDXPlugin*)user_data;
 
+	(void)subsong;
+
 	get_dirname(buffer, dir_name);
 
-	strcpy(plugin->title, getFileNameFromPath(buffer));
-
 	if (mdx_open(&plugin->mdx_tune, (char*)buffer, dir_name) >= 0) {
+		printf("1 return");
 		return 1;
 	}
 
@@ -122,7 +92,6 @@ static int mdx_plugin_close(void* user_data) {
 	MDXPlugin* plugin = (MDXPlugin*)user_data;
 
 	mdx_close(&plugin->mdx_tune);
-
 	memset(&plugin->mdx_tune, 0, sizeof(t_mdxmini));
 
 	return 0;
@@ -163,20 +132,39 @@ static int mdx_plugin_plugin_seek(void* user_data, int ms) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/*
-static int mdx_plugin_length(void* user_data) {
-	MDXPlugin* plugin = (MDXPlugin*)user_data;
-	(void)plugin;
+static int mdx_metadata(const char* filename, const HippoServiceAPI* service_api) {
+	// TODO: Max buffer handling
+	char title[1024];
+	char dir_name[4096];
+	t_mdxmini mdx_tune;
 
-	int len = mdx_get_length(&plugin->mdx_tune);
+	printf("mdx meta\n");
 
-	if (len > 0) {
-		return len;
+    const HippoMetadataAPI* metadata_api = HippoServiceAPI_get_metadata_api(service_api, HIPPO_METADATA_API_VERSION);
+
+	get_dirname(filename, dir_name);
+
+	// TODO: Look into using file apis but support needs to be added to mdx
+
+	if (mdx_open(&mdx_tune, (char*)filename, dir_name) < 0) {
+		return -1;
 	}
 
-	return -10;
+	printf("mdx meta 2\n");
+
+	mdx_get_title(&mdx_tune, title);
+
+	printf("title %s\n", title);
+
+    HippoMetadataId index = HippoMetadata_create_url(metadata_api, filename);
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_TitleTag, title);
+    HippoMetadata_set_tag_f64(metadata_api, index, HippoMetadata_LengthTag, (float)mdx_get_length(&mdx_tune));
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_SongTypeTag, "MDX (X68000 Music)");
+
+    mdx_close(&mdx_tune);
+
+	return 0;
 }
-*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -201,7 +189,7 @@ static HippoPlaybackPlugin g_mdx_plugin = {
 	mdx_plugin_close,
 	mdx_plugin_read_data,
 	mdx_plugin_plugin_seek,
-	NULL,
+	mdx_metadata,
 	NULL,
 	NULL,
 };

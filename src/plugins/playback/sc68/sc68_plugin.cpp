@@ -18,6 +18,28 @@ typedef struct Sc68Plugin {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void get_file_stem(char* dest, const char* path) {
+    const char* end_path = nullptr;
+
+	for(size_t i = strlen(path) - 1;  i > 0; i--) {
+		if (path[i] == '/') {
+            end_path = &path[i+1];
+            break;
+		}
+    }
+
+    strcpy(dest, end_path);
+
+    for(size_t i = strlen(dest) - 1;  i > 0; i--) {
+        if (dest[i] == '.') {
+            dest[i] = 0;
+            break;
+        }
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static const char* sc68_plugin_supported_extensions() {
 	return "sc68,snd,sndh";
 }
@@ -102,16 +124,43 @@ static int sc68_plugin_metadata(const char* filename, const HippoServiceAPI* ser
     int length = info.trk.time_ms;
     (void)ret;
 
+    int subsong_count = info.tracks;
+
+    char title[4096] = { 0 };
+
+    if (!info.title) {
+        get_file_stem(title, filename);
+    } else {
+        strcpy(title, info.title);
+    }
+
     HippoMetadataId index = HippoMetadata_create_url(metadata_api, filename);
-    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_TitleTag, info.title ? info.title : ""); 
-    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_SongTypeTag, info.format); 
-    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_AuthoringToolTag, info.converter); 
-    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_ArtistTag, info.artist); 
-    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_DateTag, info.year); 
-    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_MessageTag, info.ripper); 
-    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_AlbumTag, info.album); 
-    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_GenreTag, info.genre); 
-    HippoMetadata_set_tag_f64(metadata_api, index, HippoMetadata_LengthTag, length / 1000); 
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_TitleTag, title);
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_SongTypeTag, info.format);
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_AuthoringToolTag, info.converter);
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_ArtistTag, info.artist);
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_DateTag, info.year);
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_MessageTag, info.ripper);
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_AlbumTag, info.album);
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_GenreTag, info.genre);
+    HippoMetadata_set_tag_f64(metadata_api, index, HippoMetadata_LengthTag, length / 1000);
+
+    if (subsong_count > 1) {
+        for (int i = 0; i < subsong_count; ++i) {
+            char subsong_name[1024] = { 0 };
+            sc68_music_info_t info = { 0 };
+
+            int ret = sc68_music_info(inst, &info, i + 1, 0);
+
+            if (ret && info.title) {
+                sprintf(subsong_name, "%s - %s (%d/%d)", title, info.title, i + 1, subsong_count);
+            } else {
+                sprintf(subsong_name, "%s (%d/%d)", title, i + 1, subsong_count);
+            }
+
+            HippoMetadata_add_subsong(metadata_api, index, i, subsong_name, info.trk.time_ms / 1000);
+        }
+    }
 
     sc68_destroy(inst);
 
@@ -148,7 +197,7 @@ static void* sc68_plugin_create(const struct HippoServiceAPI* service_api) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int sc68_plugin_open(void* user_data, const char* buffer) {
+static int sc68_plugin_open(void* user_data, const char* buffer, int subsong) {
     uint64_t size = 0;
     void* load_data = nullptr;
 	Sc68Plugin* data = (Sc68Plugin*)user_data;
@@ -170,6 +219,8 @@ static int sc68_plugin_open(void* user_data, const char* buffer) {
         printf("sc68_plugin: Failed process\n");
         return -1;
     }
+
+    sc68_play(data->instance, subsong, 0);
 
 	return 0;
 }

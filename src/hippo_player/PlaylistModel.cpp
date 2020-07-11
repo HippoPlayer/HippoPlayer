@@ -304,7 +304,7 @@ void PlaylistModel::update_index(const HippoSelectSong* select_song_msg) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void PlaylistModel::add_entry(const HippoUrlEntry* select_song_msg) {
+void PlaylistModel::insert_entry(const HippoUrlEntry* select_song_msg) {
     auto desc = select_song_msg->description();
     QString duration;
 
@@ -318,14 +318,28 @@ void PlaylistModel::add_entry(const HippoUrlEntry* select_song_msg) {
     }
 
     PlaylistEntry entry = { title, duration, description };
-    m_entries.push_back(entry);
+    m_temp_insert.push_back(entry);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void PlaylistModel::begin_insert(int index, int count) {
+    m_insert_index = index;
+    m_temp_insert.clear();
+    (void)count;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void PlaylistModel::end_insert() {
+    m_entries.insert(m_entries.begin() + m_insert_index,
+                     m_temp_insert.begin(), m_temp_insert.end());
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool PlaylistModel::removeRows(int row, int count, const QModelIndex&) {
-    printf("remove %d (count %d)\n", row, count);
-    m_entries.remove(row, count);
+    m_entries.erase(m_entries.begin() + row, m_entries.begin() + row + count);
     hippo_playlist_remove_entry(m_core, row);
 
     return true;

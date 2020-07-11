@@ -488,10 +488,13 @@ static int read_header(vfs68_t * const is, unsigned int * hptr)
     if (have = ensure_header(is, id, have, sndh_req, hptr), !have) {
       return -1;
     }
+    /*
+    // skipping gz for now
     if (gzip_is_magic(id)) {
       TRACE68(file68_cat,"file68: found %s signature\n","GZIP");
       return -gzip_cc;
-    } else if (ice_is_magic(id)) {
+    */
+    if (ice_is_magic(id)) {
       TRACE68(file68_cat,"file68: found %s signature\n","ICE!");
       return -ice_cc;
     } else {

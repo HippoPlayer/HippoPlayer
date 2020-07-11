@@ -61,10 +61,8 @@ CPlayer *Ca2mLoader::factory(Copl *newopl)
 
 bool Ca2mLoader::load(const std::string &filename, const CFileProvider &fp)
 {
-  printf("probe\n");
   binistream *f = fp.open(filename);
   if(!f) {
-    printf("%s:%d\n", __FILE__, __LINE__);
     return false;
   }
   char id[10];
@@ -88,7 +86,6 @@ bool Ca2mLoader::load(const std::string &filename, const CFileProvider &fp)
       (version != 1 && version != 5 && version != 4 && version != 8) ||
       numpats > 64) {
     fp.close(f);
-    printf("%s:%d ver %d num pat %d\n", __FILE__, __LINE__, version, numpats);
     return false;
   }
 

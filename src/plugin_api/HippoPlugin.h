@@ -108,6 +108,7 @@ typedef struct HippoMetadataAPI {
     void (*add_subsong)(
         struct HippoMetadataAPIPrivData* priv_data,
         HippoMetadataId parent_id,
+        int index,
         const char* name,
         float length);
 
@@ -156,7 +157,7 @@ typedef struct HippoMetadataAPI {
 #define HippoMetadata_set_tag(api, id, tag, data) api->set_tag(api->priv_data, id, tag, data)
 #define HippoMetadata_set_tag_f64(api, id, tag, data) api->set_tag_f64(api->priv_data, id, tag, data)
 
-#define HippoMetadata_add_subsong(api, url, name, len) api->add_subsong(api->priv_data, url, name, len)
+#define HippoMetadata_add_subsong(api, url, index, name, len) api->add_subsong(api->priv_data, url, index, name, len)
 #define HippoMetadata_add_sample(api, url, text) api->add_sample(api->priv_data, url, text)
 #define HippoMetadata_add_instrument(api, url, text) api->add_instrument(api->priv_data, url, text)
 
@@ -174,6 +175,8 @@ typedef enum HippoSettingResult {
 	HippoSettingsResult_KeyNotFound = 2,
 	HippoSettingsResult_InvalidType = 3,
 } HippoSettingResult;
+
+struct HippoMessageAPI;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -306,7 +309,7 @@ typedef struct HippoPlaybackPlugin {
 	void* (*create)(const HippoServiceAPI* services);
 	int (*destroy)(void* user_data);
 	void (*event)(void* user_data, const unsigned char* data, int len);
-	int (*open)(void* user_data, const char* buffer);
+	int (*open)(void* user_data, const char* buffer, int subsong);
 	int (*close)(void* user_data);
 	int (*read_data)(void* user_data, void* dest, uint32_t max_sample_count);
 	int (*seek)(void* user_data, int ms);

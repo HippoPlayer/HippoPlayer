@@ -30,7 +30,19 @@ impl HippoPlayback {
         plugin_service: &PluginService,
         filename: &str,
     ) -> Option<(HippoPlayback, Instance)> {
-        let c_filename = CString::new(filename).unwrap();
+        let c_filename;
+        let subsong_index;
+        // Find subsong separator
+        // TODO: store subsong index instead?
+        if let Some(separator) = filename.find('|') {
+            // create filename without separator
+            c_filename = CString::new(&filename[..separator]).unwrap();
+            subsong_index = *&filename[separator + 1..].parse::<i32>().unwrap();
+        } else {
+            c_filename = CString::new(filename).unwrap();
+            subsong_index = 0i32;
+        }
+
         let user_data =
             unsafe { ((plugin.plugin_funcs).create)(plugin_service.get_c_service_api()) } as u64;
         let ptr_user_data = user_data as *mut c_void;
@@ -38,7 +50,7 @@ impl HippoPlayback {
         //let frame_size = (((plugin.plugin_funcs).frame_size)(ptr_user_data)) as usize;
         // TODO: Verify that state is ok
         let _open_state =
-            unsafe { ((plugin.plugin_funcs).open)(ptr_user_data, c_filename.as_ptr()) };
+            unsafe { ((plugin.plugin_funcs).open)(ptr_user_data, c_filename.as_ptr(), subsong_index) };
 
         /*
         if open_state < 0 {
