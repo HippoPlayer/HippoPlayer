@@ -8,16 +8,25 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const char* get_file_name_from_path(const char* path) {
+void get_file_stem(char* dest, const char* path) {
+    const char* end_path = nullptr;
+
 	for(size_t i = strlen(path) - 1;  i > 0; i--) {
 		if (path[i] == '/') {
-            return &path[i+1];
+            end_path = &path[i+1];
+            break;
 		}
-	}
+    }
 
-   return path;
+    strcpy(dest, end_path);
+
+    for(size_t i = strlen(dest) - 1;  i > 0; i--) {
+        if (dest[i] == '.') {
+            dest[i] = 0;
+            break;
+        }
+    }
 }
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // This is a adplug plugin used as a reference and not inteded to do anything
@@ -170,15 +179,7 @@ static int adplug_metadata(const char* url, const HippoServiceAPI* service_api) 
 
     // make sure the title actually conists of some chars
     if (strlen(meta_title) < 2) {
-        const char* filename = get_file_name_from_path(url);
-        strcpy(title, filename);
-
-        for(size_t i = strlen(title) - 1;  i > 0; i--) {
-            if (title[i] == '.') {
-                title[i] = 0;
-                break;
-            }
-        }
+        get_file_stem(title, url);
     } else {
         strcpy(title, meta_title);
     }
