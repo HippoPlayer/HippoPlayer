@@ -13,7 +13,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const char* get_file_name_from_path(const char* path) {
+static const char* get_file_name_from_path(const char* path) {
 	for(size_t i = strlen(path) - 1;  i > 0; i--) {
 		if (path[i] == '/') {
 			// if file starts with "mdat." we return without the name
