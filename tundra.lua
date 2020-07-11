@@ -4,9 +4,9 @@ local native = require('tundra.native')
 
 local mac_opts = {
     "-Wall", "-I.",
-    { "-O0", "-g"; Config = "*-*-debug" },
-    { "-O0", "-fsanitize=address", "-fno-omit-frame-pointer", "-g"; Config = "*-*-debug-asan" },
-    { "-O3", "-g"; Config = "*-*-release" },
+    { "-DHIPPO_DEBUG", "-O0", "-g"; Config = "*-*-debug" },
+    { "-DHIPPO_DEBUG", "-O0", "-fsanitize=address", "-fno-omit-frame-pointer", "-g"; Config = "*-*-debug-asan" },
+    { "-DHIPPO_RELEASE", "-O3", "-g"; Config = "*-*-release" },
 }
 
 -----------------------------------------------------------------------------------------------------------------------
@@ -75,8 +75,8 @@ local gcc_opts = {
     "-DOBJECT_DIR=\\\"$(OBJECTDIR)\\\"",
     "-Wall",
     "-fPIC",
-    { "-O0", "-g"; Config = "*-*-debug" },
-    { "-O3", "-g"; Config = "*-*-release" },
+    { "-DHIPPO_DEBUG", "-O0", "-g"; Config = "*-*-debug" },
+    { "-DHIPPO_RELEASE", "-O3", "-g"; Config = "*-*-release" },
 }
 
 local gcc_env = {
@@ -115,8 +115,8 @@ local gcc_env = {
 local win64_opts = {
     "/EHsc", "/FS", "/MT", "/W3", "/I.", "/DUNICODE", "/D_UNICODE", "/DWIN32", "/D_CRT_SECURE_NO_WARNINGS",
     "\"/DOBJECT_DIR=$(OBJECTDIR:#)\"",
-    { "/Od"; Config = "*-*-debug" },
-    { "/O2"; Config = "*-*-release" },
+    { "/DHIPPO_DEBUG","/Od"; Config = "*-*-debug" },
+    { "/DHIPPO_RELEASE", "/O2"; Config = "*-*-release" },
 }
 
 local win64 = {

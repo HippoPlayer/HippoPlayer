@@ -132,10 +132,19 @@ impl SongDb {
     }
 
     pub fn add_instrument(&self, url_id: u64, instrument_text: &str) -> Result<(), Error> {
-        let t = format!(
-            "INSERT into instruments (url_id, text) VALUES({}, \"{}\")",
-            url_id, instrument_text
-        );
+    	let t;
+    	if instrument_text.contains('"') {
+			t = format!(
+				"INSERT into instruments (url_id, text) VALUES({}, '{}')",
+				url_id, instrument_text
+			);
+    	} else {
+			t = format!(
+				"INSERT into instruments (url_id, text) VALUES({}, \"{}\")",
+				url_id, instrument_text
+			);
+    	}
+
         self.connection.execute(t)?;
         Ok(())
     }
