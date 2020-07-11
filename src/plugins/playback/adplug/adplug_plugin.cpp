@@ -7,6 +7,19 @@
 #include <silentopl.h>
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static const char* get_file_name_from_path(const char* path) {
+	for(size_t i = strlen(path) - 1;  i > 0; i--) {
+		if (path[i] == '/') {
+            return &path[i+1];
+		}
+	}
+
+   return path;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // This is a adplug plugin used as a reference and not inteded to do anything
 
 struct AdplugPlugin {
@@ -56,6 +69,8 @@ static int adplug_open(void* user_data, const char* url, int subsong) {
     if (!plugin->player) {
         return 0;
     }
+
+    plugin->player->rewind(subsong);
 
 	return 1;
 }
@@ -149,18 +164,47 @@ static int adplug_metadata(const char* url, const HippoServiceAPI* service_api) 
     const HippoMetadataAPI* metadata_api = HippoServiceAPI_get_metadata_api(service_api, HIPPO_METADATA_API_VERSION);
     HippoMetadataId index = HippoMetadata_create_url(metadata_api, url);
 
-    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_TitleTag, p->gettitle().c_str());
+    char title[4096] = { 0 };
+
+    const char* meta_title = p->gettitle().c_str();
+
+    // make sure the title actually conists of some chars
+    if (strlen(meta_title) < 2) {
+        const char* filename = get_file_name_from_path(url);
+        strcpy(title, filename);
+
+        for(size_t i = strlen(title) - 1;  i > 0; i--) {
+            if (title[i] == '.') {
+                title[i] = 0;
+                break;
+            }
+        }
+    } else {
+        strcpy(title, meta_title);
+    }
+
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_TitleTag, title);
     HippoMetadata_set_tag(metadata_api, index, HippoMetadata_SongTypeTag, p->gettype().c_str());
     HippoMetadata_set_tag(metadata_api, index, HippoMetadata_ArtistTag, p->getauthor().c_str());
     HippoMetadata_set_tag(metadata_api, index, HippoMetadata_MessageTag, p->getdesc().c_str());
 
-    // TODO: Sub-song support
     // TODO: This function is quite heavy (it will play the song to the end to figure out the length) maybe
     //       We should do this async instead and update the length later?
     HippoMetadata_set_tag_f64(metadata_api, index, HippoMetadata_LengthTag, p->songlength() / 1000);
 
 	for (int i = 0, c = p->getinstruments(); i < c; ++i) {
     	HippoMetadata_add_instrument(metadata_api, index, p->getinstrument(i).c_str());
+	}
+
+	const int subsongs_count = p->getsubsongs();
+
+	if (subsongs_count > 1) {
+        for (int i = 0; i < subsongs_count; ++i) {
+            char subsong_name[1024] = { 0 };
+	        auto len = p->songlength(i);
+            sprintf(subsong_name, "%s (%d/%d)", title, i + 1, subsongs_count);
+            HippoMetadata_add_subsong(metadata_api, index, i, subsong_name, len / 1000);
+        }
 	}
 
 	return 1;
