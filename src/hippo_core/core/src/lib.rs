@@ -70,6 +70,9 @@ impl HippoCore {
 
         for plugin in &self.plugins.decoder_plugins {
             if plugin.probe_can_play(&buffer, buffer_read_size, &url_no_sub, metadata.len()) {
+            	// we need stop before before doing metadata check because of UADE threads :(
+                self.audio.stop();
+
                 if !song_db.is_present(url) {
                     song_db.begin_transaction();
                     plugin.get_metadata(&url, &self.plugin_service);
@@ -77,7 +80,6 @@ impl HippoCore {
                 }
 
                 // This is a bit hacky right now but will do the trick
-                self.audio.stop();
                 self.audio = HippoAudio::new();
                 self.is_playing = true;
 
