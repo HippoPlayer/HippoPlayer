@@ -176,6 +176,8 @@ typedef enum HippoSettingResult {
 	HippoSettingsResult_InvalidType = 3,
 } HippoSettingResult;
 
+struct HippoMessageAPI;
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef struct HippoSettingsAPI {

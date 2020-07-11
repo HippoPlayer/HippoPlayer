@@ -233,9 +233,15 @@ impl SongDb {
     }
 
     pub fn begin_get_all(&mut self, url: &str) -> u32 {
-        let url_id = xxh3::hash(url.as_bytes());
+        let url_id;
 
-        let query = format!("SELECT * FROM urls WHERE pk=={}", url_id);
+        if let Some(subsong_sep) = url.find('|') {
+        	url_id = xxh3::hash(&url[..subsong_sep].as_bytes());
+        } else {
+        	url_id = xxh3::hash(url.as_bytes());
+        }
+
+		let query = format!("SELECT * FROM urls WHERE pk=={}", url_id);
         let mut statement = self.connection.prepare(query).unwrap();
         let count = statement.names().len();
         let mut total_count = 0;

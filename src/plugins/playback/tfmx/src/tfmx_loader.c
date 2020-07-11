@@ -430,3 +430,10 @@ void tfmx_fill_module_info(char* t) {
         }
     }
 }
+
+
+void tfmx_fill_text_info(char* t) {
+    for (int i = 0; i < 6; ++i) {
+        t += sprintf(t, "%40.40s\n", mdat_header.text[i]);
+	}
+}

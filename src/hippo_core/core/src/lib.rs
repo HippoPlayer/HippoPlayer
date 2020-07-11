@@ -176,19 +176,15 @@ impl HippoCore {
         // If current song has been updated with messages above we try starting playing the new one
 
         if self.playlist.is_current_song_updated() {
-            self.playlist.dump_first();
             let new_song = self.playlist.get_current_song();
 
             if let Some(song) = new_song {
                 let songname = self.play_file(&song.0, song.1);
                 self.current_song_time = 5.0 * 60.0;
-                self.playlist.dump_first();
 
                 let song_db = self.plugin_service.get_song_db();
-                self.playlist.dump_first();
 
                 if self.plugin_service.get_song_db().is_present(&song.0) {
-                    self.playlist.dump_first();
                     self.current_song_time = song_db.get_tag_f64("length", &songname).unwrap() as f32;
                     self.playlist.update_current_entry(song_db, &songname);
                     self.start_time = Instant::now();

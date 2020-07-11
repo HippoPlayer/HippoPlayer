@@ -339,7 +339,6 @@ void PlaylistModel::end_insert() {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool PlaylistModel::removeRows(int row, int count, const QModelIndex&) {
-    printf("remove %d (count %d)\n", row, count);
     m_entries.erase(m_entries.begin() + row, m_entries.begin() + row + count);
     hippo_playlist_remove_entry(m_core, row);
 

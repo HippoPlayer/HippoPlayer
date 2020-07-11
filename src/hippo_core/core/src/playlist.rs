@@ -103,7 +103,6 @@ impl Playlist {
 
         song_db.get_tag("title", url).map(|title| {
             if title != "" {
-                println!("updated current entry to {} - {}", title, url);
                 entry.title = title;
             }
         });
@@ -241,11 +240,22 @@ impl Playlist {
                     // Assume files now and if we can't create a file from the path we drop it
                     let filename = Path::new(&file);
                     if let Some(base) = filename.file_stem() {
+                        // this is a bit of hack for mod and mdat files that may start with mod. or mdat.
+                        let mut title = filename.file_name().unwrap().to_string_lossy().to_string();
+
+                        if title.starts_with("mdat.") {
+                            title = title[5..].to_owned();
+                        } else if title.starts_with("mod.") {
+                            title = title[4..].to_owned();
+                        } else {
+                            title = base.to_string_lossy().to_string();
+                        }
+
                         self.entries.push(PlaylistEntry {
                             path: file.to_owned(),
-                            title: base.to_string_lossy().to_string(),
                             song_type: String::new(),
                             duration: 0.0,
+                            title,
                         });
                     }
                 }
@@ -326,12 +336,6 @@ impl Playlist {
         let new_song = self.new_song;
         self.new_song = false;
         new_song
-    }
-
-    pub fn dump_first(&self) {
-        if !self.entries.is_empty() {
-            println!("first {}", self.entries[0].path);
-        }
     }
 
     ///

@@ -13,38 +13,26 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const char* getFileNameFromPath(const char* path) {
-   for(size_t i = strlen(path) - 1;  i > 0; i--) {
-      if (path[i] == '/') {
-         return &path[i+1];
-      }
-   }
+const char* get_file_name_from_path(const char* path) {
+	for(size_t i = strlen(path) - 1;  i > 0; i--) {
+		if (path[i] == '/') {
+			// if file starts with "mdat." we return without the name
+			if (memcmp(&path[i+1], "mdat.", 5) == 0) {
+				return &path[i+6];
+			} else {
+				return &path[i+1];
+			}
+		}
+	}
 
    return path;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-typedef struct TfmxReplayerData
-{
+typedef struct TfmxReplayerData {
 	void* tune;
-	const char* name;
-
 } TfmxReplayerData;
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/*
-static const char* tfmx_track_info(void* user_data) {
-	TfmxReplayerData* plugin = (TfmxReplayerData*)user_data;
-
-	if (!plugin || !plugin->name) {
-		return "TFMX: <unknown>";
-	}
-
-	return plugin->name;
-}
-*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -88,14 +76,13 @@ static int tfmx_destroy(void* user_data) {
 
 static int tfmx_open(void* user_data, const char* buffer, int subsong) {
 	TfmxReplayerData* plugin = (TfmxReplayerData*)user_data;
+	(void)plugin;
 
 	if (LoadTFMXFile((char*)buffer) != 0)
 	    return -1;
 
 	TFMXSetSubSong(subsong);
     TFMXRewind();
-
-    plugin->name = strdup(getFileNameFromPath(buffer));
 
 	return 0;
 }
@@ -138,17 +125,38 @@ static int tfmx_seek(void* user_data, int ms) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/*
-static int tfmx_frame_size(void* user_data) {
-    return tfmx_get_block_size() / 2;
-}
+static int tfmx_metadata(const char* url, const HippoServiceAPI* service_api) {
+	// TODO: Fix that tfmx can load from a buffer, always from file now because of the lib code
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    const HippoMetadataAPI* metadata_api = HippoServiceAPI_get_metadata_api(service_api, HIPPO_METADATA_API_VERSION);
 
-static int tfmx_length(void* user_data) {
-	return -10;
+	if (LoadTFMXFile((char*)url) != 0)
+	    return -1;
+
+	const char* title = get_file_name_from_path(url);
+
+    HippoMetadataId index = HippoMetadata_create_url(metadata_api, url);
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_TitleTag, title);
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_SongTypeTag, "TFMX");
+    HippoMetadata_set_tag_f64(metadata_api, index, HippoMetadata_LengthTag, 0.0f);
+
+	// text info data for TFMX is 40 * 6 but * 2 for some saftey
+	char text_info[(40 * 6) * 2] = { 0 };
+	tfmx_fill_text_info(text_info);
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_MessageTag, text_info);
+
+	int subsongs_count = TFMXGetSubSongs();
+
+	if (subsongs_count > 1) {
+		for (int i = 0; i < subsongs_count; ++i) {
+			char subsong_name[1024] = { 0 };
+			sprintf(subsong_name, "%s (%d/%d)", title, i + 1, subsongs_count);
+			HippoMetadata_add_subsong(metadata_api, index, i, subsong_name, 0.0f);
+		}
+	}
+
+    return 0;
 }
-*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -173,7 +181,7 @@ static HippoPlaybackPlugin g_tfmx_plugin = {
 	tfmx_close,
 	tfmx_read_data,
 	tfmx_seek,
-	NULL,
+	tfmx_metadata,
 	NULL,
 	NULL,
 };
