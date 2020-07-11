@@ -62,17 +62,27 @@ static int nsf_metadata(const char* filename, const HippoServiceAPI* service_api
     }
 
     // Validate this is correct
-    int length = nsf.time_in_ms < 0 ? nsf.default_playtime : nsf.time_in_ms;
+    //int length = nsf.time_in_ms < 0 ? nsf.default_playtime : nsf.time_in_ms;
 
     HippoMetadataId index = HippoMetadata_create_url(metadata_api, filename);
     HippoMetadata_set_tag(metadata_api, index, HippoMetadata_TitleTag, nsf.title);
-    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_SongTypeTag, "NES Music");
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_SongTypeTag, "NES Sound Format");
     HippoMetadata_set_tag(metadata_api, index, HippoMetadata_ArtistTag, nsf.artist);
     HippoMetadata_set_tag(metadata_api, index, HippoMetadata_MessageTag, nsf.copyright);
     HippoMetadata_set_tag_f64(metadata_api, index, HippoMetadata_LengthTag, 0);
 
     // Make sure to free the buffer before we leave
     HippoIo_free_file_to_memory(io_api, data);
+
+    int subsongs_count = nsf.songs;
+
+    if (subsongs_count > 1) {
+        for (int i = 0; i < subsongs_count; ++i) {
+            char subsong_name[1024] = { 0 };
+            sprintf(subsong_name, "%s (%d/%d)", nsf.title, i + 1, subsongs_count);
+            HippoMetadata_add_subsong(metadata_api, index, i, subsong_name, 0.0f);
+        }
+    }
 
 	return 0;
 }
@@ -102,7 +112,7 @@ static int nsf_open(void* user_data, const char* buffer, int subsong) {
 
     // TODO: Proper error handling
     if (!data->nsf.Load((xgm::UINT8*)load_data, (int)size)) {
-        printf("failed load\n");
+        printf("nsf: failed load\n");
         return -1;
     }
 
@@ -110,17 +120,14 @@ static int nsf_open(void* user_data, const char* buffer, int subsong) {
     data->player.SetConfig(&data->config);
 
     if (!data->player.Load(&data->nsf)) {
-        printf("failed load 2\n");
-        printf("Error with player load\n");
+        printf("nsf: failed load 2\n");
         return -1;
     }
 
     data->player.SetPlayFreq(SAMPLE_RATE);
     data->player.SetChannels(CHANNELS);
-    data->player.SetSong(0);
+    data->player.SetSong(subsong);
     data->player.Reset();
-
-    printf("INit\n");
 
 	return 0;
 }
