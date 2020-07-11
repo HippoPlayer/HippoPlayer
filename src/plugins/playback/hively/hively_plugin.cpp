@@ -161,7 +161,8 @@ static int hively_metadata(const char* filename, const HippoServiceAPI* service_
     HippoMetadata_set_tag(metadata_api, index, HippoMetadata_AuthoringToolTag, tool);
     HippoMetadata_set_tag_f64(metadata_api, index, HippoMetadata_LengthTag, length);
 
-    for (int i = 0; i < tune->ht_InstrumentNr; ++i) {
+    // instruments starts from 1 in hively so skip 0
+    for (int i = 1; i < tune->ht_InstrumentNr; ++i) {
         HippoMetadata_add_instrument(metadata_api, index, tune->ht_Instruments[i].ins_Name);
 	}
 
