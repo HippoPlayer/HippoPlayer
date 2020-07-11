@@ -283,8 +283,6 @@ static int openmpt_metadata(const char* filename, const HippoServiceAPI* service
                 sprintf(subsong_name, "%s (%d/%d)", title, i + 1, subsong_count);
             }
 
-            printf("subsong name %s\n", subsong_name);
-
             mod.select_subsong(i);
             HippoMetadata_add_subsong(metadata_api, index, i, subsong_name, mod.get_duration_seconds());
 
