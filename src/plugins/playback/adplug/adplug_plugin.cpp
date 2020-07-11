@@ -26,12 +26,9 @@ static const char* adplug_supported_extensions() {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 enum HippoProbeResult adplug_probe_can_play(const uint8_t* data, uint32_t data_size, const char* filename, uint64_t total_size) {
-    printf("adplug_probe_can_play\n");
     // TODO: Provide provide custom FILE api so we can read from memory
     CSilentopl silent;
     CPlayer* p = CAdPlug::factory(filename, &silent);
-
-    printf("player %p\n", p);
 
     if (!p) {
         return HippoProbeResult_Unsupported;

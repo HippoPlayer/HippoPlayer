@@ -117,7 +117,6 @@ impl SongDb {
             "INSERT or IGNORE into sub_songs (url_id, sub_index, title, length) VALUES({}, {}, \"{}\", {})",
             url_id, index, name, length
         );
-        println!("add sub song {}", t);
         self.connection.execute(t)?;
         Ok(())
     }

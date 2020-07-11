@@ -87,7 +87,7 @@ namespace xgm
       nsf->nsfe_plst = NULL;
     }
 
-    nsf->DebugOut ();
+    //nsf->DebugOut ();
     Reload ();
     return true;
   }
@@ -361,7 +361,7 @@ void NSFPlayer::SetPlayFreq (double r)
     frame_render = (int)(rate)/60; // ‰‰‘tî•ñ‚ðXV‚·‚éŽüŠú
     apu_clock_rest = 0.0;
     cpu_clock_rest = 0.0;
-    printf("render rate %d\n", frame_render);
+    //printf("render rate %d\n", frame_render);
 
     int region = GetRegion(nsf->regn, nsf->regn_pref);
     switch (region)

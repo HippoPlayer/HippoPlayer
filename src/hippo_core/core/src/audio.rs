@@ -36,7 +36,6 @@ impl HippoPlayback {
         // TODO: store subsong index instead?
         if let Some(separator) = filename.find('|') {
             // create filename without separator
-            println!("creating subsong filename {}", &filename[..separator]);
             c_filename = CString::new(&filename[..separator]).unwrap();
             subsong_index = *&filename[separator + 1..].parse::<i32>().unwrap();
         } else {

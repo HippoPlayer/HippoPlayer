@@ -190,8 +190,6 @@ impl Playlist {
         let song_type = builder.create_string(&entry.song_type);
         let path = builder.create_string(&entry.path);
 
-        println!("current song message title {} index {}", entry.title, self.current_song);
-
         let song_desc = HippoSongDescription::create(
             &mut builder,
             &HippoSongDescriptionArgs {
