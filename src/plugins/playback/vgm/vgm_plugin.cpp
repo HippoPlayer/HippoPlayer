@@ -33,20 +33,54 @@ extern GD3_TAG VGMTag;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void get_file_stem(char* dest, const char* path) {
+    const char* end_path = nullptr;
+
+	for(size_t i = strlen(path) - 1;  i > 0; i--) {
+		if (path[i] == '/') {
+            end_path = &path[i+1];
+            break;
+		}
+    }
+
+    strcpy(dest, end_path);
+
+    for(size_t i = strlen(dest) - 1;  i > 0; i--) {
+        if (dest[i] == '.') {
+            dest[i] = 0;
+            break;
+        }
+    }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static bool has_init = false;
+
+static void init() {
+    /*
+    if (has_init) {
+        return;
+    }
+    */
+
+	VGMPlay_Init();
+	VGMPlay_Init2();
+
+	VGMMaxLoop = 2;
+	FadeTime = 5000;
+
+    has_init = true;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 struct VgmReplayerData {
 	char title[4096];
 	int has_data;
 	int length;
 };
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/*
-static const char* vgm_track_info(void* user_data) {
-	struct VgmReplayerData* user_data = (struct VgmReplayerData*)user_data;
-	return user_data->title;
-}
-*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -60,11 +94,7 @@ static void* vgm_create(const HippoServiceAPI* service_api) {
 	void* data = malloc(sizeof(struct VgmReplayerData));
 	memset(data, 0, sizeof(struct VgmReplayerData));
 
-	VGMPlay_Init();
-	VGMPlay_Init2();
-
-	VGMMaxLoop = 2;
-	FadeTime = 5000;
+	init();
 
 	return data;
 }
@@ -85,16 +115,11 @@ static int vgm_open(void* user_data, const char* buffer, int subsong) {
 	struct VgmReplayerData* replayer_data = (struct VgmReplayerData*)user_data;
 
 	if (!OpenVGMFile(buffer)) {
-		printf("Unable to open %s\n", buffer);
+		printf("vgm: Unable to open %s\n", buffer);
+		return -1;
 	}
 
 	PlayVGM();
-
-	if (VGMTag.strTrackNameE) {
-	    std::wstring_convert<std::codecvt_utf8<wchar_t>> utf8_conv;
-	    std::string utf8_name = utf8_conv.to_bytes(VGMTag.strTrackNameE);
-        strcpy(replayer_data->title, utf8_name.data());
-	}
 
     replayer_data->length = VGMHead.lngTotalSamples / (44100 / 2);
 	replayer_data->has_data = 1;
@@ -173,6 +198,87 @@ static void vgm_event(void* user_data, const unsigned char* data, int len) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+std::string get_string(wchar_t* text) {
+    if (!text) {
+        return std::string();
+    }
+
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> utf8_conv;
+    return utf8_conv.to_bytes(text);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::string get_tag(wchar_t* eng_text, wchar_t* jp_text) {
+    if (eng_text) {
+        return get_string(eng_text);
+    } else if (jp_text) {
+        return get_string(jp_text);
+    } else {
+        return std::string();
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void append_to_message(std::string& dest, const std::string& data, const char* tag) {
+    if (data == "") {
+        return;
+    }
+
+    dest += tag;
+    dest += data;
+    dest += "\n";
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static int vgm_metadata(const char* filename, const HippoServiceAPI* service_api) {
+    init();
+
+	PlayVGM();
+
+	auto track_name = get_tag(VGMTag.strTrackNameE, VGMTag.strTrackNameJ);
+	auto game_name = get_tag(VGMTag.strGameNameE, VGMTag.strGameNameJ);
+	auto system_name = get_tag(VGMTag.strSystemNameE, VGMTag.strSystemNameJ);
+	auto author_name = get_tag(VGMTag.strAuthorNameE, VGMTag.strAuthorNameJ);
+	auto creator = get_string(VGMTag.strCreator);
+	auto notes = get_string(VGMTag.strNotes);
+
+    const HippoMetadataAPI* metadata_api = HippoServiceAPI_get_metadata_api(service_api, HIPPO_METADATA_API_VERSION);
+    HippoMetadataId index = HippoMetadata_create_url(metadata_api, filename);
+
+    // TODO: Verify that this calculation is correct
+    HippoMetadata_set_tag_f64(metadata_api, index, HippoMetadata_LengthTag, VGMHead.lngTotalSamples / (44100 / 2));
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_SongTypeTag, "VGM (Video Game Music)");
+
+    if (track_name != "") {
+        HippoMetadata_set_tag(metadata_api, index, HippoMetadata_TitleTag, track_name.c_str());
+    } else {
+        char buffer[1024] = { 0 };
+        get_file_stem(buffer, filename);
+        HippoMetadata_set_tag(metadata_api, index, HippoMetadata_TitleTag, buffer);
+    }
+
+    if (author_name != "") {
+        HippoMetadata_set_tag(metadata_api, index, HippoMetadata_ArtistTag, author_name.c_str());
+    }
+
+    std::string message;
+    append_to_message(message, game_name, "Game: ");
+    append_to_message(message, system_name, "System: ");
+    append_to_message(message, creator, "VGM Creator: ");
+    append_to_message(message, notes, "Notes:\n");
+
+    if (message != "") {
+        HippoMetadata_set_tag(metadata_api, index, HippoMetadata_MessageTag, message.c_str());
+    }
+
+    return 1;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static HippoPlaybackPlugin g_vgm_plugin = {
 	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
 	"VGM",
@@ -186,7 +292,7 @@ static HippoPlaybackPlugin g_vgm_plugin = {
 	vgm_close,
 	vgm_read_data,
 	vgm_seek,
-	NULL,
+	vgm_metadata,
 	NULL,
 	NULL,
 };
