@@ -139,7 +139,7 @@ impl HippoCore {
             self.current_song_time -= delta;
 
             if self.current_song_time <= 0.0 {
-                self.playlist.advance_song(1);
+                self.playlist.next_song();
             }
         }
 

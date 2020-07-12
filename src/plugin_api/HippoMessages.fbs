@@ -1,5 +1,13 @@
 // Messages internal and external messages based on Flatbuffers
 
+table HippoLoopCurrent {
+  state: bool;
+}
+
+table HippoRandomizePlaylist {
+  state: bool;
+}
+
 table HippoNextSong {
 }
 
@@ -10,6 +18,10 @@ table HippoPlaySong {
 }
 
 table HippoStopSong {
+}
+
+table HippoPauseSong {
+  state: bool;
 }
 
 table HippoRequestAddedUrls {
@@ -117,6 +129,9 @@ union MessageType {
   prev_song: HippoPrevSong,
   play_song: HippoPlaySong,
   stop_song: HippoStopSong,
+  loop_current: HippoLoopCurrent,
+  randomize_playlist: HippoRandomizePlaylist,
+
   request_added_urls: HippoRequestAddedUrls,
 
   request_select_song: HippoRequestSelectSong,
@@ -132,7 +147,6 @@ union MessageType {
 
   song_metadata: HippoSongMetadata,
 }
-
 
 table HippoMessage {
   message: MessageType;

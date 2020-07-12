@@ -95,10 +95,19 @@ impl SongDb {
     }
 
     pub fn set_tag_string(&self, url_id: u64, key: &str, data: &str) -> Result<(), Error> {
-        let t = format!(
-            "UPDATE urls SET {} = \"{}\" where pk == {}",
-            key, data, url_id
-        );
+    	let t;
+    	if data.contains('"') {
+			t = format!(
+            	"UPDATE urls SET {} = '{}' where pk == {}",
+				key, data, url_id,
+			);
+    	} else {
+			t = format!(
+            	"UPDATE urls SET {} = \"{}\" where pk == {}",
+				key, data, url_id,
+			);
+    	}
+
         self.connection.execute(t)?;
         Ok(())
     }

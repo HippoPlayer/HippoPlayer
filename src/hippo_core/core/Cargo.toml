@@ -8,6 +8,7 @@ edition = "2018"
 crate-type = ["dylib"]
 
 [dependencies]
+rand = "0.7"
 anyhow = "1.0"
 config = { path = "../config" }
 song_db = { path = "../song_db" }

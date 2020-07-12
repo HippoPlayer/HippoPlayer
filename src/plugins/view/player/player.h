@@ -24,6 +24,9 @@ public:
     Q_SLOT void play_song();
     Q_SLOT void prev_song();
 
+    Q_SLOT void loop_current(int state);
+    Q_SLOT void randomize_playlist(int state);
+
 private:
     const struct HippoMessageAPI* m_message_api = nullptr;
     ScrollText* m_song_title = nullptr;
