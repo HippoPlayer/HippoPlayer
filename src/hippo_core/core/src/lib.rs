@@ -31,7 +31,7 @@ type MsgSendCallback =
     extern "C" fn(user_data: *const c_void, data: *const u8, len: i32, index: i32);
 
 pub struct HippoCore {
-    config: CoreConfig,
+    _config: CoreConfig,
     audio: HippoAudio,
     plugins: Plugins,
     plugin_service: service_ffi::PluginService,
@@ -283,7 +283,7 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
     let song_db = Box::into_raw(Box::new(SongDb::new("songdb.db").unwrap()));
 
     let mut core = Box::new(HippoCore {
-        config,
+        _config: config,
         plugins,
         audio: HippoAudio::new(),
         plugin_service: service_ffi::PluginService::new(song_db),
