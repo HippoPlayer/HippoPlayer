@@ -253,7 +253,6 @@ impl Playlist {
             MessageType::randomize_playlist => {
                 let randomize_playlist = msg.message_as_randomize_playlist().unwrap();
                 self.randomize_playlist = randomize_playlist.state();
-                println!("randomise playlist {}", self.randomize_playlist);
                 None
             },
 

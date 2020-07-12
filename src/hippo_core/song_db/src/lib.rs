@@ -131,10 +131,18 @@ impl SongDb {
     }
 
     pub fn add_sample(&self, url_id: u64, sample_text: &str) -> Result<(), Error> {
-        let t = format!(
-            "INSERT into samples (url_id, text) VALUES({}, \"{}\")",
-            url_id, sample_text
-        );
+    	let t;
+    	if sample_text.contains('"') {
+			t = format!(
+				"INSERT into samples (url_id, text) VALUES({}, '{}')",
+				url_id, sample_text
+			);
+		} else {
+			t = format!(
+				"INSERT into samples (url_id, text) VALUES({}, \"{}\")",
+				url_id, sample_text
+			);
+		}
         self.connection.execute(t)?;
         Ok(())
     }
