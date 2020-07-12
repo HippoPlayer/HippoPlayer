@@ -26,6 +26,8 @@ extern "C" {
 MainWindow::MainWindow(HippoCore* core) : QMainWindow(0), m_core(core) {
     m_docking_manager = new ToolWindowManager;
 
+    setWindowTitle(QStringLiteral("HippoPlayer 0.1.0 - 2020-07-12 19:02"));
+
     int id = QFontDatabase::addApplicationFont(QStringLiteral("data/fonts/DejaVuSansMono.ttf"));
     QString family = QFontDatabase::applicationFontFamilies(id).at(0);
     qDebug() << family;
