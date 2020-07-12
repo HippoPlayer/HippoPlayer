@@ -15,16 +15,19 @@ mkdir HippoPlayer
 mkdir HippoPlayer\platforms
 
 mkdir HippoPlayer\bin
+mkdir HippoPlayer\data
 mkdir HippoPlayer\bin\player
 mkdir HippoPlayer\bin\plugins
 mkdir HippoPlayer\bin\player\buttons
 copy ..\bin\player\buttons\*.png HippoPlayer\bin\player\buttons
 robocopy ..\bin\plugins HippoPlayer\bin\plugins /s /e
+robocopy ..\data HippoPlayer\data /s /e
 
-copy %QT5%\bin\Qt5Core.dll HippoPlayer
-copy %QT5%\bin\Qt5Widgets.dll HippoPlayer
-copy %QT5%\bin\Qt5Gui.dll HippoPlayer
-copy %QT5%\plugins\platforms\qwindows.dll HippoPlayer\platforms
+REM should be release here later
+copy %QT5_BIN%\Qt5Cored.dll HippoPlayer
+copy %QT5_BIN%\Qt5Widgetsd.dll HippoPlayer
+copy %QT5_BIN%\Qt5Guid.dll HippoPlayer
+copy %QT5_BIN%\..\plugins\platforms\qwindowsd.dll HippoPlayer\platforms
 copy win64-msvc-release-default\hippo_player.exe HippoPlayer
 copy win64-msvc-release-default\*.dll HippoPlayer
 
