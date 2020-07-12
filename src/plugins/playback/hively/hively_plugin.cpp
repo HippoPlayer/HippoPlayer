@@ -67,6 +67,7 @@ static int hively_open(void* user_data, const char* filename, int subsong) {
     }
 
 	data->tune = hvl_LoadTuneMemory((uint8_t*) data->song_data, (int)size, FREQ, 0);
+    hvl_InitSubsong(data->tune, subsong);
 
 	return 0;
 }
