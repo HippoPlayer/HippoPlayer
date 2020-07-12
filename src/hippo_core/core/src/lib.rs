@@ -75,7 +75,7 @@ impl HippoCore {
 
                 if !song_db.is_present(url) {
                     song_db.begin_transaction();
-                    plugin.get_metadata(&url, &self.plugin_service);
+                    plugin.get_metadata(&url_no_sub, &self.plugin_service);
                     song_db.commit();
                 }
 
