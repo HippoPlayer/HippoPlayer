@@ -179,6 +179,12 @@ void MainWindow::create_menus() {
     add_files->setStatusTip(tr("Remove selected items in the playlist"));
     file_menu->addAction(remove_playlist_entry);
 
+    QAction* exitAct = new QAction(tr("E&xit"), this);
+    exitAct->setShortcuts(QKeySequence::Quit);
+    exitAct->setStatusTip(tr("Exit the application"));
+    connect(exitAct, &QAction::triggered, this, &QWidget::close);
+    file_menu->addAction(exitAct);
+
     connect(add_files, &QAction::triggered, this, &MainWindow::add_files);
     connect(add_dir, &QAction::triggered, this, &MainWindow::add_directory);
 }
