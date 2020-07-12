@@ -77,20 +77,22 @@ pub enum MessageType {
   prev_song = 2,
   play_song = 3,
   stop_song = 4,
-  request_added_urls = 5,
-  request_select_song = 6,
-  select_song = 7,
-  request_add_urls = 8,
-  reply_added_urls = 9,
-  request_tracker_data = 10,
-  tracker_data = 11,
-  current_position = 12,
-  song_metadata = 13,
+  loop_current = 5,
+  randomize_playlist = 6,
+  request_added_urls = 7,
+  request_select_song = 8,
+  select_song = 9,
+  request_add_urls = 10,
+  reply_added_urls = 11,
+  request_tracker_data = 12,
+  tracker_data = 13,
+  current_position = 14,
+  song_metadata = 15,
 
 }
 
 const ENUM_MIN_MESSAGE_TYPE: u8 = 0;
-const ENUM_MAX_MESSAGE_TYPE: u8 = 13;
+const ENUM_MAX_MESSAGE_TYPE: u8 = 15;
 
 impl<'a> flatbuffers::Follow<'a> for MessageType {
   type Inner = Self;
@@ -124,12 +126,14 @@ impl flatbuffers::Push for MessageType {
 }
 
 #[allow(non_camel_case_types)]
-const ENUM_VALUES_MESSAGE_TYPE:[MessageType; 14] = [
+const ENUM_VALUES_MESSAGE_TYPE:[MessageType; 16] = [
   MessageType::NONE,
   MessageType::next_song,
   MessageType::prev_song,
   MessageType::play_song,
   MessageType::stop_song,
+  MessageType::loop_current,
+  MessageType::randomize_playlist,
   MessageType::request_added_urls,
   MessageType::request_select_song,
   MessageType::select_song,
@@ -142,12 +146,14 @@ const ENUM_VALUES_MESSAGE_TYPE:[MessageType; 14] = [
 ];
 
 #[allow(non_camel_case_types)]
-const ENUM_NAMES_MESSAGE_TYPE:[&'static str; 14] = [
+const ENUM_NAMES_MESSAGE_TYPE:[&'static str; 16] = [
     "NONE",
     "next_song",
     "prev_song",
     "play_song",
     "stop_song",
+    "loop_current",
+    "randomize_playlist",
     "request_added_urls",
     "request_select_song",
     "select_song",
@@ -165,6 +171,158 @@ pub fn enum_name_message_type(e: MessageType) -> &'static str {
 }
 
 pub struct MessageTypeUnionTableOffset {}
+pub enum HippoLoopCurrentOffset {}
+#[derive(Copy, Clone, Debug, PartialEq)]
+
+pub struct HippoLoopCurrent<'a> {
+  pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for HippoLoopCurrent<'a> {
+    type Inner = HippoLoopCurrent<'a>;
+    #[inline]
+    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: flatbuffers::Table { buf: buf, loc: loc },
+        }
+    }
+}
+
+impl<'a> HippoLoopCurrent<'a> {
+    #[inline]
+    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        HippoLoopCurrent {
+            _tab: table,
+        }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+        args: &'args HippoLoopCurrentArgs) -> flatbuffers::WIPOffset<HippoLoopCurrent<'bldr>> {
+      let mut builder = HippoLoopCurrentBuilder::new(_fbb);
+      builder.add_state(args.state);
+      builder.finish()
+    }
+
+    pub const VT_STATE: flatbuffers::VOffsetT = 4;
+
+  #[inline]
+  pub fn state(&self) -> bool {
+    self._tab.get::<bool>(HippoLoopCurrent::VT_STATE, Some(false)).unwrap()
+  }
+}
+
+pub struct HippoLoopCurrentArgs {
+    pub state: bool,
+}
+impl<'a> Default for HippoLoopCurrentArgs {
+    #[inline]
+    fn default() -> Self {
+        HippoLoopCurrentArgs {
+            state: false,
+        }
+    }
+}
+pub struct HippoLoopCurrentBuilder<'a: 'b, 'b> {
+  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b> HippoLoopCurrentBuilder<'a, 'b> {
+  #[inline]
+  pub fn add_state(&mut self, state: bool) {
+    self.fbb_.push_slot::<bool>(HippoLoopCurrent::VT_STATE, state, false);
+  }
+  #[inline]
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> HippoLoopCurrentBuilder<'a, 'b> {
+    let start = _fbb.start_table();
+    HippoLoopCurrentBuilder {
+      fbb_: _fbb,
+      start_: start,
+    }
+  }
+  #[inline]
+  pub fn finish(self) -> flatbuffers::WIPOffset<HippoLoopCurrent<'a>> {
+    let o = self.fbb_.end_table(self.start_);
+    flatbuffers::WIPOffset::new(o.value())
+  }
+}
+
+pub enum HippoRandomizePlaylistOffset {}
+#[derive(Copy, Clone, Debug, PartialEq)]
+
+pub struct HippoRandomizePlaylist<'a> {
+  pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for HippoRandomizePlaylist<'a> {
+    type Inner = HippoRandomizePlaylist<'a>;
+    #[inline]
+    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: flatbuffers::Table { buf: buf, loc: loc },
+        }
+    }
+}
+
+impl<'a> HippoRandomizePlaylist<'a> {
+    #[inline]
+    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        HippoRandomizePlaylist {
+            _tab: table,
+        }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+        args: &'args HippoRandomizePlaylistArgs) -> flatbuffers::WIPOffset<HippoRandomizePlaylist<'bldr>> {
+      let mut builder = HippoRandomizePlaylistBuilder::new(_fbb);
+      builder.add_state(args.state);
+      builder.finish()
+    }
+
+    pub const VT_STATE: flatbuffers::VOffsetT = 4;
+
+  #[inline]
+  pub fn state(&self) -> bool {
+    self._tab.get::<bool>(HippoRandomizePlaylist::VT_STATE, Some(false)).unwrap()
+  }
+}
+
+pub struct HippoRandomizePlaylistArgs {
+    pub state: bool,
+}
+impl<'a> Default for HippoRandomizePlaylistArgs {
+    #[inline]
+    fn default() -> Self {
+        HippoRandomizePlaylistArgs {
+            state: false,
+        }
+    }
+}
+pub struct HippoRandomizePlaylistBuilder<'a: 'b, 'b> {
+  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b> HippoRandomizePlaylistBuilder<'a, 'b> {
+  #[inline]
+  pub fn add_state(&mut self, state: bool) {
+    self.fbb_.push_slot::<bool>(HippoRandomizePlaylist::VT_STATE, state, false);
+  }
+  #[inline]
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> HippoRandomizePlaylistBuilder<'a, 'b> {
+    let start = _fbb.start_table();
+    HippoRandomizePlaylistBuilder {
+      fbb_: _fbb,
+      start_: start,
+    }
+  }
+  #[inline]
+  pub fn finish(self) -> flatbuffers::WIPOffset<HippoRandomizePlaylist<'a>> {
+    let o = self.fbb_.end_table(self.start_);
+    flatbuffers::WIPOffset::new(o.value())
+  }
+}
+
 pub enum HippoNextSongOffset {}
 #[derive(Copy, Clone, Debug, PartialEq)]
 
@@ -412,6 +570,82 @@ impl<'a: 'b, 'b> HippoStopSongBuilder<'a, 'b> {
   }
   #[inline]
   pub fn finish(self) -> flatbuffers::WIPOffset<HippoStopSong<'a>> {
+    let o = self.fbb_.end_table(self.start_);
+    flatbuffers::WIPOffset::new(o.value())
+  }
+}
+
+pub enum HippoPauseSongOffset {}
+#[derive(Copy, Clone, Debug, PartialEq)]
+
+pub struct HippoPauseSong<'a> {
+  pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for HippoPauseSong<'a> {
+    type Inner = HippoPauseSong<'a>;
+    #[inline]
+    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: flatbuffers::Table { buf: buf, loc: loc },
+        }
+    }
+}
+
+impl<'a> HippoPauseSong<'a> {
+    #[inline]
+    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        HippoPauseSong {
+            _tab: table,
+        }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+        args: &'args HippoPauseSongArgs) -> flatbuffers::WIPOffset<HippoPauseSong<'bldr>> {
+      let mut builder = HippoPauseSongBuilder::new(_fbb);
+      builder.add_state(args.state);
+      builder.finish()
+    }
+
+    pub const VT_STATE: flatbuffers::VOffsetT = 4;
+
+  #[inline]
+  pub fn state(&self) -> bool {
+    self._tab.get::<bool>(HippoPauseSong::VT_STATE, Some(false)).unwrap()
+  }
+}
+
+pub struct HippoPauseSongArgs {
+    pub state: bool,
+}
+impl<'a> Default for HippoPauseSongArgs {
+    #[inline]
+    fn default() -> Self {
+        HippoPauseSongArgs {
+            state: false,
+        }
+    }
+}
+pub struct HippoPauseSongBuilder<'a: 'b, 'b> {
+  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b> HippoPauseSongBuilder<'a, 'b> {
+  #[inline]
+  pub fn add_state(&mut self, state: bool) {
+    self.fbb_.push_slot::<bool>(HippoPauseSong::VT_STATE, state, false);
+  }
+  #[inline]
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> HippoPauseSongBuilder<'a, 'b> {
+    let start = _fbb.start_table();
+    HippoPauseSongBuilder {
+      fbb_: _fbb,
+      start_: start,
+    }
+  }
+  #[inline]
+  pub fn finish(self) -> flatbuffers::WIPOffset<HippoPauseSong<'a>> {
     let o = self.fbb_.end_table(self.start_);
     flatbuffers::WIPOffset::new(o.value())
   }
@@ -1976,6 +2210,26 @@ impl<'a> HippoMessage<'a> {
   pub fn message_as_stop_song(&self) -> Option<HippoStopSong<'a>> {
     if self.message_type() == MessageType::stop_song {
       self.message().map(|u| HippoStopSong::init_from_table(u))
+    } else {
+      None
+    }
+  }
+
+  #[inline]
+  #[allow(non_snake_case)]
+  pub fn message_as_loop_current(&self) -> Option<HippoLoopCurrent<'a>> {
+    if self.message_type() == MessageType::loop_current {
+      self.message().map(|u| HippoLoopCurrent::init_from_table(u))
+    } else {
+      None
+    }
+  }
+
+  #[inline]
+  #[allow(non_snake_case)]
+  pub fn message_as_randomize_playlist(&self) -> Option<HippoRandomizePlaylist<'a>> {
+    if self.message_type() == MessageType::randomize_playlist {
+      self.message().map(|u| HippoRandomizePlaylist::init_from_table(u))
     } else {
       None
     }

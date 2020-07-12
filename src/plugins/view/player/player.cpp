@@ -3,6 +3,7 @@
 #include <QtGui/QIcon>
 #include <QtWidgets/QLayout>
 #include <QtWidgets/QPushButton>
+#include <QtWidgets/QCheckBox>
 #include <QtWidgets/QWidget>
 #include "../../../plugin_api/HippoMessages.h"
 #include "../../../plugin_api/HippoPlugin.h"
@@ -23,7 +24,7 @@ QWidget* PlayerView::create(struct HippoServiceAPI* service_api, QAbstractItemMo
     QWidget* widget = new QWidget;
 
     m_song_title = new ScrollText(widget);
-    m_song_title->setText(QStringLiteral("This is a very long tile that shouldn't be that long"));
+    m_song_title->setText(QStringLiteral(""));
 
     QPushButton* prev_button = create_button("bin/player/buttons/hip_button_back.png");
     QPushButton* stop_button = create_button("bin/player/buttons/hip_button_stop.png");
@@ -41,9 +42,21 @@ QWidget* PlayerView::create(struct HippoServiceAPI* service_api, QAbstractItemMo
     hbox->addWidget(play_button);
     hbox->addWidget(next_button);
 
+
+    QCheckBox* loop_current = new QCheckBox(QStringLiteral("Loop Current"));
+    QCheckBox* randomize_playlist = new QCheckBox(QStringLiteral("Randomize Playlist"));
+    QHBoxLayout* extra_buttons_layout = new QHBoxLayout;
+
+    QObject::connect(loop_current, &QCheckBox::stateChanged, this, &PlayerView::loop_current);
+    QObject::connect(randomize_playlist, &QCheckBox::stateChanged, this, &PlayerView::randomize_playlist);
+
+    extra_buttons_layout->addWidget(loop_current);
+    extra_buttons_layout->addWidget(randomize_playlist);
+
     QVBoxLayout* vbox = new QVBoxLayout;
     vbox->addWidget(m_song_title);
     vbox->addLayout(hbox);
+    vbox->addLayout(extra_buttons_layout);
 
     widget->setLayout(vbox);
 
@@ -94,3 +107,28 @@ void PlayerView::play_song() {
     builder.Finish(CreateHippoMessageDirect(builder, MessageType_play_song, CreateHippoPlaySong(builder).Union()));
     HippoMessageAPI_send(m_message_api, builder.GetBufferPointer(), builder.GetSize());
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void PlayerView::loop_current(int state) {
+    flatbuffers::FlatBufferBuilder builder(1024);
+
+    builder.Finish(CreateHippoMessageDirect(
+        builder, MessageType_loop_current,
+        CreateHippoLoopCurrent(builder, state == Qt::Checked).Union()));
+
+    HippoMessageAPI_send(m_message_api, builder.GetBufferPointer(), builder.GetSize());
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void PlayerView::randomize_playlist(int state) {
+    flatbuffers::FlatBufferBuilder builder(1024);
+
+    builder.Finish(CreateHippoMessageDirect(
+        builder, MessageType_randomize_playlist,
+        CreateHippoLoopCurrent(builder, state == Qt::Checked).Union()));
+
+    HippoMessageAPI_send(m_message_api, builder.GetBufferPointer(), builder.GetSize());
+}
+

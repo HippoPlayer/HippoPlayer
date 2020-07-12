@@ -67,6 +67,7 @@ static int hively_open(void* user_data, const char* filename, int subsong) {
     }
 
 	data->tune = hvl_LoadTuneMemory((uint8_t*) data->song_data, (int)size, FREQ, 0);
+    hvl_InitSubsong(data->tune, subsong);
 
 	return 0;
 }
@@ -164,6 +165,14 @@ static int hively_metadata(const char* filename, const HippoServiceAPI* service_
     // instruments starts from 1 in hively so skip 0
     for (int i = 1; i < tune->ht_InstrumentNr; ++i) {
         HippoMetadata_add_instrument(metadata_api, index, tune->ht_Instruments[i].ins_Name);
+	}
+
+	if (tune->ht_SubsongNr > 1) {
+	    for (int i = 0, c = tune->ht_SubsongNr; i < c; ++i) {
+            char subsong_name[1024] = { 0 };
+            sprintf(subsong_name, "%s (%d/%d)", tune->ht_Name, i + 1, tune->ht_SubsongNr);
+            HippoMetadata_add_subsong(metadata_api, index, i, subsong_name, 0.0f);
+	    }
 	}
 
     // Make sure to free the buffer before we leave

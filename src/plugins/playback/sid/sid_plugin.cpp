@@ -120,8 +120,6 @@ static int sid_open(void* user_data, const char* buffer, int subsong) {
         return 0;
     }
 
-    printf("sid_open ok\n");
-
 	return 1;
 }
 

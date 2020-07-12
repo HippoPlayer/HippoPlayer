@@ -89,6 +89,7 @@ static HippoProbeResult openmpt_probe_can_play(const uint8_t* data, uint32_t dat
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#if 0
 static void send_pattern_data(struct OpenMptData* replayer_data) {
     flatbuffers::FlatBufferBuilder builder(16 * 1024);
 
@@ -142,8 +143,8 @@ static void send_pattern_data(struct OpenMptData* replayer_data) {
 	    printf("%04x %s - %s\n", i, t.c_str(), note.c_str());
 	}
 	*/
-
 }
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

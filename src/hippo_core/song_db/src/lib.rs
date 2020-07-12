@@ -95,10 +95,19 @@ impl SongDb {
     }
 
     pub fn set_tag_string(&self, url_id: u64, key: &str, data: &str) -> Result<(), Error> {
-        let t = format!(
-            "UPDATE urls SET {} = \"{}\" where pk == {}",
-            key, data, url_id
-        );
+    	let t;
+    	if data.contains('"') {
+			t = format!(
+            	"UPDATE urls SET {} = '{}' where pk == {}",
+				key, data, url_id,
+			);
+    	} else {
+			t = format!(
+            	"UPDATE urls SET {} = \"{}\" where pk == {}",
+				key, data, url_id,
+			);
+    	}
+
         self.connection.execute(t)?;
         Ok(())
     }
@@ -122,10 +131,18 @@ impl SongDb {
     }
 
     pub fn add_sample(&self, url_id: u64, sample_text: &str) -> Result<(), Error> {
-        let t = format!(
-            "INSERT into samples (url_id, text) VALUES({}, \"{}\")",
-            url_id, sample_text
-        );
+    	let t;
+    	if sample_text.contains('"') {
+			t = format!(
+				"INSERT into samples (url_id, text) VALUES({}, '{}')",
+				url_id, sample_text
+			);
+		} else {
+			t = format!(
+				"INSERT into samples (url_id, text) VALUES({}, \"{}\")",
+				url_id, sample_text
+			);
+		}
         self.connection.execute(t)?;
         Ok(())
     }
@@ -197,14 +214,17 @@ impl SongDb {
         }
     }
 
-    pub fn is_present(&self, url: &str) -> bool {
-    	// `|` is used as sub-song separator. If this is in the database it's already present
-    	// as the data has been changed from doing a database query
-		if url.find('|').is_some() {
-			return true;
+	/// get the has for the url but ignore any subsongs if present
+    fn get_base_url_hash(url: &str) -> u64 {
+		if let Some(sep) = url.find('|') {
+        	xxh3::hash(url[..sep].as_bytes())
+		} else {
+        	xxh3::hash(url.as_bytes())
 		}
+    }
 
-        let url_id = xxh3::hash(url.as_bytes());
+    pub fn is_present(&self, url: &str) -> bool {
+    	let url_id = Self::get_base_url_hash(url);
         let query = format!("SELECT pk FROM urls WHERE pk=={}", url_id);
 
         let mut count = 0;

@@ -6,6 +6,7 @@ use std::io;
 use std::io::{BufReader, BufWriter};
 use std::path::Path;
 use song_db::SongDb;
+use rand::prelude::*;
 
 ///
 /// Metadata for each entry. We will likely stuff more things here later on.
@@ -23,6 +24,8 @@ pub struct Playlist {
     entries: Vec<PlaylistEntry>,
     current_song: isize,
     new_song: bool,
+    loop_current: bool,
+    randomize_playlist: bool,
     new_subsongs: Option<(usize, usize)>,
 }
 
@@ -35,8 +38,26 @@ impl Playlist {
             entries: Vec::new(),
             current_song: 0,
             new_song: false,
+            loop_current: false,
+            randomize_playlist: false,
             new_subsongs: None,
         }
+    }
+    ///
+    /// Jump to next song
+    ///
+    pub fn next_song(&mut self) -> Option<Box<[u8]>> {
+    	if self.loop_current {
+			self.new_song = true;
+    	} else if self.randomize_playlist {
+    		let rand_index = random::<usize>() % self.entries.len();
+    		self.current_song = rand_index as isize;
+    		self.new_song = true;
+    	} else {
+    		return self.advance_song(1);
+    	}
+
+    	None
     }
 
     ///
@@ -223,6 +244,18 @@ impl Playlist {
     ///
     pub fn event(&mut self, msg: &HippoMessage) -> Option<Box<[u8]>> {
         match msg.message_type() {
+            MessageType::loop_current => {
+                let loop_current = msg.message_as_loop_current().unwrap();
+                self.loop_current = loop_current.state();
+                None
+            },
+
+            MessageType::randomize_playlist => {
+                let randomize_playlist = msg.message_as_randomize_playlist().unwrap();
+                self.randomize_playlist = randomize_playlist.state();
+                None
+            },
+
             MessageType::request_add_urls => {
                 // TODO: Currently we just assume these are filenames. Going forward
                 // This may not be the case as it may be a network resource, packed files and such
@@ -262,7 +295,7 @@ impl Playlist {
             }
 
             MessageType::request_select_song => self.select_song(msg),
-            MessageType::next_song => self.advance_song(1),
+            MessageType::next_song => self.next_song(),
             MessageType::prev_song => self.advance_song(-1),
             MessageType::request_added_urls => self.create_update_message(0, None),
             _ => None,
@@ -274,6 +307,9 @@ impl Playlist {
     ///
     pub fn save(&mut self, filename: &str) -> io::Result<()> {
         let f = BufWriter::new(File::create(filename)?);
+        // TODO: Hack, we ignore loop/rando for now
+        self.loop_current = false;
+        self.randomize_playlist = false;
         serde_json::to_writer_pretty(f, self)?;
         Ok(())
     }
