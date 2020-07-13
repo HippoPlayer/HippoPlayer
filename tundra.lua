@@ -113,7 +113,7 @@ local gcc_env = {
 -----------------------------------------------------------------------------------------------------------------------
 
 local win64_opts = {
-    "/EHsc", "/FS", "/MT", "/W3", "/I.", "/DUNICODE", "/D_UNICODE", "/DWIN32", "/D_CRT_SECURE_NO_WARNINGS",
+    "/EHsc", "/FS", "/MD", "/W3", "/I.", "/DUNICODE", "/D_UNICODE", "/DWIN32", "/D_CRT_SECURE_NO_WARNINGS",
     "\"/DOBJECT_DIR=$(OBJECTDIR:#)\"",
     { "/DHIPPO_DEBUG","/Od"; Config = "*-*-debug" },
     { "/DHIPPO_RELEASE", "/O2"; Config = "*-*-release" },

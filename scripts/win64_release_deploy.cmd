@@ -23,11 +23,10 @@ copy ..\bin\player\buttons\*.png HippoPlayer\bin\player\buttons
 robocopy ..\bin\plugins HippoPlayer\bin\plugins /s /e
 robocopy ..\data HippoPlayer\data /s /e
 
-REM should be release here later
-copy %QT5_BIN%\Qt5Cored.dll HippoPlayer
-copy %QT5_BIN%\Qt5Widgetsd.dll HippoPlayer
-copy %QT5_BIN%\Qt5Guid.dll HippoPlayer
-copy %QT5_BIN%\..\plugins\platforms\qwindowsd.dll HippoPlayer\platforms
+copy %QT5_BIN%\Qt5Core.dll HippoPlayer
+copy %QT5_BIN%\Qt5Widgets.dll HippoPlayer
+copy %QT5_BIN%\Qt5Gui.dll HippoPlayer
+copy %QT5_BIN%\..\plugins\platforms\qwindows.dll HippoPlayer\platforms
 copy win64-msvc-release-default\hippo_player.exe HippoPlayer
 copy win64-msvc-release-default\*.dll HippoPlayer
 

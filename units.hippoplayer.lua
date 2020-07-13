@@ -197,9 +197,9 @@ Program {
     },
 
 	Libs = {
-        { "Qt5Guid.lib", "Qt5Cored.lib", "Qt5Widgetsd.lib"; Config = "win64-*-*" },
+        -- { "Qt5Guid.lib", "Qt5Cored.lib", "Qt5Widgetsd.lib"; Config = "win64-*-*" },
 		-- enable when stupid release mode is fixed
-        -- { "Qt5Gui.lib", "Qt5Core.lib", "Qt5Widgets.lib"; Config = "win64-*-release" },
+        { "Qt5Gui.lib", "Qt5Core.lib", "Qt5Widgets.lib"; Config = "win64-*-*" },
 		{ "Qt5Widgets", "Qt5Gui", "Qt5Core"; Config = "linux-*-*" },
 	},
 

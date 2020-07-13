@@ -26,7 +26,7 @@ extern "C" {
 MainWindow::MainWindow(HippoCore* core) : QMainWindow(0), m_core(core) {
     m_docking_manager = new ToolWindowManager;
 
-    setWindowTitle(QStringLiteral("HippoPlayer 0.1.2 - 2020-07-13 09:30"));
+    setWindowTitle(QStringLiteral("HippoPlayer 0.1.3 - 2020-07-13 19:10"));
 
     int id = QFontDatabase::addApplicationFont(QStringLiteral("data/fonts/DejaVuSansMono.ttf"));
     QString family = QFontDatabase::applicationFontFamilies(id).at(0);
@@ -352,7 +352,8 @@ QWidget* MainWindow::create_plugin_by_index(int index) {
     QObject* plugin_obj = m_plugin_types[index].plugin->instance();
 
     if (!plugin_obj) {
-        qDebug() << "Unable to create plugin " << m_plugin_types[index].plugin_name;
+        qDebug() << "Unable to create plugin " << m_plugin_types[index].plugin_name << " "
+                 << m_plugin_types[index].plugin->errorString();
         return nullptr;
     }
 
