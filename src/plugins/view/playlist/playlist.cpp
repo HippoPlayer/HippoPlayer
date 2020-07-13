@@ -7,10 +7,10 @@
 #include <QtWidgets/QAction>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QLayout>
-#include <QtWidgets/QStyleOptionViewItem>
-#include <QtWidgets/QStyledItemDelegate>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QShortcut>
+#include <QtWidgets/QStyleOptionViewItem>
+#include <QtWidgets/QStyledItemDelegate>
 #include <QtWidgets/QTreeView>
 #include <QtWidgets/QWidget>
 
@@ -90,6 +90,12 @@ class TreeView : public QTreeView {
         return QTreeView::paintEvent(event);
     }
 
+    /*
+    const QModelIndexList& selection() {
+        return selectedIndexes();
+    }
+    */
+
     QPixmap _pixmapBg;
 };
 
@@ -123,10 +129,10 @@ QWidget* PlaylistView::create(struct HippoServiceAPI* service_api, QAbstractItem
     vbox->addWidget(delete_items_button);
 
     QObject::connect(m_list, &QTreeView::doubleClicked, this, &PlaylistView::item_double_clicked);
-    //QShortcut* delete_items = new QShortcut(QKeySequence(Qt::Key_Delete), delete_items_button);
-    //delete_items->setContext(Qt::WidgetWithChildrenShortcut);
+    // QShortcut* delete_items = new QShortcut(QKeySequence(Qt::Key_Delete), delete_items_button);
+    // delete_items->setContext(Qt::WidgetWithChildrenShortcut);
     QObject::connect(delete_items_button, &QPushButton::pressed, this, &PlaylistView::delete_items);
-    //QObject::connect(delete_items, &QShortcut::activated, this, &PlaylistView::delete_items);
+    // QObject::connect(delete_items, &QShortcut::activated, this, &PlaylistView::delete_items);
 
     // Have the core send us the current list of songs
     flatbuffers::FlatBufferBuilder builder(1024);
@@ -148,7 +154,7 @@ void PlaylistView::select_song(const HippoSelectSong* msg) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void PlaylistView::item_double_clicked(const QModelIndex& item) {
+void PlaylistView::play_entry(const QModelIndex& item) {
     QAbstractItemModel* model = m_list->model();
 
     flatbuffers::FlatBufferBuilder builder(1024);
@@ -160,6 +166,12 @@ void PlaylistView::item_double_clicked(const QModelIndex& item) {
         CreateHippoRequestSelectSongDirect(builder, path.data(), model->buddy(item).row()).Union()));
 
     HippoMessageAPI_send(m_message_api, builder.GetBufferPointer(), builder.GetSize());
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void PlaylistView::item_double_clicked(const QModelIndex& item) {
+    play_entry(item);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -187,6 +199,16 @@ void PlaylistView::event(const unsigned char* data, int len) {
     switch (message->message_type()) {
         case MessageType_select_song: {
             select_song(message->message_as_select_song());
+            break;
+        }
+
+        case MessageType_play_song: {
+            // TODO: this will leak but for some reason we crash here otherwise :(
+            QModelIndexList* indices = new QModelIndexList(m_list->selectionModel()->selectedIndexes());
+
+            if (indices->count() > 0) {
+                play_entry(indices->at(0));
+            }
             break;
         }
 

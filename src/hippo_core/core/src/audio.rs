@@ -161,6 +161,8 @@ impl HippoAudio {
         for pb in self.playbacks.iter_mut() {
             unsafe { ((pb.plugin.plugin_funcs).close)(pb.plugin_user_data as *mut c_void) };
         }
+
+        self.playbacks.clear();
     }
 
     //pub fn pause(&mut self) {

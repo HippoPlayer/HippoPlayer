@@ -9,6 +9,7 @@ struct HippoServiceAPI;
 struct HippoSelectSong;
 class QTreeView;
 class QModelIndex;
+class TreeView;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -25,9 +26,9 @@ public:
 
 private:
 	void select_song(const HippoSelectSong* msg);
-
+    void play_entry(const QModelIndex& item);
     const struct HippoMessageAPI* m_message_api = nullptr;
-    QTreeView* m_list = nullptr;
+    TreeView* m_list = nullptr;
 
     Q_SLOT void item_double_clicked(const QModelIndex& item);
 };

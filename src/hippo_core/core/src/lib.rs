@@ -164,6 +164,20 @@ impl HippoCore {
                     Self::send_msgs(user_data, send_messages, &reply, count, std::usize::MAX);
                 });
 
+                // Check if we should stop the current
+                match message.message_type() {
+                    MessageType::stop_song => {
+                        self.is_playing = false;
+                        self.audio.stop();
+					},
+                    /*
+                    MessageType::play_song => {
+                        self.playlist.set_new_song();
+					},
+                    */
+                    _ => (),
+                }
+
                 // If we have active playbacks we push the ui messages to the messages plugin
                 // instance so the backend can reply to them at some point
                 for playback in &mut self.audio.playbacks {
