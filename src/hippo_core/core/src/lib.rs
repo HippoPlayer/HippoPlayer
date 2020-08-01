@@ -90,7 +90,7 @@ impl HippoCore {
                     // the current file to be a "subsong (the first one)"
                     self.playlist.insert_subsongs(playlist_index, &subsongs, url);
                     // add |0 at the end of url to mark it as a subsong
-                    let sub_url = format!("{}|0", url);
+                    let sub_url = format!("{}|{}", url, subsongs[0].0);
                     self.audio.start_with_file(&plugin, &self.plugin_service, &sub_url);
                     return sub_url;
                 } else {

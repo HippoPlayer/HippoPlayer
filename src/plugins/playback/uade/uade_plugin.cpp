@@ -210,7 +210,7 @@ static int uade_metadata(const char* filename, const HippoServiceAPI* service_ap
     int sub_max = song_info->subsongs.max;
 
     if ((sub_max - sub_min) > 1) {
-        for (int i = sub_min; i < sub_max; ++i) {
+        for (int i = sub_min; i <= sub_max; ++i) {
             char subsong_name[1024] = { 0 };
             sprintf(subsong_name, "%s (%d/%d)", title, i, sub_max);
             HippoMetadata_add_subsong(metadata_api, index, i, subsong_name, 0.0f);
