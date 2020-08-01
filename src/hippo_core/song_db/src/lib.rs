@@ -237,15 +237,17 @@ impl SongDb {
         count == 1
     }
 
-    pub fn get_subsongs(&self, url: &str) -> Option<Vec<String>> {
+    pub fn get_subsongs(&self, url: &str) -> Option<Vec<(i64, String)>> {
         let url_id = xxh3::hash(url.as_bytes());
-        let query = format!("SELECT title FROM sub_songs WHERE url_id=={}", url_id);
+        let query = format!("SELECT sub_index, title FROM sub_songs WHERE url_id=={}", url_id);
         let mut statement = self.connection.prepare(query).unwrap();
 
         let mut subsongs = Vec::new();
 
 		while let State::Row = statement.next().unwrap() {
-			subsongs.push(statement.read::<String>(0).unwrap());
+			let index = statement.read::<i64>(0).unwrap();
+			let name = statement.read::<String>(1).unwrap();
+			subsongs.push((index, name));
 		}
 
 		if subsongs.is_empty() { None } else { Some(subsongs) }

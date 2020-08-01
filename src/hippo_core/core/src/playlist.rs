@@ -82,21 +82,21 @@ impl Playlist {
     }
 
     /// Insert subsongs into the playlist
-    pub fn insert_subsongs(&mut self, playlist_index: usize, subsongs: &[String], url: &str) {
+    pub fn insert_subsongs(&mut self, playlist_index: usize, subsongs: &[(i64, String)], url: &str) {
         // first entry in the list shouldn't be add, we will just update the url
         // and update the title
 
         let main_entry = &mut self.entries[playlist_index];
-        main_entry.path = format!("{}|0", url);
-        main_entry.title = subsongs[0].to_owned();
+        main_entry.path = format!("{}|{}", url, subsongs[0].0);
+        main_entry.title = subsongs[0].1.to_owned();
 
         println!("updating main {} - {} index {}", main_entry.path, main_entry.title, playlist_index);
 
         let mut playlist_entries = Vec::with_capacity(subsongs.len() - 1);
 
-        for (i, subsong) in subsongs.iter().enumerate().skip(1) {
+        for (index, subsong) in subsongs.iter().skip(1) {
             playlist_entries.push(PlaylistEntry {
-                path: format!("{}|{}", url, i),
+                path: format!("{}|{}", url, index),
                 title: subsong.to_owned(),
                 duration: 0.0,
                 song_type: String::new()
