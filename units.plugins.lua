@@ -595,7 +595,7 @@ SharedLibrary {
 	},
 
 	Defines = {
-		{ "QT_NO_DEBUG" ; Config = "*-*-release" },
+		"QT_NO_DEBUG",
 	}, 
 
 	Libs = {
@@ -637,7 +637,7 @@ SharedLibrary {
 	},
 
 	Defines = {
-		{ "QT_NO_DEBUG" ; Config = "*-*-release" },
+		"QT_NO_DEBUG",
 	}, 
 
 	Libs = {
@@ -657,7 +657,7 @@ SharedLibrary {
 	},
 
 	Defines = {
-		{ "QT_NO_DEBUG" ; Config = "*-*-release" },
+		"QT_NO_DEBUG",
 	}, 
 
 	Libs = {
