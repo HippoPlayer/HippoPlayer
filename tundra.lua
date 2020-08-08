@@ -141,7 +141,7 @@ local win64 = {
 
         CXXOPTS = {
             win64_opts,
-            "/DHIPPO_VERSION=\\\"($HIPPO_VERSION)\\\")",
+            "\"/DHIPPO_VERSION=$(HIPPO_VERSION:#)\"",
             "/I$(QT5_INC)",
             "/Isrc/external/flatbuffers/include",
         },
