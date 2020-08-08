@@ -22,8 +22,6 @@ jobs:
         set QT5_LIB=%Qt5_DIR%/lib
         git describe --tags --abbrev=0 > version.txt
         set /P HIPPO_VERSION=< version.txt
-        echo "Hippo Version"
-        echo %HIPPO_VERSION%
         bin\windows\tundra2.exe --unprotected win64-msvc-release
         scripts\win64_release_deploy.cmd
     - name: Upload binaries to release

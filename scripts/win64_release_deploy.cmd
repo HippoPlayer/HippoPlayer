@@ -24,7 +24,7 @@ robocopy ..\data HippoPlayer\data /s /e
 robocopy %Qt5_DIR%\bin HippoPlayer Qt5Core.dll Qt5Widgets.dll Qt5Gui.dll
 robocopy %Qt5_DIR%\plugins\platforms HippoPlayer\platforms qwindows.dll
 
-copy win64-msvc-release-default\*.exe HippoPlayer
+robocopy win64-msvc-release-default HippoPlayer hippo_player.exe
 copy win64-msvc-release-default\*.dll HippoPlayer
 
 ..\bin\windows\7za a ..\hippoplayer_windows.7z HippoPlayer
