@@ -1,5 +1,3 @@
-@echo off
-
 cd t2-output
 
 IF NOT "%HIPPO_VERSION%" == "" GOTO BuildIdSet
@@ -23,13 +21,16 @@ copy ..\bin\player\buttons\*.png HippoPlayer\bin\player\buttons
 robocopy ..\bin\plugins HippoPlayer\bin\plugins /s /e
 robocopy ..\data HippoPlayer\data /s /e
 
-copy %QT5_BIN%\Qt5Core.dll HippoPlayer
-copy %QT5_BIN%\Qt5Widgets.dll HippoPlayer
-copy %QT5_BIN%\Qt5Gui.dll HippoPlayer
-copy %QT5_BIN%\..\plugins\platforms\qwindows.dll HippoPlayer\platforms
+echo "Qt5 Dir"
+echo %Qt5_DIR%
+
+copy %Qt5_DIR%\bin\Qt5Core.dll HippoPlayer
+copy %Qt5_DIR%\bin\Qt5Widgets.dll HippoPlayer
+copy %Qt5_DIR%\bin\Qt5Gui.dll HippoPlayer
+copy %Qt5_DIR%\plugins\platforms\qwindows.dll HippoPlayer\platforms
 copy win64-msvc-release-default\hippo_player.exe HippoPlayer
 copy win64-msvc-release-default\*.dll HippoPlayer
 
-..\bin\windows\7za a ..\hippoplayer_win_%HIPPO_VERSION%.7z HippoPlayer
+..\bin\windows\7za a ..\hippoplayer_windows_%HIPPO_VERSION%.7z HippoPlayer
 
 cd ..
