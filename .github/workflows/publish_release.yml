@@ -1,0 +1,47 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build:
+    name: Publish binaries
+    runs-on: windows-latest
+
+    steps:
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v2
+    - name: Build code test
+      shell: cmd
+      run: |
+        set QT5_BIN=%Qt5_DIR%/bin
+        set QT5_INC=%Qt5_DIR%/include
+        set QT5_LIB=%Qt5_DIR%/lib
+        git describe --tags --abbrev=0 > version.txt
+        set /P HIPPO_VERSION=< version.txt
+        echo "Hippo Version"
+        echo %HIPPO_VERSION%
+        bin\windows\tundra2.exe --unprotected win64-msvc-release
+    - name: Generate deployment package
+      shell: cmd
+      run: |
+        echo "Hippo Version Prev"
+        echo %HIPPO_VERSION%
+        git describe --tags --abbrev=0 > version_2.txt
+        set /P HIPPO_VERSION=< version_2.txt
+        echo "Hippo Version new"
+        echo %HIPPO_VERSION%
+        scripts\win64_release_deploy.cmd
+    - name: Upload binaries to release
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: hippoplayer_win_%HIPPO_VERSION%.7z
+        asset_name: hippoplayer_win_%HIPPO_VERSION%.7z
+        tag: ${{ github.ref }}
+        overwrite: true
+        body: ""

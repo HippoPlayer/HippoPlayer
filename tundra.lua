@@ -13,6 +13,7 @@ local mac_opts = {
 
 local macosx = {
     Env = {
+		HIPPO_VERSION = native.getenv("HIPPO_VERSION", "Development Version"),
 		QT5_INC = native.getenv("QT5_INC"),
 		QT5_BIN = native.getenv("QT5_BIN"),
 		QT5_LIB = native.getenv("QT5_LIB"),
@@ -27,6 +28,7 @@ local macosx = {
 
         CXXOPTS = {
             mac_opts,
+            "-DHIPPO_VERSION='\"$(HIPPO_VERSION)\"'",
             "-isystem $(QT5_LIB)/QtWidgets.framework/Headers",
             "-isystem $(QT5_LIB)/QtCore.framework/Headers",
             "-isystem $(QT5_LIB)/QtGui.framework/Headers",
@@ -81,6 +83,7 @@ local gcc_opts = {
 
 local gcc_env = {
     Env = {
+		HIPPO_VERSION = native.getenv("HIPPO_VERSION", "Development Version"),
 		QT5_INC = native.getenv("QT5_INC"),
 		QT5_BIN = native.getenv("QT5_BIN"),
 		QT5_LIB = native.getenv("QT5_LIB"),
@@ -96,6 +99,7 @@ local gcc_env = {
 
         CXXOPTS = {
             gcc_opts,
+            "-DHIPPO_VERSION='\"$(HIPPO_VERSION)\"'",
             "-std=c++11",
             "-I$(QT5_INC)",
             "-Isrc/external/flatbuffers/include",
@@ -121,6 +125,7 @@ local win64_opts = {
 
 local win64 = {
     Env = {
+		HIPPO_VERSION = native.getenv("HIPPO_VERSION", "Development Version"),
 		QT5_INC = native.getenv("QT5_INC"),
 		QT5_BIN = native.getenv("QT5_BIN"),
 		QT5_LIB = native.getenv("QT5_LIB"),
@@ -136,6 +141,7 @@ local win64 = {
 
         CXXOPTS = {
             win64_opts,
+            "/DHIPPO_VERSION=\\\"($HIPPO_VERSION)\\\")",
             "/I$(QT5_INC)",
             "/Isrc/external/flatbuffers/include",
         },

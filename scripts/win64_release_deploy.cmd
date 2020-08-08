@@ -2,9 +2,9 @@
 
 cd t2-output
 
-IF NOT "%BUILD_FILE_ID%" == "" GOTO BuildIdSet
+IF NOT "%HIPPO_VERSION%" == "" GOTO BuildIdSet
 
-SET BUILD_FILE_ID=%DATE:~10,4%%DATE:~7,2%%DATE:~4,2%_%TIME:~0,2%%TIME:~3,2%
+SET HIPPO_VERSION=unknown_version
 
 :BuildIdSet:
 
@@ -30,6 +30,6 @@ copy %QT5_BIN%\..\plugins\platforms\qwindows.dll HippoPlayer\platforms
 copy win64-msvc-release-default\hippo_player.exe HippoPlayer
 copy win64-msvc-release-default\*.dll HippoPlayer
 
-..\bin\windows\7za a ..\hippoplayer_win_%BUILD_FILE_ID%.7z HippoPlayer
+..\bin\windows\7za a ..\hippoplayer_win_%HIPPO_VERSION%.7z HippoPlayer
 
 cd ..

@@ -322,8 +322,8 @@ typedef struct HippoPlaybackPlugin {
 #define HIPPO_PLAYBACK_PLUGIN_API_VERSION 1
 #define HIPPO_MESSAGE_API_VERSION 1
 
-#define HIPPO_NAME(name) (u64)name
-#define HIPPO_VERSION(text) (u64)text
+//#define HIPPO_NAME(name) (u64)name
+//#define HIPPO_VERSION(text) (u64)text
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
