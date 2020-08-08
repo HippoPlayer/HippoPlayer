@@ -31,6 +31,6 @@ jobs:
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: hippoplayer_windows_{{$tag}}.7z
-        asset_name: hippoplayer_windows_${{tag}}.7z
+        asset_name: hippoplayer_windows_{{$tag}}.7z
         tag: ${{ github.ref }}
         overwrite: true
