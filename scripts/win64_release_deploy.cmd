@@ -24,16 +24,19 @@ robocopy ..\data HippoPlayer\data /s /e
 echo "Qt5 Dir"
 echo %Qt5_DIR%
 
+echo "Dir bin"
+dir %QT5_BIN%
+
 echo "Regular copy"
 copy %Qt5_DIR%\bin\Qt5Core.dll HippoPlayer
 
 echo "Robocopy"
-robocopy %Qt5_DIR%\bin\Qt5Core.dll HippoPlayer
+robocopy %Qt5_DIR%\bin HippoPlayer Qt5Core.dll
 
 echo "Robocopy 2"
-robocopy %Qt5_DIR%/bin/Qt5Core.dll HippoPlayer
+robocopy %Qt5_DIR%/bin HippoPlayer Qt5Core.dll
 
-echo "----
+echo "----"
 copy %Qt5_DIR%\bin\Qt5Widgets.dll HippoPlayer
 
 copy %Qt5_DIR%\bin\Qt5Gui.dll HippoPlayer
