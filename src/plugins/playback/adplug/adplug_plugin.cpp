@@ -236,7 +236,6 @@ static void adplug_event(void* user_data, const unsigned char* data, int len) {
 
 static void adplug_set_log(struct HippoLogAPI* log) {
     g_hp_log = log;
-    hp_trace("test");
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
