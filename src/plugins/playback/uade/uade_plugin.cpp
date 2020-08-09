@@ -5,9 +5,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-//static char s_player_name[1024]; // hack
-
 #include <thread>
+
+HippoLogAPI* g_hp_log = nullptr;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -96,6 +96,9 @@ enum HippoProbeResult uade_probe_can_play(const uint8_t* data, uint32_t data_siz
 
     if (uade_analyze_eagleplayer(&detect_info, data, data_size, filename, strlen(filename), state) >= 0) {
         supported = HippoProbeResult_Supported;
+        hp_info("Supported: %s", filename);
+    } else {
+        hp_info("Unsupported: %s", filename);
     }
 
     uade_cleanup_state(state, 0);
@@ -122,8 +125,11 @@ static int uade_open(void* user_data, const char* buffer, int subsong) {
 	plugin->state = create_uade_state(1);
 
 	if (uade_play(buffer, subsong, plugin->state) == 1) {
+	    hp_info("Started to play %s", buffer);
 		return 1;
 	}
+
+	hp_error("Unable to open %s", buffer);
 
 	return -1;
 }
@@ -185,6 +191,7 @@ static int uade_metadata(const char* filename, const HippoServiceAPI* service_ap
 	if (uade_play(filename, -1, state) != 1) {
 	    uade_stop(state);
         uade_cleanup_state(state, 0);
+        hp_error("Unable to open %s", filename);
 	    return -1;
 	}
 
@@ -200,6 +207,8 @@ static int uade_metadata(const char* filename, const HippoServiceAPI* service_ap
     } else {
         get_file_stem(title, filename);
     }
+
+    hp_info("Update metadata for %s", filename);
 
     HippoMetadataId index = HippoMetadata_create_url(metadata_api, filename);
     HippoMetadata_set_tag(metadata_api, index, HippoMetadata_TitleTag, title);
@@ -233,10 +242,15 @@ static void uade_event(void* user_data, const unsigned char* data, int len) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void uade_set_log(struct HippoLogAPI* log) { g_hp_log = log; }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static HippoPlaybackPlugin g_uade_plugin = {
 	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
-	"UADE",
+	"uade",
 	"0.0.1",
+	"uade 2.0",
 	uade_probe_can_play,
 	uade_supported_extensions,
 	uade_create,
@@ -247,15 +261,14 @@ static HippoPlaybackPlugin g_uade_plugin = {
 	uade_read_data,
 	uade_plugin_seek,
 	uade_metadata,
+	uade_set_log,
 	NULL,
 	NULL,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-extern "C" {
-	HIPPO_EXPORT HippoPlaybackPlugin* hippo_playback_plugin() {
-		return &g_uade_plugin;
-	}
+extern "C" HIPPO_EXPORT HippoPlaybackPlugin* hippo_playback_plugin() {
+    return &g_uade_plugin;
 }
 

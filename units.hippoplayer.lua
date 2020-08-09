@@ -129,8 +129,8 @@ RustSharedLibrary {
     Name = "hippo_core",
     CargoConfig = "src/hippo_core/core/Cargo.toml",
     Sources = {
+        get_c_cpp_src("src/hippo_core"),
         get_rs_src("src/hippo_core"),
-        "src/hippo_core/ffi/src/lib.rs",
         "src/plugin_api/HippoPlugin.h",
     },
 }

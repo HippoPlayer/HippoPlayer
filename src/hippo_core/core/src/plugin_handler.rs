@@ -8,6 +8,8 @@ use walkdir::{DirEntry, WalkDir};
 
 //use hippo_api::ffi::{CHippoPlaybackPlugin};
 use crate::service_ffi::PluginService;
+use crate::service_ffi::ServiceApi;
+use logger::*;
 
 #[derive(Debug, Clone)]
 pub struct HippoPlaybackPluginFFI {
@@ -121,8 +123,6 @@ impl Plugins {
         > = unsafe { plugin.lib.get(b"hippo_playback_plugin\0") };
 
         if let Ok(fun) = func {
-            println!("Found playback plugin with callback data {:?}", fun());
-
             let native_plugin = unsafe { *fun() };
 
             // To make the plugin code a bit nicer we move over to a separate structure internally.
@@ -154,6 +154,20 @@ impl Plugins {
                 save: native_plugin.save,
                 load: native_plugin.load,
             };
+
+            trace!("Loaded playback plugin {} {}", plugin_funcs.name, plugin_funcs.version);
+
+            if let Some(set_log) = native_plugin.set_log {
+                // TODO: Memory leak
+                let name = format!("{} {}", plugin_funcs.name, plugin_funcs.version);
+                let c_name = CString::new(name).unwrap();
+                let log_api = Box::into_raw(ServiceApi::create_log_api());
+
+                unsafe {
+                    (*log_api).log_set_base_name.unwrap()((*log_api).priv_data, c_name.as_ptr());
+                    (set_log)(log_api);
+                }
+            }
 
             self.decoder_plugins.push(Box::new(DecoderPlugin {
                 plugin: plugin.clone(),

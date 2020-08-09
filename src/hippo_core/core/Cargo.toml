@@ -14,6 +14,7 @@ config = { path = "../config" }
 song_db = { path = "../song_db" }
 dynamic_reload = "0.4.0"
 messages = { path = "../messages" }
+logger = { path = "../logger" }
 ringbuf = "0.2"
 rodio = "0.10"
 serde = "1.0"

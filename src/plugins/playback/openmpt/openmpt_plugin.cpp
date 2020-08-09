@@ -10,7 +10,8 @@
 const int MAX_EXT_COUNT = 16 * 1024;
 static char s_supported_extensions[MAX_EXT_COUNT];
 
-static const HippoIoAPI* g_io_api = nullptr;
+const HippoIoAPI* g_io_api = nullptr;
+HippoLogAPI* g_hp_log = nullptr;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -56,8 +57,10 @@ static void* openmpt_create(const HippoServiceAPI* service_api) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int openmpt_destroy(void* userData) {
-	return 0;
+static int openmpt_destroy(void* user_data) {
+    OpenMptData* data = (OpenMptData*)user_data;
+    delete data;
+    return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -68,21 +71,23 @@ static HippoProbeResult openmpt_probe_can_play(const uint8_t* data, uint32_t dat
     switch (res) {
         case openmpt::probe_file_header_result_success :
         {
+            hp_info("Supported: %s", filename);
             return HippoProbeResult_Supported;
         }
         case openmpt::probe_file_header_result_failure :
         {
+            hp_info("Unsupported: %s", filename);
             return HippoProbeResult_Unsupported;
         }
 
         case openmpt::probe_file_header_result_wantmoredata :
         {
-            printf("openmpt: Unable to probe because not enough data\n");
+            hp_warn("openmpt: Unable to probe because not enough data\n");
             break;
         }
     }
 
-    printf("openmpt: case %d not handled in switch. Assuming unsupported file\n", res);
+    hp_warn("openmpt: case %d not handled in switch. Assuming unsupported file\n", res);
 
     return HippoProbeResult_Unsupported;
 }
@@ -156,10 +161,19 @@ static int openmpt_open(void* user_data, const char* filename, int subsong) {
         filename, &replayer_data->song_data, &size);
 
     if (res < 0) {
+        hp_error("Failed to load %s to memory", filename);
         return -1;
     }
 
-    replayer_data->mod = new openmpt::module(replayer_data->song_data, size);
+    try {
+        replayer_data->mod = new openmpt::module(replayer_data->song_data, size);
+    } catch(...) {
+        hp_error("Failed to open %s even if is as supported format", filename);
+        return -1;
+    }
+
+    hp_info("Started to play %s (subsong %d)", filename, subsong);
+
     replayer_data->length = replayer_data->mod->get_duration_seconds();
     replayer_data->mod->select_subsong(subsong);
 
@@ -241,12 +255,19 @@ static int openmpt_metadata(const char* filename, const HippoServiceAPI* service
         return res;
     }
 
-    openmpt::module mod(data, size);
+    openmpt::module* mod = nullptr;
+
+    try {
+        mod = new openmpt::module(data, size);
+    } catch(...) {
+        hp_error("Failed to open %s even if is as supported format", filename);
+        return -1;
+    }
 
     auto index = HippoMetadata_create_url(metadata_api, filename);
     char title[512] = { 0 };
 
-    const auto& mod_title = mod.get_metadata("title");
+    const auto& mod_title = mod->get_metadata("title");
 
     if (mod_title != "") {
         strcpy(title, mod_title.c_str());
@@ -255,27 +276,29 @@ static int openmpt_metadata(const char* filename, const HippoServiceAPI* service
         strcpy(title, file_title);
     }
 
-    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_TitleTag, title);
-    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_SongTypeTag, mod.get_metadata("type_long").c_str());
-    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_AuthoringToolTag, mod.get_metadata("tracker").c_str());
-    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_ArtistTag, mod.get_metadata("artist").c_str());
-    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_DateTag, mod.get_metadata("date").c_str());
-    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_MessageTag, mod.get_metadata("message").c_str());
-    HippoMetadata_set_tag_f64(metadata_api, index, HippoMetadata_LengthTag, mod.get_duration_seconds());
+    hp_info("Updating meta data for %s", filename);
 
-	for (const auto& sample : mod.get_sample_names()) {
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_TitleTag, title);
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_SongTypeTag, mod->get_metadata("type_long").c_str());
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_AuthoringToolTag, mod->get_metadata("tracker").c_str());
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_ArtistTag, mod->get_metadata("artist").c_str());
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_DateTag, mod->get_metadata("date").c_str());
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_MessageTag, mod->get_metadata("message").c_str());
+    HippoMetadata_set_tag_f64(metadata_api, index, HippoMetadata_LengthTag, mod->get_duration_seconds());
+
+	for (const auto& sample : mod->get_sample_names()) {
     	HippoMetadata_add_sample(metadata_api, index, sample.c_str());
 	}
 
-	for (const auto& instrument : mod.get_instrument_names()) {
+	for (const auto& instrument : mod->get_instrument_names()) {
     	HippoMetadata_add_instrument(metadata_api, index, instrument.c_str());
 	}
 
-	const int subsong_count = mod.get_num_subsongs();
+	const int subsong_count = mod->get_num_subsongs();
 
 	if (subsong_count > 1) {
 	    int i = 0;
-        for (const auto& name : mod.get_subsong_names()) {
+        for (const auto& name : mod->get_subsong_names()) {
             char subsong_name[1024] = { 0 };
 
             if (name != "") {
@@ -284,8 +307,8 @@ static int openmpt_metadata(const char* filename, const HippoServiceAPI* service
                 sprintf(subsong_name, "%s (%d/%d)", title, i + 1, subsong_count);
             }
 
-            mod.select_subsong(i);
-            HippoMetadata_add_subsong(metadata_api, index, i, subsong_name, mod.get_duration_seconds());
+            mod->select_subsong(i);
+            HippoMetadata_add_subsong(metadata_api, index, i, subsong_name, mod->get_duration_seconds());
 
             ++i;
         }
@@ -307,11 +330,15 @@ void openmpt_event(void* user_data, const unsigned char* data, int len) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void openmpt_set_log(struct HippoLogAPI* log) { g_hp_log = log; }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static HippoPlaybackPlugin g_openmptPlugin = {
 	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
-	"libopenmpt",
+	"openmpt",
 	"0.0.1",
+	"libopenmpt 0.5.0",
 	openmpt_probe_can_play,
 	openmpt_supported_extensions,
 	openmpt_create,
@@ -322,11 +349,10 @@ static HippoPlaybackPlugin g_openmptPlugin = {
 	openmpt_read_data,
 	openmpt_seek,
 	openmpt_metadata,
+    openmpt_set_log,
 	NULL,
 	NULL,
 };
-
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

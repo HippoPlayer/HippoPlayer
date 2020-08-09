@@ -7,6 +7,7 @@
 #define SAMPLE_RATE 48000
 #define CHANNELS 2
 
+HippoLogAPI* g_hp_log = NULL;
 static const struct HippoIoAPI* g_io_api = 0;
 //static const HippoMetadataAPI* g_metadata_api = nullptr;
 
@@ -29,13 +30,16 @@ static const char* nsf_supported_extensions() {
 
 enum HippoProbeResult nsf_probe_can_play(const uint8_t* data, uint32_t data_size, const char* filename, uint64_t total_size) {
 	if ((data[0] == 'N') && (data[1] == 'E') && (data[2] == 'S') && (data[3] == 'M')) {
+	    hp_info("Supported: %s", filename);
 		return HippoProbeResult_Supported;
 	}
 
 	if ((data[0] == 'N') && (data[1] == 'S') && (data[2] == 'F') && (data[3] == 'E')) {
+	    hp_info("Supported: %s", filename);
 	    return HippoProbeResult_Supported;
 	}
 
+    hp_info("Unsupported: %s", filename);
 	return HippoProbeResult_Unsupported;
 }
 
@@ -51,6 +55,7 @@ static int nsf_metadata(const char* filename, const HippoServiceAPI* service_api
     HippoIoErrorCode res = HippoIo_read_file_to_memory(io_api, filename, &data, &size);
 
     if (res < 0) {
+        hp_error("Unable to file-io open %s", filename);
         return res;
     }
 
@@ -58,8 +63,11 @@ static int nsf_metadata(const char* filename, const HippoServiceAPI* service_api
 
     // TODO: Error handling
     if (!nsf.Load((xgm::UINT8*)data, (int)size)) {
+        hp_error("Unable to metadata open %s", filename);
         return -1;
     }
+
+    hp_info("Updating metadata for %s", filename);
 
     // Validate this is correct
     //int length = nsf.time_in_ms < 0 ? nsf.default_playtime : nsf.time_in_ms;
@@ -107,12 +115,12 @@ static int nsf_open(void* user_data, const char* buffer, int subsong) {
     HippoIoErrorCode res = g_io_api->read_file_to_memory(g_io_api->priv_data, buffer, &load_data, &size);
 
     if (res < 0) {
+        hp_error("Unable to file-io open %s", buffer);
         return res;
     }
 
-    // TODO: Proper error handling
     if (!data->nsf.Load((xgm::UINT8*)load_data, (int)size)) {
-        printf("nsf: failed load\n");
+        hp_error("Unable to load %s", buffer);
         return -1;
     }
 
@@ -120,9 +128,11 @@ static int nsf_open(void* user_data, const char* buffer, int subsong) {
     data->player.SetConfig(&data->config);
 
     if (!data->player.Load(&data->nsf)) {
-        printf("nsf: failed load 2\n");
+        hp_error("Unable to open %s", buffer);
         return -1;
     }
+
+    hp_info("Starting to play %s (subsong %d)", subsong);
 
     data->player.SetPlayFreq(SAMPLE_RATE);
     data->player.SetChannels(CHANNELS);
@@ -184,10 +194,15 @@ static void nsf_event(void* user_data, const unsigned char* data, int len) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void nsf_set_log(struct HippoLogAPI* log) { g_hp_log = log; }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static HippoPlaybackPlugin g_nsf_plugin = {
 	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
 	"nsf",
 	"0.0.1",
+    NSFPLAY_TITLE,
 	nsf_probe_can_play,
 	nsf_supported_extensions,
 	nsf_create,
@@ -198,6 +213,7 @@ static HippoPlaybackPlugin g_nsf_plugin = {
 	nsf_read_data,
 	nsf_plugin_seek,
 	nsf_metadata,
+	nsf_set_log,
 	NULL,
 	NULL,
 };

@@ -33,7 +33,6 @@ MainWindow::MainWindow(HippoCore* core) : QMainWindow(0), m_core(core) {
 
     int id = QFontDatabase::addApplicationFont(QStringLiteral("data/fonts/DejaVuSansMono.ttf"));
     QString family = QFontDatabase::applicationFontFamilies(id).at(0);
-    qDebug() << family;
 
     m_playlist_model = new PlaylistModel(m_core, this);
     //m_playlist_model->setSelectionMode(QAbstractItemView::MultiSelection);
@@ -315,7 +314,7 @@ bool MainWindow::load_plugins(const QString& plugin_dir) {
 
         plugin_name_obj = plugin_name_obj.toObject().value(QStringLiteral("hippo_view_plugin_name"));
 
-        qDebug() << "Found plugin " << plugin_name_obj.toString();
+        //qDebug() << "Found plugin " << plugin_name_obj.toString();
 
         MainWindow::PluginInfo plugin_info = {
             plugin_loader,

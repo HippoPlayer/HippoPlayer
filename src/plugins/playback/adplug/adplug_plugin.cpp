@@ -6,6 +6,8 @@
 #include <string.h>
 #include <wemuopl.h>
 
+HippoLogAPI* g_hp_log = NULL;
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void get_file_stem(char* dest, const char* path) {
@@ -32,7 +34,8 @@ void get_file_stem(char* dest, const char* path) {
 // This is a adplug plugin used as a reference and not inteded to do anything
 
 struct AdplugPlugin {
-    AdplugPlugin() : emu_opl(48000, true, true) {}
+    AdplugPlugin() : emu_opl(48000, true, true) {
+    }
     CPlayer* player = nullptr;
     CWemuopl emu_opl;
     int to_add = 0;
@@ -47,17 +50,17 @@ static const char* adplug_supported_extensions() {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-enum HippoProbeResult adplug_probe_can_play(const uint8_t* data,
-                                            uint32_t data_size,
-                                            const char* filename,
+enum HippoProbeResult adplug_probe_can_play(const uint8_t* data, uint32_t data_size, const char* filename,
                                             uint64_t total_size) {
     // TODO: Provide provide custom FILE api so we can read from memory
     CSilentopl silent;
     CPlayer* p = CAdPlug::factory(filename, &silent);
 
     if (!p) {
+        hp_info("Unsupported: %s", filename);
         return HippoProbeResult_Unsupported;
     } else {
+        hp_info("Supported: %s", filename);
         return HippoProbeResult_Supported;
     }
 }
@@ -79,10 +82,13 @@ static int adplug_open(void* user_data, const char* url, int subsong) {
     plugin->player = CAdPlug::factory(url, &plugin->emu_opl);
 
     if (!plugin->player) {
+        hp_error("Unable to playing: %s\n", url);
         return 0;
     }
 
     plugin->player->rewind(subsong);
+
+    hp_info("Started to play: %s (subsong %d)", url, subsong);
 
     return 1;
 }
@@ -100,13 +106,18 @@ static int adplug_close(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int adplug_destroy(void* user_data) { return 0; }
+static int adplug_destroy(void* user_data) {
+    return 0;
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static inline int min_t(int a, int b) { return a < b ? a : b; }
-
-static inline int max_t(int a, int b) { return a > b ? a : b; }
+static inline int min_t(int a, int b) {
+    return a < b ? a : b;
+}
+static inline int max_t(int a, int b) {
+    return a > b ? a : b;
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -132,9 +143,7 @@ static int adplug_read_data(void* user_data, void* dest, uint32_t max_size) {
             plugin->to_add += freq;
             plugin->player->update();
         }
-        i = min_t(
-            towrite,
-            (int)(plugin->to_add / plugin->player->getrefresh() + 4) & ~3);
+        i = min_t(towrite, (int)(plugin->to_add / plugin->player->getrefresh() + 4) & ~3);
         plugin->emu_opl.update((short*)sndbufpos, i);
         sndbufpos += i * sampsize;
         towrite -= i;
@@ -155,22 +164,23 @@ static int adplug_read_data(void* user_data, void* dest, uint32_t max_size) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int adplug_plugin_seek(void* user_data, int ms) { return 0; }
+static int adplug_plugin_seek(void* user_data, int ms) {
+    return 0;
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int adplug_metadata(const char* url,
-                           const HippoServiceAPI* service_api) {
+static int adplug_metadata(const char* url, const HippoServiceAPI* service_api) {
     // TODO: Provide provide custom FILE api so we can read from memory
     CSilentopl silent;
     CPlayer* p = CAdPlug::factory(url, &silent);
 
     if (!p) {
+        hp_error("Unable to get metadata for %s\n", url);
         return -1;
     }
 
-    const HippoMetadataAPI* metadata_api = HippoServiceAPI_get_metadata_api(
-        service_api, HIPPO_METADATA_API_VERSION);
+    const HippoMetadataAPI* metadata_api = HippoServiceAPI_get_metadata_api(service_api, HIPPO_METADATA_API_VERSION);
     HippoMetadataId index = HippoMetadata_create_url(metadata_api, url);
 
     char title[4096] = {0};
@@ -184,23 +194,20 @@ static int adplug_metadata(const char* url,
         strcpy(title, meta_title);
     }
 
+    hp_info("Updating metadata for %s", url);
+
     HippoMetadata_set_tag(metadata_api, index, HippoMetadata_TitleTag, title);
-    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_SongTypeTag,
-                          p->gettype().c_str());
-    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_ArtistTag,
-                          p->getauthor().c_str());
-    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_MessageTag,
-                          p->getdesc().c_str());
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_SongTypeTag, p->gettype().c_str());
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_ArtistTag, p->getauthor().c_str());
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_MessageTag, p->getdesc().c_str());
 
     // TODO: This function is quite heavy (it will play the song to the end to
     // figure out the length) maybe
     //       We should do this async instead and update the length later?
-    HippoMetadata_set_tag_f64(metadata_api, index, HippoMetadata_LengthTag,
-                              p->songlength() / 1000);
+    HippoMetadata_set_tag_f64(metadata_api, index, HippoMetadata_LengthTag, p->songlength() / 1000);
 
     for (int i = 0, c = p->getinstruments(); i < c; ++i) {
-        HippoMetadata_add_instrument(metadata_api, index,
-                                     p->getinstrument(i).c_str());
+        HippoMetadata_add_instrument(metadata_api, index, p->getinstrument(i).c_str());
     }
 
     const int subsongs_count = p->getsubsongs();
@@ -210,8 +217,7 @@ static int adplug_metadata(const char* url,
             char subsong_name[1024] = {0};
             auto len = p->songlength(i);
             sprintf(subsong_name, "%s (%d/%d)", title, i + 1, subsongs_count);
-            HippoMetadata_add_subsong(metadata_api, index, i, subsong_name,
-                                      len / 1000);
+            HippoMetadata_add_subsong(metadata_api, index, i, subsong_name, len / 1000);
         }
     }
 
@@ -228,10 +234,18 @@ static void adplug_event(void* user_data, const unsigned char* data, int len) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void adplug_set_log(struct HippoLogAPI* log) {
+    g_hp_log = log;
+    hp_trace("test");
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static HippoPlaybackPlugin g_adplug_plugin = {
     HIPPO_PLAYBACK_PLUGIN_API_VERSION,
     "adplug",
     "0.0.1",
+    "adplug 2.3.3",
     adplug_probe_can_play,
     adplug_supported_extensions,
     adplug_create,
@@ -242,6 +256,8 @@ static HippoPlaybackPlugin g_adplug_plugin = {
     adplug_read_data,
     adplug_plugin_seek,
     adplug_metadata,
+    adplug_set_log,
+    NULL,
     NULL,
 };
 

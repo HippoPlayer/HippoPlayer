@@ -11,6 +11,8 @@
 #define strcasecmp _stricmp
 #endif
 
+HippoLogAPI* g_hp_log = NULL;
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static const char* get_file_name_from_path(const char* path) {
@@ -48,10 +50,11 @@ enum HippoProbeResult tfmx_probe_can_play(const uint8_t* data, uint32_t data_siz
     	&& strncmp("TFMX_SONG", (char*)data, 9)
 		&& strncasecmp("TFMXSONG", (char*)data, 8)
 		&& strncasecmp("TFMX ", (char*)data, 5)) {
-
+		hp_info("Unsupported %s", filename);
     	return HippoProbeResult_Unsupported;
 	}
 
+	hp_info("Supported %s", filename);
     return HippoProbeResult_Supported;
 }
 
@@ -78,11 +81,15 @@ static int tfmx_open(void* user_data, const char* buffer, int subsong) {
 	TfmxReplayerData* plugin = (TfmxReplayerData*)user_data;
 	(void)plugin;
 
-	if (LoadTFMXFile((char*)buffer) != 0)
+	if (LoadTFMXFile((char*)buffer) != 0) {
+		hp_error("Unable to open %s", buffer);
 	    return -1;
+	}
 
 	TFMXSetSubSong(subsong);
     TFMXRewind();
+
+	hp_info("Starting to play %s (subsong %d)", buffer, subsong);
 
 	return 0;
 }
@@ -130,10 +137,14 @@ static int tfmx_metadata(const char* url, const HippoServiceAPI* service_api) {
 
     const HippoMetadataAPI* metadata_api = HippoServiceAPI_get_metadata_api(service_api, HIPPO_METADATA_API_VERSION);
 
-	if (LoadTFMXFile((char*)url) != 0)
+	if (LoadTFMXFile((char*)url) != 0) {
+		hp_error("Unable to get metadata for %s", url);
 	    return -1;
+	}
 
 	const char* title = get_file_name_from_path(url);
+
+	hp_info("Updating metadata for %s", url);
 
     HippoMetadataId index = HippoMetadata_create_url(metadata_api, url);
     HippoMetadata_set_tag(metadata_api, index, HippoMetadata_TitleTag, title);
@@ -168,10 +179,15 @@ static void tfmx_event(void* user_data, const unsigned char* data, int len) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void tfmx_set_log(struct HippoLogAPI* log) { g_hp_log = log; }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static HippoPlaybackPlugin g_tfmx_plugin = {
 	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
-	"TFMX",
+	"tfmx",
 	"0.0.1",
+	"",
 	tfmx_probe_can_play,
 	tfmx_supported_extensions,
 	tfmx_create,
@@ -182,6 +198,7 @@ static HippoPlaybackPlugin g_tfmx_plugin = {
 	tfmx_read_data,
 	tfmx_seek,
 	tfmx_metadata,
+	tfmx_set_log,
 	NULL,
 	NULL,
 };

@@ -28,6 +28,8 @@ extern GD3_TAG VGMTag;
 
 }
 
+HippoLogAPI* g_hp_log = NULL;
+
 #define FREQ 48000
 #define FRAME_SIZE ((FREQ * 2) / 50)
 
@@ -115,7 +117,7 @@ static int vgm_open(void* user_data, const char* buffer, int subsong) {
 	struct VgmReplayerData* replayer_data = (struct VgmReplayerData*)user_data;
 
 	if (!OpenVGMFile(buffer)) {
-		printf("vgm: Unable to open %s\n", buffer);
+		hp_error("Unable to open %s\n", buffer);
 		return -1;
 	}
 
@@ -123,6 +125,8 @@ static int vgm_open(void* user_data, const char* buffer, int subsong) {
 
     replayer_data->length = VGMHead.lngTotalSamples / (44100 / 2);
 	replayer_data->has_data = 1;
+
+	hp_info("Starting to play %s (subsong %d)", buffer, subsong);
 
 	return 0;
 }
@@ -166,7 +170,7 @@ HippoProbeResult vgm_probe_can_play(const uint8_t* data, uint32_t data_size, con
 	if ((data[0] == 'V') &&
 		(data[1] == 'g') &&
 		(data[2] == 'm')) {
-
+		hp_info("Supported %s", filename);
 		return HippoProbeResult_Supported;
 	}
 
@@ -175,10 +179,11 @@ HippoProbeResult vgm_probe_can_play(const uint8_t* data, uint32_t data_size, con
 	if ((data[0] == 0x1f) &&    // id1
 		(data[1] == 0x8b) &&    // id2
 		(data[2] == 0x08)) {    // deflate method (only one supported
-
+		hp_info("Supported %s", filename);
 		return HippoProbeResult_Supported;
 	}
 
+    hp_info("Unsupported %s", filename);
 	return HippoProbeResult_Unsupported;
 }
 
@@ -236,7 +241,14 @@ static void append_to_message(std::string& dest, const std::string& data, const 
 static int vgm_metadata(const char* filename, const HippoServiceAPI* service_api) {
     init();
 
+	if (!OpenVGMFile(filename)) {
+		hp_error("Unable to metadata open %s\n", filename);
+		return -1;
+	}
+
 	PlayVGM();
+
+    hp_info("Updating metadata for %s", filename);
 
 	auto track_name = get_tag(VGMTag.strTrackNameE, VGMTag.strTrackNameJ);
 	auto game_name = get_tag(VGMTag.strGameNameE, VGMTag.strGameNameJ);
@@ -279,10 +291,15 @@ static int vgm_metadata(const char* filename, const HippoServiceAPI* service_api
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void vgm_set_log(struct HippoLogAPI* log) { g_hp_log = log; }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static HippoPlaybackPlugin g_vgm_plugin = {
 	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
 	"VGM",
 	"0.0.1",
+    "VGMPlay 0.40.8",
 	vgm_probe_can_play,
 	vgm_supported_extensions,
 	vgm_create,
@@ -293,6 +310,7 @@ static HippoPlaybackPlugin g_vgm_plugin = {
 	vgm_read_data,
 	vgm_seek,
 	vgm_metadata,
+	vgm_set_log,
 	NULL,
 	NULL,
 };

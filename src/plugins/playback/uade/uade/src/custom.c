@@ -1645,7 +1645,7 @@ static void REGPARAM2 custom_bput (uaecptr addr, uae_u32 value)
     custom_wput(addr, rval);
     if (!warned) {
         warned++;
-	fprintf(stderr, "uade: Byte put to custom register (0x%x to $%x)\n", rval, addr);
+	//fprintf(stderr, "uade: Byte put to custom register (0x%x to $%x)\n", rval, addr);
     }
 }
 

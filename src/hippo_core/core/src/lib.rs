@@ -259,9 +259,6 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
     // This to enforce we load relative to the current exe
     let current_exe = std::env::current_exe().unwrap();
     std::env::set_current_dir(current_exe.parent().unwrap()).unwrap();
-    let path = std::env::current_dir().unwrap();
-
-    println!("The current directory is {}", path.display());
 
     plugins.add_plugins_from_path();
 
@@ -295,12 +292,13 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
     }
 
     let song_db = Box::into_raw(Box::new(SongDb::new("songdb.db").unwrap()));
+    let service = service_ffi::PluginService::new(song_db);
 
     let mut core = Box::new(HippoCore {
         _config: config,
         plugins,
         audio: HippoAudio::new(),
-        plugin_service: service_ffi::PluginService::new(song_db),
+        plugin_service: service,
         playlist: Playlist::new(),
         current_song_time: 0.0,
         start_time: Instant::now(),
