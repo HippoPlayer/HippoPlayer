@@ -35,7 +35,7 @@ enum { LOG_TRACE, LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR, LOG_FATAL };
 
 #define MAX_LOG_CALLBACKS 32
 
-static std::mutex s_log_mutex;
+//static std::mutex s_log_mutex;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -76,11 +76,14 @@ static struct {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int gettimeofday(struct timeval* tp, struct timezone* tzp) {
+    /*
     namespace sc = std::chrono;
     sc::system_clock::duration d = sc::system_clock::now().time_since_epoch();
     sc::seconds s = sc::duration_cast<sc::seconds>(d);
     tp->tv_sec = s.count();
     tp->tv_usec = sc::duration_cast<sc::microseconds>(d - s).count();
+    */
+    memset(tp, 0, sizeof(struct timeval));
     return 0;
 }
 
@@ -186,7 +189,8 @@ extern "C" void hippo_log_set_base_name(HippoLogAPIState* state, const char* bas
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 extern "C" HippoLogAPIState* hippo_log_new_state() {
-    return new HippoLogAPIState;
+    HippoLogAPIState* state = (HippoLogAPIState*)calloc(1, sizeof(HippoLogAPIState));
+    return state;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -200,7 +204,7 @@ extern "C" void hippo_log_delete_state(HippoLogAPIState* state) {
         free(state->base_name);
     }
 
-    delete state;
+    free(state);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -215,7 +219,7 @@ extern "C" void hippo_log(HippoLogAPIState* state, int level, const char* file, 
     ev.level = level;
     ev.udata = stdout;
 
-    std::lock_guard<std::mutex> _(s_log_mutex);
+    //std::lock_guard<std::mutex> _(s_log_mutex);
 
     get_time(ev.time);
 
