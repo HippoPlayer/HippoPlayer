@@ -11,31 +11,39 @@ fi
 rm -rf t2-output/HippoPlayer.app
 cp -rf t2-output/macosx-clang-release-default/HippoPlayer.app t2-output/HippoPlayer.app
 cp -vr t2-output/macosx-clang-release-default/*.dylib t2-output/HippoPlayer.app/Contents/MacOS
+cp -vr t2-output/macosx-clang-release-default/hippo_player t2-output/HippoPlayer.app/Contents/MacOS
 
 mkdir t2-output/HippoPlayer.app/Contents/MacOS/bin
 cp -vr bin/player t2-output/HippoPlayer.app/Contents/MacOS/bin
 cp -vr bin/plugins t2-output/HippoPlayer.app/Contents/MacOS/bin
+cp -vr data t2-output/HippoPlayer.app/Contents/MacOS
 
 cd t2-output
 rm -rfv build
 mkdir build
 
-"$QT5/bin/macdeployqt" HippoPlayer.app -executable HippoPlayer.app/Contents/MacOS/librute_cpp.dylib
+ls HippoPlayer.app/Contents/MacOS
+ $QT5_BIN/macdeployqt HippoPlayer.app -executable=HippoPlayer.app/Contents/MacOS/hippo_player
 
 prefix="`grealpath $QT5`";
 frameworks=(HippoPlayer.app/Contents/Frameworks/Qt*.framework) &&
 frameworks=("${frameworks[@]#HippoPlayer.app/Contents/Frameworks/}") &&
 frameworks=("${frameworks[@]%.framework}") &&
 for framework in "${frameworks[@]}"; do
-	for target in "${frameworks[@]}"; do
-		install_name_tool -change @rpath/$target.framework/Versions/5/$target @executable_path/../Frameworks/$target.framework/Versions/5/$target HippoPlayer.app/Contents/Frameworks/$framework.framework/$framework;
-	done;
+	install_name_tool -change @loader_path/../HippoPlayer.app/Contents/Frameworks/$framework.framework/Versions/5/$framework @loader_path/../Frameworks/$framework.framework/Versions/5/$framework HippoPlayer.app/Contents/MacOS/hippo_player
 done;
-for plugin in HippoPlayer.app/Contents/PlugIns/*/*.dylib; do
-	for target in "${frameworks[@]}"; do
-		install_name_tool -change @rpath/$target.framework/Versions/5/$target @executable_path/../Frameworks/$target.framework/Versions/5/$target $plugin;
-	done;
-done;
+
+#for framework in "${frameworks[@]}"; do
+#	for target in "${frameworks[@]}"; do
+#		echo @rpath/$target.framework/Versions/5/$target @loader_path/../Frameworks/$target.framework/Versions/5/$target HippoPlayer.app/Contents/Frameworks/$framework.framework/$framework;
+#		install_name_tool -change @rpath/$target.framework/Versions/5/$target @loader_path/../Frameworks/$target.framework/Versions/5/$target HippoPlayer.app/Contents/Frameworks/$framework.framework/$framework;
+#	done;
+#done;
+#for plugin in HippoPlayer.app/Contents/PlugIns/*/*.dylib; do
+#	for target in "${frameworks[@]}"; do
+#		install_name_tool -change @rpath/$target.framework/Versions/5/$target @loader_path/../Frameworks/$target.framework/Versions/5/$target $plugin;
+#	done;
+#done;
 
 # Package the build to a dmg image
 
@@ -45,7 +53,7 @@ chmod -Rf go-w /Volumes/HippoPlayer
 sync
 sync
 hdiutil detach ${device}
-hdiutil convert "pack.temp.dmg" -format UDZO -imagekey zlib-level=9 -o "build/hippoplayer_mac_${BUILD_FILE_ID}.dmg"
+hdiutil convert "pack.temp.dmg" -format UDZO -imagekey zlib-level=9 -o "build/hippoplayer_macos_${HIPPO_VERSION}.dmg"
 rm -f pack.temp.dmg
 
 cd ..
