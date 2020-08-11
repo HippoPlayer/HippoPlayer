@@ -1,4 +1,10 @@
 #include <stdio.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <string.h>
+#ifndef _WIN32
+#include <unistd.h>
+#endif
 #include "hippo_core_loader.h"
 #include "../hippo_core/native/hippo_core.h"
 
@@ -9,6 +15,18 @@ HippoServiceApiNew hippo_service_api_new;
 HippoMessageApiNew hippo_message_api_new;
 HippoUpdateMessages hippo_update_messages;
 HippoPlaylistRemoveEntry hippo_playlist_remove_entry;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static bool file_exists(const char* filename) {
+	FILE* t = fopen(filename, "rb");
+	if (t) {
+		fclose(t);
+		return true;
+	}
+
+	return false;
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Wrap the API calls for Windows here as macOS and Linux uses dlopen/dlclose/etc API so we implement the same
@@ -115,27 +133,77 @@ const char* dlerror() {
 /// Loads the hippo_player core shared object and resolve the symbols
 extern int HippoCore_load() {
 #if defined(HIPPO_MAC)
+	#define LOAD_PATH "macosx-clang"
 	const char* core_name = "libhippo_core.dylib";
 #elif defined(_WIN32)
+	#define LOAD_PATH "win64-msvc"
 	const char* core_name = "hippo_core.dll";
 #else
-	// temp temp
+	#define LOAD_PATH "linux-gcc"
+	const char* core_name = "libhippo_core.so";
+#endif
+
 #if defined(HIPPO_DEBUG)
-	const char* core_name = "t2-output/linux-gcc-debug-default/libhippo_core.so";
-#elif defined(HIPPO_RELEASE)
-	const char* core_name = "t2-output/linux-gcc-release-default/libhippo_core.so";
+#define TARGET_TYPE "debug"
 #else
-#error "unsupported config"
+#define TARGET_TYPE "release"
 #endif
 
+	void* core_handle = NULL;
+
+	if (file_exists(core_name)) {
+		void* core_handle = dlopen(core_name, RTLD_NOW);
+
+		if (!core_handle) {
+			printf("Unable to open %s: %s", core_name, dlerror());
+			return 0;
+		}
+	} else {
+		char load_path[4096] = { 0 };
+
+#ifndef _WIN32
+
+#ifdef HIPPO_MAC
+		int size = sizeof(load_path);
+		extern int _NSGetExecutablePath(char *buf, uint32_t *bufsize);
+		_NSGetExecutablePath(load_path, &size);
+
+		int i = 0;
+
+		for (i = size - 1; i != 0; --i) {
+			if (load_path[i] == '/') {
+				break;
+			}
+		}
+
+		load_path[i] = 0;
+#else
+		if (0 == getcwd(load_path, sizeof(load_path))) {
+			printf("getwd failed %s\n", strerror(errno));
+		}
+
 #endif
+		strcat(load_path, "/");
+#endif
+		strcat(load_path, core_name);
+		if (file_exists(load_path)) {
+			core_handle = dlopen(load_path, RTLD_NOW);
 
-	void* core_handle = dlopen(core_name, RTLD_NOW);
+			if (core_handle)
+				goto done;
+		}
 
-	if (!core_handle) {
-		printf("Unable to open %s: %s", core_name, dlerror());
-		return 0;
+		sprintf(load_path, "t2-output/%s-%s-default/%s", LOAD_PATH, TARGET_TYPE, core_name);
+
+		core_handle = dlopen(load_path, RTLD_NOW);
+
+		if (!core_handle) {
+			printf("Unable to open %s: %s", load_path, dlerror());
+			return 0;
+		}
 	}
+
+done:
 
 	hippo_core_new = (HippoCoreNew)dlsym(core_handle, "hippo_core_new");
 	hippo_core_drop = (HippoCoreDrop)dlsym(core_handle, "hippo_core_drop");
