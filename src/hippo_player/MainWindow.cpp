@@ -345,6 +345,17 @@ QWidget* MainWindow::create_plugin_by_name(const QString& plugin_name) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void MainWindow::plugin_view_closed(QObject* obj) {
+    for (size_t i = 0, len = m_plugin_instances.size(); i < len; ++i) {
+        if (m_plugin_instances[i].widget == obj) {
+            m_plugin_instances.remove(i);
+            return;
+        }
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 QWidget* MainWindow::create_plugin_by_index(int index) {
     if (index >= m_plugin_types.length()) {
         return nullptr;
@@ -368,6 +379,9 @@ QWidget* MainWindow::create_plugin_by_index(int index) {
 
     HippoServiceAPI* service_api = hippo_service_api_new(m_core);
     QWidget* widget = view_plugin->create(service_api, m_playlist_model);
+    widget->setAttribute(Qt::WA_DeleteOnClose);
+
+    QObject::connect(widget, &QObject::destroyed, this, &MainWindow::plugin_view_closed);
 
     m_plugin_instances.append({view_plugin, service_api, widget});
 

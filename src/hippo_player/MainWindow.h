@@ -45,6 +45,8 @@ private:
         QWidget* widget;
     };
 
+    Q_SLOT void plugin_view_closed(QObject* obj);
+
     PlaylistModel* m_playlist_model;
     HippoCore* m_core = nullptr;
     const HippoMessageAPI* m_general_messages = nullptr;
