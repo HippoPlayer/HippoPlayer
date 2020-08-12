@@ -7,6 +7,7 @@ use std::os::raw::{c_char, c_void};
 use std::path::Path;
 use std::ptr;
 use std::time::Instant;
+use std::io::{Error, ErrorKind};
 use song_db::SongDb;
 
 mod audio;
@@ -241,16 +242,37 @@ impl HippoCore {
             );
         }
     }
+
+    fn basic_error(text: &'static str) -> Error {
+         Error::new(ErrorKind::Other, text)
+    }
+
+    /// Finds the data directory relative to the executable.
+    /// This is because it's possible to have data next to the exe, but also running
+    /// the applications as t2-output/path/exe and the location is in the root then
+    fn find_data_directory() -> std::io::Result<()>{
+        let current_path = std::env::current_dir().map_err(|_| Self::basic_error("Unable to get current dir!"))?;
+        if current_path.join("data").exists() {
+            return Ok(());
+        }
+
+        let mut path = current_path.parent().ok_or_else(|| Self::basic_error("Unable to get parent dir"))?;
+
+        loop {
+            println!("seaching for data in {:?}", path);
+
+            if path.join("data").exists() {
+                return std::env::set_current_dir(path);
+            }
+
+            path = path.parent().ok_or_else(|| Self::basic_error("Unable to get parent dir"))?;
+        }
+    }
 }
 
 #[no_mangle]
 pub extern "C" fn hippo_core_new() -> *const HippoCore {
-    let current_path = std::env::current_dir().unwrap();
-
-    // TODO: We should do better error handling here
-    // This to enforce we load relative to the current exe
-    let current_exe = std::env::current_exe().unwrap();
-    std::env::set_current_dir(current_exe.parent().unwrap()).unwrap();
+    HippoCore::find_data_directory().expect("Unable to find data directory");
 
     let config = match CoreConfig::load("data/config/global.cfg") {
         Ok(v) => v,
@@ -259,6 +281,9 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
             return ptr::null();
         }
     };
+
+    let current_path = std::env::current_dir().unwrap();
+
 
     let mut plugins = Plugins::new();
 
