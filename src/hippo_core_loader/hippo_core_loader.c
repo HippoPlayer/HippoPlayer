@@ -4,6 +4,7 @@
 #include <string.h>
 #ifndef _WIN32
 #include <unistd.h>
+#include <errno.h>
 #endif
 #include "hippo_core_loader.h"
 #include "../hippo_core/native/hippo_core.h"
