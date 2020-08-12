@@ -2,6 +2,7 @@
 #include <adplug.h>
 #include <emuopl.h>
 #include <silentopl.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <wemuopl.h>
@@ -243,10 +244,29 @@ static void adplug_set_log(struct HippoLogAPI* log) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+extern "C" void AdPlug_LogWrite(const char* fmt, ...) {
+    char buffer[2048];
+
+    va_list argptr;
+    va_start(argptr, fmt);
+    vsnprintf(buffer, sizeof(buffer), fmt, argptr);
+    va_end(argptr);
+
+    auto len = strlen(buffer);
+    // remove newline as we auto-add it in the log macro
+    if (len > 3) {
+        buffer[len - 3] = '\0';
+    }
+
+    hp_debug("%s", buffer);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static HippoPlaybackPlugin g_adplug_plugin = {
     HIPPO_PLAYBACK_PLUGIN_API_VERSION,
     "adplug",
-    "0.0.2",
+    "0.0.3",
     "adplug 2.3.3",
     adplug_probe_can_play,
     adplug_supported_extensions,
