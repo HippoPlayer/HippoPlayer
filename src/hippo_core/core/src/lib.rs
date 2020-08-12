@@ -1,8 +1,6 @@
 //use std::ffi::CStr;
 use std::fs::File;
 use std::fs;
-use std::fs::OpenOptions;
-use std::io::prelude::*;
 use std::os::raw::{c_char, c_void};
 use std::path::Path;
 use std::ptr;
@@ -284,6 +282,10 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
 
     let current_path = std::env::current_dir().unwrap();
 
+    // TODO: We should do better error handling here
+    // This to enforce we load relative to the current exe
+    let current_exe = std::env::current_exe().unwrap();
+    std::env::set_current_dir(current_exe.parent().unwrap()).unwrap();
 
     let mut plugins = Plugins::new();
 
