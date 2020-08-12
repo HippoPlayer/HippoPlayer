@@ -16,6 +16,7 @@
 QWidget* MusicInfoView::create(struct HippoServiceAPI* service_api, QAbstractItemModel* model) {
     m_metadata_api = HippoServiceAPI_get_metadata_api(service_api, HIPPO_MESSAGE_API_VERSION);
 
+    m_text_font = new QFont("DejaVu Sans Mono", 10);
     m_base = new QWidget;
     m_main_layout = new QVBoxLayout(m_base);
 
@@ -48,6 +49,8 @@ QPlainTextEdit* MusicInfoView::create_label_multi(const QString& label_name) {
 
     auto label_text = new QLabel(label_name);
     auto line = new QPlainTextEdit;
+
+    line->setFont(*m_text_font);
 
     layout->addWidget(label_text);
     layout->addWidget(line);
