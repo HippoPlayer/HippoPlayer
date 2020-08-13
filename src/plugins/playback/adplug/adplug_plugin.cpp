@@ -216,7 +216,7 @@ static int adplug_metadata(const char* url, const HippoServiceAPI* service_api) 
     if (subsongs_count > 1) {
         for (int i = 0; i < subsongs_count; ++i) {
             char subsong_name[1024] = {0};
-            auto len = p->songlength(i);
+            auto len = p->songlength(i) / 1000;
             // Only add songs if they actually have a length
             if (len > 0) {
                 sprintf(subsong_name, "%s (%d/%d)", title, i + 1, subsongs_count);
@@ -266,7 +266,7 @@ extern "C" void AdPlug_LogWrite(const char* fmt, ...) {
 static HippoPlaybackPlugin g_adplug_plugin = {
     HIPPO_PLAYBACK_PLUGIN_API_VERSION,
     "adplug",
-    "0.0.3",
+    "1.0.0",
     "adplug 2.3.3",
     adplug_probe_can_play,
     adplug_supported_extensions,
