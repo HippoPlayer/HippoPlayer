@@ -76,6 +76,7 @@ local gcc_opts = {
     "-Wno-attributes",
     "-Wno-unused-value",
     "-DOBJECT_DIR=\\\"$(OBJECTDIR)\\\"",
+    "-I$(OBJECTDIR)",
     "-Wall",
     "-fPIC",
     { "-DHIPPO_DEBUG", "-O0", "-g"; Config = "*-*-debug" },
