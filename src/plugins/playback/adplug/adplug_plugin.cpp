@@ -184,7 +184,7 @@ static int adplug_metadata(const char* url, const HippoServiceAPI* service_api) 
     const HippoMetadataAPI* metadata_api = HippoServiceAPI_get_metadata_api(service_api, HIPPO_METADATA_API_VERSION);
     HippoMetadataId index = HippoMetadata_create_url(metadata_api, url);
 
-    char title[4096] = {0};
+    char title[1024] = {0};
 
     const char* meta_title = p->gettitle().c_str();
 
@@ -215,7 +215,7 @@ static int adplug_metadata(const char* url, const HippoServiceAPI* service_api) 
 
     if (subsongs_count > 1) {
         for (int i = 0; i < subsongs_count; ++i) {
-            char subsong_name[1024] = {0};
+            char subsong_name[2048] = {0};
             auto len = p->songlength(i) / 1000;
             // Only add songs if they actually have a length
             if (len > 0) {
