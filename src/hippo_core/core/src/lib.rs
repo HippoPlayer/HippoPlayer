@@ -153,12 +153,16 @@ impl HippoCore {
             ));
             let msg_count = msgs.read_stream.len();
 
+
             for _ in 0..msg_count {
                 let message_data = msgs.read_stream.pop().unwrap();
                 let message = get_root_as_hippo_message(&message_data);
 
                 // Send messages to the frontend
                 Self::send_msgs(user_data, send_messages, &message_data, count, msg_index);
+
+                // send message to logging system
+                logger::incoming_message(&message);
 
                 // Send the message to to playlist and
                 self.playlist.event(&message).map(|reply| {
@@ -171,11 +175,6 @@ impl HippoCore {
                         self.is_playing = false;
                         self.audio.stop();
 					},
-                    /*
-                    MessageType::play_song => {
-                        self.playlist.set_new_song();
-					},
-                    */
                     _ => (),
                 }
 
@@ -218,6 +217,11 @@ impl HippoCore {
                 }
             }
         }
+
+        // Send log messages (if enabled) to the front-end
+        logger::send_log_messages().map(|reply| {
+            Self::send_msgs(user_data, send_messages, &reply, count, std::usize::MAX);
+        });
 
         // if new subsongs has been inserted we need to send it to the frontend
         self.playlist.inserted_subsongs().map(|reply| {

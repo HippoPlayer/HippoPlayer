@@ -26,16 +26,21 @@
 #include <time.h>
 #include <chrono>
 #include <mutex>
-
-#ifdef _WIN32
-#include <windows.h>
-#endif
+#include <vector>
 
 enum { LOG_TRACE, LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR, LOG_FATAL };
 
 #define MAX_LOG_CALLBACKS 32
 
-//static std::mutex s_log_mutex;
+static std::mutex s_log_mutex;
+static std::vector<const char*> s_log_messages;
+static FILE* s_log_file = nullptr;
+static bool s_log_to_file = true;
+
+// index to where we are reading messages
+static bool s_enable_send_msgs = false;
+static int s_log_read_index = 0;
+static int s_total_log_message_count = 0;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -46,7 +51,6 @@ struct HippoLogAPIState {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef struct {
-    va_list ap;
     char time[32];
     const char* base_name;
     const char* fmt;
@@ -72,17 +76,14 @@ static struct {
     Callback callbacks[MAX_LOG_CALLBACKS];
 } s_log;
 
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int gettimeofday(struct timeval* tp, struct timezone* tzp) {
-    /*
     namespace sc = std::chrono;
     sc::system_clock::duration d = sc::system_clock::now().time_since_epoch();
     sc::seconds s = sc::duration_cast<sc::seconds>(d);
     tp->tv_sec = s.count();
     tp->tv_usec = sc::duration_cast<sc::microseconds>(d - s).count();
-    */
     memset(tp, 0, sizeof(struct timeval));
     return 0;
 }
@@ -121,13 +122,11 @@ static void get_time(char* buffer) {
 
 static const char* level_strings[] = {"TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAs_log"};
 
-#ifdef USE_LOG_COLOR
 static const char* level_colors[] = {"\x1b[94m", "\x1b[36m", "\x1b[32m", "\x1b[33m", "\x1b[31m", "\x1b[35m"};
-#endif
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void stdout_callback(log_Event* ev) {
+static void stdout_callback(log_Event* ev, va_list ap) {
 #ifdef USE_LOG_COLOR
     if (ev->file) {
         fprintf(ev->udata, "%s \x1b[37m[%-20s] %s%-5s\x1b[0m \x1b[90m%s:%d:\x1b[0m ", ev->time, ev->base_name, level_colors[ev->level],
@@ -139,13 +138,62 @@ static void stdout_callback(log_Event* ev) {
 #else
     fprintf(ev->udata, "%s %-5s %s:%d: ", env->time, level_strings[ev->level], ev->file, ev->line);
 #endif
-    vfprintf(ev->udata, ev->fmt, ev->ap);
+    vfprintf(ev->udata, ev->fmt, ap);
     fprintf(ev->udata, "\n");
     fflush(ev->udata);
 }
 
+/*
+#define COL_T "<span style=\"color:gainsboro\">"
+#define COL_G "<span style=\"color:gray\">"
+#define ES "</span>"
+
+static const char* html_colors[] = {
+    "<span style=\"color:green\">"
+    "<span style=\"color:green\">"
+    "<span style=\"color:green\">"
+    "<span style=\"color:green\">"
+    "<span style=\"color:green\">"
+    "<span style=\"color:green\">"
+    "<span style=\"color:green\">"
+    "<span style=\"color:green\">"
+    "<span style=\"color:green\">"
+};
+        written_chars = sprintf(buffer, "<tt> " COL_T " %s " ES COL_G "[%-40s]" ES " %s%-5s " ES COL_T,
+                        ev->time, ev->base_name, html_colors[0], level_strings[ev->level]);
+  //<tt> <span style="color:gainsboro"> 15:19:16.000 </span> <span style="color:gray"> [VGM 0.0.1           ] </span> <span style="color:green"> INFO </span> <span>  <span style="color:gainsboro"> Unsupported /home/emoon/Music/dune/dune ii - 00.adl </span> </tt>
+*/
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void file_console_out(log_Event* ev, va_list ap) {
+    char buffer[8192];
+    int written_chars = 0;
+
+    if (ev->file) {
+        written_chars = sprintf(buffer, "%s [%-20s] %-5s %s:%d: ", ev->time, ev->base_name, level_strings[ev->level], ev->file, ev->line);
+    } else {
+        written_chars = sprintf(buffer, "%s [%-20s] %-5s ", ev->time, ev->base_name, level_strings[ev->level]);
+    }
+
+    written_chars += vsprintf(&buffer[written_chars], ev->fmt, ap);
+
+    s_log_messages.push_back(strdup(buffer));
+
+    buffer[written_chars + 0] = '\n';
+    buffer[written_chars + 1] = 0;
+
+    if (s_log_file) {
+        fwrite(buffer, 1, written_chars, s_log_file);
+        fflush(s_log_file);
+    }
+
+    s_total_log_message_count += 1;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*
 static void file_callback(log_Event* ev) {
     if (ev->file) {
         fprintf(ev->udata, "%s [%-20s] %-5s %s:%d: ", ev->time, ev->base_name, level_strings[ev->level], ev->file, ev->line);
@@ -157,6 +205,7 @@ static void file_callback(log_Event* ev) {
     fprintf(ev->udata, "\n");
     fflush(ev->udata);
 }
+*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -219,27 +268,81 @@ extern "C" void hippo_log(HippoLogAPIState* state, int level, const char* file, 
     ev.level = level;
     ev.udata = stdout;
 
-    //std::lock_guard<std::mutex> _(s_log_mutex);
+    std::lock_guard<std::mutex> _(s_log_mutex);
+
+    if (s_log_to_file) {
+        if (!s_log_file) {
+            s_log_file = fopen("hippo.log", "wb");
+        }
+    } else {
+        if (s_log_file) {
+            fclose(s_log_file);
+            s_log_file = nullptr;
+        }
+    }
+
+    if (s_log_messages.empty()) {
+        // reserve space for 10 000 messages, should hopefully be enough for a while :)
+        s_log_messages.reserve(10000);
+    }
 
     get_time(ev.time);
 
-    if (!s_log.quiet && level >= s_log.level) {
-        va_start(ev.ap, fmt);
-        stdout_callback(&ev);
-        va_end(ev.ap);
+    //stdout_callback(&ev);
+
+    va_list ap;
+    va_start(ap, fmt);
+    va_list itemcopy;
+    va_copy(itemcopy, ap);
+
+    stdout_callback(&ev, ap);
+    va_end(ap);
+
+    file_console_out(&ev, itemcopy);
+    va_end(itemcopy);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+extern "C" void hippo_log_clear() {
+    std::lock_guard<std::mutex> _(s_log_mutex);
+
+    for (auto& msg : s_log_messages) {
+        free((void*)msg);
     }
 
-    /*
-    for (int i = 0; i < MAX_LOG_CALLBACKS && s_log.callbacks[i].fn; i++) {
-        Callback* cb = &s_log.callbacks[i];
-        if (level >= cb->level) {
-            init_event(&ev, cb->udata);
-            va_start(ev.ap, fmt);
-            cb->fn(&ev);
-            va_end(ev.ap);
-        }
+    s_log_messages.clear();
+
+    s_log_read_index = 0;
+    s_total_log_message_count = 0;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+extern "C" void hippo_log_send_messages(bool enable) {
+    std::lock_guard<std::mutex> _(s_log_mutex);
+    s_enable_send_msgs = enable;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+extern "C" void hippo_log_to_file(bool enable) {
+    std::lock_guard<std::mutex> _(s_log_mutex);
+    s_log_to_file = enable;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+extern "C" const char* hippo_log_get_messages() {
+    std::lock_guard<std::mutex> _(s_log_mutex);
+
+    if ((s_log_read_index >= s_total_log_message_count - 1) || !s_enable_send_msgs) {
+        return nullptr;
     }
-    */
+
+    int index = s_log_read_index++;
+
+    return s_log_messages[index];
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

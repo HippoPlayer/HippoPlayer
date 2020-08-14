@@ -11,3 +11,5 @@ build = "build.rs"
 cc = "1.0"
 
 [dependencies]
+messages = { path = "../messages" }
+

@@ -13,7 +13,7 @@
   <property name="minimumSize">
    <size>
     <width>0</width>
-    <height>550</height>
+    <height>500</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -150,7 +150,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QPlainTextEdit" name="plainTextEdit"/>
+      <widget class="QPlainTextEdit" name="log_messages"/>
      </item>
     </layout>
    </item>

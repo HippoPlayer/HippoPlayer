@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <time.h>
 
+struct HippoMessageAPI;
+
 #define LOG_VERSION "0.1.0"
 
 //typedef void (*log_LogFn)(log_Event* ev);
@@ -27,4 +29,5 @@ extern "C" {
     void hippo_log_set_base_name(HippoLogAPIState* state, const char* base_name);
     void hippo_log_set_level(int level);
     void hippo_log(HippoLogAPIState* state, int level, const char* file, int line, const char* fmt, ...);
+    const char* hippo_log_get_log_messages();
 }

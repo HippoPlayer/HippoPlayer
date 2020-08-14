@@ -1,11 +1,17 @@
+
 use std::fmt;
 use std::os::raw::c_void;
-use std::ffi::CString;
+use std::ffi::{CString, CStr};
+use messages::*;
 
 extern "C" {
+    fn hippo_log_clear();
+    fn hippo_log_send_messages(enable: bool);
+    fn hippo_log_to_file(enable: bool);
     pub fn hippo_log_new_state() -> *mut c_void;
     pub fn hippo_log_delete_state(state: *mut c_void);
     pub fn hippo_log_set_base_name(logger: *mut c_void, name: *const i8);
+    pub fn hippo_log_get_messages() -> *const i8;
     pub fn hippo_log(
         logger: *mut c_void,
         level: i32,
@@ -15,6 +21,10 @@ extern "C" {
         ...
     );
 }
+
+
+
+
 
 pub const HIPPO_LOG_TRACE: i32 = 0;
 pub const HIPPO_LOG_DEBUG: i32 = 1;
@@ -31,9 +41,66 @@ pub fn do_log(log_level: i32, format: fmt::Arguments) {
     }
 }
 
+
+pub fn incoming_message(msg: &HippoMessage) {
+    match msg.message_type() {
+        MessageType::log_clear => unsafe { hippo_log_clear() },
+        MessageType::log_send_messages => {
+            let send_msgs = msg.message_as_log_send_messages().unwrap();
+            unsafe { hippo_log_send_messages(send_msgs.enable()) };
+        },
+        MessageType::log_file => {
+            let log_file = msg.message_as_log_file().unwrap();
+            unsafe { hippo_log_to_file(log_file.enable()) };
+        },
+
+        _ => (),
+    }
+}
+
+//pub fn send_log_messages(_msg: &HippoMessage) -> Option<Box<[u8]>> {
+pub fn send_log_messages() -> Option<Box<[u8]>> {
+    let mut message = unsafe { hippo_log_get_messages() };
+
+    if message == std::ptr::null() {
+        return None;
+    }
+
+    let mut builder = messages::FlatBufferBuilder::new_with_capacity(8192);
+    let mut log_messages = Vec::with_capacity(64);
+
+    // collect all log messages
+    loop {
+        let c_str = unsafe { CStr::from_ptr(message) };
+        log_messages.push(builder.create_string(&c_str.to_string_lossy()));
+        message = unsafe { hippo_log_get_messages() };
+        if message == std::ptr::null() {
+            break;
+        }
+    }
+
+
+    let strings_vec = builder.create_vector(&log_messages);
+
+    let added_urls = HippoLogMessages::create(
+        &mut builder,
+        &HippoLogMessagesArgs {
+            messages: Some(strings_vec),
+        },
+    );
+
+    Some(HippoMessage::create_def(
+        builder,
+        MessageType::log_messages,
+        added_urls.as_union_value(),
+    ))
+}
+
+
 #[macro_export]
 macro_rules! trace {
     ($($arg:tt)+) => ({
         $crate::do_log(HIPPO_LOG_TRACE, format_args!($($arg)*))
     });
 }
+
