@@ -141,6 +141,8 @@ QWidget* PlaylistView::create(struct HippoServiceAPI* service_api, QAbstractItem
 
     HippoMessageAPI_send(m_message_api, builder.GetBufferPointer(), builder.GetSize());
 
+    widget->setWindowTitle(QStringLiteral("Playlist"));
+
     return widget;
 }
 
