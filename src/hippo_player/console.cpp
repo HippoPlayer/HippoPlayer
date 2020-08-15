@@ -112,7 +112,7 @@ ConsoleView::ConsoleView(const struct HippoMessageAPI* messages_api, QWidget* pa
     m_active_mask = Level_All;
     m_ui = new Ui_Console();
     m_ui->setupUi(this);
-    m_ui->log_messages->setFont(QFont(QStringLiteral("DejaVu Sans Mono"), 10));
+    m_ui->log_messages->setFont(QFont(QStringLiteral("Courier"), 12));
     m_ui->log_messages->setLineWrapMode(QPlainTextEdit::NoWrap);
 
     m_highlighter = new Highlighter(m_ui->log_messages->document());

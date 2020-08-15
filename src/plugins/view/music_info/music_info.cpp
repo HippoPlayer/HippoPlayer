@@ -16,7 +16,7 @@
 QWidget* MusicInfoView::create(struct HippoServiceAPI* service_api, QAbstractItemModel* model) {
     m_metadata_api = HippoServiceAPI_get_metadata_api(service_api, HIPPO_MESSAGE_API_VERSION);
 
-    m_text_font = new QFont("DejaVu Sans Mono", 10);
+    m_text_font = new QFont("Courier", 12);
     m_base = new QWidget;
     m_main_layout = new QVBoxLayout(m_base);
 

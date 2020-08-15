@@ -277,6 +277,11 @@ impl HippoCore {
 
 #[no_mangle]
 pub extern "C" fn hippo_core_new() -> *const HippoCore {
+    // TODO: We should do better error handling here
+    // This to enforce we load relative to the current exe
+    let current_exe = std::env::current_exe().unwrap();
+    std::env::set_current_dir(current_exe.parent().unwrap()).unwrap();
+
     HippoCore::find_data_directory().expect("Unable to find data directory");
 
     let config = match CoreConfig::load("data/config/global.cfg") {

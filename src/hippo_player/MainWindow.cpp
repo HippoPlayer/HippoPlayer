@@ -31,11 +31,12 @@ MainWindow::MainWindow(HippoCore* core) : QMainWindow(0), m_core(core) {
 
     setWindowTitle(window_title);
 
-    int id = QFontDatabase::addApplicationFont(QStringLiteral("data/fonts/DejaVuSansMono.ttf"));
-    QString family = QFontDatabase::applicationFontFamilies(id).at(0);
+    //int id = QFontDatabase::addApplicationFont(QStringLiteral("data/fonts/DejaVuSansMono.ttf"));
+    //QString family = QFontDatabase::applicationFontFamilies(id).at(0);
 
     m_playlist_model = new PlaylistModel(m_core, this);
     //m_playlist_model->setSelectionMode(QAbstractItemView::MultiSelection);
+
 
     m_general_messages = HippoServiceAPI_get_message_api(hippo_service_api_new(m_core), HIPPO_MESSAGE_API_VERSION);
 
