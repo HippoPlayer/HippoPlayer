@@ -6,7 +6,7 @@ on:
       - '*'
 
 jobs:
-  build:
+  publish_windows:
     name: Publish binaries
     runs-on: windows-latest
 
@@ -30,5 +30,32 @@ jobs:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: hippoplayer_windows.7z
         asset_name: hippoplayer_windows_$tag.7z
+        tag: ${{ github.ref }}
+        overwrite: true
+
+  publish_macOS:
+    name: Publish binaries
+    runs-on: macOS-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v2
+    - name: Build code & Publish build
+      shell: cmd
+      run: |
+        export QT5=$Qt5
+        export QT5_BIN=$Qt5_DIR/bin
+        export QT5_INC=$Qt5_DIR/include
+        export QT5_LIB=$Qt5_DIR/lib
+        export HIPPO_VERSION=`git describe --tags --abbrev=0`
+        bin/macos/tundra2 macosx-clang-release
+        scripts/mac_release_deploy.sh
+    - name: Upload binaries to release
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: t2-output/build/hippoplayer_macos.dmg
+        asset_name: hippoplayer_macos_$tag.dmg
         tag: ${{ github.ref }}
         overwrite: true
