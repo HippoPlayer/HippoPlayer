@@ -4,7 +4,7 @@
 #include <limits.h>
 
 struct uade_path {
-	char name[PATH_MAX];
+	char name[4906];
 };
 
 struct uade_ep_options {

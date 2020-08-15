@@ -28,6 +28,10 @@
 #include <mutex>
 #include <vector>
 
+#ifdef _WIN32
+#include <Windows.h>
+#endif
+
 enum { LOG_TRACE, LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR, LOG_FATAL };
 
 #define MAX_LOG_CALLBACKS 32

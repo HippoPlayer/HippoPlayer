@@ -172,7 +172,9 @@ void MainWindow::send_messages_to_ui(void* this_, const unsigned char* data, int
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void MainWindow::update_messages() {
-    hippo_update_messages(m_core, this, m_plugin_instances.count() + 1, get_messages, send_messages_to_ui);
+    if (m_update_events) {
+        hippo_update_messages(m_core, this, m_plugin_instances.count() + 1, get_messages, send_messages_to_ui);
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -418,6 +420,8 @@ QWidget* MainWindow::create_plugin_by_index(int index) {
 // TODO: Save layouts and such here also
 
 void MainWindow::closeEvent(QCloseEvent *event) {
+    m_update_events = false;
+
     delete m_console;
     m_console = nullptr;
 

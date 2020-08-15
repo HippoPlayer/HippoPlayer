@@ -57,6 +57,7 @@ private:
     QVector<PluginInstance> m_plugin_instances;
     ConsoleView* m_console = nullptr;
     bool m_console_visible = false;
+    bool m_update_events = true;
 
     void create_plugin_instance(int index);
     Q_SLOT void add_files();
