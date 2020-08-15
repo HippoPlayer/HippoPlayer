@@ -42,7 +42,6 @@ jobs:
     - name: Install Qt
       uses: jurplel/install-qt-action@v2
     - name: Build code & Publish build
-      shell: cmd
       run: |
         export QT5=$Qt5
         export QT5_BIN=$Qt5_DIR/bin
