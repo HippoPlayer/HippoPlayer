@@ -35,7 +35,6 @@ enum { LOG_TRACE, LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR, LOG_FATAL };
 static std::mutex s_log_mutex;
 static std::vector<const char*> s_log_messages;
 static FILE* s_log_file = nullptr;
-static bool s_log_to_file = true;
 
 // index to where we are reading messages
 static bool s_enable_send_msgs = false;
@@ -78,13 +77,13 @@ static struct {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int gettimeofday(struct timeval* tp, struct timezone* tzp) {
+static int gettimeofday(struct timeval* tp) {
     namespace sc = std::chrono;
     sc::system_clock::duration d = sc::system_clock::now().time_since_epoch();
     sc::seconds s = sc::duration_cast<sc::seconds>(d);
     tp->tv_sec = s.count();
     tp->tv_usec = sc::duration_cast<sc::microseconds>(d - s).count();
-    memset(tp, 0, sizeof(struct timeval));
+
     return 0;
 }
 
@@ -100,7 +99,7 @@ static void get_time(char* buffer) {
     time_t rawtime;
     struct tm* timeinfo;
 
-    gettimeofday(&tv, NULL);
+    gettimeofday(&tv);
 
     millisec = int(tv.tv_usec / 1000.0);
     if (millisec >= 1000)
@@ -184,7 +183,7 @@ static void file_console_out(log_Event* ev, va_list ap) {
     buffer[written_chars + 1] = 0;
 
     if (s_log_file) {
-        fwrite(buffer, 1, written_chars, s_log_file);
+        fwrite(buffer, 1, written_chars + 1, s_log_file);
         fflush(s_log_file);
     }
 
@@ -270,17 +269,6 @@ extern "C" void hippo_log(HippoLogAPIState* state, int level, const char* file, 
 
     std::lock_guard<std::mutex> _(s_log_mutex);
 
-    if (s_log_to_file) {
-        if (!s_log_file) {
-            s_log_file = fopen("hippo.log", "wb");
-        }
-    } else {
-        if (s_log_file) {
-            fclose(s_log_file);
-            s_log_file = nullptr;
-        }
-    }
-
     if (s_log_messages.empty()) {
         // reserve space for 10 000 messages, should hopefully be enough for a while :)
         s_log_messages.reserve(10000);
@@ -326,9 +314,25 @@ extern "C" void hippo_log_send_messages(bool enable) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-extern "C" void hippo_log_to_file(bool enable) {
+extern "C" void hippo_log_to_file(const char* filename, bool enable) {
     std::lock_guard<std::mutex> _(s_log_mutex);
-    s_log_to_file = enable;
+
+    if (s_log_file) {
+        fclose(s_log_file);
+        s_log_file = nullptr;
+    }
+
+    if (filename && enable) {
+        s_log_file = fopen(filename, "wb");
+
+        // write all cached messages to the file
+        for (const auto& message : s_log_messages) {
+            fputs(message, s_log_file);
+            fputs("\n", s_log_file);
+        }
+
+        fflush(s_log_file);
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -336,7 +340,7 @@ extern "C" void hippo_log_to_file(bool enable) {
 extern "C" const char* hippo_log_get_messages() {
     std::lock_guard<std::mutex> _(s_log_mutex);
 
-    if ((s_log_read_index >= s_total_log_message_count - 1) || !s_enable_send_msgs) {
+    if ((s_log_read_index >= s_total_log_message_count) || !s_enable_send_msgs) {
         return nullptr;
     }
 

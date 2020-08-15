@@ -156,6 +156,9 @@ Program {
             Recursive = true,
         },
 
+        gen_moc("src/hippo_player/console.h"),
+        gen_uic("src/hippo_player/console.ui"),
+
         gen_moc("src/hippo_player/MainWindow.h"),
         gen_moc("src/hippo_player/PlaylistModel.h"),
         --gen_uic("src/hippo_player/test_main/MainWindow.ui"),

@@ -47,6 +47,14 @@ MainWindow::MainWindow(HippoCore* core) : QMainWindow(0), m_core(core) {
 
     layout->QLayout::addWidget(m_docking_manager);
 
+    m_console = new ConsoleView(m_general_messages, nullptr);
+    m_docking_manager->addToolWindow(
+        m_console,
+        ToolWindowManager::NewFloatingArea,
+        ToolWindowManager::ToolWindowProperty::HideOnClose);
+
+    m_docking_manager->hideToolWindow(m_console);
+
     // Update code for processing the message queue
     QTimer* timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &MainWindow::update_messages);
@@ -110,6 +118,9 @@ const HippoMessageAPI* MainWindow::get_messages(void* this_, int index) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void MainWindow::handle_incoming_messages(const unsigned char* data, int len) {
+    // let console handle messages
+    m_console->event(data, len);
+
     const HippoMessage* message = GetHippoMessage(data);
 
     switch (message->message_type())
@@ -191,6 +202,14 @@ void MainWindow::create_menus() {
 
     connect(add_files, &QAction::triggered, this, &MainWindow::add_files);
     connect(add_dir, &QAction::triggered, this, &MainWindow::add_directory);
+
+    // Add console to the menu
+
+    QMenu* view_menu = menuBar()->addMenu(QStringLiteral("&View"));
+    QAction* console_view_act = new QAction(tr("Console"), this);
+    console_view_act ->setStatusTip(tr("Show Console with log messages"));
+    QObject::connect(console_view_act, &QAction::triggered, this, &MainWindow::show_hide_console);
+    view_menu->addAction(console_view_act);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -251,6 +270,12 @@ void MainWindow::add_files() {
     builder.Finish(CreateHippoMessageDirect(builder, MessageType_request_add_urls,
         CreateHippoRequestAddUrls(builder, builder.CreateVector(urls)).Union()));
     HippoMessageAPI_send(m_general_messages, builder.GetBufferPointer(), builder.GetSize());
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void MainWindow::show_hide_console() {
+    m_docking_manager->moveToolWindow(m_console, ToolWindowManager::NewFloatingArea);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

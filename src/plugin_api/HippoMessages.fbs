@@ -50,6 +50,7 @@ table HippoLogClear {
 }
 
 table HippoLogToFile {
+  filename: string;
   enable: bool;
 }
 

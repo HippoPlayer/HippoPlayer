@@ -679,30 +679,6 @@ SharedLibrary {
 }
 
 -----------------------------------------------------------------------------------------------------------------------
-
-SharedLibrary {
-	Name = "console",
-	Sources = {
-	    "src/plugins/view/console/console.cpp",
-        gen_moc("src/plugins/view/console/console.h"),
-        gen_uic("src/plugins/view/console/console.ui"),
-	},
-
-	Defines = {
-		"QT_NO_DEBUG",
-	},
-
-	Libs = {
-        { "Qt5Gui.lib", "Qt5Core.lib", "Qt5Widgets.lib"; Config = "win64-*-*" },
-	},
-
-    Frameworks = { "Cocoa", "QtWidgets", "QtGui", "QtCore" },
-
-	Depends = { "flatbuffers_lib" },
-}
-
-
------------------------------------------------------------------------------------------------------------------------
 -- Default plugins
 -----------------------------------------------------------------------------------------------------------------------
 
@@ -728,7 +704,6 @@ Default "adplug"
 -- Views
 
 --Default "playlist"
-Default "console"
 Default "player"
 Default "playlist"
 Default "music_info"

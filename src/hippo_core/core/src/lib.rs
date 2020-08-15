@@ -7,6 +7,7 @@ use std::ptr;
 use std::time::Instant;
 use std::io::{Error, ErrorKind};
 use song_db::SongDb;
+use logger::*;
 
 mod audio;
 mod core_config;
@@ -100,6 +101,8 @@ impl HippoCore {
                 }
             }
         }
+
+        warn!("No playback plugin found for: {}", url);
 
         String::new()
     }

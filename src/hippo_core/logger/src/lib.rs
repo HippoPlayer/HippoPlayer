@@ -7,7 +7,7 @@ use messages::*;
 extern "C" {
     fn hippo_log_clear();
     fn hippo_log_send_messages(enable: bool);
-    fn hippo_log_to_file(enable: bool);
+    fn hippo_log_to_file(filename: *const i8, enable: bool);
     pub fn hippo_log_new_state() -> *mut c_void;
     pub fn hippo_log_delete_state(state: *mut c_void);
     pub fn hippo_log_set_base_name(logger: *mut c_void, name: *const i8);
@@ -21,8 +21,6 @@ extern "C" {
         ...
     );
 }
-
-
 
 
 
@@ -49,9 +47,13 @@ pub fn incoming_message(msg: &HippoMessage) {
             let send_msgs = msg.message_as_log_send_messages().unwrap();
             unsafe { hippo_log_send_messages(send_msgs.enable()) };
         },
+
         MessageType::log_file => {
             let log_file = msg.message_as_log_file().unwrap();
-            unsafe { hippo_log_to_file(log_file.enable()) };
+            let filename = log_file.filename().unwrap();
+            let c_filename = CString::new(filename).unwrap();
+
+            unsafe { hippo_log_to_file(c_filename.as_ptr(), log_file.enable()) };
         },
 
         _ => (),
@@ -103,4 +105,12 @@ macro_rules! trace {
         $crate::do_log(HIPPO_LOG_TRACE, format_args!($($arg)*))
     });
 }
+
+#[macro_export]
+macro_rules! warn {
+    ($($arg:tt)+) => ({
+        $crate::do_log(HIPPO_LOG_WARN, format_args!($($arg)*))
+    });
+}
+
 

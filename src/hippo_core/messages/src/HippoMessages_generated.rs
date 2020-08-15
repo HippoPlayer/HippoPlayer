@@ -1182,27 +1182,35 @@ impl<'a> HippoLogToFile<'a> {
     #[allow(unused_mut)]
     pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-        args: &'args HippoLogToFileArgs) -> flatbuffers::WIPOffset<HippoLogToFile<'bldr>> {
+        args: &'args HippoLogToFileArgs<'args>) -> flatbuffers::WIPOffset<HippoLogToFile<'bldr>> {
       let mut builder = HippoLogToFileBuilder::new(_fbb);
+      if let Some(x) = args.filename { builder.add_filename(x); }
       builder.add_enable(args.enable);
       builder.finish()
     }
 
-    pub const VT_ENABLE: flatbuffers::VOffsetT = 4;
+    pub const VT_FILENAME: flatbuffers::VOffsetT = 4;
+    pub const VT_ENABLE: flatbuffers::VOffsetT = 6;
 
+  #[inline]
+  pub fn filename(&self) -> Option<&'a str> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(HippoLogToFile::VT_FILENAME, None)
+  }
   #[inline]
   pub fn enable(&self) -> bool {
     self._tab.get::<bool>(HippoLogToFile::VT_ENABLE, Some(false)).unwrap()
   }
 }
 
-pub struct HippoLogToFileArgs {
+pub struct HippoLogToFileArgs<'a> {
+    pub filename: Option<flatbuffers::WIPOffset<&'a  str>>,
     pub enable: bool,
 }
-impl<'a> Default for HippoLogToFileArgs {
+impl<'a> Default for HippoLogToFileArgs<'a> {
     #[inline]
     fn default() -> Self {
         HippoLogToFileArgs {
+            filename: None,
             enable: false,
         }
     }
@@ -1212,6 +1220,10 @@ pub struct HippoLogToFileBuilder<'a: 'b, 'b> {
   start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
 impl<'a: 'b, 'b> HippoLogToFileBuilder<'a, 'b> {
+  #[inline]
+  pub fn add_filename(&mut self, filename: flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(HippoLogToFile::VT_FILENAME, filename);
+  }
   #[inline]
   pub fn add_enable(&mut self, enable: bool) {
     self.fbb_.push_slot::<bool>(HippoLogToFile::VT_ENABLE, enable, false);

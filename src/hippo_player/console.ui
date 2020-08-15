@@ -56,12 +56,12 @@
           <widget class="QComboBox" name="log_level">
            <item>
             <property name="text">
-             <string>Debug</string>
+             <string>Trace</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>Trace</string>
+             <string>Debug</string>
             </property>
            </item>
            <item>
@@ -87,16 +87,16 @@
           </widget>
          </item>
          <item>
-          <widget class="QCheckBox" name="debug_check">
+          <widget class="QCheckBox" name="trace_check">
            <property name="text">
-            <string>Debug</string>
+            <string>Trace</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QCheckBox" name="trace_check">
+          <widget class="QCheckBox" name="debug_check">
            <property name="text">
-            <string>Trace</string>
+            <string>Debug</string>
            </property>
           </widget>
          </item>

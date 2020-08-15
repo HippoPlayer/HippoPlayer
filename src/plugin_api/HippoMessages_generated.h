@@ -687,13 +687,19 @@ inline flatbuffers::Offset<HippoLogClear> CreateHippoLogClear(
 
 struct HippoLogToFile FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_ENABLE = 4
+    VT_FILENAME = 4,
+    VT_ENABLE = 6
   };
+  const flatbuffers::String *filename() const {
+    return GetPointer<const flatbuffers::String *>(VT_FILENAME);
+  }
   bool enable() const {
     return GetField<uint8_t>(VT_ENABLE, 0) != 0;
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_FILENAME) &&
+           verifier.VerifyString(filename()) &&
            VerifyField<uint8_t>(verifier, VT_ENABLE) &&
            verifier.EndTable();
   }
@@ -702,6 +708,9 @@ struct HippoLogToFile FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 struct HippoLogToFileBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
+  void add_filename(flatbuffers::Offset<flatbuffers::String> filename) {
+    fbb_.AddOffset(HippoLogToFile::VT_FILENAME, filename);
+  }
   void add_enable(bool enable) {
     fbb_.AddElement<uint8_t>(HippoLogToFile::VT_ENABLE, static_cast<uint8_t>(enable), 0);
   }
@@ -719,10 +728,23 @@ struct HippoLogToFileBuilder {
 
 inline flatbuffers::Offset<HippoLogToFile> CreateHippoLogToFile(
     flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<flatbuffers::String> filename = 0,
     bool enable = false) {
   HippoLogToFileBuilder builder_(_fbb);
+  builder_.add_filename(filename);
   builder_.add_enable(enable);
   return builder_.Finish();
+}
+
+inline flatbuffers::Offset<HippoLogToFile> CreateHippoLogToFileDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    const char *filename = nullptr,
+    bool enable = false) {
+  auto filename__ = filename ? _fbb.CreateString(filename) : 0;
+  return CreateHippoLogToFile(
+      _fbb,
+      filename__,
+      enable);
 }
 
 struct HippoLogSendMessages FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
