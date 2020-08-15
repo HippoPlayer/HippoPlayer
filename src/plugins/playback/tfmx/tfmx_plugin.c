@@ -51,7 +51,7 @@ enum HippoProbeResult tfmx_probe_can_play(const uint8_t* data, uint32_t data_siz
         && strncmp("TFMX_SONG", (char*)data, 9)
         && strncasecmp("TFMXSONG", (char*)data, 8)
         && strncasecmp("TFMX ", (char*)data, 5)) {
-        hp_info("Unsupported %s", filename);
+        hp_debug("Unsupported: %s", filename);
         return HippoProbeResult_Unsupported;
     }
 

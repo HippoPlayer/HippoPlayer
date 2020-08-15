@@ -58,7 +58,7 @@ enum HippoProbeResult adplug_probe_can_play(const uint8_t* data, uint32_t data_s
     CPlayer* p = CAdPlug::factory(filename, &silent);
 
     if (!p) {
-        hp_info("Unsupported: %s", filename);
+        hp_debug("Unsupported: %s", filename);
         return HippoProbeResult_Unsupported;
     } else {
         hp_info("Supported: %s", filename);
@@ -258,7 +258,7 @@ extern "C" void AdPlug_LogWrite(const char* fmt, ...) {
         buffer[len - 3] = '\0';
     }
 
-    hp_debug("%s", buffer);
+    hp_trace("%s", buffer);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -56,7 +56,7 @@ enum HippoProbeResult mdx_plugin_probe_can_play(const uint8_t* data, uint32_t da
 		}
 	}
 
-	hp_info("Unsupported: %s", filename);
+	hp_debug("Unsupported: %s", filename);
 	return HippoProbeResult_Unsupported;
 }
 

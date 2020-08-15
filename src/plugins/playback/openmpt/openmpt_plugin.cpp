@@ -76,7 +76,7 @@ static HippoProbeResult openmpt_probe_can_play(const uint8_t* data, uint32_t dat
         }
         case openmpt::probe_file_header_result_failure :
         {
-            hp_info("Unsupported: %s", filename);
+            hp_debug("Unsupported: %s", filename);
             return HippoProbeResult_Unsupported;
         }
 

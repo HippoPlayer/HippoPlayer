@@ -99,7 +99,7 @@ enum HippoProbeResult uade_probe_can_play(const uint8_t* data, uint32_t data_siz
         supported = HippoProbeResult_Supported;
         hp_info("Supported: %s", filename);
     } else {
-        hp_info("Unsupported: %s", filename);
+        hp_debug("Unsupported: %s", filename);
     }
 
     uade_cleanup_state(state, 0);
