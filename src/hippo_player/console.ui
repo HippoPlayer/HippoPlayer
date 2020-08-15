@@ -7,13 +7,13 @@
     <x>0</x>
     <y>0</y>
     <width>1460</width>
-    <height>550</height>
+    <height>412</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
     <width>0</width>
-    <height>500</height>
+    <height>350</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -29,7 +29,7 @@
       <widget class="QGroupBox" name="LoggingLevel">
        <property name="minimumSize">
         <size>
-         <width>200</width>
+         <width>150</width>
          <height>0</height>
         </size>
        </property>
@@ -45,47 +45,13 @@
        <widget class="QWidget" name="verticalLayoutWidget">
         <property name="geometry">
          <rect>
-          <x>20</x>
-          <y>57</y>
-          <width>176</width>
-          <height>432</height>
+          <x>10</x>
+          <y>20</y>
+          <width>131</width>
+          <height>251</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_2">
-         <item>
-          <widget class="QComboBox" name="log_level">
-           <item>
-            <property name="text">
-             <string>Trace</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Debug</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Warn</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Error</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Fatal</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Error</string>
-            </property>
-           </item>
-          </widget>
-         </item>
          <item>
           <widget class="QCheckBox" name="trace_check">
            <property name="text">

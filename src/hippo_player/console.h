@@ -29,6 +29,8 @@ private:
 
     void log_messages(const struct HippoLogMessages* messages);
     void send_log_enable(bool state);
+    void write_settings();
+    void read_settings();
 
     const struct HippoMessageAPI* m_message_api = nullptr;
     Ui_Console* m_ui = nullptr;

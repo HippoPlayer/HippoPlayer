@@ -417,6 +417,9 @@ QWidget* MainWindow::create_plugin_by_index(int index) {
 // TODO: Save layouts and such here also
 
 void MainWindow::closeEvent(QCloseEvent *event) {
+    delete m_console;
+    m_console = nullptr;
+
     // disconnect all the events so we don't get them when MainWindow is destroyed
     for (const auto& inst : m_plugin_instances) {
         QObject::disconnect(inst.widget, &QObject::destroyed, this, &MainWindow::plugin_view_closed);

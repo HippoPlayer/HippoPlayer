@@ -2,6 +2,8 @@
 #include <QtCore/QDebug>
 #include <QtWidgets/QWidget>
 
+#include <QtCore/QRegularExpression>
+#include <QtCore/QSettings>
 #include <QtGui/QTextCursor>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QLayout>
@@ -132,12 +134,16 @@ ConsoleView::ConsoleView(const struct HippoMessageAPI* messages_api, QWidget* pa
     QObject::connect(m_ui->log_file, &QCheckBox::toggled, this, &ConsoleView::select_log_file);
     QObject::connect(m_ui->clear_button, &QCheckBox::pressed, this, &ConsoleView::clear_log);
 
+    read_settings();
+
     send_log_enable(true);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ConsoleView::~ConsoleView() {
+    printf("writing settings\n");
+    write_settings();
     // disable log sending
     send_log_enable(false);
 }
@@ -211,7 +217,14 @@ void ConsoleView::checked(bool) {
     size_t block_count = doc->blockCount();
 
     if (block_count != m_line_masks.size()) {
+        /*
         printf("ERROR: Unable to match lines for console %ld %ld\n", block_count, m_line_masks.size());
+
+        for (QTextBlock it = doc->begin(); it != doc->end(); it = it.next()) {
+            qDebug() << it.text();
+        }
+        */
+
         return;
     }
     int i = 0;
@@ -299,3 +312,44 @@ void ConsoleView::event(const unsigned char* data, int len) {
             break;
     }
 }
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void ConsoleView::write_settings() {
+    QSettings settings;
+    settings.beginGroup(QStringLiteral("console"));
+    settings.setValue(QStringLiteral("log_file"), m_log_file);
+    settings.setValue(QStringLiteral("trace"), m_ui->trace_check->isChecked());
+    settings.setValue(QStringLiteral("debug"), m_ui->debug_check->isChecked());
+    settings.setValue(QStringLiteral("info"), m_ui->info_check->isChecked());
+    settings.setValue(QStringLiteral("warn"), m_ui->warn_check->isChecked());
+    settings.setValue(QStringLiteral("error"), m_ui->error_check->isChecked());
+    settings.setValue(QStringLiteral("fatal"), m_ui->fatal_check->isChecked());
+    settings.endGroup();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void ConsoleView::read_settings() {
+    QSettings settings;
+    settings.beginGroup(QStringLiteral("console"));
+    m_log_file = settings.value(QStringLiteral("log_file")).toString();
+    m_ui->trace_check->setChecked(settings.value(QStringLiteral("trace"), QVariant(true)).toBool());
+    m_ui->debug_check->setChecked(settings.value(QStringLiteral("debug"), QVariant(true)).toBool());
+    m_ui->info_check->setChecked(settings.value(QStringLiteral("info"), QVariant(true)).toBool());
+    m_ui->warn_check->setChecked(settings.value(QStringLiteral("warn"), QVariant(true)).toBool());
+    m_ui->error_check->setChecked(settings.value(QStringLiteral("error"), QVariant(true)).toBool());
+    m_ui->fatal_check->setChecked(settings.value(QStringLiteral("fatal"), QVariant(true)).toBool());
+    m_ui->info_check->setChecked(settings.value(QStringLiteral("info"), QVariant(true)).toBool());
+    settings.endGroup();
+
+    m_active_mask = 0;
+    m_active_mask |= uint8_t(m_ui->trace_check->isChecked()) << 1;
+    m_active_mask |= uint8_t(m_ui->debug_check->isChecked()) << 2;
+    m_active_mask |= uint8_t(m_ui->info_check->isChecked()) << 3;
+    m_active_mask |= uint8_t(m_ui->warn_check->isChecked()) << 4;
+    m_active_mask |= uint8_t(m_ui->error_check->isChecked()) << 5;
+    m_active_mask |= uint8_t(m_ui->fatal_check->isChecked()) << 6;
+}
+
