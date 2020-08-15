@@ -7,7 +7,9 @@
 #include <string.h>
 #include <wemuopl.h>
 
-extern "C" HippoLogAPI* g_hp_log = NULL;
+extern "C" {
+    HippoLogAPI* g_hp_log = NULL;
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -220,7 +222,7 @@ static int adplug_metadata(const char* url, const HippoServiceAPI* service_api) 
             // Only add songs if they actually have a length
             if (len > 0) {
                 sprintf(subsong_name, "%s (%d/%d)", title, i + 1, subsongs_count);
-                HippoMetadata_add_subsong(metadata_api, index, i, subsong_name, len / 1000);
+                HippoMetadata_add_subsong(metadata_api, index, i, subsong_name, len);
             }
         }
     }

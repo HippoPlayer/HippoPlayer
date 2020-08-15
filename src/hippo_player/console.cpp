@@ -146,7 +146,6 @@ ConsoleView::ConsoleView(const struct HippoMessageAPI* messages_api, QWidget* pa
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ConsoleView::~ConsoleView() {
-    printf("writing settings\n");
     write_settings();
     // disable log sending
     send_log_enable(false);
