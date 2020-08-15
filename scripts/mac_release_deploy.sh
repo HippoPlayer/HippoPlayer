@@ -53,7 +53,7 @@ chmod -Rf go-w /Volumes/HippoPlayer
 sync
 sync
 hdiutil detach ${device}
-hdiutil convert "pack.temp.dmg" -format UDZO -imagekey zlib-level=9 -o "build/hippoplayer_macos_${HIPPO_VERSION}.dmg"
+hdiutil convert "pack.temp.dmg" -format UDZO -imagekey zlib-level=9 -o "build/hippoplayer_macos.dmg"
 rm -f pack.temp.dmg
 
 cd ..
