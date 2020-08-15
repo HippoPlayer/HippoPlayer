@@ -88,11 +88,15 @@ pub enum MessageType {
   tracker_data = 13,
   current_position = 14,
   song_metadata = 15,
+  log_messages = 16,
+  log_clear = 17,
+  log_file = 18,
+  log_send_messages = 19,
 
 }
 
 const ENUM_MIN_MESSAGE_TYPE: u8 = 0;
-const ENUM_MAX_MESSAGE_TYPE: u8 = 15;
+const ENUM_MAX_MESSAGE_TYPE: u8 = 19;
 
 impl<'a> flatbuffers::Follow<'a> for MessageType {
   type Inner = Self;
@@ -126,7 +130,7 @@ impl flatbuffers::Push for MessageType {
 }
 
 #[allow(non_camel_case_types)]
-const ENUM_VALUES_MESSAGE_TYPE:[MessageType; 16] = [
+const ENUM_VALUES_MESSAGE_TYPE:[MessageType; 20] = [
   MessageType::NONE,
   MessageType::next_song,
   MessageType::prev_song,
@@ -142,11 +146,15 @@ const ENUM_VALUES_MESSAGE_TYPE:[MessageType; 16] = [
   MessageType::request_tracker_data,
   MessageType::tracker_data,
   MessageType::current_position,
-  MessageType::song_metadata
+  MessageType::song_metadata,
+  MessageType::log_messages,
+  MessageType::log_clear,
+  MessageType::log_file,
+  MessageType::log_send_messages
 ];
 
 #[allow(non_camel_case_types)]
-const ENUM_NAMES_MESSAGE_TYPE:[&'static str; 16] = [
+const ENUM_NAMES_MESSAGE_TYPE:[&'static str; 20] = [
     "NONE",
     "next_song",
     "prev_song",
@@ -162,7 +170,11 @@ const ENUM_NAMES_MESSAGE_TYPE:[&'static str; 16] = [
     "request_tracker_data",
     "tracker_data",
     "current_position",
-    "song_metadata"
+    "song_metadata",
+    "log_messages",
+    "log_clear",
+    "log_file",
+    "log_send_messages"
 ];
 
 pub fn enum_name_message_type(e: MessageType) -> &'static str {
@@ -999,6 +1011,309 @@ impl<'a: 'b, 'b> HippoRequestAddUrlsBuilder<'a, 'b> {
   }
   #[inline]
   pub fn finish(self) -> flatbuffers::WIPOffset<HippoRequestAddUrls<'a>> {
+    let o = self.fbb_.end_table(self.start_);
+    flatbuffers::WIPOffset::new(o.value())
+  }
+}
+
+pub enum HippoLogMessagesOffset {}
+#[derive(Copy, Clone, Debug, PartialEq)]
+
+pub struct HippoLogMessages<'a> {
+  pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for HippoLogMessages<'a> {
+    type Inner = HippoLogMessages<'a>;
+    #[inline]
+    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: flatbuffers::Table { buf: buf, loc: loc },
+        }
+    }
+}
+
+impl<'a> HippoLogMessages<'a> {
+    #[inline]
+    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        HippoLogMessages {
+            _tab: table,
+        }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+        args: &'args HippoLogMessagesArgs<'args>) -> flatbuffers::WIPOffset<HippoLogMessages<'bldr>> {
+      let mut builder = HippoLogMessagesBuilder::new(_fbb);
+      if let Some(x) = args.messages { builder.add_messages(x); }
+      builder.finish()
+    }
+
+    pub const VT_MESSAGES: flatbuffers::VOffsetT = 4;
+
+  #[inline]
+  pub fn messages(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<&'a str>>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<&'a str>>>>(HippoLogMessages::VT_MESSAGES, None)
+  }
+}
+
+pub struct HippoLogMessagesArgs<'a> {
+    pub messages: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<&'a  str>>>>,
+}
+impl<'a> Default for HippoLogMessagesArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        HippoLogMessagesArgs {
+            messages: None,
+        }
+    }
+}
+pub struct HippoLogMessagesBuilder<'a: 'b, 'b> {
+  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b> HippoLogMessagesBuilder<'a, 'b> {
+  #[inline]
+  pub fn add_messages(&mut self, messages: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<&'b  str>>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(HippoLogMessages::VT_MESSAGES, messages);
+  }
+  #[inline]
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> HippoLogMessagesBuilder<'a, 'b> {
+    let start = _fbb.start_table();
+    HippoLogMessagesBuilder {
+      fbb_: _fbb,
+      start_: start,
+    }
+  }
+  #[inline]
+  pub fn finish(self) -> flatbuffers::WIPOffset<HippoLogMessages<'a>> {
+    let o = self.fbb_.end_table(self.start_);
+    flatbuffers::WIPOffset::new(o.value())
+  }
+}
+
+pub enum HippoLogClearOffset {}
+#[derive(Copy, Clone, Debug, PartialEq)]
+
+pub struct HippoLogClear<'a> {
+  pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for HippoLogClear<'a> {
+    type Inner = HippoLogClear<'a>;
+    #[inline]
+    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: flatbuffers::Table { buf: buf, loc: loc },
+        }
+    }
+}
+
+impl<'a> HippoLogClear<'a> {
+    #[inline]
+    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        HippoLogClear {
+            _tab: table,
+        }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+        _args: &'args HippoLogClearArgs) -> flatbuffers::WIPOffset<HippoLogClear<'bldr>> {
+      let mut builder = HippoLogClearBuilder::new(_fbb);
+      builder.finish()
+    }
+
+}
+
+pub struct HippoLogClearArgs {
+}
+impl<'a> Default for HippoLogClearArgs {
+    #[inline]
+    fn default() -> Self {
+        HippoLogClearArgs {
+        }
+    }
+}
+pub struct HippoLogClearBuilder<'a: 'b, 'b> {
+  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b> HippoLogClearBuilder<'a, 'b> {
+  #[inline]
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> HippoLogClearBuilder<'a, 'b> {
+    let start = _fbb.start_table();
+    HippoLogClearBuilder {
+      fbb_: _fbb,
+      start_: start,
+    }
+  }
+  #[inline]
+  pub fn finish(self) -> flatbuffers::WIPOffset<HippoLogClear<'a>> {
+    let o = self.fbb_.end_table(self.start_);
+    flatbuffers::WIPOffset::new(o.value())
+  }
+}
+
+pub enum HippoLogToFileOffset {}
+#[derive(Copy, Clone, Debug, PartialEq)]
+
+pub struct HippoLogToFile<'a> {
+  pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for HippoLogToFile<'a> {
+    type Inner = HippoLogToFile<'a>;
+    #[inline]
+    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: flatbuffers::Table { buf: buf, loc: loc },
+        }
+    }
+}
+
+impl<'a> HippoLogToFile<'a> {
+    #[inline]
+    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        HippoLogToFile {
+            _tab: table,
+        }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+        args: &'args HippoLogToFileArgs<'args>) -> flatbuffers::WIPOffset<HippoLogToFile<'bldr>> {
+      let mut builder = HippoLogToFileBuilder::new(_fbb);
+      if let Some(x) = args.filename { builder.add_filename(x); }
+      builder.add_enable(args.enable);
+      builder.finish()
+    }
+
+    pub const VT_FILENAME: flatbuffers::VOffsetT = 4;
+    pub const VT_ENABLE: flatbuffers::VOffsetT = 6;
+
+  #[inline]
+  pub fn filename(&self) -> Option<&'a str> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(HippoLogToFile::VT_FILENAME, None)
+  }
+  #[inline]
+  pub fn enable(&self) -> bool {
+    self._tab.get::<bool>(HippoLogToFile::VT_ENABLE, Some(false)).unwrap()
+  }
+}
+
+pub struct HippoLogToFileArgs<'a> {
+    pub filename: Option<flatbuffers::WIPOffset<&'a  str>>,
+    pub enable: bool,
+}
+impl<'a> Default for HippoLogToFileArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        HippoLogToFileArgs {
+            filename: None,
+            enable: false,
+        }
+    }
+}
+pub struct HippoLogToFileBuilder<'a: 'b, 'b> {
+  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b> HippoLogToFileBuilder<'a, 'b> {
+  #[inline]
+  pub fn add_filename(&mut self, filename: flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(HippoLogToFile::VT_FILENAME, filename);
+  }
+  #[inline]
+  pub fn add_enable(&mut self, enable: bool) {
+    self.fbb_.push_slot::<bool>(HippoLogToFile::VT_ENABLE, enable, false);
+  }
+  #[inline]
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> HippoLogToFileBuilder<'a, 'b> {
+    let start = _fbb.start_table();
+    HippoLogToFileBuilder {
+      fbb_: _fbb,
+      start_: start,
+    }
+  }
+  #[inline]
+  pub fn finish(self) -> flatbuffers::WIPOffset<HippoLogToFile<'a>> {
+    let o = self.fbb_.end_table(self.start_);
+    flatbuffers::WIPOffset::new(o.value())
+  }
+}
+
+pub enum HippoLogSendMessagesOffset {}
+#[derive(Copy, Clone, Debug, PartialEq)]
+
+pub struct HippoLogSendMessages<'a> {
+  pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for HippoLogSendMessages<'a> {
+    type Inner = HippoLogSendMessages<'a>;
+    #[inline]
+    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: flatbuffers::Table { buf: buf, loc: loc },
+        }
+    }
+}
+
+impl<'a> HippoLogSendMessages<'a> {
+    #[inline]
+    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        HippoLogSendMessages {
+            _tab: table,
+        }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+        args: &'args HippoLogSendMessagesArgs) -> flatbuffers::WIPOffset<HippoLogSendMessages<'bldr>> {
+      let mut builder = HippoLogSendMessagesBuilder::new(_fbb);
+      builder.add_enable(args.enable);
+      builder.finish()
+    }
+
+    pub const VT_ENABLE: flatbuffers::VOffsetT = 4;
+
+  #[inline]
+  pub fn enable(&self) -> bool {
+    self._tab.get::<bool>(HippoLogSendMessages::VT_ENABLE, Some(false)).unwrap()
+  }
+}
+
+pub struct HippoLogSendMessagesArgs {
+    pub enable: bool,
+}
+impl<'a> Default for HippoLogSendMessagesArgs {
+    #[inline]
+    fn default() -> Self {
+        HippoLogSendMessagesArgs {
+            enable: false,
+        }
+    }
+}
+pub struct HippoLogSendMessagesBuilder<'a: 'b, 'b> {
+  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b> HippoLogSendMessagesBuilder<'a, 'b> {
+  #[inline]
+  pub fn add_enable(&mut self, enable: bool) {
+    self.fbb_.push_slot::<bool>(HippoLogSendMessages::VT_ENABLE, enable, false);
+  }
+  #[inline]
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> HippoLogSendMessagesBuilder<'a, 'b> {
+    let start = _fbb.start_table();
+    HippoLogSendMessagesBuilder {
+      fbb_: _fbb,
+      start_: start,
+    }
+  }
+  #[inline]
+  pub fn finish(self) -> flatbuffers::WIPOffset<HippoLogSendMessages<'a>> {
     let o = self.fbb_.end_table(self.start_);
     flatbuffers::WIPOffset::new(o.value())
   }
@@ -2320,6 +2635,46 @@ impl<'a> HippoMessage<'a> {
   pub fn message_as_song_metadata(&self) -> Option<HippoSongMetadata<'a>> {
     if self.message_type() == MessageType::song_metadata {
       self.message().map(|u| HippoSongMetadata::init_from_table(u))
+    } else {
+      None
+    }
+  }
+
+  #[inline]
+  #[allow(non_snake_case)]
+  pub fn message_as_log_messages(&self) -> Option<HippoLogMessages<'a>> {
+    if self.message_type() == MessageType::log_messages {
+      self.message().map(|u| HippoLogMessages::init_from_table(u))
+    } else {
+      None
+    }
+  }
+
+  #[inline]
+  #[allow(non_snake_case)]
+  pub fn message_as_log_clear(&self) -> Option<HippoLogClear<'a>> {
+    if self.message_type() == MessageType::log_clear {
+      self.message().map(|u| HippoLogClear::init_from_table(u))
+    } else {
+      None
+    }
+  }
+
+  #[inline]
+  #[allow(non_snake_case)]
+  pub fn message_as_log_file(&self) -> Option<HippoLogToFile<'a>> {
+    if self.message_type() == MessageType::log_file {
+      self.message().map(|u| HippoLogToFile::init_from_table(u))
+    } else {
+      None
+    }
+  }
+
+  #[inline]
+  #[allow(non_snake_case)]
+  pub fn message_as_log_send_messages(&self) -> Option<HippoLogSendMessages<'a>> {
+    if self.message_type() == MessageType::log_send_messages {
+      self.message().map(|u| HippoLogSendMessages::init_from_table(u))
     } else {
       None
     }

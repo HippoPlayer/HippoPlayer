@@ -3,6 +3,7 @@ name = "hippo_core"
 version = "0.1.0"
 authors = ["Daniel Collin <daniel@collin.com>"]
 edition = "2018"
+build = "build.rs"
 
 [lib]
 crate-type = ["dylib"]
@@ -14,6 +15,7 @@ config = { path = "../config" }
 song_db = { path = "../song_db" }
 dynamic_reload = "0.4.0"
 messages = { path = "../messages" }
+logger = { path = "../logger" }
 ringbuf = "0.2"
 rodio = "0.10"
 serde = "1.0"

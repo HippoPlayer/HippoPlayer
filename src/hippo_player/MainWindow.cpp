@@ -31,12 +31,12 @@ MainWindow::MainWindow(HippoCore* core) : QMainWindow(0), m_core(core) {
 
     setWindowTitle(window_title);
 
-    int id = QFontDatabase::addApplicationFont(QStringLiteral("data/fonts/DejaVuSansMono.ttf"));
-    QString family = QFontDatabase::applicationFontFamilies(id).at(0);
-    qDebug() << family;
+    //int id = QFontDatabase::addApplicationFont(QStringLiteral("data/fonts/DejaVuSansMono.ttf"));
+    //QString family = QFontDatabase::applicationFontFamilies(id).at(0);
 
     m_playlist_model = new PlaylistModel(m_core, this);
     //m_playlist_model->setSelectionMode(QAbstractItemView::MultiSelection);
+
 
     m_general_messages = HippoServiceAPI_get_message_api(hippo_service_api_new(m_core), HIPPO_MESSAGE_API_VERSION);
 
@@ -47,6 +47,14 @@ MainWindow::MainWindow(HippoCore* core) : QMainWindow(0), m_core(core) {
     setCentralWidget(main_widget);
 
     layout->QLayout::addWidget(m_docking_manager);
+
+    m_console = new ConsoleView(m_general_messages, nullptr);
+    m_docking_manager->addToolWindow(
+        m_console,
+        ToolWindowManager::NewFloatingArea,
+        ToolWindowManager::ToolWindowProperty::HideOnClose);
+
+    m_docking_manager->hideToolWindow(m_console);
 
     // Update code for processing the message queue
     QTimer* timer = new QTimer(this);
@@ -111,6 +119,9 @@ const HippoMessageAPI* MainWindow::get_messages(void* this_, int index) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void MainWindow::handle_incoming_messages(const unsigned char* data, int len) {
+    // let console handle messages
+    m_console->event(data, len);
+
     const HippoMessage* message = GetHippoMessage(data);
 
     switch (message->message_type())
@@ -161,7 +172,9 @@ void MainWindow::send_messages_to_ui(void* this_, const unsigned char* data, int
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void MainWindow::update_messages() {
-    hippo_update_messages(m_core, this, m_plugin_instances.count() + 1, get_messages, send_messages_to_ui);
+    if (m_update_events) {
+        hippo_update_messages(m_core, this, m_plugin_instances.count() + 1, get_messages, send_messages_to_ui);
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -192,6 +205,14 @@ void MainWindow::create_menus() {
 
     connect(add_files, &QAction::triggered, this, &MainWindow::add_files);
     connect(add_dir, &QAction::triggered, this, &MainWindow::add_directory);
+
+    // Add console to the menu
+
+    QMenu* view_menu = menuBar()->addMenu(QStringLiteral("&View"));
+    QAction* console_view_act = new QAction(tr("Console"), this);
+    console_view_act ->setStatusTip(tr("Show Console with log messages"));
+    QObject::connect(console_view_act, &QAction::triggered, this, &MainWindow::show_hide_console);
+    view_menu->addAction(console_view_act);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -256,6 +277,12 @@ void MainWindow::add_files() {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void MainWindow::show_hide_console() {
+    m_docking_manager->moveToolWindow(m_console, ToolWindowManager::NewFloatingArea);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void MainWindow::create_plugin_menus() {
     QMenu* plugin_menu = menuBar()->addMenu(QStringLiteral("&Plugins"));
     int plugin_index = 0;
@@ -315,7 +342,7 @@ bool MainWindow::load_plugins(const QString& plugin_dir) {
 
         plugin_name_obj = plugin_name_obj.toObject().value(QStringLiteral("hippo_view_plugin_name"));
 
-        qDebug() << "Found plugin " << plugin_name_obj.toString();
+        //qDebug() << "Found plugin " << plugin_name_obj.toString();
 
         MainWindow::PluginInfo plugin_info = {
             plugin_loader,
@@ -346,6 +373,17 @@ QWidget* MainWindow::create_plugin_by_name(const QString& plugin_name) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void MainWindow::plugin_view_closed(QObject* obj) {
+    for (size_t i = 0, len = m_plugin_instances.size(); i < len; ++i) {
+        if (m_plugin_instances[i].widget == obj) {
+            m_plugin_instances.remove(i);
+            return;
+        }
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 QWidget* MainWindow::create_plugin_by_index(int index) {
     if (index >= m_plugin_types.length()) {
         return nullptr;
@@ -369,6 +407,9 @@ QWidget* MainWindow::create_plugin_by_index(int index) {
 
     HippoServiceAPI* service_api = hippo_service_api_new(m_core);
     QWidget* widget = view_plugin->create(service_api, m_playlist_model);
+    widget->setAttribute(Qt::WA_DeleteOnClose);
+
+    QObject::connect(widget, &QObject::destroyed, this, &MainWindow::plugin_view_closed);
 
     m_plugin_instances.append({view_plugin, service_api, widget});
 
@@ -379,6 +420,17 @@ QWidget* MainWindow::create_plugin_by_index(int index) {
 // TODO: Save layouts and such here also
 
 void MainWindow::closeEvent(QCloseEvent *event) {
+    m_update_events = false;
+
+    delete m_console;
+    m_console = nullptr;
+
+    // disconnect all the events so we don't get them when MainWindow is destroyed
+    for (const auto& inst : m_plugin_instances) {
+        QObject::disconnect(inst.widget, &QObject::destroyed, this, &MainWindow::plugin_view_closed);
+    }
+
+    m_plugin_instances.clear();
 	hippo_core_drop(m_core);
 }
 

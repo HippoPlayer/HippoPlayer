@@ -10,6 +10,7 @@ extern "C" {
 #define SAMPLE_RATE 48000
 #define CHANNELS 2
 
+HippoLogAPI* g_hp_log = NULL;
 static const struct HippoIoAPI* g_io_api = 0;
 
 typedef struct Sc68Plugin {
@@ -85,9 +86,11 @@ enum HippoProbeResult sc68_plugin_probe_can_play(const uint8_t* data, uint32_t d
     init();
 
     if (file68_verify_header((void*)data, (int)data_size) == -1) {
+        hp_debug("Unsupported: %s", filename);
 	    return HippoProbeResult_Unsupported;
     }
 
+    hp_info("Supported: %s", filename);
 	return HippoProbeResult_Supported;
 }
 
@@ -106,6 +109,7 @@ static int sc68_plugin_metadata(const char* filename, const HippoServiceAPI* ser
     HippoIoErrorCode res = HippoIo_read_file_to_memory(io_api, filename, &data, &size);
 
     if (res < 0) {
+        hp_error("Unable to file-io open %s", filename);
         return res;
     }
 
@@ -115,8 +119,8 @@ static int sc68_plugin_metadata(const char* filename, const HippoServiceAPI* ser
     create.sampling_rate = SAMPLE_RATE;
     sc68_t* inst = sc68_create(&create);
 
-    // TODO: Proper error handling
     if (sc68_load_mem(inst, data, (int)size) < 0) {
+        hp_error("Unable to load_mem %s", filename);
         return -1;
     }
 
@@ -133,6 +137,8 @@ static int sc68_plugin_metadata(const char* filename, const HippoServiceAPI* ser
     } else {
         strcpy(title, info.title);
     }
+
+    hp_info("Updating metadata for %s", filename);
 
     HippoMetadataId index = HippoMetadata_create_url(metadata_api, filename);
     HippoMetadata_set_tag(metadata_api, index, HippoMetadata_TitleTag, title);
@@ -183,7 +189,7 @@ static void* sc68_plugin_create(const struct HippoServiceAPI* service_api) {
 
     // TODO: Proper error handling
     if (!instance) {
-        printf("sc68_plugin: Failed to create\n");
+        hp_error("Failed to create");
         return nullptr;
     }
 
@@ -205,20 +211,21 @@ static int sc68_plugin_open(void* user_data, const char* buffer, int subsong) {
     HippoIoErrorCode res = g_io_api->read_file_to_memory(g_io_api->priv_data, buffer, &load_data, &size);
 
     if (res < 0) {
-        printf("sc68_plugin: Failed load file\n");
+        hp_error("Failed to io-open %s", buffer);
         return res;
     }
 
-    // TODO: Proper error handling
     if (sc68_load_mem(data->instance, load_data, (int)size) < 0) {
-        printf("sc68_plugin: Failed load\n");
+        hp_error("Unable to load_mem %s", buffer);
         return -1;
     }
 
     if (sc68_process(data->instance, 0, 0) == SC68_ERROR) {
-        printf("sc68_plugin: Failed process\n");
+        hp_error("Failed to process %s", buffer);
         return -1;
     }
+
+    hp_info("Starting to play %s (subsong %d)", subsong);
 
     sc68_play(data->instance, subsong, 0);
 
@@ -283,10 +290,15 @@ static void sc68_plugin_event(void* user_data, const unsigned char* data, int le
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void sc68_plugin_set_log(struct HippoLogAPI* log) { g_hp_log = log; }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static HippoPlaybackPlugin g_sc68_plugin_plugin = {
 	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
-	"sc68_plugin",
+	"sc68",
 	"0.0.1",
+	"libsc68 svn 2020-04-02",
 	sc68_plugin_probe_can_play,
 	sc68_plugin_supported_extensions,
 	sc68_plugin_create,
@@ -297,6 +309,7 @@ static HippoPlaybackPlugin g_sc68_plugin_plugin = {
 	sc68_plugin_read_data,
 	sc68_plugin_plugin_seek,
 	sc68_plugin_metadata,
+    sc68_plugin_set_log,
 	NULL,
 	NULL,
 };
@@ -306,8 +319,4 @@ static HippoPlaybackPlugin g_sc68_plugin_plugin = {
 extern "C" HIPPO_EXPORT HippoPlaybackPlugin* hippo_playback_plugin() {
 	return &g_sc68_plugin_plugin;
 }
-
-
-
-
 

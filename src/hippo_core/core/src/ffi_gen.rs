@@ -3,7 +3,6 @@
 pub const _STDINT_H: u32 = 1;
 pub const _FEATURES_H: u32 = 1;
 pub const _DEFAULT_SOURCE: u32 = 1;
-pub const __GLIBC_USE_ISOC2X: u32 = 0;
 pub const __USE_ISOC11: u32 = 1;
 pub const __USE_ISOC99: u32 = 1;
 pub const __USE_ISOC95: u32 = 1;
@@ -21,36 +20,30 @@ pub const __USE_MISC: u32 = 1;
 pub const __USE_ATFILE: u32 = 1;
 pub const __USE_FORTIFY_LEVEL: u32 = 0;
 pub const __GLIBC_USE_DEPRECATED_GETS: u32 = 0;
-pub const __GLIBC_USE_DEPRECATED_SCANF: u32 = 0;
 pub const _STDC_PREDEF_H: u32 = 1;
 pub const __STDC_IEC_559__: u32 = 1;
 pub const __STDC_IEC_559_COMPLEX__: u32 = 1;
 pub const __STDC_ISO_10646__: u32 = 201706;
+pub const __STDC_NO_THREADS__: u32 = 1;
 pub const __GNU_LIBRARY__: u32 = 6;
 pub const __GLIBC__: u32 = 2;
-pub const __GLIBC_MINOR__: u32 = 31;
+pub const __GLIBC_MINOR__: u32 = 27;
 pub const _SYS_CDEFS_H: u32 = 1;
 pub const __glibc_c99_flexarr_available: u32 = 1;
 pub const __WORDSIZE: u32 = 64;
 pub const __WORDSIZE_TIME64_COMPAT32: u32 = 1;
 pub const __SYSCALL_WORDSIZE: u32 = 64;
-pub const __LONG_DOUBLE_USES_FLOAT128: u32 = 0;
 pub const __HAVE_GENERIC_SELECTION: u32 = 1;
 pub const __GLIBC_USE_LIB_EXT2: u32 = 0;
 pub const __GLIBC_USE_IEC_60559_BFP_EXT: u32 = 0;
-pub const __GLIBC_USE_IEC_60559_BFP_EXT_C2X: u32 = 0;
 pub const __GLIBC_USE_IEC_60559_FUNCS_EXT: u32 = 0;
-pub const __GLIBC_USE_IEC_60559_FUNCS_EXT_C2X: u32 = 0;
 pub const __GLIBC_USE_IEC_60559_TYPES_EXT: u32 = 0;
 pub const _BITS_TYPES_H: u32 = 1;
-pub const __TIMESIZE: u32 = 64;
 pub const _BITS_TYPESIZES_H: u32 = 1;
 pub const __OFF_T_MATCHES_OFF64_T: u32 = 1;
 pub const __INO_T_MATCHES_INO64_T: u32 = 1;
 pub const __RLIM_T_MATCHES_RLIM64_T: u32 = 1;
-pub const __STATFS_MATCHES_STATFS64: u32 = 1;
 pub const __FD_SETSIZE: u32 = 1024;
-pub const _BITS_TIME64_H: u32 = 1;
 pub const _BITS_WCHAR_H: u32 = 1;
 pub const _BITS_STDINT_INTN_H: u32 = 1;
 pub const _BITS_STDINT_UINTN_H: u32 = 1;
@@ -104,7 +97,7 @@ pub const HippoMetadata_LengthTag: &'static [u8; 7usize] = b"length\0";
 pub const HippoMetadata_SamplesTag: &'static [u8; 8usize] = b"sample_\0";
 pub const HippoMetadata_InstrumentsTag: &'static [u8; 12usize] = b"instrument_\0";
 pub const HIPPO_METADATA_API_VERSION: u32 = 1;
-pub const HIPPO_SETTINGS_API_VERSION: u32 = 1;
+pub const HIPPO_LOG_API_VERSION: u32 = 1;
 pub const HIPPO_PLAYBACK_PLUGIN_API_VERSION: u32 = 1;
 pub const HIPPO_MESSAGE_API_VERSION: u32 = 1;
 pub type __u_char = ::std::os::raw::c_uchar;
@@ -119,14 +112,6 @@ pub type __int32_t = ::std::os::raw::c_int;
 pub type __uint32_t = ::std::os::raw::c_uint;
 pub type __int64_t = ::std::os::raw::c_long;
 pub type __uint64_t = ::std::os::raw::c_ulong;
-pub type __int_least8_t = __int8_t;
-pub type __uint_least8_t = __uint8_t;
-pub type __int_least16_t = __int16_t;
-pub type __uint_least16_t = __uint16_t;
-pub type __int_least32_t = __int32_t;
-pub type __uint_least32_t = __uint32_t;
-pub type __int_least64_t = __int64_t;
-pub type __uint_least64_t = __uint64_t;
 pub type __quad_t = ::std::os::raw::c_long;
 pub type __u_quad_t = ::std::os::raw::c_ulong;
 pub type __intmax_t = ::std::os::raw::c_long;
@@ -173,14 +158,14 @@ pub type __caddr_t = *mut ::std::os::raw::c_char;
 pub type __intptr_t = ::std::os::raw::c_long;
 pub type __socklen_t = ::std::os::raw::c_uint;
 pub type __sig_atomic_t = ::std::os::raw::c_int;
-pub type int_least8_t = __int_least8_t;
-pub type int_least16_t = __int_least16_t;
-pub type int_least32_t = __int_least32_t;
-pub type int_least64_t = __int_least64_t;
-pub type uint_least8_t = __uint_least8_t;
-pub type uint_least16_t = __uint_least16_t;
-pub type uint_least32_t = __uint_least32_t;
-pub type uint_least64_t = __uint_least64_t;
+pub type int_least8_t = ::std::os::raw::c_schar;
+pub type int_least16_t = ::std::os::raw::c_short;
+pub type int_least32_t = ::std::os::raw::c_int;
+pub type int_least64_t = ::std::os::raw::c_long;
+pub type uint_least8_t = ::std::os::raw::c_uchar;
+pub type uint_least16_t = ::std::os::raw::c_ushort;
+pub type uint_least32_t = ::std::os::raw::c_uint;
+pub type uint_least64_t = ::std::os::raw::c_ulong;
 pub type int_fast8_t = ::std::os::raw::c_schar;
 pub type int_fast16_t = ::std::os::raw::c_long;
 pub type int_fast32_t = ::std::os::raw::c_long;
@@ -265,7 +250,6 @@ pub struct HippoIoAPI {
     >,
     pub priv_data: *mut HippoApiPrivData,
 }
-#[doc = ""]
 pub type HippoFileAPI = HippoIoAPI;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -310,7 +294,7 @@ pub struct HippoMetadataAPI {
         unsafe extern "C" fn(
             priv_data: *mut HippoMetadataAPIPrivData,
             parent_id: HippoMetadataId,
-            index: i32,
+            index: ::std::os::raw::c_int,
             name: *const ::std::os::raw::c_char,
             length: f32,
         ),
@@ -407,6 +391,34 @@ pub struct HippoMessageAPI {
         ),
     >,
 }
+pub const HIPPO_LOG_TRACE: _bindgen_ty_1 = 0;
+pub const HIPPO_LOG_DEBUG: _bindgen_ty_1 = 1;
+pub const HIPPO_LOG_INFO: _bindgen_ty_1 = 2;
+pub const HIPPO_LOG_WARN: _bindgen_ty_1 = 3;
+pub const HIPPO_LOG_ERROR: _bindgen_ty_1 = 4;
+pub const HIPPO_LOG_FATAL: _bindgen_ty_1 = 5;
+pub type _bindgen_ty_1 = u32;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct HippoLogAPI {
+    pub priv_data: *mut ::std::os::raw::c_void,
+    pub log_set_base_name: ::std::option::Option<
+        unsafe extern "C" fn(
+            priv_data: *mut ::std::os::raw::c_void,
+            base_name: *const ::std::os::raw::c_char,
+        ),
+    >,
+    pub log: ::std::option::Option<
+        unsafe extern "C" fn(
+            priv_data: *mut ::std::os::raw::c_void,
+            level: ::std::os::raw::c_int,
+            file: *const ::std::os::raw::c_char,
+            line: ::std::os::raw::c_int,
+            fmt: *const ::std::os::raw::c_char,
+            ...
+        ),
+    >,
+}
 #[doc = ""]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -416,6 +428,12 @@ pub struct HippoServicePrivData {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct HippoServiceAPI {
+    pub get_log_api: ::std::option::Option<
+        unsafe extern "C" fn(
+            private_data: *mut HippoServicePrivData,
+            api_version: ::std::os::raw::c_int,
+        ) -> *const HippoLogAPI,
+    >,
     pub get_io_api: ::std::option::Option<
         unsafe extern "C" fn(
             private_data: *mut HippoServicePrivData,
@@ -452,6 +470,7 @@ pub struct HippoPlaybackPlugin {
     pub api_version: u64,
     pub name: *const ::std::os::raw::c_char,
     pub version: *const ::std::os::raw::c_char,
+    pub library_version: *const ::std::os::raw::c_char,
     pub probe_can_play: ::std::option::Option<
         unsafe extern "C" fn(
             data: *const u8,
@@ -504,6 +523,7 @@ pub struct HippoPlaybackPlugin {
             services: *const HippoServiceAPI,
         ) -> ::std::os::raw::c_int,
     >,
+    pub set_log: ::std::option::Option<unsafe extern "C" fn(log: *mut HippoLogAPI)>,
     pub save: ::std::option::Option<
         unsafe extern "C" fn(
             user_data: *mut ::std::os::raw::c_void,

@@ -89,10 +89,15 @@ static void dummy_event(void* user_data, const unsigned char* data, int len) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void dummy_set_log(struct HippoLogAPI* log) {}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static HippoPlaybackPlugin g_dummy_plugin = {
 	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
 	"dummy",
 	"0.0.1",
+	"",
 	dummy_probe_can_play,
 	dummy_supported_extensions,
 	dummy_create,
@@ -102,6 +107,8 @@ static HippoPlaybackPlugin g_dummy_plugin = {
 	dummy_close,
 	dummy_read_data,
 	dummy_plugin_seek,
+	NULL,
+	dummy_set_log,
 	NULL,
 	NULL,
 };

@@ -4,6 +4,7 @@
 #include <vector>
 
 class QWidget;
+class QFont;
 struct HippoMessageAPI;
 struct HippoServiceAPI;
 struct HippoSelectSong;
@@ -31,6 +32,7 @@ private:
     QPlainTextEdit* create_label_multi(const QString& label_name);
 
     std::vector<QWidget*> m_widgets;
+    QFont* m_text_font = nullptr;
 
     const struct HippoMetadataAPI* m_metadata_api = nullptr;
     QTreeView* m_list = nullptr;

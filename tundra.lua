@@ -4,6 +4,7 @@ local native = require('tundra.native')
 
 local mac_opts = {
     "-Wall", "-I.",
+    "-DHIPPO_MAC",
     { "-DHIPPO_DEBUG", "-O0", "-g"; Config = "*-*-debug" },
     { "-DHIPPO_DEBUG", "-O0", "-fsanitize=address", "-fno-omit-frame-pointer", "-g"; Config = "*-*-debug-asan" },
     { "-DHIPPO_RELEASE", "-O3", "-g"; Config = "*-*-release" },
@@ -75,6 +76,7 @@ local gcc_opts = {
     "-Wno-attributes",
     "-Wno-unused-value",
     "-DOBJECT_DIR=\\\"$(OBJECTDIR)\\\"",
+    "-I$(OBJECTDIR)",
     "-Wall",
     "-fPIC",
     { "-DHIPPO_DEBUG", "-O0", "-g"; Config = "*-*-debug" },

@@ -42,6 +42,23 @@ table HippoRequestAddUrls {
   urls: [string];
 }
 
+table HippoLogMessages {
+  messages: [string];
+}
+
+table HippoLogClear {
+}
+
+table HippoLogToFile {
+  filename: string;
+  enable: bool;
+}
+
+table HippoLogSendMessages {
+  enable: bool;
+}
+
+
 table HippoSongDescription {
   path: string;
   title: string;
@@ -146,6 +163,11 @@ union MessageType {
   current_position: HippoCurrentPosition,
 
   song_metadata: HippoSongMetadata,
+
+  log_messages: HippoLogMessages,
+  log_clear: HippoLogClear,
+  log_file: HippoLogToFile,
+  log_send_messages: HippoLogSendMessages,
 }
 
 table HippoMessage {

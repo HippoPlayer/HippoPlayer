@@ -5,7 +5,9 @@ use std::os::raw::{c_char, c_void};
 use std::path::Path;
 use std::ptr;
 use std::time::Instant;
+use std::io::{Error, ErrorKind};
 use song_db::SongDb;
+use logger::*;
 
 mod audio;
 mod core_config;
@@ -100,6 +102,8 @@ impl HippoCore {
             }
         }
 
+        warn!("No playback plugin found for: {}", url);
+
         String::new()
     }
 
@@ -152,12 +156,16 @@ impl HippoCore {
             ));
             let msg_count = msgs.read_stream.len();
 
+
             for _ in 0..msg_count {
                 let message_data = msgs.read_stream.pop().unwrap();
                 let message = get_root_as_hippo_message(&message_data);
 
                 // Send messages to the frontend
                 Self::send_msgs(user_data, send_messages, &message_data, count, msg_index);
+
+                // send message to logging system
+                logger::incoming_message(&message);
 
                 // Send the message to to playlist and
                 self.playlist.event(&message).map(|reply| {
@@ -170,11 +178,6 @@ impl HippoCore {
                         self.is_playing = false;
                         self.audio.stop();
 					},
-                    /*
-                    MessageType::play_song => {
-                        self.playlist.set_new_song();
-					},
-                    */
                     _ => (),
                 }
 
@@ -218,6 +221,11 @@ impl HippoCore {
             }
         }
 
+        // Send log messages (if enabled) to the front-end
+        logger::send_log_messages().map(|reply| {
+            Self::send_msgs(user_data, send_messages, &reply, count, std::usize::MAX);
+        });
+
         // if new subsongs has been inserted we need to send it to the frontend
         self.playlist.inserted_subsongs().map(|reply| {
             Self::send_msgs(user_data, send_messages, &reply, count, std::usize::MAX);
@@ -239,10 +247,43 @@ impl HippoCore {
             );
         }
     }
+
+    fn basic_error(text: &'static str) -> Error {
+         Error::new(ErrorKind::Other, text)
+    }
+
+    /// Finds the data directory relative to the executable.
+    /// This is because it's possible to have data next to the exe, but also running
+    /// the applications as t2-output/path/exe and the location is in the root then
+    fn find_data_directory() -> std::io::Result<()>{
+        let current_path = std::env::current_dir().map_err(|_| Self::basic_error("Unable to get current dir!"))?;
+        if current_path.join("data").exists() {
+            return Ok(());
+        }
+
+        let mut path = current_path.parent().ok_or_else(|| Self::basic_error("Unable to get parent dir"))?;
+
+        loop {
+            println!("seaching for data in {:?}", path);
+
+            if path.join("data").exists() {
+                return std::env::set_current_dir(path);
+            }
+
+            path = path.parent().ok_or_else(|| Self::basic_error("Unable to get parent dir"))?;
+        }
+    }
 }
 
 #[no_mangle]
 pub extern "C" fn hippo_core_new() -> *const HippoCore {
+    // TODO: We should do better error handling here
+    // This to enforce we load relative to the current exe
+    let current_exe = std::env::current_exe().unwrap();
+    std::env::set_current_dir(current_exe.parent().unwrap()).unwrap();
+
+    HippoCore::find_data_directory().expect("Unable to find data directory");
+
     let config = match CoreConfig::load("data/config/global.cfg") {
         Ok(v) => v,
         Err(e) => {
@@ -251,17 +292,14 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
         }
     };
 
-    let mut plugins = Plugins::new();
-
     let current_path = std::env::current_dir().unwrap();
 
     // TODO: We should do better error handling here
     // This to enforce we load relative to the current exe
     let current_exe = std::env::current_exe().unwrap();
     std::env::set_current_dir(current_exe.parent().unwrap()).unwrap();
-    let path = std::env::current_dir().unwrap();
 
-    println!("The current directory is {}", path.display());
+    let mut plugins = Plugins::new();
 
     plugins.add_plugins_from_path();
 
@@ -295,12 +333,13 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
     }
 
     let song_db = Box::into_raw(Box::new(SongDb::new("songdb.db").unwrap()));
+    let service = service_ffi::PluginService::new(song_db);
 
     let mut core = Box::new(HippoCore {
         _config: config,
         plugins,
         audio: HippoAudio::new(),
-        plugin_service: service_ffi::PluginService::new(song_db),
+        plugin_service: service,
         playlist: Playlist::new(),
         current_song_time: 0.0,
         start_time: Instant::now(),

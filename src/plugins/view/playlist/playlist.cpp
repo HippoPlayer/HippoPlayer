@@ -141,6 +141,8 @@ QWidget* PlaylistView::create(struct HippoServiceAPI* service_api, QAbstractItem
 
     HippoMessageAPI_send(m_message_api, builder.GetBufferPointer(), builder.GetSize());
 
+    widget->setWindowTitle(QStringLiteral("Playlist"));
+
     return widget;
 }
 
@@ -181,11 +183,13 @@ void PlaylistView::delete_items() {
     auto selection_model = m_list->selectionModel();
     auto list = selection_model->selectedIndexes();
 
-    // TODO: we should batch the removal of items if they are all in order
-    // step 3 for I as we go by rows and not each item
-    for (int i = 0, len = list.size(); i < len; i += 3) {
-        QModelIndex index = list.at(i);
-        model->removeRows(index.row(), 1);
+    if (list.size() >= 3) {
+        // TODO: we should batch the removal of items if they are all in order
+        // step 3 for I as we go by rows and not each item
+        for (int i = 0, len = list.size(); i < len; i += 3) {
+            QModelIndex index = list.at(i);
+            model->removeRows(index.row(), 1);
+        }
     }
 
     model->layoutChanged();

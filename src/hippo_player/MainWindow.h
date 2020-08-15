@@ -3,6 +3,7 @@
 #include <QtCore/QPluginLoader>
 #include <QtCore/QVector>
 #include <QtWidgets/QMainWindow>
+#include "console.h"
 
 class QStringListModel;
 class ToolWindowManager;
@@ -45,12 +46,18 @@ private:
         QWidget* widget;
     };
 
+    Q_SLOT void plugin_view_closed(QObject* obj);
+    Q_SLOT void show_hide_console();
+
     PlaylistModel* m_playlist_model;
     HippoCore* m_core = nullptr;
     const HippoMessageAPI* m_general_messages = nullptr;
     ToolWindowManager* m_docking_manager = nullptr;
     QVector<PluginInfo> m_plugin_types;
     QVector<PluginInstance> m_plugin_instances;
+    ConsoleView* m_console = nullptr;
+    bool m_console_visible = false;
+    bool m_update_events = true;
 
     void create_plugin_instance(int index);
     Q_SLOT void add_files();

@@ -13,6 +13,7 @@ extern "C" {
 #define FRAME_SIZE ((FREQ * 2) / 50)
 
 static const struct HippoIoAPI* g_io_api = 0;
+HippoLogAPI* g_hp_log = NULL;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -66,6 +67,8 @@ static int hively_open(void* user_data, const char* filename, int subsong) {
         return -1;
     }
 
+    hp_info("Starting to play %s (subsong %d)", filename, subsong);
+
 	data->tune = hvl_LoadTuneMemory((uint8_t*) data->song_data, (int)size, FREQ, 0);
     hvl_InitSubsong(data->tune, subsong);
 
@@ -86,15 +89,18 @@ enum HippoProbeResult hively_probe_can_play(const uint8_t* data, uint32_t data_s
 		(data[1] == 'H') &&
 		(data[2] == 'X') &&
 		(data[3] < 3)) {
+		hp_info("Supported: %s", filename);
 		return HippoProbeResult_Supported;
 	}
 
 	if ((data[0] == 'H') &&
 		(data[1] == 'V') &&
 		(data[2] == 'L')) {
+		hp_info("Supported: %s", filename);
 		return HippoProbeResult_Supported;
 	}
 
+    hp_debug("Unsupported: %s", filename);
     return HippoProbeResult_Unsupported;
 }
 
@@ -138,6 +144,7 @@ static int hively_metadata(const char* filename, const HippoServiceAPI* service_
     HippoIoErrorCode res = HippoIo_read_file_to_memory(io_api, filename, &data, &size);
 
     if (res < 0) {
+        hp_error("Unable to open: %s", filename);
         return -1;
     }
 
@@ -149,6 +156,8 @@ static int hively_metadata(const char* filename, const HippoServiceAPI* service_
     }
 
 	struct hvl_tune* tune = hvl_LoadTuneMemory((uint8_t*) data, (int)size, FREQ, 0);
+
+	hp_info("Updating metadata for %s", filename);
 
     // TODO: Calculate len
     float length = 0.0f;
@@ -191,10 +200,15 @@ static void hively_event(void* user_data, const unsigned char* data, int len) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void hively_set_log(struct HippoLogAPI* log) { g_hp_log = log; }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static HippoPlaybackPlugin g_hively_plugin = {
 	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
 	"Hively",
 	"0.0.1",
+	"",
 	hively_probe_can_play,
 	hively_supported_extensions,
 	hively_create,
@@ -205,6 +219,8 @@ static HippoPlaybackPlugin g_hively_plugin = {
 	hively_read_data,
 	hively_seek,
 	hively_metadata,
+    hively_set_log,
+	NULL,
 	NULL,
 };
 

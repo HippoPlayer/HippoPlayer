@@ -30,6 +30,14 @@ struct HippoRequestSelectSong;
 
 struct HippoRequestAddUrls;
 
+struct HippoLogMessages;
+
+struct HippoLogClear;
+
+struct HippoLogToFile;
+
+struct HippoLogSendMessages;
+
 struct HippoSongDescription;
 
 struct HippoUrlEntry;
@@ -99,11 +107,15 @@ enum MessageType {
   MessageType_tracker_data = 13,
   MessageType_current_position = 14,
   MessageType_song_metadata = 15,
+  MessageType_log_messages = 16,
+  MessageType_log_clear = 17,
+  MessageType_log_file = 18,
+  MessageType_log_send_messages = 19,
   MessageType_MIN = MessageType_NONE,
-  MessageType_MAX = MessageType_song_metadata
+  MessageType_MAX = MessageType_log_send_messages
 };
 
-inline const MessageType (&EnumValuesMessageType())[16] {
+inline const MessageType (&EnumValuesMessageType())[20] {
   static const MessageType values[] = {
     MessageType_NONE,
     MessageType_next_song,
@@ -120,13 +132,17 @@ inline const MessageType (&EnumValuesMessageType())[16] {
     MessageType_request_tracker_data,
     MessageType_tracker_data,
     MessageType_current_position,
-    MessageType_song_metadata
+    MessageType_song_metadata,
+    MessageType_log_messages,
+    MessageType_log_clear,
+    MessageType_log_file,
+    MessageType_log_send_messages
   };
   return values;
 }
 
 inline const char * const *EnumNamesMessageType() {
-  static const char * const names[17] = {
+  static const char * const names[21] = {
     "NONE",
     "next_song",
     "prev_song",
@@ -143,13 +159,17 @@ inline const char * const *EnumNamesMessageType() {
     "tracker_data",
     "current_position",
     "song_metadata",
+    "log_messages",
+    "log_clear",
+    "log_file",
+    "log_send_messages",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameMessageType(MessageType e) {
-  if (e < MessageType_NONE || e > MessageType_song_metadata) return "";
+  if (e < MessageType_NONE || e > MessageType_log_send_messages) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesMessageType()[index];
 }
@@ -584,6 +604,187 @@ inline flatbuffers::Offset<HippoRequestAddUrls> CreateHippoRequestAddUrlsDirect(
   return CreateHippoRequestAddUrls(
       _fbb,
       urls__);
+}
+
+struct HippoLogMessages FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_MESSAGES = 4
+  };
+  const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *messages() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_MESSAGES);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_MESSAGES) &&
+           verifier.VerifyVector(messages()) &&
+           verifier.VerifyVectorOfStrings(messages()) &&
+           verifier.EndTable();
+  }
+};
+
+struct HippoLogMessagesBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_messages(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> messages) {
+    fbb_.AddOffset(HippoLogMessages::VT_MESSAGES, messages);
+  }
+  explicit HippoLogMessagesBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  HippoLogMessagesBuilder &operator=(const HippoLogMessagesBuilder &);
+  flatbuffers::Offset<HippoLogMessages> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<HippoLogMessages>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<HippoLogMessages> CreateHippoLogMessages(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> messages = 0) {
+  HippoLogMessagesBuilder builder_(_fbb);
+  builder_.add_messages(messages);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<HippoLogMessages> CreateHippoLogMessagesDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    const std::vector<flatbuffers::Offset<flatbuffers::String>> *messages = nullptr) {
+  auto messages__ = messages ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*messages) : 0;
+  return CreateHippoLogMessages(
+      _fbb,
+      messages__);
+}
+
+struct HippoLogClear FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           verifier.EndTable();
+  }
+};
+
+struct HippoLogClearBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  explicit HippoLogClearBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  HippoLogClearBuilder &operator=(const HippoLogClearBuilder &);
+  flatbuffers::Offset<HippoLogClear> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<HippoLogClear>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<HippoLogClear> CreateHippoLogClear(
+    flatbuffers::FlatBufferBuilder &_fbb) {
+  HippoLogClearBuilder builder_(_fbb);
+  return builder_.Finish();
+}
+
+struct HippoLogToFile FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_FILENAME = 4,
+    VT_ENABLE = 6
+  };
+  const flatbuffers::String *filename() const {
+    return GetPointer<const flatbuffers::String *>(VT_FILENAME);
+  }
+  bool enable() const {
+    return GetField<uint8_t>(VT_ENABLE, 0) != 0;
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_FILENAME) &&
+           verifier.VerifyString(filename()) &&
+           VerifyField<uint8_t>(verifier, VT_ENABLE) &&
+           verifier.EndTable();
+  }
+};
+
+struct HippoLogToFileBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_filename(flatbuffers::Offset<flatbuffers::String> filename) {
+    fbb_.AddOffset(HippoLogToFile::VT_FILENAME, filename);
+  }
+  void add_enable(bool enable) {
+    fbb_.AddElement<uint8_t>(HippoLogToFile::VT_ENABLE, static_cast<uint8_t>(enable), 0);
+  }
+  explicit HippoLogToFileBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  HippoLogToFileBuilder &operator=(const HippoLogToFileBuilder &);
+  flatbuffers::Offset<HippoLogToFile> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<HippoLogToFile>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<HippoLogToFile> CreateHippoLogToFile(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<flatbuffers::String> filename = 0,
+    bool enable = false) {
+  HippoLogToFileBuilder builder_(_fbb);
+  builder_.add_filename(filename);
+  builder_.add_enable(enable);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<HippoLogToFile> CreateHippoLogToFileDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    const char *filename = nullptr,
+    bool enable = false) {
+  auto filename__ = filename ? _fbb.CreateString(filename) : 0;
+  return CreateHippoLogToFile(
+      _fbb,
+      filename__,
+      enable);
+}
+
+struct HippoLogSendMessages FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_ENABLE = 4
+  };
+  bool enable() const {
+    return GetField<uint8_t>(VT_ENABLE, 0) != 0;
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint8_t>(verifier, VT_ENABLE) &&
+           verifier.EndTable();
+  }
+};
+
+struct HippoLogSendMessagesBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_enable(bool enable) {
+    fbb_.AddElement<uint8_t>(HippoLogSendMessages::VT_ENABLE, static_cast<uint8_t>(enable), 0);
+  }
+  explicit HippoLogSendMessagesBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  HippoLogSendMessagesBuilder &operator=(const HippoLogSendMessagesBuilder &);
+  flatbuffers::Offset<HippoLogSendMessages> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<HippoLogSendMessages>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<HippoLogSendMessages> CreateHippoLogSendMessages(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    bool enable = false) {
+  HippoLogSendMessagesBuilder builder_(_fbb);
+  builder_.add_enable(enable);
+  return builder_.Finish();
 }
 
 struct HippoSongDescription FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
@@ -1506,6 +1707,18 @@ struct HippoMessage FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const HippoSongMetadata *message_as_song_metadata() const {
     return message_type() == MessageType_song_metadata ? static_cast<const HippoSongMetadata *>(message()) : nullptr;
   }
+  const HippoLogMessages *message_as_log_messages() const {
+    return message_type() == MessageType_log_messages ? static_cast<const HippoLogMessages *>(message()) : nullptr;
+  }
+  const HippoLogClear *message_as_log_clear() const {
+    return message_type() == MessageType_log_clear ? static_cast<const HippoLogClear *>(message()) : nullptr;
+  }
+  const HippoLogToFile *message_as_log_file() const {
+    return message_type() == MessageType_log_file ? static_cast<const HippoLogToFile *>(message()) : nullptr;
+  }
+  const HippoLogSendMessages *message_as_log_send_messages() const {
+    return message_type() == MessageType_log_send_messages ? static_cast<const HippoLogSendMessages *>(message()) : nullptr;
+  }
   const flatbuffers::String *user_data() const {
     return GetPointer<const flatbuffers::String *>(VT_USER_DATA);
   }
@@ -1632,6 +1845,22 @@ inline bool VerifyMessageType(flatbuffers::Verifier &verifier, const void *obj, 
     }
     case MessageType_song_metadata: {
       auto ptr = reinterpret_cast<const HippoSongMetadata *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case MessageType_log_messages: {
+      auto ptr = reinterpret_cast<const HippoLogMessages *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case MessageType_log_clear: {
+      auto ptr = reinterpret_cast<const HippoLogClear *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case MessageType_log_file: {
+      auto ptr = reinterpret_cast<const HippoLogToFile *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case MessageType_log_send_messages: {
+      auto ptr = reinterpret_cast<const HippoLogSendMessages *>(obj);
       return verifier.VerifyTable(ptr);
     }
     default: return false;

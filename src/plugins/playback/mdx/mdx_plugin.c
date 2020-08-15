@@ -11,6 +11,8 @@
 #define strcasecmp _stricmp
 #endif
 
+HippoLogAPI* g_hp_log = NULL;
+
 char* sj2utf8(const char* input);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -49,10 +51,12 @@ enum HippoProbeResult mdx_plugin_probe_can_play(const uint8_t* data, uint32_t da
 
 	if ((point = strrchr(filename,'.')) != NULL) {
 		if (strcasecmp(point,".mdx") == 0) {
+			hp_info("Supported: %s", filename);
 			return HippoProbeResult_Supported;
 		}
 	}
 
+	hp_debug("Unsupported: %s", filename);
 	return HippoProbeResult_Unsupported;
 }
 
@@ -79,9 +83,11 @@ static int mdx_plugin_open(void* user_data, const char* buffer, int subsong) {
 	get_dirname(buffer, dir_name);
 
 	if (mdx_open(&plugin->mdx_tune, (char*)buffer, dir_name) >= 0) {
-		printf("1 return");
+		hp_info("Unable to open: %s", buffer);
 		return 1;
 	}
+
+	hp_info("Starting to play %s", buffer);
 
 	return 0;
 }
@@ -138,8 +144,6 @@ static int mdx_metadata(const char* filename, const HippoServiceAPI* service_api
 	char dir_name[4096];
 	t_mdxmini mdx_tune;
 
-	printf("mdx meta\n");
-
     const HippoMetadataAPI* metadata_api = HippoServiceAPI_get_metadata_api(service_api, HIPPO_METADATA_API_VERSION);
 
 	get_dirname(filename, dir_name);
@@ -147,15 +151,13 @@ static int mdx_metadata(const char* filename, const HippoServiceAPI* service_api
 	// TODO: Look into using file apis but support needs to be added to mdx
 
 	if (mdx_open(&mdx_tune, (char*)filename, dir_name) < 0) {
+		hp_error("Unable to open %s", filename);
 		return -1;
 	}
 
-	printf("mdx meta 2\n");
+	hp_info("Updating metadata for %s", filename);
 
 	mdx_get_title(&mdx_tune, title);
-
-	printf("title %s\n", title);
-
     HippoMetadataId index = HippoMetadata_create_url(metadata_api, filename);
     HippoMetadata_set_tag(metadata_api, index, HippoMetadata_TitleTag, title);
     HippoMetadata_set_tag_f64(metadata_api, index, HippoMetadata_LengthTag, (float)mdx_get_length(&mdx_tune));
@@ -176,10 +178,15 @@ void mdx_plugin_event(void* user_data, const unsigned char* data, int len) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void mdx_set_log(struct HippoLogAPI* log) { g_hp_log = log; }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static HippoPlaybackPlugin g_mdx_plugin = {
 	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
-	"MDX",
+	"mdx",
 	"0.0.1",
+	"mdxmini 1.0.0",
 	mdx_plugin_probe_can_play,
 	mdx_plugin_supported_extensions,
 	mdx_plugin_create,
@@ -190,6 +197,7 @@ static HippoPlaybackPlugin g_mdx_plugin = {
 	mdx_plugin_read_data,
 	mdx_plugin_plugin_seek,
 	mdx_metadata,
+	mdx_set_log,
 	NULL,
 	NULL,
 };
@@ -199,8 +207,4 @@ static HippoPlaybackPlugin g_mdx_plugin = {
 HIPPO_EXPORT HippoPlaybackPlugin* hippo_playback_plugin() {
 	return &g_mdx_plugin;
 }
-
-
-
-
 

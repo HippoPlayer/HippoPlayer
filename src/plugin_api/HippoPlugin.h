@@ -212,17 +212,82 @@ typedef struct HippoMessageAPI {
 
 #define HippoMessageAPI_send(api, data, len) api->send(api->priv_data, data, len)
 
+enum { HIPPO_LOG_TRACE, HIPPO_LOG_DEBUG, HIPPO_LOG_INFO, HIPPO_LOG_WARN, HIPPO_LOG_ERROR, HIPPO_LOG_FATAL };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#define HIPPO_LOG_API_VERSION 1
+
+typedef struct HippoLogAPI {
+    void* priv_data;
+    void (*log_set_base_name)(void* priv_data, const char* base_name);
+    void (*log)(void* priv_data, int level, const char* file, int line, const char* fmt, ...);
+} HippoLogAPI;
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#define hp_debug(...) { \
+    extern HippoLogAPI* g_hp_log;  \
+    g_hp_log->log(g_hp_log->priv_data, HIPPO_LOG_DEBUG, NULL, 0, __VA_ARGS__); }
+
+#define hpfl_debug(...) { \
+    extern HippoLogAPI* g_hp_log;  \
+    g_hp_log->log(g_hp_log->priv_data, HIPPO_LOG_DEBUG, __FILE__, __LINE__, __VA_ARGS__); }
+
+#define hp_trace(...) { \
+    extern HippoLogAPI* g_hp_log;  \
+    g_hp_log->log(g_hp_log->priv_data, HIPPO_LOG_TRACE, NULL, 0, __VA_ARGS__); }
+
+#define hpfl_trace(...) { \
+    extern HippoLogAPI* g_hp_log;  \
+    g_hp_log->log(g_hp_log->priv_data, HIPPO_LOG_TRACE, __FILE__, __LINE__, __VA_ARGS__); }
+
+#define hp_info(...) { \
+    extern HippoLogAPI* g_hp_log;  \
+    g_hp_log->log(g_hp_log->priv_data, HIPPO_LOG_INFO, NULL, 0, __VA_ARGS__); }
+
+#define hpfl_info(...) { \
+    extern HippoLogAPI* g_hp_log;  \
+    g_hp_log->log(g_hp_log->priv_data, HIPPO_LOG_INFO, __FILE__, __LINE__, __VA_ARGS__); }
+
+#define hp_warn(...) { \
+    extern HippoLogAPI* g_hp_log;  \
+    g_hp_log->log(g_hp_log->priv_data, HIPPO_LOG_WARN, NULL, 0, __VA_ARGS__); }
+
+#define hpfl_warn(...) { \
+    extern HippoLogAPI* g_hp_log;  \
+    g_hp_log->log(g_hp_log->priv_data, HIPPO_LOG_WARN, __FILE__, __LINE__, __VA_ARGS__); }
+
+#define hp_error(...) { \
+    extern HippoLogAPI* g_hp_log;  \
+    g_hp_log->log(g_hp_log->priv_data, HIPPO_LOG_ERROR, NULL, 0, __VA_ARGS__); }
+
+#define hpfl_error(...) { \
+    extern HippoLogAPI* g_hp_log;  \
+    g_hp_log->log(g_hp_log->priv_data, HIPPO_LOG_ERROR, __FILE__, __LINE__, __VA_ARGS__); }
+
+#define hp_fatal(...) { \
+    extern HippoLogAPI* g_hp_log;  \
+    g_hp_log->log(g_hp_log->priv_data, HIPPO_LOG_FATAL, NULL, 0, __VA_ARGS__); }
+
+#define hpfl_fatal(...) { \
+    extern HippoLogAPI* g_hp_log;  \
+    g_hp_log->log(g_hp_log->priv_data, HIPPO_LOG_FATAL, __FILE__, __LINE__, __VA_ARGS__); }
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct HippoServicePrivData;
 
 typedef struct HippoServiceAPI {
+	const HippoLogAPI* (*get_log_api)(struct HippoServicePrivData* private_data, int api_version);
 	const HippoFileAPI* (*get_io_api)(struct HippoServicePrivData* private_data, int api_version);
 	const HippoMetadataAPI* (*get_metadata_api)(struct HippoServicePrivData* private_data, int api_version);
 	const HippoMessageAPI* (*get_message_api)(struct HippoServicePrivData* private_data, int api_version);
 	struct HippoServicePrivData* private_data;
 } HippoServiceAPI;
 
+#define HippoServiceAPI_get_log_api(api, version) api->get_log_api(api->private_data, version)
 #define HippoServiceAPI_get_io_api(api, version) api->get_io_api(api->private_data, version)
 #define HippoServiceAPI_get_metadata_api(api, version) api->get_metadata_api(api->private_data, version)
 #define HippoServiceAPI_get_message_api(api, version) api->get_message_api(api->private_data, version)
@@ -304,6 +369,7 @@ typedef struct HippoPlaybackPlugin {
 	uint64_t api_version;
 	const char* name;
 	const char* version;
+	const char* library_version;
 	enum HippoProbeResult (*probe_can_play)(const uint8_t* data, uint32_t data_size, const char* filename, uint64_t total_size);
 	const char* (*supported_extensions)();
 	void* (*create)(const HippoServiceAPI* services);
@@ -314,6 +380,7 @@ typedef struct HippoPlaybackPlugin {
 	int (*read_data)(void* user_data, void* dest, uint32_t max_sample_count);
 	int (*seek)(void* user_data, int ms);
 	int (*metadata)(const char* url, const HippoServiceAPI* services);
+	void (*set_log)(struct HippoLogAPI* log);
 	int (*save)(void* user_data, const struct HippoSaveAPI* save_api);
 	int (*load)(void* user_data, const struct HippoLoadAPI* load_api);
 } HippoPlaybackPlugin;

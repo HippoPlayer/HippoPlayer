@@ -8,6 +8,7 @@ use std::os::raw::{c_char, c_void};
 use std::ptr;
 use std::slice;
 use song_db::*;
+use logger;
 
 extern "C" fn file_exists_wrapper(priv_data: *mut ffi::HippoApiPrivData, target: *const i8) -> i32 {
     let file_api: &mut IoApi = unsafe { &mut *(priv_data as *mut IoApi) };
@@ -127,6 +128,14 @@ extern "C" fn file_seek_wrapper(
 ) -> i32 {
     let _file_wrapper: &mut FileWrapper = unsafe { &mut *(handle as *mut FileWrapper) };
     0
+}
+
+extern "C" fn get_log_api(
+    priv_data: *mut ffi::HippoServicePrivData,
+    _version: i32,
+) -> *const ffi::HippoLogAPI {
+    let service_api: &mut ServiceApi = unsafe { &mut *(priv_data as *mut ServiceApi) };
+    service_api.get_c_log_api()
 }
 
 extern "C" fn get_io_api_wrapper(
@@ -351,6 +360,7 @@ extern "C" fn metadata_get_all_instrument(
 
 
 pub struct ServiceApi {
+    pub c_log_api: *const ffi::HippoLogAPI,
     pub c_io_api: *const ffi::HippoIoAPI,
     pub c_metadata_api: *const ffi::HippoMetadataAPI,
     pub c_message_api: *const ffi::HippoMessageAPI,
@@ -368,6 +378,10 @@ pub fn new_c_message_api() -> *const ffi::HippoMessageAPI {
 }
 
 impl ServiceApi {
+    fn get_c_log_api(&self) -> *const ffi::HippoLogAPI {
+        self.c_log_api
+    }
+
     fn get_c_io_api(&self) -> *const ffi::HippoIoAPI {
         self.c_io_api
     }
@@ -408,6 +422,14 @@ impl ServiceApi {
         Self::get_message_api_from_c_api_mut(self.c_message_api)
     }
 
+    pub fn create_log_api() -> Box<ffi::HippoLogAPI> {
+        Box::new(ffi::HippoLogAPI {
+            priv_data: unsafe { logger::hippo_log_new_state() },
+            log_set_base_name: Some(logger::hippo_log_set_base_name),
+            log: Some(logger::hippo_log),
+        })
+    }
+
     fn new(song_db: *const SongDb) -> ServiceApi {
         // setup IO services
 
@@ -416,6 +438,18 @@ impl ServiceApi {
                 saved_allocs: HashMap::new(),
             }))
         };
+
+        let c_log_api = Box::new(ffi::HippoLogAPI {
+            priv_data: unsafe { logger::hippo_log_new_state() },
+            log_set_base_name: Some(logger::hippo_log_set_base_name),
+            log: Some(logger::hippo_log),
+        });
+
+        unsafe {
+            logger::hippo_log_set_base_name(c_log_api.priv_data, b"core\0".as_ptr() as *const _);
+        }
+
+        let c_log_api: *const ffi::HippoLogAPI = unsafe { transmute(c_log_api) };
 
         let c_io_api = Box::new(ffi::HippoIoAPI {
             exists: Some(file_exists_wrapper),
@@ -451,6 +485,7 @@ impl ServiceApi {
         let c_metadata_api: *const ffi::HippoMetadataAPI = unsafe { transmute(c_metadata_api) };
 
         ServiceApi {
+            c_log_api,
             c_io_api,
             c_metadata_api,
             c_message_api: new_c_message_api(),
@@ -473,6 +508,7 @@ impl PluginService {
         let service_api = Box::into_raw(Box::new(ServiceApi::new(song_db)));
 
         let c_service_api = Box::new(ffi::HippoServiceAPI {
+            get_log_api: Some(get_log_api),
             get_io_api: Some(get_io_api_wrapper),
             get_metadata_api: Some(get_metadata_api),
             get_message_api: Some(get_message_api),

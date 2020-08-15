@@ -18,6 +18,7 @@
 
 const int FREQ = 48000;
 const int FRAME_SIZE = (FREQ * 2) / 100;
+HippoLogAPI* g_hp_log = NULL;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -28,17 +29,19 @@ struct SidReplayerData {
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// I haven't found any way to probe the MDX file so have to do with extension compare :/
+// TODO: Better probe
 
 enum HippoProbeResult sid_probe_can_play(const uint8_t* data, uint32_t data_size, const char* filename, uint64_t total_size) {
 	const char* point = 0;
 
 	if ((point = strrchr(filename,'.')) != NULL) {
 		if (strcasecmp(point,".sid") == 0 || (strcasecmp(point,".psid") == 0)) {
+		    hp_info("Supported: %s", filename);
 			return HippoProbeResult_Supported;
 		}
 	}
 
+    hp_debug("Unsupported: %s", filename);
 	return HippoProbeResult_Unsupported;
 }
 
@@ -64,10 +67,10 @@ static void* sid_create(const struct HippoServiceAPI* service_api) {
 
     // Check if builder is ok
     if (!data->rs->getStatus()) {
-        printf("SidPlugin error %s\n", data->rs->error());
+        hp_error("Unable to create %s", data->rs->error());
         delete data->rs;
         delete data;
-        return 0;
+        return nullptr;
     }
 
 	return data;
@@ -91,7 +94,7 @@ static int sid_open(void* user_data, const char* buffer, int subsong) {
 
     // Check if the tune is valid
     if (!tune->getStatus()) {
-        printf("SidPlugin: tune status %s\n", tune->statusString());
+        hp_error("Unable to open %s error: %s", buffer, tune->statusString());
         return -1;
     }
 
@@ -110,15 +113,17 @@ static int sid_open(void* user_data, const char* buffer, int subsong) {
     cfg.defaultSidModel = SidConfig::MOS8580;
 
     if (!data->engine.config(cfg)) {
-        printf("Engine error %s\n", data->engine.error());
+        hp_error("Config error %s\n", data->engine.error());
         return 0;
     }
 
     // Load tune into engine
     if (!data->engine.load(data->tune)) {
-        printf("Engine error %s\n", data->engine.error());
+        hp_error("Engine error %s\n", data->engine.error());
         return 0;
     }
+
+    hp_info("Starting to play %s (subsong %d)", buffer, subsong);
 
 	return 1;
 }
@@ -182,14 +187,18 @@ static int sid_metadata(const char* url, const HippoServiceAPI* service_api) {
     HippoIoErrorCode res = HippoIo_read_file_to_memory(io_api, url, &data, &size);
 
     if (res < 0) {
+        hp_error("Unable to file-io open %s", url);
         return -1;
     }
 
 	SidTune* tune = new SidTune((uint8_t*)data, size);
 
     if (!tune->getStatus()) {
+        hp_error("Unable to metadata get status %s", url);
         return -1;
     }
+
+    hp_info("Updating metadata for %s", url);
 
     int subsongs_count = tune->getInfo()->songs();
     HippoMetadataId index = HippoMetadata_create_url(metadata_api, url);
@@ -234,10 +243,15 @@ static int sid_metadata(const char* url, const HippoServiceAPI* service_api) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void sid_set_log(struct HippoLogAPI* log) { g_hp_log = log; }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static HippoPlaybackPlugin g_sid_plugin = {
 	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
 	"SID",
 	"0.0.1",
+	"sidplayfp 2.0.0beta",
 	sid_probe_can_play,
 	sid_supported_extensions,
 	sid_create,
@@ -248,8 +262,9 @@ static HippoPlaybackPlugin g_sid_plugin = {
 	sid_read_data,
 	sid_seek,
 	sid_metadata,
-	NULL,
-	NULL,
+    sid_set_log,
+	nullptr,
+	nullptr,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
