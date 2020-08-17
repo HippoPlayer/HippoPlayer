@@ -31,34 +31,15 @@ PrefsDialog::PrefsDialog(QWidget* parent)
     m_ui->config_category->addTopLevelItem(playback);
     m_ui->panel->setCurrentIndex(0);
 
+    QObject::connect(this, &QDialog::finished, this, &PrefsDialog::dialog_finished);
+    QObject::connect(m_ui->button_box, &QDialogButtonBox::accepted, this, &QDialog::accept);
+    QObject::connect(m_ui->button_box, &QDialogButtonBox::rejected, this, &QDialog::reject);
+}
 
-    /*
-    Config configs[] = {
-        {QStringLiteral("Apperance"), new AppearanceWidget(this)},
-    };
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    QListWidgetItem* first_item = nullptr;
-
-    for (unsigned i = 0; i < sizeof_array(configs); ++i) {
-        QListWidgetItem* item = new QListWidgetItem(configs[i].name);
-
-        if (i == 0) {
-            first_item = item;
-        }
-
-        QWidget* widget = configs[i].widget;
-
-        item->setData(Qt::UserRole, i);
-
-        m_ui->panel->addWidget(widget);
-        m_ui->config_categories->addItem(item);
-    }
-
-    m_ui->config_categories->setCurrentItem(first_item);
-
-    connect(m_ui->save_buttons, &QDialogButtonBox::accepted, this,
-            &QDialog::close);
-    */
+void PrefsDialog::dialog_finished(int state) {
+    printf("state %d\n", state);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

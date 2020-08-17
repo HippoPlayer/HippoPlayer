@@ -14,8 +14,11 @@ PlaybackPluginPriority::PlaybackPluginPriority(QWidget* parent) : QDialog(parent
 
     QListWidget* list = new QListWidget();
 
-    for (int i = 1; i < 10; ++i)
-        list->addItem(new QListWidgetItem(QString(QStringLiteral("Item %1")).arg(i)));
+    for (int i = 1; i < 10; ++i) {
+        auto item = new QListWidgetItem(QString(QStringLiteral("Plugin %1")).arg(i));
+        item->setCheckState(Qt::Checked);
+        list->addItem(item);
+    }
 
     list->setDragDropMode(QAbstractItemView::InternalMove);
 

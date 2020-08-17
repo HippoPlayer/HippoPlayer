@@ -20,7 +20,10 @@ public:
     explicit PrefsDialog(QWidget* parent = nullptr);
     virtual ~PrefsDialog();
 
+
 private:
+    Q_SLOT void dialog_finished(int state);
+
     //Q_SLOT void change_layout(QListWidgetItem* curr, QListWidgetItem* prev);
     Ui_PrefsDialog* m_ui = nullptr;
 };
