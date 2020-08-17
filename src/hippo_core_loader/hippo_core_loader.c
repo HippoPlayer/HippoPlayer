@@ -153,7 +153,7 @@ extern int HippoCore_load() {
 	void* core_handle = NULL;
 
 	if (file_exists(core_name)) {
-		void* core_handle = dlopen(core_name, RTLD_NOW);
+		core_handle = dlopen(core_name, RTLD_NOW);
 
 		if (!core_handle) {
 			printf("Unable to open %s: %s", core_name, dlerror());
