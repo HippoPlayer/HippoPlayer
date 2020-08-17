@@ -17,6 +17,7 @@ PlaybackPluginPriority::PlaybackPluginPriority(QWidget* parent) : QDialog(parent
     for (int i = 1; i < 10; ++i) {
         auto item = new QListWidgetItem(QString(QStringLiteral("Plugin %1")).arg(i));
         item->setCheckState(Qt::Checked);
+        item->setFlags(item->flags() | Qt::ItemIsDragEnabled);
         list->addItem(item);
     }
 
