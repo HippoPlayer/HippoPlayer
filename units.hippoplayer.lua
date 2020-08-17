@@ -161,6 +161,14 @@ Program {
 
         gen_moc("src/hippo_player/MainWindow.h"),
         gen_moc("src/hippo_player/PlaylistModel.h"),
+
+        -- Dialogs
+        gen_uic("src/hippo_player/PrefsDialog.ui"),
+        gen_moc("src/hippo_player/PrefsDialog.h"),
+
+        gen_uic("src/hippo_player/PlaybackPluginPriority.ui"),
+        gen_moc("src/hippo_player/PlaybackPluginPriority.h"),
+
         --gen_uic("src/hippo_player/test_main/MainWindow.ui"),
     },
 
@@ -201,8 +209,6 @@ Program {
     },
 
 	Libs = {
-        -- { "Qt5Guid.lib", "Qt5Cored.lib", "Qt5Widgetsd.lib"; Config = "win64-*-*" },
-		-- enable when stupid release mode is fixed
         { "Qt5Gui.lib", "Qt5Core.lib", "Qt5Widgets.lib", "qtmain.lib", "shell32.lib"; Config = "win64-*-*" },
 		{ "Qt5Widgets", "Qt5Gui", "Qt5Core"; Config = "linux-*-*" },
 	},

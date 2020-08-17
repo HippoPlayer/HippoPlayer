@@ -48,6 +48,7 @@ private:
 
     Q_SLOT void plugin_view_closed(QObject* obj);
     Q_SLOT void show_hide_console();
+    Q_SLOT void show_prefs();
 
     PlaylistModel* m_playlist_model;
     HippoCore* m_core = nullptr;
