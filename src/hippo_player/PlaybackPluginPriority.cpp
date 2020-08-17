@@ -1,87 +1,11 @@
 #include "PlaybackPluginPriority.h"
-#include "ui_PlaybackPluginPriority.h"
-#include <QtGui/QDragMoveEvent>
-#include <QtCore/QMimeData>
 #include <QtCore/QDebug>
+#include <QtCore/QMimeData>
 #include <QtGui/QDrag>
+#include <QtGui/QDragMoveEvent>
+#include <QtWidgets/QListWidget>
+#include "ui_PlaybackPluginPriority.h"
 //#include <QtWidgets/QDragMoveEvent>
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void PluginList::dragMoveEvent(QDragMoveEvent* e) {
-    if (e->mimeData()->hasFormat(QStringLiteral("application/x-item")) && e->source() != this) {
-        e->setDropAction(Qt::MoveAction);
-        e->accept();
-    } else
-        e->ignore();
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-PluginList::PluginList(QWidget* parent) : QListWidget(parent) {
-    this->setViewMode(QListView::IconMode);
-    this->setIconSize(QSize(55, 55));
-    this->setSelectionMode(QAbstractItemView::SingleSelection);
-    this->setDragEnabled(true);
-    this->setDefaultDropAction(Qt::MoveAction);
-    this->setDragDropMode(QAbstractItemView::InternalMove);
-    this->setAcceptDrops(true);
-    this->setDropIndicatorShown(true);
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void PluginList::dropEvent(QDropEvent* event) {
-    //if (event->mimeData()->hasFormat(QStringLiteral("application/x-item"))) {
-        event->accept();
-        event->setDropAction(Qt::MoveAction);
-        QListWidgetItem* item = new QListWidgetItem;
-        //QString name = event->mimeData()->data(QStringLiteral("application/x-item"));
-        item->setText(QStringLiteral("dummy"));
-        item->setIcon(QIcon(QStringLiteral(":/images/iString")));  // set path to image
-        addItem(item);
-    //}
-    //else
-    //   event->ignore();
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void PluginList::startDrag(Qt::DropActions supportedActions) {
-    QListWidgetItem* item = currentItem();
-    QMimeData* mimeData = new QMimeData;
-    QByteArray ba;
-    ba = item->text().toLatin1().data();
-    //mimeData->setData(QStringLiteral("application/x-item"), ba);
-    QDrag* drag = new QDrag(this);
-    drag->setMimeData(mimeData);
-    if (drag->exec(Qt::MoveAction) == Qt::MoveAction) {
-        delete takeItem(row(item));
-        emit itemDroped();
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void PluginList::dragEnterEvent(QDragEnterEvent* event) {
-    /*
-    auto t = event->mimeData()->hasText();
-    qDebug() << t;
-
-    if (event->mimeData()->hasFormat(QStringLiteral("application/x-item")))
-    */
-        event->accept();
-    /*
-    else
-        event->ignore();
-    */
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-Qt::DropAction PluginList::supportedDropActions() {
-    return Qt::MoveAction;
-}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -90,7 +14,7 @@ PlaybackPluginPriority::PlaybackPluginPriority(QWidget* parent) : QDialog(parent
 
     QListWidget* list = new QListWidget();
 
-    for(int i = 1; i < 10; ++i)
+    for (int i = 1; i < 10; ++i)
         list->addItem(new QListWidgetItem(QString(QStringLiteral("Item %1")).arg(i)));
 
     list->setDragDropMode(QAbstractItemView::InternalMove);
@@ -107,11 +31,10 @@ PlaybackPluginPriority::PlaybackPluginPriority(QWidget* parent) : QDialog(parent
     list->addItem(t1);
     */
 
-
     QVBoxLayout* vbox = new QVBoxLayout;
     vbox->addWidget(list);
-    //vbox->addStretch(1);
-    m_ui->groupBox->setLayout(vbox);
+    // vbox->addStretch(1);
+    m_ui->groupbox->setLayout(vbox);
 
     /*
 

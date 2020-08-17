@@ -1,32 +1,14 @@
 #pragma once
 
 #include <QDialog>
-#include <QtWidgets/QListWidget>
 
 class Ui_PlaybackPluginPriority;
 class QListWidgetItem;
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-class PluginList : public QListWidget {
-    Q_OBJECT
-public:
-    PluginList(QWidget* parent);
-
-protected:
-    void dragMoveEvent(QDragMoveEvent* e);
-    void dropEvent(QDropEvent* event);
-    void startDrag(Qt::DropActions supportedActions);
-    void dragEnterEvent(QDragEnterEvent* event);
-    Qt::DropAction supportedDropActions();
-signals:
-    void itemDroped();
-};
+class QListWidget;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-// PlaybackPluginPriority shows settings for font and interface, etc. Everything that
-// has to do with colors and such
+// PlaybackPluginPriority is used to re-order playback plugins in their priority order
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -39,5 +21,5 @@ public:
 
 private:
     Ui_PlaybackPluginPriority* m_ui = nullptr;
-    PluginList* m_plugin_list = nullptr;
+    QListWidget* m_plugin_list = nullptr;
 };
