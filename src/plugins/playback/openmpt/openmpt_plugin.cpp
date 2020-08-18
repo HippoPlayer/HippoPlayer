@@ -250,8 +250,8 @@ static int openmpt_read_data(void* user_data, void* dest, uint32_t max_samples) 
     struct OpenMptData* replayer_data = (struct OpenMptData*)user_data;
 
     // count is number of frames per channel and div by 2 as we have 2 channels
-    const int count = 480;
-    int gen_count = replayer_data->mod->read_interleaved_stereo(48000, count, (float*)dest) * 2;
+    //const int count = 480;
+    int gen_count = replayer_data->mod->read_interleaved_stereo(48000, max_samples, (float*)dest) * 2;
 
     // Send current positions back to frontend if we have some more data
     if (gen_count > 0) {

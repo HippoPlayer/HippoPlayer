@@ -1,21 +1,24 @@
-extern crate rodio;
+//extern crate rodio;
+
+use miniaudio;
 
 use crate::plugin_handler::DecoderPlugin;
-use rodio::{Sink, Source};
+//use rodio::{Sink, Source};
 use std::ffi::CString;
 use std::os::raw::c_void;
 use std::time::Duration;
+use std::sync::{Arc, Mutex};
+
+//use miniaudio::{Device, DeviceConfig, DeviceType, Format, FramesMut};
+//use miniaudio::{Waveform, WaveformConfig, WaveformType};
 
 use crate::service_ffi::PluginService;
 use ringbuf::{Consumer, Producer, RingBuffer};
 
+#[derive(Clone)]
 pub struct HippoPlayback {
     plugin_user_data: u64,
     plugin: DecoderPlugin,
-    _read_stream: Consumer<Box<[u8]>>,
-    out_data: Vec<f32>,
-    frame_size: usize,
-    current_offset: usize, // sender: Sender<DecodeEvent>,
 }
 
 pub struct Instance {
@@ -65,10 +68,7 @@ impl HippoPlayback {
             HippoPlayback {
                 plugin_user_data: user_data,
                 plugin: plugin.clone(),
-                out_data: vec![0.0; frame_size],
-                _read_stream: cons,
-                frame_size,
-                current_offset: frame_size + 1,
+                //_read_stream: cons,
             },
             Instance {
                 write_stream: prod,
@@ -78,7 +78,7 @@ impl HippoPlayback {
         ))
     }
 }
-
+/*
 impl Iterator for HippoPlayback {
     type Item = f32;
 
@@ -137,24 +137,90 @@ impl Source for HippoPlayback {
         None
     }
 }
+*/
+
+/*
+struct AudioPlayback {
+    value: f32,
+}
+
+impl miniaudio::Source for AudioPlayback {
+    fn generate_samples(&mut self, output: &mut [f32]) {
+        let mut start = self.value;
+
+        println!("gen samples {}", output.len());
+
+        for v in output {
+            let t = start.sin();
+            //println!("{}", t);
+            *v = t;
+            start += 0.0001;
+        }
+
+        self.value += 0.001;
+    }
+}
+*/
 
 pub struct HippoAudio {
-    audio_sink: rodio::Sink,
-    pub playbacks: Vec<Instance>, // audio_endpoint: rodio::Endpoint,
+    //players: Box<Mutex<Vec<HippoPlayback>>>,
+    players: *mut c_void,
+    audio_playback: miniaudio::Device,
+    //audio_sink: rodio::Sink,
+    pub playbacks: Vec<Instance>,
 }
+
+unsafe extern "C" fn data_callback(
+    device_ptr: *mut miniaudio::ma_device,
+    output_ptr: *mut c_void,
+    _input_ptr: *const c_void,
+    frame_count: u32,
+) {
+    let f_output = std::slice::from_raw_parts_mut(output_ptr as *mut f32, frame_count as usize);
+    let source: &Mutex<Vec<HippoPlayback>> = std::mem::transmute((*device_ptr).pUserData);
+    let playback;
+
+    {
+        // TODO: Fix me
+        let t = source.lock().unwrap();
+        if t.len() == 0 {
+            for v in f_output {
+                *v = 0.0;
+            }
+
+            return;
+        }
+
+        playback = t[0].clone();
+    }
+
+    ((playback.plugin.plugin_funcs).read_data)(
+        playback.plugin_user_data as *mut c_void,
+        output_ptr, frame_count);
+}
+
+
 
 impl HippoAudio {
     pub fn new() -> HippoAudio {
-        let device = rodio::default_output_device().unwrap();
-        let sink = Sink::new(&device);
+        let players = Box::new(Mutex::new(Vec::<HippoPlayback>::new()));
+        let t: *mut c_void = unsafe { std::mem::transmute(players) };
 
-        HippoAudio {
-            audio_sink: sink,
+        //println!("{:#?} {:#?}", players.as_mut_ptr(), t);
+
+        let t = HippoAudio {
+            players: t,
+            audio_playback: miniaudio::Device::new(data_callback, t).unwrap(),
             playbacks: Vec::new(),
-        }
+        };
+
+
+        t.audio_playback.start();
+        t
     }
 
     pub fn stop(&mut self) {
+        /*
         self.audio_sink.stop();
         self.audio_sink.sleep_until_end();
 
@@ -163,6 +229,7 @@ impl HippoAudio {
         }
 
         self.playbacks.clear();
+        */
     }
 
     //pub fn pause(&mut self) {
@@ -183,7 +250,11 @@ impl HippoAudio {
         let playback = HippoPlayback::start_with_file(plugin, service, filename);
 
         if let Some(pb) = playback {
-            self.audio_sink.append(pb.0);
+            {
+                let players: &Mutex<Vec<HippoPlayback>> = unsafe { std::mem::transmute(self.players) };
+                let mut t = players.lock().unwrap();
+                t.push(pb.0);
+            }
             self.playbacks.push(pb.1);
         }
     }
