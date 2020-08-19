@@ -6,6 +6,7 @@
 #define MA_NO_MP3
 #define MA_NO_GENERATION
 #define MA_NO_AVX512
+#define MA_COINIT_VALUE 2 // Because of Qt
 
 /*
 Audio playback and capture library. Choice of public domain or MIT-0. See license statements at the end of this file.
