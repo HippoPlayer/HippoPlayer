@@ -1,8 +1,9 @@
+pub mod error;
 pub mod sys;
-use std::marker::PhantomData;
-use std::mem::{transmute, MaybeUninit};
+
+use error::Error;
+use std::mem::MaybeUninit;
 use std::os::raw::c_void;
-use std::sync::{Arc, Mutex};
 pub use sys::ma_device;
 
 pub type DataCallback = unsafe extern "C" fn(
@@ -11,6 +12,19 @@ pub type DataCallback = unsafe extern "C" fn(
     _input_ptr: *const c_void,
     frame_count: u32,
 );
+
+/// This macro will execute a success block if a result is a MA_SUCCESS block
+/// and return the value of that block wrapped in a Result::Ok. If $Result is an error this will
+/// return an Error enum wrapped in a Result::Err.
+macro_rules! map_result {
+    ($Result:expr, $Success:expr) => {
+        if $crate::Error::is_c_error($Result) {
+            Err($crate::Error::from_c_error($Result))
+        } else {
+            Ok($Success)
+        }
+    };
+}
 
 /// Converts slice of any sized type into a slice of bytes.
 pub fn into_byte_slice<T: Sized>(orig: &[T]) -> &[u8] {
@@ -93,43 +107,34 @@ unsafe extern "C" fn stop_callback(_device_ptr: *mut sys::ma_device) {
 }
 
 impl Device {
-    // TODO: Error handling
-    pub fn new(callback: DataCallback, user_data: *mut c_void) -> Option<Device> {
-        // This has to be boxed because it requires a stable address, and Rust's moves basically make
-        // that impossible without a heap allocation.
+    pub fn new(callback: DataCallback, user_data: *mut c_void) -> Result<Device, Error> {
         let device = Box::into_raw(Box::new(MaybeUninit::<sys::ma_device>::uninit()));
 
-        println!("creating device");
+        let mut device_config = unsafe { sys::ma_device_config_init(sys::ma_device_type_playback) };
 
-        unsafe {
-            let mut device_config = sys::ma_device_config_init(sys::ma_device_type_playback);
+        device_config.playback.format = sys::ma_format_f32;
+        device_config.playback.channels = 2;
+        device_config.sampleRate = 48000;
+        device_config.dataCallback = Some(callback);
+        device_config.stopCallback = Some(stop_callback);
+        device_config.pUserData = user_data;
 
-            device_config.playback.format = sys::ma_format_f32;
-            device_config.playback.channels = 2;
-            device_config.sampleRate = 48000;
-            device_config.dataCallback = Some(callback);
-            device_config.stopCallback = Some(stop_callback);
-            device_config.pUserData = user_data;
+        // We don't need low-latency audio, larger buffers is better for us
+        device_config.performanceProfile = sys::ma_performance_profile_conservative;
 
-            println!("init with {:#?}", device);
+        let result = unsafe {
+            sys::ma_device_init(std::ptr::null_mut(), &device_config, (*device).as_mut_ptr())
+        };
 
-            if sys::ma_device_init(std::ptr::null_mut(), &device_config, (*device).as_mut_ptr())
-                != sys::MA_SUCCESS as _
-            {
-                println!("Failed to open playback device.");
-                return None;
+        map_result!(
+            result,
+            Device {
+                device: unsafe { (*device).as_mut_ptr() }
             }
-        }
-
-        Some(Device {
-            device: unsafe { (*device).as_mut_ptr() },
-        })
+        )
     }
 
-    pub fn start(&self) {
-        println!("starting to play with {:#?}", self.device);
-        unsafe {
-            sys::ma_device_start(self.device as *const _ as *mut _);
-        }
+    pub fn start(&self) -> Result<(), Error> {
+        unsafe { Error::from_c_result(sys::ma_device_start(self.device as *const _ as *mut _)) }
     }
 }

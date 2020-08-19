@@ -176,18 +176,13 @@ unsafe extern "C" fn data_callback(
     _input_ptr: *const c_void,
     frame_count: u32,
 ) {
-    let f_output = std::slice::from_raw_parts_mut(output_ptr as *mut f32, frame_count as usize);
     let source: &Mutex<Vec<HippoPlayback>> = std::mem::transmute((*device_ptr).pUserData);
     let playback;
 
     {
-        // TODO: Fix me
+        // miniaudio will clear the buffer so we don't have to do it here
         let t = source.lock().unwrap();
         if t.len() == 0 {
-            for v in f_output {
-                *v = 0.0;
-            }
-
             return;
         }
 
