@@ -3,6 +3,7 @@ use std::fmt;
 use std::os::raw::c_void;
 use std::ffi::{CString, CStr};
 use messages::*;
+use dirs;
 
 extern "C" {
     fn hippo_log_clear();
@@ -31,6 +32,27 @@ pub const HIPPO_LOG_WARN: i32 = 3;
 pub const HIPPO_LOG_ERROR: i32 = 4;
 pub const HIPPO_LOG_FATAL: i32 = 5;
 
+// Turn on logging to file the first thing we do pretty much in the core so we get all data
+// TODO: Cleanup this function but should be good enough for now
+pub fn init_file_log() {
+    if let Some(config_dir) = dirs::config_dir() {
+        let dir = config_dir.join("HippoPlayer");
+        if std::fs::create_dir_all(&dir).is_ok() {
+            let dir = dir.join("hippo_log.txt");
+            if let Some(name) = dir.to_str() {
+                if let Ok(c_filename) = CString::new(name) {
+                    unsafe { hippo_log_to_file(c_filename.as_ptr(), true) };
+                    return;
+                }
+            } else {
+                println!("Strange path {:#?}", dir);
+            }
+        }
+    }
+
+    println!("FATAL ERROR: Unable to create logging to file. Can't find config directory to write to. Please report this.\n");
+}
+
 pub fn do_log(log_level: i32, format: fmt::Arguments) {
     let t = format!("{}", format);
     let c_to_print = CString::new(t).unwrap();
@@ -38,7 +60,6 @@ pub fn do_log(log_level: i32, format: fmt::Arguments) {
         hippo_log(std::ptr::null_mut(), log_level, std::ptr::null(), 0, c_to_print.as_ptr());
     }
 }
-
 
 pub fn incoming_message(msg: &HippoMessage) {
     match msg.message_type() {

@@ -264,7 +264,7 @@ impl HippoCore {
         let mut path = current_path.parent().ok_or_else(|| Self::basic_error("Unable to get parent dir"))?;
 
         loop {
-            println!("seaching for data in {:?}", path);
+            trace!("seaching for data in {:?}", path);
 
             if path.join("data").exists() {
                 return std::env::set_current_dir(path);
@@ -277,6 +277,8 @@ impl HippoCore {
 
 #[no_mangle]
 pub extern "C" fn hippo_core_new() -> *const HippoCore {
+    logger::init_file_log();
+
     // TODO: We should do better error handling here
     // This to enforce we load relative to the current exe
     let current_exe = std::env::current_exe().unwrap();

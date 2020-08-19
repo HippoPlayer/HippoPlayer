@@ -14,6 +14,10 @@ extern "C" {
 }
 
 int main(int argc, char** argv) {
+    QApplication app(argc, argv);
+
+    QCoreApplication::setOrganizationDomain(QStringLiteral("hippoplayer.com"));
+    QCoreApplication::setApplicationName(QStringLiteral("HippoPlayer"));
 
     // Make sure we manage to load the core
     if (!HippoCore_load()) {
@@ -22,7 +26,6 @@ int main(int argc, char** argv) {
 
     HippoCore* core = hippo_core_new();
 
-    QApplication app(argc, argv);
     app.setStyle(QStyleFactory::create(QStringLiteral("Fusion")));
 
     QPalette darkPalette;

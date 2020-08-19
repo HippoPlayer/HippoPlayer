@@ -12,4 +12,5 @@ cc = "1.0"
 
 [dependencies]
 messages = { path = "../messages" }
+dirs = "3.0.1"
 

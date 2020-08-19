@@ -165,8 +165,7 @@ impl miniaudio::Source for AudioPlayback {
 pub struct HippoAudio {
     //players: Box<Mutex<Vec<HippoPlayback>>>,
     players: *mut c_void,
-    audio_playback: miniaudio::Device,
-    //audio_sink: rodio::Sink,
+    output_device: Option<miniaudio::Device>,
     pub playbacks: Vec<Instance>,
 }
 
@@ -198,20 +197,14 @@ unsafe extern "C" fn data_callback(
 
 impl HippoAudio {
     pub fn new() -> HippoAudio {
+        // This is a bit hacky so it can be shared with the device and HippoAudio
         let players = Box::new(Mutex::new(Vec::<HippoPlayback>::new()));
-        let t: *mut c_void = unsafe { std::mem::transmute(players) };
 
-        //println!("{:#?} {:#?}", players.as_mut_ptr(), t);
-
-        let t = HippoAudio {
-            players: t,
-            audio_playback: miniaudio::Device::new(data_callback, t).unwrap(),
+        HippoAudio {
+            players: Box::into_raw(players) as *mut c_void,
+            output_device: None,
             playbacks: Vec::new(),
-        };
-
-
-        t.audio_playback.start();
-        t
+        }
     }
 
     pub fn stop(&mut self) {
@@ -241,6 +234,7 @@ impl HippoAudio {
         service: &PluginService,
         filename: &str,
     ) {
+        /*
         // TODO: Do error checking
         let playback = HippoPlayback::start_with_file(plugin, service, filename);
 
@@ -252,5 +246,6 @@ impl HippoAudio {
             }
             self.playbacks.push(pb.1);
         }
+        */
     }
 }
