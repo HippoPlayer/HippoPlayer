@@ -91,12 +91,14 @@ pub struct Devices {
 impl Devices {
     pub fn new() -> Result<Devices, Error> {
         // backends prio, alsa over pulse audio and wasapi over dsound
+        /*
         let backends: &[u32] = &[
             sys::ma_backend_alsa,
             sys::ma_backend_pulseaudio,
             sys::ma_backend_wasapi,
             sys::ma_backend_dsound,
         ];
+        */
 
         let mut config = unsafe { sys::ma_context_config_init() };
         config.logCallback = Some(log_callback);
@@ -104,7 +106,8 @@ impl Devices {
 
         let mut context = MaybeUninit::<sys::ma_context>::uninit();
 
-        let result = unsafe { sys::ma_context_init(backends.as_ptr(), 4, &config, context.as_mut_ptr()) };
+        //let result = unsafe { sys::ma_context_init(backends.as_ptr(), 4, &config, context.as_mut_ptr()) };
+        let result = unsafe { sys::ma_context_init(std::ptr::null_mut(), 0, &config, context.as_mut_ptr()) };
 
         if Error::is_c_error(result) {
             return Err(Error::from_c_error(result));
