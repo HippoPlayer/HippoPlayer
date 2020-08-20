@@ -1621,7 +1621,7 @@ MA_LOG_LEVEL_ERROR
 #define MA_LOG_LEVEL_ERROR     1
 
 #ifndef MA_LOG_LEVEL
-#define MA_LOG_LEVEL           MA_LOG_LEVEL_ERROR
+#define MA_LOG_LEVEL           MA_LOG_LEVEL_INFO
 #endif
 
 typedef struct ma_context ma_context;

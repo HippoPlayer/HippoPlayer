@@ -2,8 +2,11 @@
 
 #include <QDialog>
 
+class DevicePanel;
+class PlaybackPluginPriority;
+class QTreeWidgetItem;
 class Ui_PrefsDialog;
-class QListWidgetItem;
+struct HippoMessageAPI;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -17,15 +20,20 @@ class PrefsDialog : public QDialog {
     Q_OBJECT
 
 public:
-    explicit PrefsDialog(QWidget* parent = nullptr);
+    explicit PrefsDialog(const struct HippoMessageAPI* messages_api, QWidget* parent = nullptr);
     virtual ~PrefsDialog();
 
+    void incoming_messages(const unsigned char* data, int len);
 
 private:
     Q_SLOT void dialog_finished(int state);
 
-    //Q_SLOT void change_layout(QListWidgetItem* curr, QListWidgetItem* prev);
+    PlaybackPluginPriority* m_plugin_priority;
+    DevicePanel* m_device_panel;
+
+    Q_SLOT void change_layout(QTreeWidgetItem* curr, QTreeWidgetItem* prev);
     Ui_PrefsDialog* m_ui = nullptr;
+    const struct HippoMessageAPI* m_messages_api = nullptr;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

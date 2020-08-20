@@ -283,7 +283,7 @@ void ConsoleView::select_log_file(bool checked) {
     auto filename = builder.CreateString(log_file.toUtf8().constData());
 
     builder.Finish(CreateHippoMessageDirect(builder, MessageType_log_file,
-                                            CreateHippoLogToFile(builder, filename, log_to_file ).Union()));
+                                            CreateHippoLogToFile(builder, filename, log_to_file).Union()));
     HippoMessageAPI_send(m_message_api, builder.GetBufferPointer(), builder.GetSize());
 }
 
@@ -302,7 +302,7 @@ void ConsoleView::clear_log() {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void ConsoleView::event(const unsigned char* data, int len) {
+void ConsoleView::incoming_messages(const unsigned char* data, int len) {
     const HippoMessage* message = GetHippoMessage(data);
 
     switch (message->message_type()) {

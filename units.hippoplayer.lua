@@ -165,9 +165,10 @@ Program {
         -- Dialogs
         gen_uic("src/hippo_player/PrefsDialog.ui"),
         gen_moc("src/hippo_player/PrefsDialog.h"),
-
         gen_uic("src/hippo_player/PlaybackPluginPriority.ui"),
         gen_moc("src/hippo_player/PlaybackPluginPriority.h"),
+        gen_uic("src/hippo_player/DevicePanel.ui"),
+        gen_moc("src/hippo_player/DevicePanel.h"),
 
         --gen_uic("src/hippo_player/test_main/MainWindow.ui"),
     },

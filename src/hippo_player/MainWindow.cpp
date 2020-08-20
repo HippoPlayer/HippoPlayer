@@ -49,7 +49,11 @@ MainWindow::MainWindow(HippoCore* core) : QMainWindow(0), m_core(core) {
 
     layout->QLayout::addWidget(m_docking_manager);
 
+    printf("general messeages %p\n", m_general_messages);
+
     m_console = new ConsoleView(m_general_messages, nullptr);
+    m_prefs_dialog = new PrefsDialog(m_general_messages);
+
     m_docking_manager->addToolWindow(m_console, ToolWindowManager::NewFloatingArea,
                                      ToolWindowManager::ToolWindowProperty::HideOnClose);
 
@@ -118,7 +122,8 @@ const HippoMessageAPI* MainWindow::get_messages(void* this_, int index) {
 
 void MainWindow::handle_incoming_messages(const unsigned char* data, int len) {
     // let console handle messages
-    m_console->event(data, len);
+    m_console->incoming_messages(data, len);
+    m_prefs_dialog->incoming_messages(data, len);
 
     const HippoMessage* message = GetHippoMessage(data);
 
@@ -293,8 +298,7 @@ void MainWindow::show_hide_console() {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void MainWindow::show_prefs() {
-    PrefsDialog prefs;
-    prefs.exec();
+    m_prefs_dialog->show();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

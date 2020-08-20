@@ -12,6 +12,7 @@ class PlaylistModel;
 struct HippoServiceAPI;
 struct HippoCore;
 struct HippoMessageAPI;
+class PrefsDialog;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -50,7 +51,8 @@ private:
     Q_SLOT void show_hide_console();
     Q_SLOT void show_prefs();
 
-    PlaylistModel* m_playlist_model;
+    PrefsDialog* m_prefs_dialog = nullptr;
+    PlaylistModel* m_playlist_model = nullptr;
     HippoCore* m_core = nullptr;
     const HippoMessageAPI* m_general_messages = nullptr;
     ToolWindowManager* m_docking_manager = nullptr;

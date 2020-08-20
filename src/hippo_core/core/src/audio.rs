@@ -1,6 +1,7 @@
 //extern crate rodio;
 
-use miniaudio;
+use miniaudio::{Devices};
+use messages::*;
 
 use crate::plugin_handler::DecoderPlugin;
 //use rodio::{Sink, Source};
@@ -165,7 +166,7 @@ impl miniaudio::Source for AudioPlayback {
 pub struct HippoAudio {
     //players: Box<Mutex<Vec<HippoPlayback>>>,
     players: *mut c_void,
-    output_device: Option<miniaudio::Device>,
+    output_devices: Option<Devices>,
     pub playbacks: Vec<Instance>,
 }
 
@@ -202,7 +203,7 @@ impl HippoAudio {
 
         HippoAudio {
             players: Box::into_raw(players) as *mut c_void,
-            output_device: None,
+            output_devices: None,
             playbacks: Vec::new(),
         }
     }
@@ -220,6 +221,60 @@ impl HippoAudio {
         */
     }
 
+    fn replay_output_devices(&self) -> Option<Box<[u8]>> {
+        let output_devices = self.output_devices.as_ref()?;
+
+        let mut builder = messages::FlatBufferBuilder::new_with_capacity(8192);
+        let mut out_ent = Vec::with_capacity(output_devices.devices.len());
+
+        for dev in &output_devices.devices {
+            let device_name = builder.create_string(&dev.name);
+
+            let desc = HippoOutputDevice::create(
+                &mut builder,
+                &HippoOutputDeviceArgs {
+                    name: Some(device_name),
+                    min_channels: dev.min_channels as i32,
+                    max_channels: dev.max_channels as i32,
+                    min_sample_rate: dev.min_sample_rate as i32,
+                    max_sample_rate: dev.max_channels as i32,
+                },
+            );
+
+            out_ent.push(desc);
+        }
+
+        let devices_vec = builder.create_vector(&out_ent);
+
+        let added_devices = HippoReplyOutputDevices::create(
+            &mut builder,
+            &HippoReplyOutputDevicesArgs {
+                devices: Some(devices_vec),
+            },
+        );
+
+        Some(HippoMessage::create_def(
+            builder,
+            MessageType::reply_output_devices,
+            added_devices.as_union_value(),
+        ))
+    }
+
+    ///
+    /// Handle incoming events
+    ///
+    pub fn event(&mut self, msg: &HippoMessage) -> Option<Box<[u8]>> {
+        match msg.message_type() {
+            MessageType::request_output_devices => self.replay_output_devices(),
+            _ => None,
+        }
+    }
+
+    pub fn init_devices(&mut self) -> Result<(), miniaudio::Error> {
+        self.output_devices = Some(Devices::new()?);
+        Ok(())
+    }
+
     //pub fn pause(&mut self) {
     //    self.audio_sink.pause();
     //}
@@ -233,7 +288,9 @@ impl HippoAudio {
         plugin: &DecoderPlugin,
         service: &PluginService,
         filename: &str,
-    ) {
+    ) -> Result<(), miniaudio::Error> {
+
+
         /*
         // TODO: Do error checking
         let playback = HippoPlayback::start_with_file(plugin, service, filename);
@@ -247,5 +304,7 @@ impl HippoAudio {
             self.playbacks.push(pb.1);
         }
         */
+
+        Ok(())
     }
 }

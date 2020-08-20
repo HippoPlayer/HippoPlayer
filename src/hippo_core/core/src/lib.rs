@@ -167,8 +167,13 @@ impl HippoCore {
                 // send message to logging system
                 logger::incoming_message(&message);
 
-                // Send the message to to playlist and
+                // Send the message to to playlist and back to the ui
                 self.playlist.event(&message).map(|reply| {
+                    Self::send_msgs(user_data, send_messages, &reply, count, std::usize::MAX);
+                });
+
+                // Send the message to to audio (to configure output, get devices, etc)
+                self.audio.event(&message).map(|reply| {
                     Self::send_msgs(user_data, send_messages, &reply, count, std::usize::MAX);
                 });
 
@@ -348,6 +353,10 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
         is_playing: false,
         song_db,
     });
+
+    if let Err(e) = core.audio.init_devices() {
+        error!("Failed to find audio devices {:#?}", e);
+    }
 
     // it's ok to allow this function to fail if we have no playlist
     core.playlist.load("default_playlist.hpl").ok();

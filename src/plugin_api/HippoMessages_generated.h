@@ -58,6 +58,12 @@ struct HippoTrackerData;
 
 struct HippoCurrentPosition;
 
+struct HippoOutputDevice;
+
+struct HippoRequestOutputDevices;
+
+struct HippoReplyOutputDevices;
+
 struct HippoMessage;
 
 enum HippoTrackerType {
@@ -90,6 +96,7 @@ inline const char *EnumNameHippoTrackerType(HippoTrackerType e) {
   return EnumNamesHippoTrackerType()[index];
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////
 enum MessageType {
   MessageType_NONE = 0,
   MessageType_next_song = 1,
@@ -111,11 +118,13 @@ enum MessageType {
   MessageType_log_clear = 17,
   MessageType_log_file = 18,
   MessageType_log_send_messages = 19,
+  MessageType_request_output_devices = 20,
+  MessageType_reply_output_devices = 21,
   MessageType_MIN = MessageType_NONE,
-  MessageType_MAX = MessageType_log_send_messages
+  MessageType_MAX = MessageType_reply_output_devices
 };
 
-inline const MessageType (&EnumValuesMessageType())[20] {
+inline const MessageType (&EnumValuesMessageType())[22] {
   static const MessageType values[] = {
     MessageType_NONE,
     MessageType_next_song,
@@ -136,13 +145,15 @@ inline const MessageType (&EnumValuesMessageType())[20] {
     MessageType_log_messages,
     MessageType_log_clear,
     MessageType_log_file,
-    MessageType_log_send_messages
+    MessageType_log_send_messages,
+    MessageType_request_output_devices,
+    MessageType_reply_output_devices
   };
   return values;
 }
 
 inline const char * const *EnumNamesMessageType() {
-  static const char * const names[21] = {
+  static const char * const names[23] = {
     "NONE",
     "next_song",
     "prev_song",
@@ -163,13 +174,15 @@ inline const char * const *EnumNamesMessageType() {
     "log_clear",
     "log_file",
     "log_send_messages",
+    "request_output_devices",
+    "reply_output_devices",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameMessageType(MessageType e) {
-  if (e < MessageType_NONE || e > MessageType_log_send_messages) return "";
+  if (e < MessageType_NONE || e > MessageType_reply_output_devices) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesMessageType()[index];
 }
@@ -1650,6 +1663,184 @@ inline flatbuffers::Offset<HippoCurrentPosition> CreateHippoCurrentPosition(
   return builder_.Finish();
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////
+struct HippoOutputDevice FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_NAME = 4,
+    VT_MIN_CHANNELS = 6,
+    VT_MAX_CHANNELS = 8,
+    VT_MIN_SAMPLE_RATE = 10,
+    VT_MAX_SAMPLE_RATE = 12
+  };
+  const flatbuffers::String *name() const {
+    return GetPointer<const flatbuffers::String *>(VT_NAME);
+  }
+  int32_t min_channels() const {
+    return GetField<int32_t>(VT_MIN_CHANNELS, 0);
+  }
+  int32_t max_channels() const {
+    return GetField<int32_t>(VT_MAX_CHANNELS, 0);
+  }
+  int32_t min_sample_rate() const {
+    return GetField<int32_t>(VT_MIN_SAMPLE_RATE, 0);
+  }
+  int32_t max_sample_rate() const {
+    return GetField<int32_t>(VT_MAX_SAMPLE_RATE, 0);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_NAME) &&
+           verifier.VerifyString(name()) &&
+           VerifyField<int32_t>(verifier, VT_MIN_CHANNELS) &&
+           VerifyField<int32_t>(verifier, VT_MAX_CHANNELS) &&
+           VerifyField<int32_t>(verifier, VT_MIN_SAMPLE_RATE) &&
+           VerifyField<int32_t>(verifier, VT_MAX_SAMPLE_RATE) &&
+           verifier.EndTable();
+  }
+};
+
+struct HippoOutputDeviceBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_name(flatbuffers::Offset<flatbuffers::String> name) {
+    fbb_.AddOffset(HippoOutputDevice::VT_NAME, name);
+  }
+  void add_min_channels(int32_t min_channels) {
+    fbb_.AddElement<int32_t>(HippoOutputDevice::VT_MIN_CHANNELS, min_channels, 0);
+  }
+  void add_max_channels(int32_t max_channels) {
+    fbb_.AddElement<int32_t>(HippoOutputDevice::VT_MAX_CHANNELS, max_channels, 0);
+  }
+  void add_min_sample_rate(int32_t min_sample_rate) {
+    fbb_.AddElement<int32_t>(HippoOutputDevice::VT_MIN_SAMPLE_RATE, min_sample_rate, 0);
+  }
+  void add_max_sample_rate(int32_t max_sample_rate) {
+    fbb_.AddElement<int32_t>(HippoOutputDevice::VT_MAX_SAMPLE_RATE, max_sample_rate, 0);
+  }
+  explicit HippoOutputDeviceBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  HippoOutputDeviceBuilder &operator=(const HippoOutputDeviceBuilder &);
+  flatbuffers::Offset<HippoOutputDevice> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<HippoOutputDevice>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<HippoOutputDevice> CreateHippoOutputDevice(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<flatbuffers::String> name = 0,
+    int32_t min_channels = 0,
+    int32_t max_channels = 0,
+    int32_t min_sample_rate = 0,
+    int32_t max_sample_rate = 0) {
+  HippoOutputDeviceBuilder builder_(_fbb);
+  builder_.add_max_sample_rate(max_sample_rate);
+  builder_.add_min_sample_rate(min_sample_rate);
+  builder_.add_max_channels(max_channels);
+  builder_.add_min_channels(min_channels);
+  builder_.add_name(name);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<HippoOutputDevice> CreateHippoOutputDeviceDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    const char *name = nullptr,
+    int32_t min_channels = 0,
+    int32_t max_channels = 0,
+    int32_t min_sample_rate = 0,
+    int32_t max_sample_rate = 0) {
+  auto name__ = name ? _fbb.CreateString(name) : 0;
+  return CreateHippoOutputDevice(
+      _fbb,
+      name__,
+      min_channels,
+      max_channels,
+      min_sample_rate,
+      max_sample_rate);
+}
+
+struct HippoRequestOutputDevices FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           verifier.EndTable();
+  }
+};
+
+struct HippoRequestOutputDevicesBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  explicit HippoRequestOutputDevicesBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  HippoRequestOutputDevicesBuilder &operator=(const HippoRequestOutputDevicesBuilder &);
+  flatbuffers::Offset<HippoRequestOutputDevices> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<HippoRequestOutputDevices>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<HippoRequestOutputDevices> CreateHippoRequestOutputDevices(
+    flatbuffers::FlatBufferBuilder &_fbb) {
+  HippoRequestOutputDevicesBuilder builder_(_fbb);
+  return builder_.Finish();
+}
+
+struct HippoReplyOutputDevices FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_DEVICES = 4
+  };
+  const flatbuffers::Vector<flatbuffers::Offset<HippoOutputDevice>> *devices() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<HippoOutputDevice>> *>(VT_DEVICES);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_DEVICES) &&
+           verifier.VerifyVector(devices()) &&
+           verifier.VerifyVectorOfTables(devices()) &&
+           verifier.EndTable();
+  }
+};
+
+struct HippoReplyOutputDevicesBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_devices(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<HippoOutputDevice>>> devices) {
+    fbb_.AddOffset(HippoReplyOutputDevices::VT_DEVICES, devices);
+  }
+  explicit HippoReplyOutputDevicesBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  HippoReplyOutputDevicesBuilder &operator=(const HippoReplyOutputDevicesBuilder &);
+  flatbuffers::Offset<HippoReplyOutputDevices> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<HippoReplyOutputDevices>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<HippoReplyOutputDevices> CreateHippoReplyOutputDevices(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<HippoOutputDevice>>> devices = 0) {
+  HippoReplyOutputDevicesBuilder builder_(_fbb);
+  builder_.add_devices(devices);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<HippoReplyOutputDevices> CreateHippoReplyOutputDevicesDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    const std::vector<flatbuffers::Offset<HippoOutputDevice>> *devices = nullptr) {
+  auto devices__ = devices ? _fbb.CreateVector<flatbuffers::Offset<HippoOutputDevice>>(*devices) : 0;
+  return CreateHippoReplyOutputDevices(
+      _fbb,
+      devices__);
+}
+
 struct HippoMessage FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_MESSAGE_TYPE = 4,
@@ -1718,6 +1909,12 @@ struct HippoMessage FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
   const HippoLogSendMessages *message_as_log_send_messages() const {
     return message_type() == MessageType_log_send_messages ? static_cast<const HippoLogSendMessages *>(message()) : nullptr;
+  }
+  const HippoRequestOutputDevices *message_as_request_output_devices() const {
+    return message_type() == MessageType_request_output_devices ? static_cast<const HippoRequestOutputDevices *>(message()) : nullptr;
+  }
+  const HippoReplyOutputDevices *message_as_reply_output_devices() const {
+    return message_type() == MessageType_reply_output_devices ? static_cast<const HippoReplyOutputDevices *>(message()) : nullptr;
   }
   const flatbuffers::String *user_data() const {
     return GetPointer<const flatbuffers::String *>(VT_USER_DATA);
@@ -1861,6 +2058,14 @@ inline bool VerifyMessageType(flatbuffers::Verifier &verifier, const void *obj, 
     }
     case MessageType_log_send_messages: {
       auto ptr = reinterpret_cast<const HippoLogSendMessages *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case MessageType_request_output_devices: {
+      auto ptr = reinterpret_cast<const HippoRequestOutputDevices *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case MessageType_reply_output_devices: {
+      auto ptr = reinterpret_cast<const HippoReplyOutputDevices *>(obj);
       return verifier.VerifyTable(ptr);
     }
     default: return false;

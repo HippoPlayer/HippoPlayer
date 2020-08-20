@@ -22,9 +22,6 @@ extern "C" {
         ...
     );
 }
-
-
-
 pub const HIPPO_LOG_TRACE: i32 = 0;
 pub const HIPPO_LOG_DEBUG: i32 = 1;
 pub const HIPPO_LOG_INFO: i32 = 2;
@@ -56,6 +53,7 @@ pub fn init_file_log() {
 pub fn do_log(log_level: i32, format: fmt::Arguments) {
     let t = format!("{}", format);
     let c_to_print = CString::new(t).unwrap();
+
     unsafe {
         hippo_log(std::ptr::null_mut(), log_level, std::ptr::null(), 0, c_to_print.as_ptr());
     }
@@ -133,5 +131,13 @@ macro_rules! warn {
         $crate::do_log(HIPPO_LOG_WARN, format_args!($($arg)*))
     });
 }
+
+#[macro_export]
+macro_rules! error {
+    ($($arg:tt)+) => ({
+        $crate::do_log(HIPPO_LOG_ERROR, format_args!($($arg)*))
+    });
+}
+
 
 
