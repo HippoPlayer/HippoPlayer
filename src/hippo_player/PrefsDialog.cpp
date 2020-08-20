@@ -62,6 +62,8 @@ void PrefsDialog::dialog_finished(int state) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void PrefsDialog::change_layout(QTreeWidgetItem* curr, QTreeWidgetItem* prev) {
+    if (!curr) curr = prev;
+
     int index = curr->data(0, Qt::UserRole).toInt();
 
     if (index >= 0) {

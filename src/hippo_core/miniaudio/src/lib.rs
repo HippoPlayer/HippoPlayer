@@ -144,7 +144,11 @@ impl Devices {
             let name = unsafe { cstr_display(&(*device).name) };
             let name = name.to_owned().to_string();
 
+
             trace!("Found output device {}", name);
+            unsafe {
+                trace!("  Sample rate range {} - {}", (*device).minSampleRate, (*device).maxSampleRate);
+            }
 
             //trace!("Found output device {}", name);
 

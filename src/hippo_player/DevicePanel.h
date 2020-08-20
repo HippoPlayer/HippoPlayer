@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QDialog>
+#include <vector>
 
 class Ui_DevicePanel;
 class QListWidgetItem;
@@ -25,6 +26,17 @@ public:
 
 private:
     void get_devices(const struct HippoReplyOutputDevices* messages);
+
+    struct DeviceInfo {
+        int min_channels;
+        int max_channels;
+        int min_sample_rate;
+        int max_sample_rate;
+    };
+
+    Q_SLOT void change_device(int index);
+
+    std::vector<DeviceInfo> m_device_info;
 
     Ui_DevicePanel* m_ui = nullptr;
     const struct HippoMessageAPI* m_messages_api = nullptr;
