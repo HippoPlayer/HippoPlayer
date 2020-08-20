@@ -26,6 +26,7 @@ DevicePanel::~DevicePanel() {
 
 void DevicePanel::get_devices(const struct HippoReplyOutputDevices* messages) {
     m_ui->device_name->clear();
+    m_ui->device_name->addItem(QStringLiteral("Default Sound Device"));
 
     for (auto const& msg : *messages->devices()) {
         const char* device_name = msg->name()->c_str();
