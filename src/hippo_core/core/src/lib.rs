@@ -278,6 +278,14 @@ impl HippoCore {
             path = path.parent().ok_or_else(|| Self::basic_error("Unable to get parent dir"))?;
         }
     }
+
+    /// Try to initalize the audio device, if it fails a C style error string will be returned here so
+    /// the front-end can show it. As we do this early we don't have any message passing setup so it
+    /// makes sense to have this specific
+    fn init_audio_device(&mut self) -> Option<*const c_char> {
+        //if let Err(self.
+        None
+    }
 }
 
 #[no_mangle]
@@ -390,6 +398,12 @@ pub unsafe extern "C" fn hippo_play_file(_core: *mut HippoCore, _filename: *cons
 
     //core.play_file(slice.to_str().unwrap(), 0);
     //println!("filename to play returned: {}", slice.to_str().unwrap());
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn hippo_init_audio_device(_core: *mut HippoCore) -> *const c_char {
+    let core = &mut *_core;
+    core.init_audio_device()
 }
 
 #[no_mangle]

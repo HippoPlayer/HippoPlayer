@@ -270,8 +270,14 @@ impl HippoAudio {
         }
     }
 
-    pub fn init_devices(&mut self) -> Result<(), miniaudio::Error> {
+    pub fn init_output_device(&mut self) -> Result<(), miniaudio::Error> {
         self.output_devices = Some(Devices::new()?);
+
+
+        Ok(())
+    }
+
+    pub fn init_devices(&mut self) -> Result<(), miniaudio::Error> {
         Ok(())
     }
 

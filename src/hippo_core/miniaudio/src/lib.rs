@@ -69,7 +69,13 @@ unsafe extern "C" fn log_callback(
 ) {
     // we have some more levels in our logger so bump up them to that range
     let level = level as usize;
-    logger::hippo_log(std::ptr::null_mut(), LEVEL_TRANSLATION[level], std::ptr::null(), 0, message);
+    logger::hippo_log(
+        std::ptr::null_mut(),
+        LEVEL_TRANSLATION[level],
+        std::ptr::null(),
+        0,
+        message,
+    );
 }
 
 pub struct Device(*mut sys::ma_device);
@@ -102,12 +108,13 @@ impl Devices {
 
         let mut config = unsafe { sys::ma_context_config_init() };
         config.logCallback = Some(log_callback);
-        config.pUserData   = std::ptr::null_mut();
+        config.pUserData = std::ptr::null_mut();
 
         let mut context = MaybeUninit::<sys::ma_context>::uninit();
 
         //let result = unsafe { sys::ma_context_init(backends.as_ptr(), 4, &config, context.as_mut_ptr()) };
-        let result = unsafe { sys::ma_context_init(std::ptr::null_mut(), 0, &config, context.as_mut_ptr()) };
+        let result =
+            unsafe { sys::ma_context_init(std::ptr::null_mut(), 0, &config, context.as_mut_ptr()) };
 
         if Error::is_c_error(result) {
             return Err(Error::from_c_error(result));
@@ -123,13 +130,15 @@ impl Devices {
         let mut capture_device_infos = MaybeUninit::<*mut sys::ma_device_info>::uninit();
         let mut capture_device_count = 032;
 
-        let result = unsafe { sys::ma_context_get_devices(
-            context,
-            playback_device_infos.as_mut_ptr(),
-            &mut playback_device_count,
-            capture_device_infos.as_mut_ptr(),
-            &mut capture_device_count,
-        ) };
+        let result = unsafe {
+            sys::ma_context_get_devices(
+                context,
+                playback_device_infos.as_mut_ptr(),
+                &mut playback_device_count,
+                capture_device_infos.as_mut_ptr(),
+                &mut capture_device_count,
+            )
+        };
 
         if Error::is_c_error(result) {
             return Err(Error::from_c_error(result));
@@ -144,10 +153,13 @@ impl Devices {
             let name = unsafe { cstr_display(&(*device).name) };
             let name = name.to_owned().to_string();
 
-
             trace!("Found output device {}", name);
             unsafe {
-                trace!("  Sample rate range {} - {}", (*device).minSampleRate, (*device).maxSampleRate);
+                trace!(
+                    "  Sample rate range {} - {}",
+                    (*device).minSampleRate,
+                    (*device).maxSampleRate
+                );
             }
 
             //trace!("Found output device {}", name);
@@ -164,75 +176,25 @@ impl Devices {
             }
         }
 
-        Ok(Devices {
-            context,
-            devices,
-        })
+        Ok(Devices { context, devices })
     }
 }
 
-pub unsafe fn enumerate_devices() -> i32 {
-    use std::ptr::null;
-
-    let mut context = MaybeUninit::<sys::ma_context>::uninit();
-    if sys::ma_context_init(null(), 0, null(), context.as_mut_ptr()) != sys::MA_SUCCESS as _ {
-        eprintln!("Failed to initialize context.");
-        return -2;
-    }
-    let mut context = context.assume_init();
-
-    let mut playback_device_infos = MaybeUninit::<*mut sys::ma_device_info>::uninit();
-    let mut playback_device_count = 0u32;
-
-    let mut capture_device_infos = MaybeUninit::<*mut sys::ma_device_info>::uninit();
-    let mut capture_device_count = 032;
-
-    let result = sys::ma_context_get_devices(
-        &mut context,
-        playback_device_infos.as_mut_ptr(),
-        &mut playback_device_count,
-        capture_device_infos.as_mut_ptr(),
-        &mut capture_device_count,
-    );
-
-    if result != sys::MA_SUCCESS as _ {
-        eprintln!("Failed to retrieve device information.");
-        return -3;
-    }
-
-    let playback_device_infos = playback_device_infos.assume_init();
-    let capture_device_infos = capture_device_infos.assume_init();
-
-    println!("Playback Devices:");
-    for device_idx in 0..playback_device_count {
-        let device = playback_device_infos.add(device_idx as usize);
-        let name = cstr_display(&(*device).name);
-        println!("\t{}: {}", device_idx, name);
-    }
-
-    println!("Capture Devices:");
-    for device_idx in 0..capture_device_count {
-        let device = capture_device_infos.add(device_idx as usize);
-        let name = cstr_display(&(*device).name);
-        println!("\t{}: {}", device_idx, name);
-    }
-
-    sys::ma_context_uninit(&mut context);
-
-    return 0;
-}
-
-
-unsafe extern "C" fn stop_callback(_device_ptr: *mut sys::ma_device) {
-    println!("Device Stopped.");
-}
+unsafe extern "C" fn stop_callback(_device_ptr: *mut sys::ma_device) {}
 
 impl Device {
-    pub fn new(callback: DataCallback, user_data: *mut c_void) -> Result<Device, Error> {
+    pub fn new(
+        callback: DataCallback,
+        user_data: *mut c_void,
+        context: *mut sys::ma_context,
+        device_id: Option<*const sys::ma_device_id>,
+    ) -> Result<Device, Error> {
         let device = Box::into_raw(Box::new(MaybeUninit::<sys::ma_device>::uninit()));
 
         let mut device_config = unsafe { sys::ma_device_config_init(sys::ma_device_type_playback) };
+        let dev = device_id.unwrap_or_else(|| std::ptr::null_mut());
 
+        device_config.playback.pDeviceID = dev;
         device_config.playback.format = sys::ma_format_f32;
         device_config.playback.channels = 2;
         device_config.sampleRate = 48000;
@@ -243,14 +205,10 @@ impl Device {
         // We don't need low-latency audio, larger buffers is better for us
         device_config.performanceProfile = sys::ma_performance_profile_conservative;
 
-        let result = unsafe {
-            sys::ma_device_init(std::ptr::null_mut(), &device_config, (*device).as_mut_ptr())
-        };
+        let result =
+            unsafe { sys::ma_device_init(context, &device_config, (*device).as_mut_ptr()) };
 
-        map_result!(
-            result,
-            Device(unsafe { (*device).as_mut_ptr() })
-        )
+        map_result!(result, Device(unsafe { (*device).as_mut_ptr() }))
     }
 
     pub fn start(&self) -> Result<(), Error> {

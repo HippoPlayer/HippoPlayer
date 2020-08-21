@@ -20975,8 +20975,6 @@ static ma_result ma_device_init__pulse(ma_context* pContext, const ma_device_con
         pDevice->playback.internalChannels   = ss.channels;
         pDevice->playback.internalSampleRate = ss.rate;
 
-        printf("rate %d\n", ss.rate);
-
         /* Internal channel map. */
         pActualCMap = ((ma_pa_stream_get_channel_map_proc)pContext->pulse.pa_stream_get_channel_map)((ma_pa_stream*)pDevice->pulse.pStreamPlayback);
         if (pActualCMap != NULL) {

@@ -10,8 +10,14 @@ DevicePanel::DevicePanel(const struct HippoMessageAPI* messages_api, QWidget* pa
     m_ui->setupUi(this);
 
     // Setup for default device with values that seems reasonable
-    auto t = DeviceInfo { 1, 2, 11025, 192000 };
+    auto t = DeviceInfo { 1, 2, 0, 0 };
     m_device_info.push_back(t);
+    m_ui->channels->clear();
+
+    // Only do two channels for now
+    m_ui->channels->addItem(QStringLiteral("2"));
+    m_ui->channels->setCurrentIndex(0);
+    m_ui->channels->setEnabled(false);
 
     QObject::connect(
         m_ui->device_name, QOverload<int>::of(&QComboBox::currentIndexChanged),
@@ -83,10 +89,11 @@ static uint32_t s_standard_sample_rates[] = {
 
 void DevicePanel::change_device(int index) {
     m_ui->sample_rate->clear();
-    m_ui->channels->clear();
+    //m_ui->channels->clear();
 
     const auto& device = m_device_info[index];
 
+    /*
     int max_channel_count = 32;
 
     for (int i = device.min_channels; i <= device.max_channels; ++i) {
@@ -95,13 +102,12 @@ void DevicePanel::change_device(int index) {
 
         m_ui->channels->addItem(QString::number(i));
     }
+    */
 
     // find range for our sample rates
 
     int min_start_index = 0;
     int max_start_index = 0;
-
-    printf("min range %d max range %d\n", device.min_sample_rate, device.max_sample_rate);
 
     for (size_t i = 0; i < sizeof_array(s_standard_sample_rates); ++i) {
         int current_rate = s_standard_sample_rates[i];
@@ -121,11 +127,16 @@ void DevicePanel::change_device(int index) {
         max_start_index = sizeof_array(s_standard_sample_rates) - 1;
     }
 
-    printf("range %d %d\n", min_start_index, max_start_index);
+    int temp_selection = 0;
 
     for (int i = min_start_index; i <= max_start_index; ++i) {
-        m_ui->sample_rate->addItem(QString::number(s_standard_sample_rates[i]));
+        auto t = s_standard_sample_rates[i];
+        if (t == 48000) { temp_selection = i; }
+        m_ui->sample_rate->addItem(QString::number(t));
     }
+
+    m_ui->sample_rate->setCurrentIndex(temp_selection);
+    m_ui->sample_rate->setEnabled(false);
 }
 
 
