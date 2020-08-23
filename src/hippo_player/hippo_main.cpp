@@ -6,6 +6,7 @@
 #include <QtWidgets/QMenuBar>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QStyleFactory>
+#include <QtWidgets/QMessageBox>
 #include "MainWindow.h"
 #include "src/hippo_core_loader/hippo_core_loader.h"
 
@@ -25,6 +26,23 @@ int main(int argc, char** argv) {
     }
 
     HippoCore* core = hippo_core_new();
+
+    if (!core) {
+        QMessageBox::critical(
+            nullptr,
+            QStringLiteral("Unable to setup hippo core"),
+            QStringLiteral("Unable to initialize HippoPlayer because the core couldn't be created. Report this issue on the support tracker with the log file attached."));
+        return 1;
+    }
+
+    const char* error_message = hippo_init_audio_device(core);
+
+    if (error_message) {
+        QMessageBox::critical(
+            nullptr,
+            QStringLiteral("Unable to init audio device. Please report this error "),
+            QString::fromUtf8(error_message));
+    }
 
     app.setStyle(QStyleFactory::create(QStringLiteral("Fusion")));
 

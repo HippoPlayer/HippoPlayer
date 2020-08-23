@@ -81,7 +81,7 @@ unsafe extern "C" fn log_callback(
 pub struct Device(*mut sys::ma_device);
 
 pub struct OutputDevice {
-    device_id: sys::ma_device_id,
+    pub device_id: sys::ma_device_id,
     pub name: String,
     pub min_channels: usize,
     pub max_channels: usize,
@@ -213,5 +213,9 @@ impl Device {
 
     pub fn start(&self) -> Result<(), Error> {
         unsafe { Error::from_c_result(sys::ma_device_start(self.0 as *const _ as *mut _)) }
+    }
+
+    pub fn close(&self) {
+        unsafe { sys::ma_device_uninit(self.0 as *const _ as *mut _) };
     }
 }

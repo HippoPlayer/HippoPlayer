@@ -16,7 +16,7 @@ impl Config {
         Ok(data)
     }
 
-    pub fn deserialize<'a, T: DeserializeOwned>(path: &str) -> io::Result<T> {
+    pub fn load<'a, T: DeserializeOwned>(path: &str) -> io::Result<T> {
         let data = Self::read_to_file(path)?;
 
         let t: T = match toml::from_str(&data) {
@@ -32,7 +32,7 @@ impl Config {
         Ok(t)
     }
 
-    pub fn serialize<T: Serialize>(config: &T, path: &str) -> io::Result<usize> {
+    pub fn write<T: Serialize>(config: &T, path: &str) -> io::Result<usize> {
         let mut file = File::create(&path)?;
         let toml = match toml::to_string(config) {
             Err(e) => {

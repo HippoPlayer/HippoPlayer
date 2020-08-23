@@ -1,20 +1,15 @@
-//extern crate rodio;
-
-use miniaudio::{Devices};
+use miniaudio::{Device, Devices};
 use messages::*;
+use logger::*;
 
 use crate::plugin_handler::DecoderPlugin;
-//use rodio::{Sink, Source};
 use std::ffi::CString;
 use std::os::raw::c_void;
-use std::time::Duration;
-use std::sync::{Arc, Mutex};
-
-//use miniaudio::{Device, DeviceConfig, DeviceType, Format, FramesMut};
-//use miniaudio::{Waveform, WaveformConfig, WaveformType};
+use std::sync::{Mutex};
 
 use crate::service_ffi::PluginService;
-use ringbuf::{Consumer, Producer, RingBuffer};
+//use ringbuf::{Consumer, Producer, RingBuffer};
+use ringbuf::{Producer, RingBuffer};
 
 #[derive(Clone)]
 pub struct HippoPlayback {
@@ -166,6 +161,7 @@ impl miniaudio::Source for AudioPlayback {
 pub struct HippoAudio {
     //players: Box<Mutex<Vec<HippoPlayback>>>,
     players: *mut c_void,
+    output_device: Option<Device>,
     output_devices: Option<Devices>,
     pub playbacks: Vec<Instance>,
 }
@@ -204,6 +200,7 @@ impl HippoAudio {
         HippoAudio {
             players: Box::into_raw(players) as *mut c_void,
             output_devices: None,
+            output_device: None,
             playbacks: Vec::new(),
         }
     }
@@ -270,15 +267,60 @@ impl HippoAudio {
         }
     }
 
-    pub fn init_output_device(&mut self) -> Result<(), miniaudio::Error> {
+    pub fn init_devices(&mut self) -> Result<(), miniaudio::Error> {
         self.output_devices = Some(Devices::new()?);
+        Ok(())
+    }
 
+    fn init_default_device(&mut self) -> Result<(), miniaudio::Error> {
+        let context = self.output_devices.as_ref().unwrap().context;
+
+        self.output_device = Some(Device::new(
+            data_callback,
+            self.players,
+            context,
+            None)?);
 
         Ok(())
     }
 
-    pub fn init_devices(&mut self) -> Result<(), miniaudio::Error> {
-        Ok(())
+    pub fn close_device(&mut self) {
+        if let Some(ref mut device) = self.output_device.as_ref() {
+            device.close();
+        }
+
+        self.output_device = None;
+    }
+
+    pub fn init_device(&mut self, playback_device: &Option<&String>) -> Result<(), miniaudio::Error> {
+        // Try to init output devices if we have none.
+        if self.output_devices.is_none() {
+            self.output_devices = Some(Devices::new()?);
+        }
+
+        let output_devices = self.output_devices.as_ref().unwrap();
+        let context = output_devices.context;
+
+        if let Some(device_name) = playback_device {
+            for device in &output_devices.devices {
+                let device_id = device.device_id;
+                if device.name == **device_name {
+                    println!("closing device");
+                    self.close_device();
+                    self.output_device = Some(Device::new(
+                        data_callback,
+                        self.players,
+                        context,
+                        Some(&device_id))?);
+                    break;
+                }
+            }
+        } else {
+            self.close_device();
+            self.init_default_device()?;
+        }
+
+        self.output_device.as_ref().unwrap().start()
     }
 
     //pub fn pause(&mut self) {
@@ -294,10 +336,14 @@ impl HippoAudio {
         plugin: &DecoderPlugin,
         service: &PluginService,
         filename: &str,
-    ) -> Result<(), miniaudio::Error> {
+    ) {
+        println!("has device {:p} {}", self, self.output_device.is_some());
 
+        if self.output_device.is_none() || self.output_devices.is_none() {
+            error!("Unable to play {} because system has no audio device(s)", filename);
+            return;
+        }
 
-        /*
         // TODO: Do error checking
         let playback = HippoPlayback::start_with_file(plugin, service, filename);
 
@@ -305,12 +351,14 @@ impl HippoAudio {
             {
                 let players: &Mutex<Vec<HippoPlayback>> = unsafe { std::mem::transmute(self.players) };
                 let mut t = players.lock().unwrap();
-                t.push(pb.0);
+
+                if t.len() == 1 {
+                    t[0] = pb.0;
+                } else {
+                    t.push(pb.0);
+                }
             }
             self.playbacks.push(pb.1);
         }
-        */
-
-        Ok(())
     }
 }

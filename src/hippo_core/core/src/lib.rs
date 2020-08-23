@@ -1,9 +1,8 @@
-//use std::ffi::CStr;
+use std::ffi::CString;
 use std::fs::File;
 use std::fs;
 use std::os::raw::{c_char, c_void};
-use std::path::Path;
-use std::ptr;
+use std::path::{Path, PathBuf};
 use std::time::Instant;
 use std::io::{Error, ErrorKind};
 use song_db::SongDb;
@@ -33,7 +32,8 @@ type MsgSendCallback =
     extern "C" fn(user_data: *const c_void, data: *const u8, len: i32, index: i32);
 
 pub struct HippoCore {
-    _config: CoreConfig,
+    error_string: Option<CString>,
+    config: CoreConfig,
     audio: HippoAudio,
     plugins: Plugins,
     plugin_service: service_ffi::PluginService,
@@ -81,8 +81,6 @@ impl HippoCore {
                     song_db.commit();
                 }
 
-                // This is a bit hacky right now but will do the trick
-                self.audio = HippoAudio::new();
                 self.is_playing = true;
 
                 // TODO: Config if this should be expanded async or not
@@ -282,31 +280,48 @@ impl HippoCore {
     /// Try to initalize the audio device, if it fails a C style error string will be returned here so
     /// the front-end can show it. As we do this early we don't have any message passing setup so it
     /// makes sense to have this specific
-    fn init_audio_device(&mut self) -> Option<*const c_char> {
-        //if let Err(self.
-        None
+    fn init_audio_device(&mut self) -> Result<(), miniaudio::Error> {
+        let device = self.config.audio_device.as_ref();
+        self.audio.init_device(&device)
     }
+}
+
+
+/// init the data directory used for configs, logs, databases, etec
+pub extern "C" fn init_config_dir() -> std::io::Result<PathBuf> {
+    if let Some(config_dir) = dirs::config_dir() {
+        let dir = config_dir.join("HippoPlayer");
+        if std::fs::create_dir_all(&dir).is_ok() {
+            return Ok(dir);
+        }
+    }
+
+    error!("Unable to create data directory for user");
+
+    Err(Error::new(
+        ErrorKind::Other, "Unable to init output dir for generated files!"
+    ))
 }
 
 #[no_mangle]
 pub extern "C" fn hippo_core_new() -> *const HippoCore {
-    logger::init_file_log();
+    let config_dir = init_config_dir();
+    let mut config = CoreConfig::default();
+
+    if let Ok(output_dir) = config_dir {
+        logger::init_file_log(&output_dir);
+        if let Ok(cfg) = CoreConfig::load(&output_dir, "global.cfg") {
+            config = cfg;
+        }
+    }
 
     // TODO: We should do better error handling here
     // This to enforce we load relative to the current exe
+    // TODO: clean this up
     let current_exe = std::env::current_exe().unwrap();
     std::env::set_current_dir(current_exe.parent().unwrap()).unwrap();
 
     HippoCore::find_data_directory().expect("Unable to find data directory");
-
-    let config = match CoreConfig::load("data/config/global.cfg") {
-        Ok(v) => v,
-        Err(e) => {
-            println!("Config error: {}", e);
-            return ptr::null();
-        }
-    };
-
     let current_path = std::env::current_dir().unwrap();
 
     // TODO: We should do better error handling here
@@ -322,6 +337,7 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
 
     let plugin_count = plugins.decoder_plugins.len();
 
+    /*
     // sort high-prority plugins
     for (index, name) in config.playback_priority_high.iter().enumerate() {
         for i in 0..plugin_count {
@@ -341,6 +357,7 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
             }
         }
     }
+    */
 
     // No need to switch back if we are in the correct spot
     if !Path::new("bin").is_dir() {
@@ -351,7 +368,8 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
     let service = service_ffi::PluginService::new(song_db);
 
     let mut core = Box::new(HippoCore {
-        _config: config,
+        error_string: None,
+        config: config,
         plugins,
         audio: HippoAudio::new(),
         plugin_service: service,
@@ -403,7 +421,16 @@ pub unsafe extern "C" fn hippo_play_file(_core: *mut HippoCore, _filename: *cons
 #[no_mangle]
 pub unsafe extern "C" fn hippo_init_audio_device(_core: *mut HippoCore) -> *const c_char {
     let core = &mut *_core;
-    core.init_audio_device()
+    if let Err(e) = core.init_audio_device() {
+        let text = format!("{:#?}", e);
+        error!("Error setting up audio device {}", text);
+        if let Ok(c_string) = CString::new(text) {
+            core.error_string = Some(c_string);
+            return core.error_string.as_ref().map_or_else(|| std::ptr::null(), |v| v.as_ptr())
+        }
+    }
+
+    std::ptr::null()
 }
 
 #[no_mangle]
