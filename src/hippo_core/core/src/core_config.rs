@@ -11,13 +11,15 @@ pub struct CoreConfig {
     pub(crate) playback_switch_no_time: f32,
 }
 
+/// TODO: Cleanup recration of config filename
 impl CoreConfig {
     pub fn load(path: &PathBuf, filename: &str) -> std::io::Result<CoreConfig> {
         let dir = path.join(filename);
         Config::load(&dir.to_string_lossy())
     }
 
-    pub fn write(&self, path: &str) -> std::io::Result<usize> {
-        Config::write(&self, path)
+    pub fn write(&self, path: &PathBuf, filename: &str) -> std::io::Result<usize> {
+        let dir = path.join(filename);
+        Config::write(&self, &dir.to_string_lossy())
     }
 }

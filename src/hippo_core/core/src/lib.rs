@@ -32,6 +32,7 @@ type MsgSendCallback =
     extern "C" fn(user_data: *const c_void, data: *const u8, len: i32, index: i32);
 
 pub struct HippoCore {
+    //config_filename: String,
     error_string: Option<CString>,
     config: CoreConfig,
     audio: HippoAudio,
@@ -395,6 +396,14 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
 pub extern "C" fn hippo_core_drop(core: *mut HippoCore) {
     let mut core = unsafe { Box::from_raw(core) };
     let _ = unsafe { Box::from_raw(core.song_db as *mut SongDb) };
+
+    let config_dir = init_config_dir();
+    let mut config = CoreConfig::default();
+
+    if let Ok(output_dir) = config_dir {
+        // TODO: Fix me
+        core.config.write(&output_dir, "global.cfg").unwrap();
+    }
 
     core.audio.stop();
     core.playlist

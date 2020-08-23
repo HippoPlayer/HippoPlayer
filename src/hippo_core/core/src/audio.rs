@@ -337,8 +337,6 @@ impl HippoAudio {
         service: &PluginService,
         filename: &str,
     ) {
-        println!("has device {:p} {}", self, self.output_device.is_some());
-
         if self.output_device.is_none() || self.output_devices.is_none() {
             error!("Unable to play {} because system has no audio device(s)", filename);
             return;
