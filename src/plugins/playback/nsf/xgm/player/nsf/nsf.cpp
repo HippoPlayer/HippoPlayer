@@ -139,7 +139,7 @@ static int is_sjis_prefix(int c)
     {
       return print_title;
     }
-    
+
     if(format==NULL||strlen(format)>128)
       format = "%L (%n/%e) %T - %A";
 
@@ -223,7 +223,7 @@ static int is_sjis_prefix(int c)
         print_title[wp++] = *format++;
       }
     }
-    
+
     print_title[wp]='\0';
 
     // strip trailing whitespace
@@ -379,7 +379,7 @@ static int is_sjis_prefix(int c)
       return nsfe_entry[s].time;
     }
 
-    return time_in_ms < 0 ? default_playtime : time_in_ms;
+    return time_in_ms <= 0 ? default_playtime : time_in_ms;
   }
 
   int NSF::GetLoopTime ()
@@ -418,7 +418,7 @@ static int is_sjis_prefix(int c)
   {
     return song;
   }
-  
+
   int NSF::GetSongNum ()
   {
     return songs;
