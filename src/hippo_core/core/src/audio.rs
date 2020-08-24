@@ -124,16 +124,10 @@ impl HippoAudio {
     }
 
     pub fn stop(&mut self) {
-        /*
-        self.audio_sink.stop();
-        self.audio_sink.sleep_until_end();
-
-        for pb in self.playbacks.iter_mut() {
-            unsafe { ((pb.plugin.plugin_funcs).close)(pb.plugin_user_data as *mut c_void) };
-        }
-
+        let players: &Mutex<Vec<HippoPlayback>> = unsafe { std::mem::transmute(self.players) };
+        let mut t = players.lock().unwrap();
+        t.clear();
         self.playbacks.clear();
-        */
     }
 
     fn select_output_device(&mut self, msg: &HippoSelectOutputDevice) -> Result<(), miniaudio::Error> {
