@@ -9,16 +9,18 @@ build = "build.rs"
 crate-type = ["dylib"]
 
 [dependencies]
-rand = "0.7"
 anyhow = "1.0"
 config = { path = "../config" }
-song_db = { path = "../song_db" }
+dirs = "3.0.1"
 dynamic_reload = "0.4.0"
-messages = { path = "../messages" }
 logger = { path = "../logger" }
+messages = { path = "../messages" }
+miniaudio = { path = "../miniaudio" }
+rand = "0.7"
 ringbuf = "0.2"
-rodio = "0.10"
 serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0"
+song_db = { path = "../song_db" }
 walkdir = "2"
+

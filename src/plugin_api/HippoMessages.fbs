@@ -141,6 +141,30 @@ table HippoCurrentPosition {
   duration: float;
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////
+// Mostly internal messages goes here (perhaps to be split out?)
+
+table HippoOutputDevice {
+    name: string;
+    min_channels: int;
+    max_channels: int;
+    min_sample_rate: int;
+    max_sample_rate: int;
+}
+
+table HippoRequestOutputDevices { }
+
+table HippoReplyOutputDevices {
+  current_device: string;
+  devices: [HippoOutputDevice];
+}
+
+table HippoSelectOutputDevice {
+  name: string;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
 union MessageType {
   next_song: HippoNextSong,
   prev_song: HippoPrevSong,
@@ -168,6 +192,11 @@ union MessageType {
   log_clear: HippoLogClear,
   log_file: HippoLogToFile,
   log_send_messages: HippoLogSendMessages,
+
+  request_output_devices: HippoRequestOutputDevices,
+  reply_output_devices: HippoReplyOutputDevices,
+
+  select_output_device: HippoSelectOutputDevice,
 }
 
 table HippoMessage {

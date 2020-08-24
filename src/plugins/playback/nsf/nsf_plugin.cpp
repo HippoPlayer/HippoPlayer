@@ -132,7 +132,7 @@ static int nsf_open(void* user_data, const char* buffer, int subsong) {
         return -1;
     }
 
-    hp_info("Starting to play %s (subsong %d)", subsong);
+    hp_info("Starting to play %s (subsong %d)", buffer, subsong);
 
     data->player.SetPlayFreq(SAMPLE_RATE);
     data->player.SetChannels(CHANNELS);
@@ -159,23 +159,25 @@ static int nsf_destroy(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int nsf_read_data(void* user_data, void* dest, uint32_t max_size) {
+static int nsf_read_data(void* user_data, void* dest, uint32_t samples_to_read) {
 	NsfPlugin* plugin = (NsfPlugin*)user_data;
 	(void)plugin;
 
-	int16_t data[800 * 2] = { 0 };
+	assert(samples_to_read < 1024);
+
+	int16_t data[1024 * 2] = { 0 };
 
 	float* new_dest = (float*)dest;
 
 	const float scale = 1.0f / 32767.0f;
 
-	plugin->player.Render(data, 800);
+	plugin->player.Render(data, samples_to_read);
 
-	for (int i = 0; i < 800 * 2; ++i) {
+	for (int i = 0; i < samples_to_read * 2; ++i) {
 		new_dest[i] = ((float)data[i]) * scale;
 	}
 
-	return 800 * 2;
+	return samples_to_read * 2;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

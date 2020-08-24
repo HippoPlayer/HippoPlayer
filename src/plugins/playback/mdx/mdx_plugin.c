@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <assert.h>
 
 #ifndef _WIN32
 #include <libgen.h>
@@ -111,23 +112,25 @@ static int mdx_plugin_destroy(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int mdx_plugin_read_data(void* user_data, void* dest, uint32_t max_samples) {
+static int mdx_plugin_read_data(void* user_data, void* dest, uint32_t samples_to_read) {
 	MDXPlugin* plugin = (MDXPlugin*)user_data;
 	(void)plugin;
 
-	short data[480 * 2] = { 0 };
+	short data[1024 * 2] = { 0 };
 
-	mdx_calc_sample(&plugin->mdx_tune, data, (480 * 2) / 2);
+	assert(samples_to_read < 1024);
+
+	mdx_calc_sample(&plugin->mdx_tune, data, (samples_to_read * 2) / 2);
 
 	float* new_dest = (float*)dest;
 
 	const float scale = 1.0f / 32767.0f;
 
-	for (int i = 0; i < 480 * 2; ++i) {
+	for (int i = 0; i < samples_to_read * 2; ++i) {
 		new_dest[i] = ((float)data[i]) * scale;
 	}
 
-	return 480 * 2;
+	return samples_to_read  * 2;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

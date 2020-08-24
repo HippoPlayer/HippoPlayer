@@ -1,11 +1,13 @@
-#include <libopenmpt/libopenmpt.hpp>
-#include <HippoPlugin.h>
 #include <HippoMessages.h>
+#include <HippoPlugin.h>
+#include <libopenmpt/libopenmpt.h>
+#include <libopenmpt/libopenmpt.hpp>
 
-#include <vector>
-#include <string>
-#include <string.h>
 #include <assert.h>
+#include <string.h>
+#include <sstream>
+#include <string>
+#include <vector>
 
 const int MAX_EXT_COUNT = 16 * 1024;
 static char s_supported_extensions[MAX_EXT_COUNT];
@@ -14,8 +16,57 @@ const HippoIoAPI* g_io_api = nullptr;
 HippoLogAPI* g_hp_log = nullptr;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// eww eww!
+
+class StringStream : public std::ostringstream {
+public:
+    // -----------------------------------------------------------------
+    // Overloaded insertion operators to replace those defined in
+    // ostream. We want << to return StringStream& instead of ostream&.
+    // -----------------------------------------------------------------
+
+    // insertion of standard and user defined data-types
+    template <class T>
+    StringStream& operator<<(T item);
+
+    // insertion of stream manipulators (cannot be instantiated
+    // with template above)
+    StringStream& operator<<(std::ostream& (*manipulator)(std::ostream&));
+
+    // -----------------------------------------------------------
+    // Overloaded casting operator for string.
+    // -----------------------------------------------------------
+    operator std::string();
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+template <class T>
+StringStream& StringStream::operator<<(T item) {
+    printf("here 1\n");
+    *(std::ostringstream*)this << item;
+    return *this;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+StringStream& StringStream::operator<<(std::ostream& (*manipulator)(std::ostream&)) {
+    printf("here 2\n");
+    *(std::ostringstream*)this << manipulator;
+    return *this;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+StringStream::operator std::string() {
+    printf("here 3\n");
+    return str();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct OpenMptData {
+    StringStream log;
     openmpt::module* mod = 0;
     const HippoMessageAPI* message_api;
     float length = 0.0f;
@@ -25,23 +76,23 @@ struct OpenMptData {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static const char* openmpt_supported_extensions() {
-	// If we have already populated this we can just return
+    // If we have already populated this we can just return
 
-	if (s_supported_extensions[0] != 0) {
-		return s_supported_extensions;
-	}
+    if (s_supported_extensions[0] != 0) {
+        return s_supported_extensions;
+    }
 
-	std::vector<std::string> ext_list = openmpt::get_supported_extensions();
-	size_t count = ext_list.size();
+    std::vector<std::string> ext_list = openmpt::get_supported_extensions();
+    size_t count = ext_list.size();
 
-	for (size_t i = 0; i < count; ++i) {
-		strcat(s_supported_extensions, ext_list[i].c_str());
-		if (i != count - 1) {
-			strcat(s_supported_extensions, ",");
-		}
-	}
+    for (size_t i = 0; i < count; ++i) {
+        strcat(s_supported_extensions, ext_list[i].c_str());
+        if (i != count - 1) {
+            strcat(s_supported_extensions, ",");
+        }
+    }
 
-	return s_supported_extensions;
+    return s_supported_extensions;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -52,7 +103,7 @@ static void* openmpt_create(const HippoServiceAPI* service_api) {
     g_io_api = HippoServiceAPI_get_io_api(service_api, 1);
     user_data->message_api = HippoServiceAPI_get_message_api(service_api, 1);
 
-	return (void*)user_data;
+    return (void*)user_data;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -65,23 +116,21 @@ static int openmpt_destroy(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static HippoProbeResult openmpt_probe_can_play(const uint8_t* data, uint32_t data_size, const char* filename, uint64_t total_size) {
+static HippoProbeResult openmpt_probe_can_play(const uint8_t* data, uint32_t data_size, const char* filename,
+                                               uint64_t total_size) {
     int res = openmpt::probe_file_header(openmpt::probe_file_header_flags_default, data, data_size, total_size);
 
     switch (res) {
-        case openmpt::probe_file_header_result_success :
-        {
+        case openmpt::probe_file_header_result_success: {
             hp_info("Supported: %s", filename);
             return HippoProbeResult_Supported;
         }
-        case openmpt::probe_file_header_result_failure :
-        {
+        case openmpt::probe_file_header_result_failure: {
             hp_debug("Unsupported: %s", filename);
             return HippoProbeResult_Unsupported;
         }
 
-        case openmpt::probe_file_header_result_wantmoredata :
-        {
+        case openmpt::probe_file_header_result_wantmoredata: {
             hp_warn("openmpt: Unable to probe because not enough data\n");
             break;
         }
@@ -155,10 +204,10 @@ static void send_pattern_data(struct OpenMptData* replayer_data) {
 
 static int openmpt_open(void* user_data, const char* filename, int subsong) {
     uint64_t size = 0;
-	struct OpenMptData* replayer_data = (struct OpenMptData*)user_data;
+    struct OpenMptData* replayer_data = (struct OpenMptData*)user_data;
 
-    HippoIoErrorCode res = g_io_api->read_file_to_memory(g_io_api->priv_data,
-        filename, &replayer_data->song_data, &size);
+    HippoIoErrorCode res =
+        g_io_api->read_file_to_memory(g_io_api->priv_data, filename, &replayer_data->song_data, &size);
 
     if (res < 0) {
         hp_error("Failed to load %s to memory", filename);
@@ -166,8 +215,8 @@ static int openmpt_open(void* user_data, const char* filename, int subsong) {
     }
 
     try {
-        replayer_data->mod = new openmpt::module(replayer_data->song_data, size);
-    } catch(...) {
+        replayer_data->mod = new openmpt::module(replayer_data->song_data, size, replayer_data->log);
+    } catch (...) {
         hp_error("Failed to open %s even if is as supported format", filename);
         return -1;
     }
@@ -177,67 +226,66 @@ static int openmpt_open(void* user_data, const char* filename, int subsong) {
     replayer_data->length = replayer_data->mod->get_duration_seconds();
     replayer_data->mod->select_subsong(subsong);
 
-	return 0;
+    return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int openmpt_close(void* user_data) {
-	struct OpenMptData* replayer_data = (struct OpenMptData*)user_data;
+    struct OpenMptData* replayer_data = (struct OpenMptData*)user_data;
 
-	if (g_io_api) {
-	    g_io_api->free_file_to_memory(g_io_api->priv_data, replayer_data->song_data);
-	}
+    if (g_io_api) {
+        g_io_api->free_file_to_memory(g_io_api->priv_data, replayer_data->song_data);
+    }
 
-	delete replayer_data->mod;
-	delete replayer_data;
+    delete replayer_data->mod;
+    delete replayer_data;
 
-	return 0;
+    return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int openmpt_read_data(void* user_data, void* dest, uint32_t max_samples) {
-	struct OpenMptData* replayer_data = (struct OpenMptData*)user_data;
+static int openmpt_read_data(void* user_data, void* dest, uint32_t samples_to_read) {
+    struct OpenMptData* replayer_data = (struct OpenMptData*)user_data;
 
-	// count is number of frames per channel and div by 2 as we have 2 channels
-	const int count = 480;
-    int gen_count = replayer_data->mod->read_interleaved_stereo(48000, count, (float*)dest) * 2;
+    // count is number of frames per channel and div by 2 as we have 2 channels
+    //const int count = 480;
+    int gen_count = replayer_data->mod->read_interleaved_stereo(48000, samples_to_read, (float*)dest) * 2;
 
     // Send current positions back to frontend if we have some more data
     if (gen_count > 0) {
         flatbuffers::FlatBufferBuilder builder(1024);
-        builder.Finish(CreateHippoMessageDirect(builder, MessageType_current_position,
-            CreateHippoCurrentPosition(builder,
-                replayer_data->mod->get_position_seconds(),
-                replayer_data->mod->get_current_pattern(),
-                replayer_data->mod->get_current_row(),
-                replayer_data->mod->get_current_speed(),
-                replayer_data->length).Union()));
+        builder.Finish(CreateHippoMessageDirect(
+            builder, MessageType_current_position,
+            CreateHippoCurrentPosition(builder, replayer_data->mod->get_position_seconds(),
+                                       replayer_data->mod->get_current_pattern(), replayer_data->mod->get_current_row(),
+                                       replayer_data->mod->get_current_speed(), replayer_data->length)
+                .Union()));
         HippoMessageAPI_send(replayer_data->message_api, builder.GetBufferPointer(), builder.GetSize());
     }
 
     // TODO: Only send pattern data when we need requsted
-    //send_pattern_data(replayer_data);
+    // send_pattern_data(replayer_data);
     return gen_count;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int openmpt_seek(void* user_data, int ms) {
-	return 0;
+    return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 const char* filename_from_path(const char* path) {
-   for(size_t i = strlen(path) - 1;  i > 0; i--) {
-      if (path[i] == '/') {
-         return &path[i+1];
-      }
-   }
+    for (size_t i = strlen(path) - 1; i > 0; i--) {
+        if (path[i] == '/') {
+            return &path[i + 1];
+        }
+    }
 
-   return path;
+    return path;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -259,13 +307,13 @@ static int openmpt_metadata(const char* filename, const HippoServiceAPI* service
 
     try {
         mod = new openmpt::module(data, size);
-    } catch(...) {
+    } catch (...) {
         hp_error("Failed to open %s even if is as supported format", filename);
         return -1;
     }
 
     auto index = HippoMetadata_create_url(metadata_api, filename);
-    char title[512] = { 0 };
+    char title[512] = {0};
 
     const auto& mod_title = mod->get_metadata("title");
 
@@ -286,20 +334,20 @@ static int openmpt_metadata(const char* filename, const HippoServiceAPI* service
     HippoMetadata_set_tag(metadata_api, index, HippoMetadata_MessageTag, mod->get_metadata("message").c_str());
     HippoMetadata_set_tag_f64(metadata_api, index, HippoMetadata_LengthTag, mod->get_duration_seconds());
 
-	for (const auto& sample : mod->get_sample_names()) {
-    	HippoMetadata_add_sample(metadata_api, index, sample.c_str());
-	}
+    for (const auto& sample : mod->get_sample_names()) {
+        HippoMetadata_add_sample(metadata_api, index, sample.c_str());
+    }
 
-	for (const auto& instrument : mod->get_instrument_names()) {
-    	HippoMetadata_add_instrument(metadata_api, index, instrument.c_str());
-	}
+    for (const auto& instrument : mod->get_instrument_names()) {
+        HippoMetadata_add_instrument(metadata_api, index, instrument.c_str());
+    }
 
-	const int subsong_count = mod->get_num_subsongs();
+    const int subsong_count = mod->get_num_subsongs();
 
-	if (subsong_count > 1) {
-	    int i = 0;
+    if (subsong_count > 1) {
+        int i = 0;
         for (const auto& name : mod->get_subsong_names()) {
-            char subsong_name[1024] = { 0 };
+            char subsong_name[1024] = {0};
 
             if (name != "") {
                 sprintf(subsong_name, "%s - %s (%d/%d)", title, name.c_str(), i + 1, subsong_count);
@@ -317,7 +365,7 @@ static int openmpt_metadata(const char* filename, const HippoServiceAPI* service
     // Make sure to free the buffer before we leave
     HippoIo_free_file_to_memory(io_api, data);
 
-	return 0;
+    return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -330,34 +378,34 @@ void openmpt_event(void* user_data, const unsigned char* data, int len) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void openmpt_set_log(struct HippoLogAPI* log) { g_hp_log = log; }
+static void openmpt_set_log(struct HippoLogAPI* log) {
+    g_hp_log = log;
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static HippoPlaybackPlugin g_openmptPlugin = {
-	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
-	"openmpt",
-	"0.0.1",
-	"libopenmpt 0.5.0",
-	openmpt_probe_can_play,
-	openmpt_supported_extensions,
-	openmpt_create,
-	openmpt_destroy,
-	openmpt_event,
-	openmpt_open,
-	openmpt_close,
-	openmpt_read_data,
-	openmpt_seek,
-	openmpt_metadata,
+    HIPPO_PLAYBACK_PLUGIN_API_VERSION,
+    "openmpt",
+    "0.0.1",
+    "libopenmpt 0.5.0",
+    openmpt_probe_can_play,
+    openmpt_supported_extensions,
+    openmpt_create,
+    openmpt_destroy,
+    openmpt_event,
+    openmpt_open,
+    openmpt_close,
+    openmpt_read_data,
+    openmpt_seek,
+    openmpt_metadata,
     openmpt_set_log,
-	NULL,
-	NULL,
+    NULL,
+    NULL,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 extern "C" HIPPO_EXPORT HippoPlaybackPlugin* hippo_playback_plugin() {
-	return &g_openmptPlugin;
+    return &g_openmptPlugin;
 }
-
-

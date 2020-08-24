@@ -8,6 +8,7 @@
 #include <thread>
 
 HippoLogAPI* g_hp_log = nullptr;
+#define FRAME_SIZE 1024
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -158,23 +159,26 @@ static int uade_destroy(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int uade_read_data(void* user_data, void* dest, uint32_t max_samples) {
+static int uade_read_data(void* user_data, void* dest, uint32_t samples_to_read) {
     UadePlugin* plugin = (UadePlugin*)user_data;
 
-    int16_t data[480 * 2] = {0};
+    int16_t data[FRAME_SIZE * 2];
 
-    int rc = uade_read(data, 480 * 2, plugin->state);
+    assert(samples_to_read < FRAME_SIZE);
+
+    // * 4 as count is number of bytes (and each frame is two, 16-bit values)
+    int rc = uade_read(data, samples_to_read * 4, plugin->state);
     (void)rc;
 
     float* new_dest = (float*)dest;
 
     const float scale = 1.0f / 32767.0f;
 
-    for (int i = 0; i < 480 * 2; ++i) {
+    for (uint32_t i = 0; i < samples_to_read * 2; ++i) {
         new_dest[i] = ((float)data[i]) * scale;
     }
 
-    return 480;
+    return samples_to_read;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

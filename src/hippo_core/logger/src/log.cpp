@@ -329,6 +329,12 @@ extern "C" void hippo_log_to_file(const char* filename, bool enable) {
     if (filename && enable) {
         s_log_file = fopen(filename, "wb");
 
+        if (!s_log_file) {
+            printf("ERROR! Unable to start logging to %s\n", filename);
+        } else {
+            printf("Starting to log to %s\n", filename);
+        }
+
         // write all cached messages to the file
         for (const auto& message : s_log_messages) {
             fputs(message, s_log_file);

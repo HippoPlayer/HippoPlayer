@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <wemuopl.h>
+#include <assert.h>
 
 extern "C" {
     HippoLogAPI* g_hp_log = NULL;
@@ -124,7 +125,7 @@ static inline int max_t(int a, int b) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int adplug_read_data(void* user_data, void* dest, uint32_t max_size) {
+static int adplug_read_data(void* user_data, void* dest, uint32_t samples_to_read) {
     AdplugPlugin* plugin = (AdplugPlugin*)user_data;
 
     int i = 0;
@@ -135,10 +136,12 @@ static int adplug_read_data(void* user_data, void* dest, uint32_t max_size) {
     const int freq = 48000;
     char sndbuf[buffer_size * sampsize * 2] = {0};
 
+    assert(samples_to_read < buffer_size);
+
     float* new_dest = (float*)dest;
 
     // fill sound buffer
-    towrite = buffer_size;
+    towrite = samples_to_read;
     sndbufpos = sndbuf;
 
     while (towrite > 0) {
@@ -158,11 +161,11 @@ static int adplug_read_data(void* user_data, void* dest, uint32_t max_size) {
 
     int16_t* t = (int16_t*)&sndbuf[0];
 
-    for (i = 0; i < buffer_size * 2; ++i) {
+    for (i = 0; i < samples_to_read * 2; ++i) {
         new_dest[i] = ((float)t[i]) * scale;
     }
 
-    return buffer_size * 2;
+    return samples_to_read;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

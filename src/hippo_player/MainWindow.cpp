@@ -1,24 +1,26 @@
 #include "MainWindow.h"
+#include <flatbuffers/flatbuffers.h>
 #include <QtCore/QDebug>
 #include <QtCore/QDir>
-#include <QtCore/QTimer>
+#include <QtCore/QDirIterator>
 #include <QtCore/QPluginLoader>
 #include <QtCore/QStringListModel>
-#include <QtCore/QDirIterator>
+#include <QtCore/QTimer>
+#include <QtGui/QFontDatabase>
+#include <QtWidgets/QAbstractItemView>
 #include <QtWidgets/QBoxLayout>
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QMenuBar>
-#include <QtWidgets/QAbstractItemView>
-#include <QtGui/QFontDatabase>
-#include <flatbuffers/flatbuffers.h>
-#include "PlaylistModel.h"
-#include "../../src/plugin_api/HippoPlugin.h"
 #include "../../src/plugin_api/HippoMessages.h"
+#include "../../src/plugin_api/HippoPlugin.h"
 #include "../../src/plugin_api/HippoQtView.h"
+#include "PlaylistModel.h"
+#include "PrefsDialog.h"
+
 #include "src/external/toolwindowmanager/src/ToolWindowManager.h"
 extern "C" {
-	#include "src/hippo_core/native/hippo_core.h"
+#include "src/hippo_core/native/hippo_core.h"
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -31,12 +33,11 @@ MainWindow::MainWindow(HippoCore* core) : QMainWindow(0), m_core(core) {
 
     setWindowTitle(window_title);
 
-    //int id = QFontDatabase::addApplicationFont(QStringLiteral("data/fonts/DejaVuSansMono.ttf"));
-    //QString family = QFontDatabase::applicationFontFamilies(id).at(0);
+    // int id = QFontDatabase::addApplicationFont(QStringLiteral("data/fonts/DejaVuSansMono.ttf"));
+    // QString family = QFontDatabase::applicationFontFamilies(id).at(0);
 
     m_playlist_model = new PlaylistModel(m_core, this);
-    //m_playlist_model->setSelectionMode(QAbstractItemView::MultiSelection);
-
+    // m_playlist_model->setSelectionMode(QAbstractItemView::MultiSelection);
 
     m_general_messages = HippoServiceAPI_get_message_api(hippo_service_api_new(m_core), HIPPO_MESSAGE_API_VERSION);
 
@@ -49,10 +50,10 @@ MainWindow::MainWindow(HippoCore* core) : QMainWindow(0), m_core(core) {
     layout->QLayout::addWidget(m_docking_manager);
 
     m_console = new ConsoleView(m_general_messages, nullptr);
-    m_docking_manager->addToolWindow(
-        m_console,
-        ToolWindowManager::NewFloatingArea,
-        ToolWindowManager::ToolWindowProperty::HideOnClose);
+    m_prefs_dialog = new PrefsDialog(m_general_messages);
+
+    m_docking_manager->addToolWindow(m_console, ToolWindowManager::NewFloatingArea,
+                                     ToolWindowManager::ToolWindowProperty::HideOnClose);
 
     m_docking_manager->hideToolWindow(m_console);
 
@@ -82,7 +83,6 @@ MainWindow::MainWindow(HippoCore* core) : QMainWindow(0), m_core(core) {
         m_docking_manager->addDockWidget(ads::TopDockWidgetArea, DockWidget);
         */
 
-
     /*
     QVBoxLayout* layout = new QVBoxLayout;
 
@@ -97,7 +97,7 @@ MainWindow::MainWindow(HippoCore* core) : QMainWindow(0), m_core(core) {
 
     create_menus();
 
-    //resize(2840, 1600);
+    // resize(2840, 1600);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -120,39 +120,39 @@ const HippoMessageAPI* MainWindow::get_messages(void* this_, int index) {
 
 void MainWindow::handle_incoming_messages(const unsigned char* data, int len) {
     // let console handle messages
-    m_console->event(data, len);
+    m_console->incoming_messages(data, len);
+    m_prefs_dialog->incoming_messages(data, len);
 
     const HippoMessage* message = GetHippoMessage(data);
 
-    switch (message->message_type())
-	{
-    	case MessageType_reply_added_urls: {
-    	    auto reply_msg = message->message_as_reply_added_urls();
-			auto urls = reply_msg->urls();
+    switch (message->message_type()) {
+        case MessageType_reply_added_urls: {
+            auto reply_msg = message->message_as_reply_added_urls();
+            auto urls = reply_msg->urls();
 
-			m_playlist_model->begin_insert(reply_msg->index(), 0);
+            m_playlist_model->begin_insert(reply_msg->index(), 0);
 
-			for (int i = 0, e = urls->Length(); i < e; ++i) {
-			    auto url = urls->Get(i);
+            for (int i = 0, e = urls->Length(); i < e; ++i) {
+                auto url = urls->Get(i);
                 m_playlist_model->insert_entry(url);
-			}
+            }
 
-			m_playlist_model->end_insert();
+            m_playlist_model->end_insert();
 
             m_playlist_model->layoutChanged();
 
-			break;
-		}
+            break;
+        }
 
-        case MessageType_select_song:
-        {
+        case MessageType_select_song: {
             auto msg = message->message_as_select_song();
             m_playlist_model->update_index(msg);
             break;
         }
 
-		default: break;
-	}
+        default:
+            break;
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -183,7 +183,6 @@ void MainWindow::create_menus() {
     QMenu* file_menu = menuBar()->addMenu(QStringLiteral("&Playlist"));
 
     QAction* add_files = new QAction(tr("&Add files.."), this);
-    add_files->setShortcut(QKeySequence(QStringLiteral("Ctrl+A")));
     add_files->setStatusTip(tr("Add file(s)/link(s) to the playlist"));
     file_menu->addAction(add_files);
 
@@ -192,25 +191,36 @@ void MainWindow::create_menus() {
     add_dir->setStatusTip(tr("Add directory of files to the playlist"));
     file_menu->addAction(add_dir);
 
+    // Remove playlist entry
+
     QAction* remove_playlist_entry = new QAction(tr("&Remove selected"), this);
     remove_playlist_entry->setShortcut(QKeySequence::Delete);
     add_files->setStatusTip(tr("Remove selected items in the playlist"));
     file_menu->addAction(remove_playlist_entry);
 
-    QAction* exitAct = new QAction(tr("E&xit"), this);
-    exitAct->setShortcuts(QKeySequence::Quit);
-    exitAct->setStatusTip(tr("Exit the application"));
-    connect(exitAct, &QAction::triggered, this, &QWidget::close);
-    file_menu->addAction(exitAct);
+    file_menu->addSeparator();
+
+    // Prefs
+
+    QAction* prefs_entry = new QAction(tr("&Preferences"), this);
+    prefs_entry->setShortcut(QKeySequence(QStringLiteral("Ctrl+P")));
+    prefs_entry->setStatusTip(tr("Show Preferences Dialog"));
+    file_menu->addAction(prefs_entry);
+    QObject::connect(prefs_entry, &QAction::triggered, this, &MainWindow::show_prefs);
+
+    QAction* exit_act = new QAction(tr("E&xit"), this);
+    exit_act->setShortcuts(QKeySequence::Quit);
+    exit_act->setStatusTip(tr("Exit the application"));
+    connect(exit_act, &QAction::triggered, this, &QWidget::close);
+    file_menu->addAction(exit_act);
 
     connect(add_files, &QAction::triggered, this, &MainWindow::add_files);
     connect(add_dir, &QAction::triggered, this, &MainWindow::add_directory);
 
     // Add console to the menu
-
     QMenu* view_menu = menuBar()->addMenu(QStringLiteral("&View"));
     QAction* console_view_act = new QAction(tr("Console"), this);
-    console_view_act ->setStatusTip(tr("Show Console with log messages"));
+    console_view_act->setStatusTip(tr("Show Console with log messages"));
     QObject::connect(console_view_act, &QAction::triggered, this, &MainWindow::show_hide_console);
     view_menu->addAction(console_view_act);
 }
@@ -218,9 +228,10 @@ void MainWindow::create_menus() {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void MainWindow::add_directory() {
-	// Using native dialog will crash/hang on Windows due to COMInit issue
-    QString dir_name = QFileDialog::getExistingDirectory(this, tr("Select Directory"), tr(""),
-                  QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks | QFileDialog::DontUseNativeDialog);
+    // Using native dialog will crash/hang on Windows due to COMInit issue
+    QString dir_name = QFileDialog::getExistingDirectory(
+        this, tr("Select Directory"), tr(""),
+        QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks | QFileDialog::DontUseNativeDialog);
 
     if (dir_name.isEmpty()) {
         return;
@@ -242,16 +253,17 @@ void MainWindow::add_directory() {
     }
 
     builder.Finish(CreateHippoMessageDirect(builder, MessageType_request_add_urls,
-        CreateHippoRequestAddUrls(builder, builder.CreateVector(urls)).Union()));
+                                            CreateHippoRequestAddUrls(builder, builder.CreateVector(urls)).Union()));
     HippoMessageAPI_send(m_general_messages, builder.GetBufferPointer(), builder.GetSize());
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void MainWindow::add_files() {
-	// Using native dialog will crash/hang on Windows due to COMInit issue
-    QStringList filenames = QFileDialog::getOpenFileNames(this, QStringLiteral("Add files files"), QDir::currentPath(),
-                                                          QStringLiteral("All files (*.*)"), nullptr, QFileDialog::DontUseNativeDialog);
+    // Using native dialog will crash/hang on Windows due to COMInit issue
+    QStringList filenames =
+        QFileDialog::getOpenFileNames(this, QStringLiteral("Add files files"), QDir::currentPath(),
+                                      QStringLiteral("All files (*.*)"), nullptr, QFileDialog::DontUseNativeDialog);
     if (filenames.isEmpty()) {
         return;
     }
@@ -271,7 +283,7 @@ void MainWindow::add_files() {
     }
 
     builder.Finish(CreateHippoMessageDirect(builder, MessageType_request_add_urls,
-        CreateHippoRequestAddUrls(builder, builder.CreateVector(urls)).Union()));
+                                            CreateHippoRequestAddUrls(builder, builder.CreateVector(urls)).Union()));
     HippoMessageAPI_send(m_general_messages, builder.GetBufferPointer(), builder.GetSize());
 }
 
@@ -279,6 +291,12 @@ void MainWindow::add_files() {
 
 void MainWindow::show_hide_console() {
     m_docking_manager->moveToolWindow(m_console, ToolWindowManager::NewFloatingArea);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void MainWindow::show_prefs() {
+    m_prefs_dialog->show();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -293,7 +311,7 @@ void MainWindow::create_plugin_menus() {
         plugin_menu->addAction(plugin_menu_entry);
 
         connect(plugin_menu_entry, &QAction::triggered, this,
-            [this, plugin_index]() { create_plugin_instance(plugin_index); });
+                [this, plugin_index]() { create_plugin_instance(plugin_index); });
         plugin_index++;
     }
 }
@@ -301,11 +319,11 @@ void MainWindow::create_plugin_menus() {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void MainWindow::create_plugin_instance(int index) {
-	QWidget* plugin_widget = create_plugin_by_index(index);
+    QWidget* plugin_widget = create_plugin_by_index(index);
 
-	if (plugin_widget) {
-	    m_docking_manager->addToolWindow(plugin_widget, ToolWindowManager::LastUsedArea);
-	}
+    if (plugin_widget) {
+        m_docking_manager->addToolWindow(plugin_widget, ToolWindowManager::LastUsedArea);
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -342,7 +360,7 @@ bool MainWindow::load_plugins(const QString& plugin_dir) {
 
         plugin_name_obj = plugin_name_obj.toObject().value(QStringLiteral("hippo_view_plugin_name"));
 
-        //qDebug() << "Found plugin " << plugin_name_obj.toString();
+        // qDebug() << "Found plugin " << plugin_name_obj.toString();
 
         MainWindow::PluginInfo plugin_info = {
             plugin_loader,
@@ -419,7 +437,7 @@ QWidget* MainWindow::create_plugin_by_index(int index) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // TODO: Save layouts and such here also
 
-void MainWindow::closeEvent(QCloseEvent *event) {
+void MainWindow::closeEvent(QCloseEvent* event) {
     m_update_events = false;
 
     delete m_console;
@@ -431,21 +449,21 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     }
 
     m_plugin_instances.clear();
-	hippo_core_drop(m_core);
+    hippo_core_drop(m_core);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void MainWindow::setup_default_plugins() {
-	QWidget* player = create_plugin_by_name(QStringLiteral("Player"));
-	QWidget* playlist = create_plugin_by_name(QStringLiteral("Playlist"));
-	QWidget* music_info = create_plugin_by_name(QStringLiteral("Music Info"));
+    QWidget* player = create_plugin_by_name(QStringLiteral("Player"));
+    QWidget* playlist = create_plugin_by_name(QStringLiteral("Playlist"));
+    QWidget* music_info = create_plugin_by_name(QStringLiteral("Music Info"));
 
-	m_docking_manager->addToolWindow(player, ToolWindowManager::EmptySpace);
+    m_docking_manager->addToolWindow(player, ToolWindowManager::EmptySpace);
 
-	m_docking_manager->addToolWindow(music_info,
-			ToolWindowManager::AreaReference(ToolWindowManager::RightOf, m_docking_manager->areaOf(player)));
+    m_docking_manager->addToolWindow(
+        music_info, ToolWindowManager::AreaReference(ToolWindowManager::RightOf, m_docking_manager->areaOf(player)));
 
-	m_docking_manager->addToolWindow(playlist,
-			ToolWindowManager::AreaReference(ToolWindowManager::BottomOf, m_docking_manager->areaOf(player)));
+    m_docking_manager->addToolWindow(
+        playlist, ToolWindowManager::AreaReference(ToolWindowManager::BottomOf, m_docking_manager->areaOf(player)));
 }

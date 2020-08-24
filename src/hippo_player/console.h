@@ -20,7 +20,7 @@ public:
     ConsoleView(const struct HippoMessageAPI* messages_api, QWidget* parent);
     virtual ~ConsoleView();
 
-    void event(const unsigned char* data, int len);
+    void incoming_messages(const unsigned char* data, int len);
 
 private:
     Q_SLOT void checked(bool state);

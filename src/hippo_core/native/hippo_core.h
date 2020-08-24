@@ -16,6 +16,8 @@ typedef void (*HippoCoreDrop)(struct HippoCore* core);
 typedef void (*HippoPlayFile)(struct HippoCore* core, const char* filename);
 typedef struct HippoServiceAPI* (*HippoServiceApiNew)(struct HippoCore* core);
 typedef struct HippoMessageAPI* (*HippoMessageApiNew)(struct HippoCore* core);
+typedef const char* (*HippoInitAudioDevice)(struct HippoCore* core);
+
 
 typedef void (*HippoUpdateMessages)(struct HippoCore* core,
                                     void* user_data,
@@ -30,6 +32,7 @@ extern HippoPlayFile hippo_play_file;
 extern HippoServiceApiNew hippo_service_api_new;
 extern HippoUpdateMessages hippo_update_messages;
 extern HippoPlaylistRemoveEntry hippo_playlist_remove_entry;
+extern HippoInitAudioDevice hippo_init_audio_device;
 
 #ifdef __cplusplus
 }

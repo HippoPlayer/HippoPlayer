@@ -225,7 +225,7 @@ static int sc68_plugin_open(void* user_data, const char* buffer, int subsong) {
         return -1;
     }
 
-    hp_info("Starting to play %s (subsong %d)", subsong);
+    hp_info("Starting to play %s (subsong %d)", buffer, subsong);
 
     sc68_play(data->instance, subsong, 0);
 
@@ -254,11 +254,11 @@ static int sc68_plugin_destroy(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int sc68_plugin_read_data(void* user_data, void* dest, uint32_t max_size) {
+static int sc68_plugin_read_data(void* user_data, void* dest, uint32_t samples_to_read) {
 	Sc68Plugin* plugin = (Sc68Plugin*)user_data;
 
-	int16_t data[800 * 2] = { 0 };
-    int n = sizeof(data) >> 2;
+	int16_t data[1024 * 2] = { 0 };
+    int n = samples_to_read;
 
     // TODO: Handle error
     int code = sc68_process(plugin->instance, data, &n);
@@ -267,11 +267,11 @@ static int sc68_plugin_read_data(void* user_data, void* dest, uint32_t max_size)
 	float* new_dest = (float*)dest;
 	const float scale = 1.0f / 32767.0f;
 
-	for (int i = 0; i < n * 2; ++i) {
+	for (int i = 0; i < samples_to_read * 2; ++i) {
 		new_dest[i] = ((float)data[i]) * scale;
 	}
 
-	return n * 2;
+	return n;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

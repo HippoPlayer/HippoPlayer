@@ -31,7 +31,7 @@ extern GD3_TAG VGMTag;
 HippoLogAPI* g_hp_log = NULL;
 
 #define FREQ 48000
-#define FRAME_SIZE ((FREQ * 2) / 50)
+#define FRAME_SIZE 2048
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -139,7 +139,7 @@ static int vgm_close(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int vgm_read_data(void* user_data, void* dest, uint32_t max_samples) {
+static int vgm_read_data(void* user_data, void* dest, uint32_t samples_to_read) {
 	WAVE_16BS temp_data[FRAME_SIZE * 2];
 
 	struct VgmReplayerData* replayer_data = (struct VgmReplayerData*)user_data;
@@ -150,16 +150,16 @@ static int vgm_read_data(void* user_data, void* dest, uint32_t max_samples) {
 
 	float* newDest = (float*)dest;
 
-	FillBuffer(temp_data, FRAME_SIZE / 2);
+	FillBuffer(temp_data, samples_to_read);
 
 	const float scale = 1.0f / 32767.0f;
 
-	for (int i = 0; i < FRAME_SIZE / 2; ++i) {
+	for (int i = 0; i < samples_to_read; ++i) {
 		newDest[(i * 2) + 0] = ((float)temp_data[i].Left) * scale;
 		newDest[(i * 2) + 1] = ((float)temp_data[i].Right) * scale;
 	}
 
-	return FRAME_SIZE;
+	return samples_to_read;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

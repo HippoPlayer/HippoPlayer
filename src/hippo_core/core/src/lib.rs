@@ -1,9 +1,8 @@
-//use std::ffi::CStr;
+use std::ffi::CString;
 use std::fs::File;
 use std::fs;
 use std::os::raw::{c_char, c_void};
-use std::path::Path;
-use std::ptr;
+use std::path::{Path, PathBuf};
 use std::time::Instant;
 use std::io::{Error, ErrorKind};
 use song_db::SongDb;
@@ -33,7 +32,9 @@ type MsgSendCallback =
     extern "C" fn(user_data: *const c_void, data: *const u8, len: i32, index: i32);
 
 pub struct HippoCore {
-    _config: CoreConfig,
+    //config_filename: String,
+    error_string: Option<CString>,
+    config: CoreConfig,
     audio: HippoAudio,
     plugins: Plugins,
     plugin_service: service_ffi::PluginService,
@@ -81,8 +82,6 @@ impl HippoCore {
                     song_db.commit();
                 }
 
-                // This is a bit hacky right now but will do the trick
-                self.audio = HippoAudio::new();
                 self.is_playing = true;
 
                 // TODO: Config if this should be expanded async or not
@@ -167,8 +166,13 @@ impl HippoCore {
                 // send message to logging system
                 logger::incoming_message(&message);
 
-                // Send the message to to playlist and
+                // Send the message to to playlist and back to the ui
                 self.playlist.event(&message).map(|reply| {
+                    Self::send_msgs(user_data, send_messages, &reply, count, std::usize::MAX);
+                });
+
+                // Send the message to to audio (to configure output, get devices, etc)
+                self.audio.event(&message).map(|reply| {
                     Self::send_msgs(user_data, send_messages, &reply, count, std::usize::MAX);
                 });
 
@@ -264,7 +268,7 @@ impl HippoCore {
         let mut path = current_path.parent().ok_or_else(|| Self::basic_error("Unable to get parent dir"))?;
 
         loop {
-            println!("seaching for data in {:?}", path);
+            trace!("seaching for data in {:?}", path);
 
             if path.join("data").exists() {
                 return std::env::set_current_dir(path);
@@ -273,25 +277,52 @@ impl HippoCore {
             path = path.parent().ok_or_else(|| Self::basic_error("Unable to get parent dir"))?;
         }
     }
+
+    /// Try to initalize the audio device, if it fails a C style error string will be returned here so
+    /// the front-end can show it. As we do this early we don't have any message passing setup so it
+    /// makes sense to have this specific
+    fn init_audio_device(&mut self) -> Result<(), miniaudio::Error> {
+        let device = self.config.audio_device.to_owned();
+        self.audio.init_device(&device)
+    }
+}
+
+
+/// init the data directory used for configs, logs, databases, etec
+pub extern "C" fn init_config_dir() -> std::io::Result<PathBuf> {
+    if let Some(config_dir) = dirs::config_dir() {
+        let dir = config_dir.join("HippoPlayer");
+        if std::fs::create_dir_all(&dir).is_ok() {
+            return Ok(dir);
+        }
+    }
+
+    error!("Unable to create data directory for user");
+
+    Err(Error::new(
+        ErrorKind::Other, "Unable to init output dir for generated files!"
+    ))
 }
 
 #[no_mangle]
 pub extern "C" fn hippo_core_new() -> *const HippoCore {
+    let config_dir = init_config_dir();
+    let mut config = CoreConfig::default();
+
+    if let Ok(output_dir) = config_dir {
+        logger::init_file_log(&output_dir);
+        if let Ok(cfg) = CoreConfig::load(&output_dir, "global.cfg") {
+            config = cfg;
+        }
+    }
+
     // TODO: We should do better error handling here
     // This to enforce we load relative to the current exe
+    // TODO: clean this up
     let current_exe = std::env::current_exe().unwrap();
     std::env::set_current_dir(current_exe.parent().unwrap()).unwrap();
 
     HippoCore::find_data_directory().expect("Unable to find data directory");
-
-    let config = match CoreConfig::load("data/config/global.cfg") {
-        Ok(v) => v,
-        Err(e) => {
-            println!("Config error: {}", e);
-            return ptr::null();
-        }
-    };
-
     let current_path = std::env::current_dir().unwrap();
 
     // TODO: We should do better error handling here
@@ -307,8 +338,16 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
 
     let plugin_count = plugins.decoder_plugins.len();
 
+    // if we have no
+    // this is somewhat temporary but should be fine for now, we split the configure in two parts
+    // and the first entries are th high priority ones and the others the low prio
+
+    let len = config.playback_priority.len();
+    let high_prio = &config.playback_priority[0..len/2];
+    let low_prio = &config.playback_priority[len/2..];
+
     // sort high-prority plugins
-    for (index, name) in config.playback_priority_high.iter().enumerate() {
+    for (index, name) in high_prio.iter().enumerate() {
         for i in 0..plugin_count {
             let lower_name = plugins.decoder_plugins[i].plugin_path.to_lowercase();
             if lower_name.rfind(name).is_some() && plugin_count > index {
@@ -318,7 +357,7 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
     }
 
     // sort low-prority plugins
-    for (index, name) in config.playback_priority_low.iter().enumerate() {
+    for (index, name) in low_prio.iter().enumerate() {
         for i in 0..plugin_count {
             let lower_name = plugins.decoder_plugins[i].plugin_path.to_lowercase();
             if lower_name.rfind(name).is_some() && plugin_count > index {
@@ -336,7 +375,8 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
     let service = service_ffi::PluginService::new(song_db);
 
     let mut core = Box::new(HippoCore {
-        _config: config,
+        error_string: None,
+        config: config,
         plugins,
         audio: HippoAudio::new(),
         plugin_service: service,
@@ -346,6 +386,12 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
         is_playing: false,
         song_db,
     });
+
+    core.audio.device_name = core.config.audio_device.to_owned();
+
+    if let Err(e) = core.audio.init_devices() {
+        error!("Failed to find audio devices {:#?}", e);
+    }
 
     // it's ok to allow this function to fail if we have no playlist
     core.playlist.load("default_playlist.hpl").ok();
@@ -358,6 +404,14 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
 pub extern "C" fn hippo_core_drop(core: *mut HippoCore) {
     let mut core = unsafe { Box::from_raw(core) };
     let _ = unsafe { Box::from_raw(core.song_db as *mut SongDb) };
+
+    let config_dir = init_config_dir();
+    core.config.audio_device = core.audio.device_name.to_owned();
+
+    if let Ok(output_dir) = config_dir {
+        // TODO: Fix me
+        core.config.write(&output_dir, "global.cfg").unwrap();
+    }
 
     core.audio.stop();
     core.playlist
@@ -382,6 +436,21 @@ pub unsafe extern "C" fn hippo_play_file(_core: *mut HippoCore, _filename: *cons
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn hippo_init_audio_device(_core: *mut HippoCore) -> *const c_char {
+    let core = &mut *_core;
+    if let Err(e) = core.init_audio_device() {
+        let text = format!("{:#?}", e);
+        error!("Error setting up audio device {}", text);
+        if let Ok(c_string) = CString::new(text) {
+            core.error_string = Some(c_string);
+            return core.error_string.as_ref().map_or_else(|| std::ptr::null(), |v| v.as_ptr())
+        }
+    }
+
+    std::ptr::null()
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn hippo_service_api_new(_core: *mut HippoCore) -> *const ffi::HippoServiceAPI {
     let core = &mut *_core;
     PluginService::new_c_api(core.song_db)
@@ -403,6 +472,7 @@ pub unsafe extern "C" fn hippo_update_messages(
     let core = &mut *core;
     core.update_messages(user_data, count, get_messages, send_messages);
 }
+
 
 #[no_mangle]
 pub unsafe extern "C" fn hippo_playlist_remove_entry(core: *mut HippoCore, entry: i32) {

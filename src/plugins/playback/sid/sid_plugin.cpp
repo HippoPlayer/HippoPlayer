@@ -8,6 +8,7 @@
 #include <sidplayfp/SidTune.h>
 #include <sidplayfp/SidInfo.h>
 #include <builders/residfp-builder/residfp.h>
+#include <assert.h>
 
 #ifndef _WIN32
 #include <libgen.h>
@@ -17,7 +18,7 @@
 #endif
 
 const int FREQ = 48000;
-const int FRAME_SIZE = (FREQ * 2) / 100;
+const int FRAME_SIZE = 1024;
 HippoLogAPI* g_hp_log = NULL;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -142,23 +143,25 @@ static int sid_close(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int sid_read_data(void* user_data, void* dest, uint32_t max_samples) {
+static int sid_read_data(void* user_data, void* dest, uint32_t samples_to_read) {
 	SidReplayerData* data = (SidReplayerData*)user_data;
 	float* output = (float*)dest;
 
+	assert(samples_to_read < FRAME_SIZE);
+
 	int16_t temp_data[FRAME_SIZE * 2] = { 0 };
 
-	data->engine.play(temp_data, FRAME_SIZE / 2);
+	data->engine.play(temp_data, samples_to_read);
 
 	const float scale = 1.0f / 32767.0f;
 
-	for (int i = 0; i < FRAME_SIZE / 2; ++i) {
+	for (int i = 0; i < samples_to_read; ++i) {
 		const float v = ((float)temp_data[i]) * scale;
 		*output++ = v;
 		*output++ = v;
 	}
 
-	return FRAME_SIZE;
+	return samples_to_read;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

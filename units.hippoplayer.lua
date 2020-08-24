@@ -129,7 +129,7 @@ RustSharedLibrary {
     Name = "hippo_core",
     CargoConfig = "src/hippo_core/core/Cargo.toml",
     Sources = {
-        get_c_cpp_src("src/hippo_core"),
+        "src/hippo_core/miniaudio/src/c_api/miniaudio.h",
         get_rs_src("src/hippo_core"),
         "src/plugin_api/HippoPlugin.h",
     },
@@ -161,6 +161,15 @@ Program {
 
         gen_moc("src/hippo_player/MainWindow.h"),
         gen_moc("src/hippo_player/PlaylistModel.h"),
+
+        -- Dialogs
+        gen_uic("src/hippo_player/PrefsDialog.ui"),
+        gen_moc("src/hippo_player/PrefsDialog.h"),
+        gen_uic("src/hippo_player/PlaybackPluginPriority.ui"),
+        gen_moc("src/hippo_player/PlaybackPluginPriority.h"),
+        gen_uic("src/hippo_player/DevicePanel.ui"),
+        gen_moc("src/hippo_player/DevicePanel.h"),
+
         --gen_uic("src/hippo_player/test_main/MainWindow.ui"),
     },
 
@@ -196,14 +205,13 @@ Program {
         PROGCOM = {
             {  "-Wl,-rpath,$(QT5_LIB)", "-F$(QT5_LIB)", "-lstdc++", Config = "macosx-clang-*" },
             {  "-Wl,-rpath,$(QT5_LIB)", "-ldl"; Config = "linux-*-*" },
-            {  "/SUBSYSTEM:WINDOWS" ; Config = "win64-*-*" },
+            --{  "/SUBSYSTEM:WINDOWS" ; Config = "win64-*-*" },
         },
     },
 
 	Libs = {
-        -- { "Qt5Guid.lib", "Qt5Cored.lib", "Qt5Widgetsd.lib"; Config = "win64-*-*" },
-		-- enable when stupid release mode is fixed
-        { "Qt5Gui.lib", "Qt5Core.lib", "Qt5Widgets.lib", "qtmain.lib", "shell32.lib"; Config = "win64-*-*" },
+        -- { "Qt5Gui.lib", "Qt5Core.lib", "Qt5Widgets.lib", "qtmain.lib", "shell32.lib"; Config = "win64-*-*" },
+        { "Qt5Gui.lib", "Qt5Core.lib", "Qt5Widgets.lib", "shell32.lib"; Config = "win64-*-*" },
 		{ "Qt5Widgets", "Qt5Gui", "Qt5Core"; Config = "linux-*-*" },
 	},
 
