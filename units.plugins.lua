@@ -690,7 +690,7 @@ SharedLibrary {
 
 -- Decoders
 
-Default "tfmx"
+--Default "tfmx"
 Default "hively"
 
 Default "openmpt"

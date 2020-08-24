@@ -20,6 +20,9 @@ HippoLogAPI* g_hp_log = NULL;
 struct HivelyReplayerData {
 	struct hvl_tune* tune;
 	void* song_data;
+	int16_t temp_data[FRAME_SIZE * 4];
+	int read_index;
+	int frames_decoded;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -106,22 +109,61 @@ enum HippoProbeResult hively_probe_can_play(const uint8_t* data, uint32_t data_s
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int hively_read_data(void* user_data, void* dest, uint32_t max_count) {
-	int16_t temp_data[FRAME_SIZE * 4];
-	int8_t* ptr = (int8_t*)temp_data;
-
+static int hively_read_data(void* user_data, void* dest, uint32_t samples_to_read_in) {
+	struct HivelyReplayerData* data = (struct HivelyReplayerData*)user_data;
+	int8_t* ptr = (int8_t*)data->temp_data;
 	float* newDest = (float*)dest;
+	int samples_to_read = (int)samples_to_read_in;
 
-	// TODO: Support more than one tune
-	struct HivelyReplayerData* replayerData = (struct HivelyReplayerData*)user_data;
+	// because hively works with fixed sized chunks we need to do some temporary stuff here as
+	// the player can request arbitary sized chunk. Later on it would be good to allow the backend
+	// to just deal with this insdeat
 
-	int frames_decoded = hvl_DecodeFrame(replayerData->tune, ptr, ptr + 2, 4) / 2;
+    int frames_decoded = 0;
+
+	if (data->frames_decoded == 0) {
+	    data->frames_decoded = hvl_DecodeFrame(data->tune, ptr, ptr + 2, 4) / 4;
+	}
 
 	const float scale = 1.0f / 32767.0f;
 
-	for (int i = 0; i < frames_decoded; ++i) {
-		newDest[i] = ((float)temp_data[i]) * scale;
+	int16_t* data_read = (int16_t*)data->temp_data;
+
+	// if we have enough data we can just convert it to the output
+	if ((data->read_index + samples_to_read) < data->frames_decoded) {
+	    data_read += data->read_index * 2;
+
+        for (int i = 0; i < samples_to_read * 2; ++i) {
+            newDest[i] = ((float)data_read[i]) * scale;
+        }
+
+        data->read_index += samples_to_read;
+	} else {
+	    // else we need to copy what we have left, decode a new frame and copy the remainder from thata
+	    int diff = data->frames_decoded - data->read_index;
+	    data_read += data->read_index * 2;
+
+	    // copy what we have left in the buffer
+        for (int i = 0; i < diff * 2; ++i) {
+            newDest[i] = ((float)data_read[i]) * scale;
+        }
+
+        newDest += diff * 2;
+
+        // decode some new output so we can fill up the remining data
+	    data->frames_decoded = hvl_DecodeFrame(data->tune, ptr, ptr + 2, 4) / 4;
+	    data_read = (int16_t*)data->temp_data;
+	    int new_samples = samples_to_read - diff;
+
+	    // copy what we have left in the buffer
+        for (int i = 0; i < new_samples * 2; ++i) {
+            newDest[i] = ((float)data_read[i]) * scale;
+        }
+
+        data->read_index = new_samples;
 	}
+
+	//int frames_decoded = hvl_DecodeFrame(replayerData->tune, ptr, ptr + 2, 4) / 2;
 
 	return frames_decoded;
 }
