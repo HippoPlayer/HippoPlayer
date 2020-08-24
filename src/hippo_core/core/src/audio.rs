@@ -11,6 +11,8 @@ use crate::service_ffi::PluginService;
 //use ringbuf::{Consumer, Producer, RingBuffer};
 use ringbuf::{Producer, RingBuffer};
 
+const DEFAULT_DEVICE_NAME: &str = "Default Sound Device";
+
 #[derive(Clone)]
 pub struct HippoPlayback {
     plugin_user_data: u64,
@@ -76,7 +78,7 @@ impl HippoPlayback {
 }
 pub struct HippoAudio {
     //players: Box<Mutex<Vec<HippoPlayback>>>,
-    device_name: String,
+    pub device_name: String,
     players: *mut c_void,
     output_device: Option<Device>,
     output_devices: Option<Devices>,
@@ -113,7 +115,7 @@ impl HippoAudio {
         let players = Box::new(Mutex::new(Vec::<HippoPlayback>::new()));
 
         HippoAudio {
-            device_name: String::new(),
+            device_name: DEFAULT_DEVICE_NAME.to_owned(),
             players: Box::into_raw(players) as *mut c_void,
             output_devices: None,
             output_device: None,
@@ -136,15 +138,8 @@ impl HippoAudio {
 
     fn select_output_device(&mut self, msg: &HippoSelectOutputDevice) -> Result<(), miniaudio::Error> {
         let name = msg.name().unwrap();
-
-        if name == "Default Sound Device" {
-            self.init_device(&None)?;
-        } else {
-            // TODO: Fix me
-            let t = name.to_owned();
-            self.init_device(&Some(&t))?;
-        }
-
+        self.init_device(name)?;
+        self.device_name = name.to_owned();
         Ok(())
     }
 
@@ -233,7 +228,7 @@ impl HippoAudio {
         self.output_device = None;
     }
 
-    pub fn init_device(&mut self, playback_device: &Option<&String>) -> Result<(), miniaudio::Error> {
+    pub fn init_device(&mut self, playback_device: &str) -> Result<(), miniaudio::Error> {
         // Try to init output devices if we have none.
         if self.output_devices.is_none() {
             self.output_devices = Some(Devices::new()?);
@@ -242,10 +237,13 @@ impl HippoAudio {
         let output_devices = self.output_devices.as_ref().unwrap();
         let context = output_devices.context;
 
-        if let Some(device_name) = playback_device {
+        if playback_device == DEFAULT_DEVICE_NAME {
+            self.close_device();
+            self.init_default_device()?;
+        } else {
             for device in &output_devices.devices {
                 let device_id = device.device_id;
-                if device.name == **device_name {
+                if device.name == playback_device {
                     self.close_device();
                     self.output_device = Some(Device::new(
                         data_callback,
@@ -255,9 +253,6 @@ impl HippoAudio {
                     break;
                 }
             }
-        } else {
-            self.close_device();
-            self.init_default_device()?;
         }
 
         self.output_device.as_ref().unwrap().start()

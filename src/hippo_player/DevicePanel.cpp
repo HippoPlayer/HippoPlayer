@@ -45,6 +45,7 @@ void DevicePanel::get_devices(const struct HippoReplyOutputDevices* messages) {
     m_device_info.clear();
 
     m_old_device_name = messages->current_device()->c_str();
+
     m_old_device_name_qt = QString::fromUtf8(m_old_device_name.c_str());
 
     // Setup for default device with values that seems reasonable
@@ -63,15 +64,19 @@ void DevicePanel::get_devices(const struct HippoReplyOutputDevices* messages) {
             msg->max_sample_rate(),
         };
 
-        if (dev_name == m_old_device_name_qt) {
-            index;
-        }
-
         m_device_info.push_back(t);
     }
 
-    m_old_selection = index;
+    for (int i = 0, count = m_ui->device_name->count(); i < count; ++i) {
+        auto t = m_ui->device_name->itemText(i);
 
+        if (t == m_old_device_name_qt) {
+            index = i;
+            break;
+        }
+    }
+
+    m_old_selection = index;
     m_ui->device_name->setCurrentIndex(index);
 }
 
@@ -157,18 +162,29 @@ void DevicePanel::change_device(int index) {
     // Select the new output device
 
     auto selected_device_name = m_ui->device_name->itemText(index);
+    m_old_selection = index;
 
+    select_device(selected_device_name);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void DevicePanel::cancel() {
+    select_device(m_old_device_name_qt);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void DevicePanel::select_device(const QString& name) {
     flatbuffers::FlatBufferBuilder builder(1024);
 
-    QByteArray t = selected_device_name.toUtf8();
+    QByteArray t = name.toUtf8();
 
     auto device_name = builder.CreateString(t.constData());
 
     builder.Finish(CreateHippoMessageDirect(builder, MessageType_select_output_device,
                                             CreateHippoSelectOutputDevice(builder, device_name).Union()));
     HippoMessageAPI_send(m_messages_api, builder.GetBufferPointer(), builder.GetSize());
-
-    m_old_selection = index;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

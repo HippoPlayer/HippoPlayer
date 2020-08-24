@@ -282,7 +282,7 @@ impl HippoCore {
     /// the front-end can show it. As we do this early we don't have any message passing setup so it
     /// makes sense to have this specific
     fn init_audio_device(&mut self) -> Result<(), miniaudio::Error> {
-        let device = self.config.audio_device.as_ref();
+        let device = self.config.audio_device.to_owned();
         self.audio.init_device(&device)
     }
 }
@@ -338,9 +338,16 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
 
     let plugin_count = plugins.decoder_plugins.len();
 
-    /*
+    // if we have no
+    // this is somewhat temporary but should be fine for now, we split the configure in two parts
+    // and the first entries are th high priority ones and the others the low prio
+
+    let len = config.playback_priority.len();
+    let high_prio = &config.playback_priority[0..len/2];
+    let low_prio = &config.playback_priority[len/2..];
+
     // sort high-prority plugins
-    for (index, name) in config.playback_priority_high.iter().enumerate() {
+    for (index, name) in high_prio.iter().enumerate() {
         for i in 0..plugin_count {
             let lower_name = plugins.decoder_plugins[i].plugin_path.to_lowercase();
             if lower_name.rfind(name).is_some() && plugin_count > index {
@@ -350,7 +357,7 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
     }
 
     // sort low-prority plugins
-    for (index, name) in config.playback_priority_low.iter().enumerate() {
+    for (index, name) in low_prio.iter().enumerate() {
         for i in 0..plugin_count {
             let lower_name = plugins.decoder_plugins[i].plugin_path.to_lowercase();
             if lower_name.rfind(name).is_some() && plugin_count > index {
@@ -358,7 +365,6 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
             }
         }
     }
-    */
 
     // No need to switch back if we are in the correct spot
     if !Path::new("bin").is_dir() {
@@ -381,6 +387,8 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
         song_db,
     });
 
+    core.audio.device_name = core.config.audio_device.to_owned();
+
     if let Err(e) = core.audio.init_devices() {
         error!("Failed to find audio devices {:#?}", e);
     }
@@ -398,7 +406,7 @@ pub extern "C" fn hippo_core_drop(core: *mut HippoCore) {
     let _ = unsafe { Box::from_raw(core.song_db as *mut SongDb) };
 
     let config_dir = init_config_dir();
-    let mut config = CoreConfig::default();
+    core.config.audio_device = core.audio.device_name.to_owned();
 
     if let Ok(output_dir) = config_dir {
         // TODO: Fix me

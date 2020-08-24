@@ -24,8 +24,10 @@ public:
     virtual ~DevicePanel();
 
     void incoming_messages(const unsigned char* data, int len);
+    void cancel();
 
 private:
+    void select_device(const QString& name);
     void get_devices(const struct HippoReplyOutputDevices* messages);
 
     struct DeviceInfo {
