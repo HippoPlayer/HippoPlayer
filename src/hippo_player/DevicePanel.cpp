@@ -44,13 +44,18 @@ void DevicePanel::get_devices(const struct HippoReplyOutputDevices* messages) {
     m_ui->device_name->addItem(QStringLiteral("Default Sound Device"));
     m_device_info.clear();
 
+    m_old_device_name = messages->current_device()->c_str();
+    m_old_device_name_qt = QString::fromUtf8(m_old_device_name.c_str());
+
     // Setup for default device with values that seems reasonable
+    int index = 0;
     auto t = DeviceInfo { 1, 2, 11025, 192000 };
     m_device_info.push_back(t);
 
     for (auto const& msg : *messages->devices()) {
         const char* device_name = msg->name()->c_str();
-        m_ui->device_name->addItem(QString::fromUtf8(device_name));
+        QString dev_name = QString::fromUtf8(device_name);
+        m_ui->device_name->addItem(dev_name);
         auto t = DeviceInfo {
             msg->min_channels(),
             msg->max_channels(),
@@ -58,10 +63,17 @@ void DevicePanel::get_devices(const struct HippoReplyOutputDevices* messages) {
             msg->max_sample_rate(),
         };
 
+        if (dev_name == m_old_device_name_qt) {
+            index;
+        }
+
         m_device_info.push_back(t);
     }
-}
 
+    m_old_selection = index;
+
+    m_ui->device_name->setCurrentIndex(index);
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Standard sample rates we setup
@@ -88,6 +100,10 @@ static uint32_t s_standard_sample_rates[] = {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void DevicePanel::change_device(int index) {
+    if (m_old_selection == index) {
+        return;
+    }
+
     m_ui->sample_rate->clear();
     //m_ui->channels->clear();
 
@@ -137,8 +153,23 @@ void DevicePanel::change_device(int index) {
 
     m_ui->sample_rate->setCurrentIndex(temp_selection);
     m_ui->sample_rate->setEnabled(false);
-}
 
+    // Select the new output device
+
+    auto selected_device_name = m_ui->device_name->itemText(index);
+
+    flatbuffers::FlatBufferBuilder builder(1024);
+
+    QByteArray t = selected_device_name.toUtf8();
+
+    auto device_name = builder.CreateString(t.constData());
+
+    builder.Finish(CreateHippoMessageDirect(builder, MessageType_select_output_device,
+                                            CreateHippoSelectOutputDevice(builder, device_name).Union()));
+    HippoMessageAPI_send(m_messages_api, builder.GetBufferPointer(), builder.GetSize());
+
+    m_old_selection = index;
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -155,13 +186,3 @@ void DevicePanel::incoming_messages(const unsigned char* data, int len) {
             break;
     }
 }
-
-/*
-    flatbuffers::FlatBufferBuilder builder(1024);
-
-    auto filename = builder.CreateString(log_file.toUtf8().constData());
-
-    builder.Finish(CreateHippoMessageDirect(builder, MessageType_log_file,
-                                            CreateHippoLogToFile(builder, filename, log_to_file).Union()));
-    HippoMessageAPI_send(m_message_api, builder.GetBufferPointer(), builder.GetSize());
-*/

@@ -95,11 +95,12 @@ pub enum MessageType {
   log_send_messages = 19,
   request_output_devices = 20,
   reply_output_devices = 21,
+  select_output_device = 22,
 
 }
 
 const ENUM_MIN_MESSAGE_TYPE: u8 = 0;
-const ENUM_MAX_MESSAGE_TYPE: u8 = 21;
+const ENUM_MAX_MESSAGE_TYPE: u8 = 22;
 
 impl<'a> flatbuffers::Follow<'a> for MessageType {
   type Inner = Self;
@@ -133,7 +134,7 @@ impl flatbuffers::Push for MessageType {
 }
 
 #[allow(non_camel_case_types)]
-const ENUM_VALUES_MESSAGE_TYPE:[MessageType; 22] = [
+const ENUM_VALUES_MESSAGE_TYPE:[MessageType; 23] = [
   MessageType::NONE,
   MessageType::next_song,
   MessageType::prev_song,
@@ -155,11 +156,12 @@ const ENUM_VALUES_MESSAGE_TYPE:[MessageType; 22] = [
   MessageType::log_file,
   MessageType::log_send_messages,
   MessageType::request_output_devices,
-  MessageType::reply_output_devices
+  MessageType::reply_output_devices,
+  MessageType::select_output_device
 ];
 
 #[allow(non_camel_case_types)]
-const ENUM_NAMES_MESSAGE_TYPE:[&'static str; 22] = [
+const ENUM_NAMES_MESSAGE_TYPE:[&'static str; 23] = [
     "NONE",
     "next_song",
     "prev_song",
@@ -181,7 +183,8 @@ const ENUM_NAMES_MESSAGE_TYPE:[&'static str; 22] = [
     "log_file",
     "log_send_messages",
     "request_output_devices",
-    "reply_output_devices"
+    "reply_output_devices",
+    "select_output_device"
 ];
 
 pub fn enum_name_message_type(e: MessageType) -> &'static str {
@@ -2664,11 +2667,17 @@ impl<'a> HippoReplyOutputDevices<'a> {
         args: &'args HippoReplyOutputDevicesArgs<'args>) -> flatbuffers::WIPOffset<HippoReplyOutputDevices<'bldr>> {
       let mut builder = HippoReplyOutputDevicesBuilder::new(_fbb);
       if let Some(x) = args.devices { builder.add_devices(x); }
+      if let Some(x) = args.current_device { builder.add_current_device(x); }
       builder.finish()
     }
 
-    pub const VT_DEVICES: flatbuffers::VOffsetT = 4;
+    pub const VT_CURRENT_DEVICE: flatbuffers::VOffsetT = 4;
+    pub const VT_DEVICES: flatbuffers::VOffsetT = 6;
 
+  #[inline]
+  pub fn current_device(&self) -> Option<&'a str> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(HippoReplyOutputDevices::VT_CURRENT_DEVICE, None)
+  }
   #[inline]
   pub fn devices(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<HippoOutputDevice<'a>>>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<HippoOutputDevice<'a>>>>>(HippoReplyOutputDevices::VT_DEVICES, None)
@@ -2676,12 +2685,14 @@ impl<'a> HippoReplyOutputDevices<'a> {
 }
 
 pub struct HippoReplyOutputDevicesArgs<'a> {
+    pub current_device: Option<flatbuffers::WIPOffset<&'a  str>>,
     pub devices: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<HippoOutputDevice<'a >>>>>,
 }
 impl<'a> Default for HippoReplyOutputDevicesArgs<'a> {
     #[inline]
     fn default() -> Self {
         HippoReplyOutputDevicesArgs {
+            current_device: None,
             devices: None,
         }
     }
@@ -2691,6 +2702,10 @@ pub struct HippoReplyOutputDevicesBuilder<'a: 'b, 'b> {
   start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
 impl<'a: 'b, 'b> HippoReplyOutputDevicesBuilder<'a, 'b> {
+  #[inline]
+  pub fn add_current_device(&mut self, current_device: flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(HippoReplyOutputDevices::VT_CURRENT_DEVICE, current_device);
+  }
   #[inline]
   pub fn add_devices(&mut self, devices: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<HippoOutputDevice<'b >>>>) {
     self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(HippoReplyOutputDevices::VT_DEVICES, devices);
@@ -2705,6 +2720,82 @@ impl<'a: 'b, 'b> HippoReplyOutputDevicesBuilder<'a, 'b> {
   }
   #[inline]
   pub fn finish(self) -> flatbuffers::WIPOffset<HippoReplyOutputDevices<'a>> {
+    let o = self.fbb_.end_table(self.start_);
+    flatbuffers::WIPOffset::new(o.value())
+  }
+}
+
+pub enum HippoSelectOutputDeviceOffset {}
+#[derive(Copy, Clone, Debug, PartialEq)]
+
+pub struct HippoSelectOutputDevice<'a> {
+  pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for HippoSelectOutputDevice<'a> {
+    type Inner = HippoSelectOutputDevice<'a>;
+    #[inline]
+    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: flatbuffers::Table { buf: buf, loc: loc },
+        }
+    }
+}
+
+impl<'a> HippoSelectOutputDevice<'a> {
+    #[inline]
+    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        HippoSelectOutputDevice {
+            _tab: table,
+        }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+        args: &'args HippoSelectOutputDeviceArgs<'args>) -> flatbuffers::WIPOffset<HippoSelectOutputDevice<'bldr>> {
+      let mut builder = HippoSelectOutputDeviceBuilder::new(_fbb);
+      if let Some(x) = args.name { builder.add_name(x); }
+      builder.finish()
+    }
+
+    pub const VT_NAME: flatbuffers::VOffsetT = 4;
+
+  #[inline]
+  pub fn name(&self) -> Option<&'a str> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(HippoSelectOutputDevice::VT_NAME, None)
+  }
+}
+
+pub struct HippoSelectOutputDeviceArgs<'a> {
+    pub name: Option<flatbuffers::WIPOffset<&'a  str>>,
+}
+impl<'a> Default for HippoSelectOutputDeviceArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        HippoSelectOutputDeviceArgs {
+            name: None,
+        }
+    }
+}
+pub struct HippoSelectOutputDeviceBuilder<'a: 'b, 'b> {
+  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b> HippoSelectOutputDeviceBuilder<'a, 'b> {
+  #[inline]
+  pub fn add_name(&mut self, name: flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(HippoSelectOutputDevice::VT_NAME, name);
+  }
+  #[inline]
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> HippoSelectOutputDeviceBuilder<'a, 'b> {
+    let start = _fbb.start_table();
+    HippoSelectOutputDeviceBuilder {
+      fbb_: _fbb,
+      start_: start,
+    }
+  }
+  #[inline]
+  pub fn finish(self) -> flatbuffers::WIPOffset<HippoSelectOutputDevice<'a>> {
     let o = self.fbb_.end_table(self.start_);
     flatbuffers::WIPOffset::new(o.value())
   }
@@ -2966,6 +3057,16 @@ impl<'a> HippoMessage<'a> {
   pub fn message_as_reply_output_devices(&self) -> Option<HippoReplyOutputDevices<'a>> {
     if self.message_type() == MessageType::reply_output_devices {
       self.message().map(|u| HippoReplyOutputDevices::init_from_table(u))
+    } else {
+      None
+    }
+  }
+
+  #[inline]
+  #[allow(non_snake_case)]
+  pub fn message_as_select_output_device(&self) -> Option<HippoSelectOutputDevice<'a>> {
+    if self.message_type() == MessageType::select_output_device {
+      self.message().map(|u| HippoSelectOutputDevice::init_from_table(u))
     } else {
       None
     }

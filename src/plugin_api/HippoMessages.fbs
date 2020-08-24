@@ -155,7 +155,12 @@ table HippoOutputDevice {
 table HippoRequestOutputDevices { }
 
 table HippoReplyOutputDevices {
-    devices: [HippoOutputDevice];
+  current_device: string;
+  devices: [HippoOutputDevice];
+}
+
+table HippoSelectOutputDevice {
+  name: string;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -190,6 +195,8 @@ union MessageType {
 
   request_output_devices: HippoRequestOutputDevices,
   reply_output_devices: HippoReplyOutputDevices,
+
+  select_output_device: HippoSelectOutputDevice,
 }
 
 table HippoMessage {

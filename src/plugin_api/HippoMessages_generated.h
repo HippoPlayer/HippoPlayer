@@ -64,6 +64,8 @@ struct HippoRequestOutputDevices;
 
 struct HippoReplyOutputDevices;
 
+struct HippoSelectOutputDevice;
+
 struct HippoMessage;
 
 enum HippoTrackerType {
@@ -120,11 +122,12 @@ enum MessageType {
   MessageType_log_send_messages = 19,
   MessageType_request_output_devices = 20,
   MessageType_reply_output_devices = 21,
+  MessageType_select_output_device = 22,
   MessageType_MIN = MessageType_NONE,
-  MessageType_MAX = MessageType_reply_output_devices
+  MessageType_MAX = MessageType_select_output_device
 };
 
-inline const MessageType (&EnumValuesMessageType())[22] {
+inline const MessageType (&EnumValuesMessageType())[23] {
   static const MessageType values[] = {
     MessageType_NONE,
     MessageType_next_song,
@@ -147,13 +150,14 @@ inline const MessageType (&EnumValuesMessageType())[22] {
     MessageType_log_file,
     MessageType_log_send_messages,
     MessageType_request_output_devices,
-    MessageType_reply_output_devices
+    MessageType_reply_output_devices,
+    MessageType_select_output_device
   };
   return values;
 }
 
 inline const char * const *EnumNamesMessageType() {
-  static const char * const names[23] = {
+  static const char * const names[24] = {
     "NONE",
     "next_song",
     "prev_song",
@@ -176,13 +180,14 @@ inline const char * const *EnumNamesMessageType() {
     "log_send_messages",
     "request_output_devices",
     "reply_output_devices",
+    "select_output_device",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameMessageType(MessageType e) {
-  if (e < MessageType_NONE || e > MessageType_reply_output_devices) return "";
+  if (e < MessageType_NONE || e > MessageType_select_output_device) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesMessageType()[index];
 }
@@ -1792,13 +1797,19 @@ inline flatbuffers::Offset<HippoRequestOutputDevices> CreateHippoRequestOutputDe
 
 struct HippoReplyOutputDevices FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_DEVICES = 4
+    VT_CURRENT_DEVICE = 4,
+    VT_DEVICES = 6
   };
+  const flatbuffers::String *current_device() const {
+    return GetPointer<const flatbuffers::String *>(VT_CURRENT_DEVICE);
+  }
   const flatbuffers::Vector<flatbuffers::Offset<HippoOutputDevice>> *devices() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<HippoOutputDevice>> *>(VT_DEVICES);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_CURRENT_DEVICE) &&
+           verifier.VerifyString(current_device()) &&
            VerifyOffset(verifier, VT_DEVICES) &&
            verifier.VerifyVector(devices()) &&
            verifier.VerifyVectorOfTables(devices()) &&
@@ -1809,6 +1820,9 @@ struct HippoReplyOutputDevices FLATBUFFERS_FINAL_CLASS : private flatbuffers::Ta
 struct HippoReplyOutputDevicesBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
+  void add_current_device(flatbuffers::Offset<flatbuffers::String> current_device) {
+    fbb_.AddOffset(HippoReplyOutputDevices::VT_CURRENT_DEVICE, current_device);
+  }
   void add_devices(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<HippoOutputDevice>>> devices) {
     fbb_.AddOffset(HippoReplyOutputDevices::VT_DEVICES, devices);
   }
@@ -1826,19 +1840,74 @@ struct HippoReplyOutputDevicesBuilder {
 
 inline flatbuffers::Offset<HippoReplyOutputDevices> CreateHippoReplyOutputDevices(
     flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<flatbuffers::String> current_device = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<HippoOutputDevice>>> devices = 0) {
   HippoReplyOutputDevicesBuilder builder_(_fbb);
   builder_.add_devices(devices);
+  builder_.add_current_device(current_device);
   return builder_.Finish();
 }
 
 inline flatbuffers::Offset<HippoReplyOutputDevices> CreateHippoReplyOutputDevicesDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
+    const char *current_device = nullptr,
     const std::vector<flatbuffers::Offset<HippoOutputDevice>> *devices = nullptr) {
+  auto current_device__ = current_device ? _fbb.CreateString(current_device) : 0;
   auto devices__ = devices ? _fbb.CreateVector<flatbuffers::Offset<HippoOutputDevice>>(*devices) : 0;
   return CreateHippoReplyOutputDevices(
       _fbb,
+      current_device__,
       devices__);
+}
+
+struct HippoSelectOutputDevice FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_NAME = 4
+  };
+  const flatbuffers::String *name() const {
+    return GetPointer<const flatbuffers::String *>(VT_NAME);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_NAME) &&
+           verifier.VerifyString(name()) &&
+           verifier.EndTable();
+  }
+};
+
+struct HippoSelectOutputDeviceBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_name(flatbuffers::Offset<flatbuffers::String> name) {
+    fbb_.AddOffset(HippoSelectOutputDevice::VT_NAME, name);
+  }
+  explicit HippoSelectOutputDeviceBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  HippoSelectOutputDeviceBuilder &operator=(const HippoSelectOutputDeviceBuilder &);
+  flatbuffers::Offset<HippoSelectOutputDevice> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<HippoSelectOutputDevice>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<HippoSelectOutputDevice> CreateHippoSelectOutputDevice(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<flatbuffers::String> name = 0) {
+  HippoSelectOutputDeviceBuilder builder_(_fbb);
+  builder_.add_name(name);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<HippoSelectOutputDevice> CreateHippoSelectOutputDeviceDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    const char *name = nullptr) {
+  auto name__ = name ? _fbb.CreateString(name) : 0;
+  return CreateHippoSelectOutputDevice(
+      _fbb,
+      name__);
 }
 
 struct HippoMessage FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
@@ -1915,6 +1984,9 @@ struct HippoMessage FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
   const HippoReplyOutputDevices *message_as_reply_output_devices() const {
     return message_type() == MessageType_reply_output_devices ? static_cast<const HippoReplyOutputDevices *>(message()) : nullptr;
+  }
+  const HippoSelectOutputDevice *message_as_select_output_device() const {
+    return message_type() == MessageType_select_output_device ? static_cast<const HippoSelectOutputDevice *>(message()) : nullptr;
   }
   const flatbuffers::String *user_data() const {
     return GetPointer<const flatbuffers::String *>(VT_USER_DATA);
@@ -2066,6 +2138,10 @@ inline bool VerifyMessageType(flatbuffers::Verifier &verifier, const void *obj, 
     }
     case MessageType_reply_output_devices: {
       auto ptr = reinterpret_cast<const HippoReplyOutputDevices *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case MessageType_select_output_device: {
+      auto ptr = reinterpret_cast<const HippoSelectOutputDevice *>(obj);
       return verifier.VerifyTable(ptr);
     }
     default: return false;

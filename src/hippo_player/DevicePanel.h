@@ -2,6 +2,7 @@
 
 #include <QDialog>
 #include <vector>
+#include <string>
 
 class Ui_DevicePanel;
 class QListWidgetItem;
@@ -37,6 +38,9 @@ private:
     Q_SLOT void change_device(int index);
 
     std::vector<DeviceInfo> m_device_info;
+    std::string m_old_device_name;
+    QString m_old_device_name_qt;
+    int m_old_selection = 0;
 
     Ui_DevicePanel* m_ui = nullptr;
     const struct HippoMessageAPI* m_messages_api = nullptr;

@@ -74,92 +74,9 @@ impl HippoPlayback {
         ))
     }
 }
-/*
-impl Iterator for HippoPlayback {
-    type Item = f32;
-
-    #[inline]
-    fn next(&mut self) -> Option<f32> {
-        self.current_offset += 1;
-        /*
-        let message_count = self.incoming_messages.read_stream.len();
-
-        for _ in message_count {
-            let message = self.incoming_messages.read_stream.pop().unwrap();
-
-            if let Some(event_callback) = (self.plugin.plugin_funcs).event {
-                event_callback(
-                    self.plugin_user_data as *mut c_void,
-
-
-            }
-        }
-        */
-
-        if self.current_offset >= self.frame_size {
-            self.frame_size = unsafe {
-                ((self.plugin.plugin_funcs).read_data)(
-                    self.plugin_user_data as *mut c_void,
-                    self.out_data.as_slice().as_ptr() as *mut c_void,
-                    48000 / 2,
-                ) as usize
-            };
-
-            self.current_offset = 0;
-        }
-
-        Some(self.out_data[self.current_offset])
-    }
-}
-
-impl Source for HippoPlayback {
-    #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
-        None
-    }
-
-    #[inline]
-    fn channels(&self) -> u16 {
-        2
-    }
-
-    #[inline]
-    fn sample_rate(&self) -> u32 {
-        48000
-    }
-
-    #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        None
-    }
-}
-*/
-
-/*
-struct AudioPlayback {
-    value: f32,
-}
-
-impl miniaudio::Source for AudioPlayback {
-    fn generate_samples(&mut self, output: &mut [f32]) {
-        let mut start = self.value;
-
-        println!("gen samples {}", output.len());
-
-        for v in output {
-            let t = start.sin();
-            //println!("{}", t);
-            *v = t;
-            start += 0.0001;
-        }
-
-        self.value += 0.001;
-    }
-}
-*/
-
 pub struct HippoAudio {
     //players: Box<Mutex<Vec<HippoPlayback>>>,
+    device_name: String,
     players: *mut c_void,
     output_device: Option<Device>,
     output_devices: Option<Devices>,
@@ -190,14 +107,13 @@ unsafe extern "C" fn data_callback(
         output_ptr, frame_count);
 }
 
-
-
 impl HippoAudio {
     pub fn new() -> HippoAudio {
         // This is a bit hacky so it can be shared with the device and HippoAudio
         let players = Box::new(Mutex::new(Vec::<HippoPlayback>::new()));
 
         HippoAudio {
+            device_name: String::new(),
             players: Box::into_raw(players) as *mut c_void,
             output_devices: None,
             output_device: None,
@@ -218,11 +134,27 @@ impl HippoAudio {
         */
     }
 
+    fn select_output_device(&mut self, msg: &HippoSelectOutputDevice) -> Result<(), miniaudio::Error> {
+        let name = msg.name().unwrap();
+
+        if name == "Default Sound Device" {
+            self.init_device(&None)?;
+        } else {
+            // TODO: Fix me
+            let t = name.to_owned();
+            self.init_device(&Some(&t))?;
+        }
+
+        Ok(())
+    }
+
     fn replay_output_devices(&self) -> Option<Box<[u8]>> {
         let output_devices = self.output_devices.as_ref()?;
 
         let mut builder = messages::FlatBufferBuilder::new_with_capacity(8192);
         let mut out_ent = Vec::with_capacity(output_devices.devices.len());
+
+        let device_name = builder.create_string(&self.device_name);
 
         for dev in &output_devices.devices {
             let device_name = builder.create_string(&dev.name);
@@ -246,6 +178,7 @@ impl HippoAudio {
         let added_devices = HippoReplyOutputDevices::create(
             &mut builder,
             &HippoReplyOutputDevicesArgs {
+                current_device: Some(device_name),
                 devices: Some(devices_vec),
             },
         );
@@ -263,6 +196,14 @@ impl HippoAudio {
     pub fn event(&mut self, msg: &HippoMessage) -> Option<Box<[u8]>> {
         match msg.message_type() {
             MessageType::request_output_devices => self.replay_output_devices(),
+            MessageType::select_output_device => {
+                trace!("Trying to select new output from UI");
+                let select_output = msg.message_as_select_output_device().unwrap();
+                if let Err(e) = self.select_output_device(&select_output) {
+                    error!("Unable to select output device {:#?}", e);
+                }
+                None
+            }
             _ => None,
         }
     }
@@ -305,7 +246,6 @@ impl HippoAudio {
             for device in &output_devices.devices {
                 let device_id = device.device_id;
                 if device.name == **device_name {
-                    println!("closing device");
                     self.close_device();
                     self.output_device = Some(Device::new(
                         data_callback,
