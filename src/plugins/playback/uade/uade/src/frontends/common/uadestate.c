@@ -105,7 +105,7 @@ static int get_bytes_per_second(const struct uade_state *state)
 	return UADE_BYTES_PER_FRAME * uade_get_sampling_rate(state);
 }
 
-void uade_cleanup_state(struct uade_state *state, int spawn)
+void uade_cleanup_state(struct uade_state *state, int spawn, void* user_data)
 {
 	if (state == NULL)
 		return;
@@ -119,7 +119,7 @@ void uade_cleanup_state(struct uade_state *state, int spawn)
 	uade_free_playerstore(state->playerstore);
 
 	if (spawn) {
-		uade_arch_kill_and_wait_uadecore(&state->ipc, &state->pid);
+		uade_arch_kill_and_wait_uadecore(&state->ipc, &state->pid, user_data);
 	}
 
 	memset(state, 0, sizeof(*state));
@@ -1099,7 +1099,7 @@ int uade_read(void *_data, size_t bytes, struct uade_state *state)
 	return copied;
 }
 
-struct uade_state *uade_new_state(const struct uade_config *extraconfig, int spawn)
+struct uade_state *uade_new_state(const struct uade_config *extraconfig, int spawn, void* user_data)
 {
 	struct uade_state *state;
 	DIR *bd;
@@ -1149,7 +1149,7 @@ struct uade_state *uade_new_state(const struct uade_config *extraconfig, int spa
 			goto error;
 		}
 
-		if (uade_arch_spawn(&state->ipc, &state->pid, state->config.uadecore_file.name)) {
+		if (uade_arch_spawn(&state->ipc, &state->pid, state->config.uadecore_file.name, user_data)) {
 			uade_warning("Can not spawn uade: %s\n", state->config.uadecore_file.name);
 			goto error;
 		}
@@ -1163,7 +1163,7 @@ struct uade_state *uade_new_state(const struct uade_config *extraconfig, int spa
 	return state;
 
 error:
-	uade_cleanup_state(state, spawn);
+	uade_cleanup_state(state, spawn, user_data);
 	return NULL;
 }
 

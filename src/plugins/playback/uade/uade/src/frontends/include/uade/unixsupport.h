@@ -25,8 +25,8 @@
 char *uade_dirname(char *dst, char *src, size_t maxlen);
 int uade_find_amiga_file(char *realname, size_t maxlen, const char *aname, const char *playerdir);
 
-void uade_arch_kill_and_wait_uadecore(struct uade_ipc *ipc, pid_t *uadepid);
-int uade_arch_spawn(struct uade_ipc *ipc, pid_t *uadepid, const char *uadename);
+void uade_arch_kill_and_wait_uadecore(struct uade_ipc *ipc, pid_t *uadepid, void* user_data);
+int uade_arch_spawn(struct uade_ipc *ipc, pid_t *uadepid, const char *uadename, void* user_data);
 
 int uade_filesize(size_t *size, const char *pathname);
 

@@ -14,14 +14,15 @@ table HippoNextSong {
 table HippoPrevSong {
 }
 
-table HippoPlaySong {
+table HippoRequestPlaySong {
+  pause_state: bool;
 }
+
+table HippoReplyPlaySong {
+}
+
 
 table HippoStopSong {
-}
-
-table HippoPauseSong {
-  state: bool;
 }
 
 table HippoRequestAddedUrls {
@@ -34,6 +35,7 @@ table HippoRemovePlaylistEntries {
 }
 
 table HippoRequestSelectSong {
+  pause_state: bool;
   path: string;
   playlist_index: int;
 }
@@ -168,8 +170,11 @@ table HippoSelectOutputDevice {
 union MessageType {
   next_song: HippoNextSong,
   prev_song: HippoPrevSong,
-  play_song: HippoPlaySong,
   stop_song: HippoStopSong,
+
+  request_play_song: HippoRequestPlaySong,
+  reply_play_song: HippoReplyPlaySong,
+
   loop_current: HippoLoopCurrent,
   randomize_playlist: HippoRandomizePlaylist,
 

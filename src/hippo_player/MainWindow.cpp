@@ -166,7 +166,7 @@ void MainWindow::send_messages_to_ui(void* this_, const unsigned char* data, int
         return;
     }
 
-    main_win->m_plugin_instances[index - 1].view_plugin->event(data, len);
+    main_win->m_plugin_instances[index - 1].view_plugin->incoming_messages(data, len);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

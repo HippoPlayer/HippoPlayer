@@ -21,12 +21,12 @@ class PlaylistView : public QObject, HippoQtView
 
 public:
     QWidget* create(struct HippoServiceAPI* service_api, QAbstractItemModel* model);
-    void event(const unsigned char* data, int len);
+    void incoming_messages(const unsigned char* data, int len);
     void delete_items();
 
 private:
 	void select_song(const HippoSelectSong* msg);
-    void play_entry(const QModelIndex& item);
+    void play_entry(const QModelIndex& item, bool pause_state);
     const struct HippoMessageAPI* m_message_api = nullptr;
     TreeView* m_list = nullptr;
 

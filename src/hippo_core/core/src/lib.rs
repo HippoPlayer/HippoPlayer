@@ -95,8 +95,9 @@ impl HippoCore {
                     self.audio.start_with_file(&plugin, &self.plugin_service, &sub_url);
                     return sub_url;
                 } else {
-                    self.audio.start_with_file(&plugin, &self.plugin_service, url);
-                    return url.to_owned();
+                    if self.audio.start_with_file(&plugin, &self.plugin_service, url) {
+                        return url.to_owned();
+                    }
                 }
             }
         }
@@ -207,7 +208,7 @@ impl HippoCore {
 
                 let song_db = self.plugin_service.get_song_db();
 
-                if self.plugin_service.get_song_db().is_present(&song.0) {
+                if self.plugin_service.get_song_db().is_present(&song.0) && songname != "" {
                     self.current_song_time = song_db.get_tag_f64("length", &songname).unwrap() as f32;
                     self.playlist.update_current_entry(song_db, &songname);
                     self.start_time = Instant::now();

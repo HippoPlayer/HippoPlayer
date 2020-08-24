@@ -1,7 +1,7 @@
 /* UNIX support tools
 
    Copyright 2000-2011 (C) Heikki Orsila <heikki.orsila@iki.fi>
-   
+
    This module is licensed under the GNU LGPL.
 */
 
@@ -216,6 +216,7 @@ void uade_arch_kill_and_wait_uadecore(struct uade_ipc *ipc, pid_t *uadepid)
 	*uadepid = 0;
 }
 
+//int uade_arch_spawn(struct uade_ipc *ipc, pid_t *uadepid, const char *uadename, void* user_data)
 int uade_arch_spawn(struct uade_ipc *ipc, pid_t *uadepid, const char *uadename)
 {
 	int fds[2];
