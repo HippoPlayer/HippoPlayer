@@ -17,6 +17,7 @@ const DEFAULT_DEVICE_NAME: &str = "Default Sound Device";
 pub struct HippoPlayback {
     plugin_user_data: u64,
     plugin: DecoderPlugin,
+    is_paused: bool,
 }
 
 pub struct Instance {
@@ -47,25 +48,22 @@ impl HippoPlayback {
         let user_data =
             unsafe { ((plugin.plugin_funcs).create)(plugin_service.get_c_service_api()) } as u64;
         let ptr_user_data = user_data as *mut c_void;
-        let frame_size = 48000;
         //let frame_size = (((plugin.plugin_funcs).frame_size)(ptr_user_data)) as usize;
-        // TODO: Verify that state is ok
-        let _open_state =
+        let open_state =
             unsafe { ((plugin.plugin_funcs).open)(ptr_user_data, c_filename.as_ptr(), subsong_index) };
 
-        /*
         if open_state < 0 {
             return None;
         }
-        */
 
         let rb = RingBuffer::<Box<[u8]>>::new(256);
-        let (prod, cons) = rb.split();
+        let (prod, _cons) = rb.split();
 
         Some((
             HippoPlayback {
                 plugin_user_data: user_data,
                 plugin: plugin.clone(),
+                is_paused: false,
                 //_read_stream: cons,
             },
             Instance {
@@ -265,27 +263,31 @@ impl HippoAudio {
         plugin: &DecoderPlugin,
         service: &PluginService,
         filename: &str,
-    ) {
+    ) -> bool {
+
         if self.output_device.is_none() || self.output_devices.is_none() {
             error!("Unable to play {} because system has no audio device(s)", filename);
-            return;
+            return false;
         }
 
         // TODO: Do error checking
         let playback = HippoPlayback::start_with_file(plugin, service, filename);
 
         if let Some(pb) = playback {
-            {
-                let players: &Mutex<Vec<HippoPlayback>> = unsafe { std::mem::transmute(self.players) };
-                let mut t = players.lock().unwrap();
+            let players: &Mutex<Vec<HippoPlayback>> = unsafe { std::mem::transmute(self.players) };
+            let mut t = players.lock().unwrap();
 
-                if t.len() == 1 {
-                    t[0] = pb.0;
-                } else {
-                    t.push(pb.0);
-                }
+            if t.len() == 1 {
+                t[0] = pb.0;
+            } else {
+                t.push(pb.0);
             }
+
             self.playbacks.push(pb.1);
+
+            return true;
         }
+
+        return false;
     }
 }

@@ -161,7 +161,7 @@ void MusicInfoView::select_song(const HippoSelectSong* msg) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void MusicInfoView::event(const unsigned char* data, int len) {
+void MusicInfoView::incoming_messages(const unsigned char* data, int len) {
     const HippoMessage* message = GetHippoMessage(data);
 
     switch (message->message_type()) {

@@ -10,6 +10,10 @@
 HippoLogAPI* g_hp_log = nullptr;
 #define FRAME_SIZE 1024
 
+struct ThreadWrapper {
+    std::thread* thread = nullptr;
+};
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void get_file_stem(char* dest, const char* path) {
@@ -34,28 +38,26 @@ void get_file_stem(char* dest, const char* path) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static std::thread* s_uade_thread = nullptr;
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-extern "C" void uade_run_thread(void (*f)(void*), void* data) {
-    s_uade_thread = new std::thread(f, data);
+extern "C" void uade_run_thread(void (*f)(void*), void* data, void* user_data) {
+    ThreadWrapper* wrapper_data = (ThreadWrapper*)user_data;
+    wrapper_data->thread = new std::thread(f, data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-extern "C" void uade_wait_thread() {
-    if (s_uade_thread) {
-        s_uade_thread->join();
+extern "C" void uade_wait_thread(void* user_data) {
+    ThreadWrapper* wrapper_data = (ThreadWrapper*)user_data;
+    if (wrapper_data->thread) {
+        wrapper_data->thread->join();
     }
 
-    delete s_uade_thread;
-    s_uade_thread = nullptr;
+    delete wrapper_data->thread;
+    delete wrapper_data;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct uade_state* create_uade_state(int spawn) {
+struct uade_state* create_uade_state(int spawn, ThreadWrapper* thread_wrapper) {
     struct uade_config* config = uade_new_config();
     uade_config_set_option(config, UC_ONE_SUBSONG, NULL);
     uade_config_set_option(config, UC_IGNORE_PLAYER_CHECK, NULL);
@@ -65,7 +67,7 @@ struct uade_state* create_uade_state(int spawn) {
     // uade_config_set_option(config, UC_VERBOSE, "true");
 
     uade_config_set_option(config, UC_BASE_DIR, "bin/plugins/uade");
-    uade_state* state = uade_new_state(config, spawn);
+    uade_state* state = uade_new_state(config, spawn, thread_wrapper);
 
     free(config);
 
@@ -78,6 +80,7 @@ typedef struct UadePlugin {
     const HippoMetadataAPI* metadata_api = nullptr;
     struct uade_state* state = nullptr;
     bool closing_down;
+    ThreadWrapper thread_wrapper;
 } UadePlugin;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -92,9 +95,10 @@ static const char* uade_supported_extensions() {
 enum HippoProbeResult uade_probe_can_play(const uint8_t* data, uint32_t data_size, const char* filename,
                                           uint64_t total_size) {
     enum HippoProbeResult supported = HippoProbeResult_Unsupported;
+    ThreadWrapper* thread_wrapper = new ThreadWrapper;
 
     struct uade_detection_info detect_info;
-    struct uade_state* state = create_uade_state(0);
+    struct uade_state* state = create_uade_state(0, thread_wrapper);
 
     if (uade_analyze_eagleplayer(&detect_info, data, data_size, filename, strlen(filename), state) >= 0) {
         supported = HippoProbeResult_Supported;
@@ -103,7 +107,7 @@ enum HippoProbeResult uade_probe_can_play(const uint8_t* data, uint32_t data_siz
         hp_debug("Unsupported: %s", filename);
     }
 
-    uade_cleanup_state(state, 0);
+    uade_cleanup_state(state, 0, thread_wrapper);
 
     // supported = HippoProbeResult_Supported;
 
@@ -124,7 +128,7 @@ static void* uade_create(const struct HippoServiceAPI* services) {
 static int uade_open(void* user_data, const char* buffer, int subsong) {
     UadePlugin* plugin = (UadePlugin*)user_data;
 
-    plugin->state = create_uade_state(1);
+    plugin->state = create_uade_state(1, &plugin->thread_wrapper);
 
     if (uade_play(buffer, subsong, plugin->state) == 1) {
         hp_info("Started to play %s", buffer);
@@ -143,7 +147,7 @@ static int uade_close(void* user_data) {
 
     if (plugin->state) {
         uade_stop(plugin->state);
-        uade_cleanup_state(plugin->state, 1);
+        uade_cleanup_state(plugin->state, 1, &plugin->thread_wrapper);
     }
 
     plugin->state = 0;
@@ -190,12 +194,14 @@ static int uade_plugin_seek(void* user_data, int ms) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int uade_metadata(const char* filename, const HippoServiceAPI* service_api) {
-    auto state = create_uade_state(1);
+    ThreadWrapper thread_data;
+
+    auto state = create_uade_state(1, &thread_data);
 
     // TODO: Use io functions
     if (uade_play(filename, -1, state) != 1) {
         uade_stop(state);
-        uade_cleanup_state(state, 0);
+        uade_cleanup_state(state, 0, &thread_data);
         hp_error("Unable to open %s", filename);
         return -1;
     }
@@ -232,7 +238,7 @@ static int uade_metadata(const char* filename, const HippoServiceAPI* service_ap
     }
 
     uade_stop(state);
-    uade_cleanup_state(state, 0);
+    uade_cleanup_state(state, 0, &thread_data);
 
     return 1;
 }

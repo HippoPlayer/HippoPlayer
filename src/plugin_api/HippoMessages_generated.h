@@ -14,11 +14,11 @@ struct HippoNextSong;
 
 struct HippoPrevSong;
 
-struct HippoPlaySong;
+struct HippoRequestPlaySong;
+
+struct HippoReplyPlaySong;
 
 struct HippoStopSong;
-
-struct HippoPauseSong;
 
 struct HippoRequestAddedUrls;
 
@@ -103,37 +103,39 @@ enum MessageType {
   MessageType_NONE = 0,
   MessageType_next_song = 1,
   MessageType_prev_song = 2,
-  MessageType_play_song = 3,
-  MessageType_stop_song = 4,
-  MessageType_loop_current = 5,
-  MessageType_randomize_playlist = 6,
-  MessageType_request_added_urls = 7,
-  MessageType_request_select_song = 8,
-  MessageType_select_song = 9,
-  MessageType_request_add_urls = 10,
-  MessageType_reply_added_urls = 11,
-  MessageType_request_tracker_data = 12,
-  MessageType_tracker_data = 13,
-  MessageType_current_position = 14,
-  MessageType_song_metadata = 15,
-  MessageType_log_messages = 16,
-  MessageType_log_clear = 17,
-  MessageType_log_file = 18,
-  MessageType_log_send_messages = 19,
-  MessageType_request_output_devices = 20,
-  MessageType_reply_output_devices = 21,
-  MessageType_select_output_device = 22,
+  MessageType_stop_song = 3,
+  MessageType_request_play_song = 4,
+  MessageType_reply_play_song = 5,
+  MessageType_loop_current = 6,
+  MessageType_randomize_playlist = 7,
+  MessageType_request_added_urls = 8,
+  MessageType_request_select_song = 9,
+  MessageType_select_song = 10,
+  MessageType_request_add_urls = 11,
+  MessageType_reply_added_urls = 12,
+  MessageType_request_tracker_data = 13,
+  MessageType_tracker_data = 14,
+  MessageType_current_position = 15,
+  MessageType_song_metadata = 16,
+  MessageType_log_messages = 17,
+  MessageType_log_clear = 18,
+  MessageType_log_file = 19,
+  MessageType_log_send_messages = 20,
+  MessageType_request_output_devices = 21,
+  MessageType_reply_output_devices = 22,
+  MessageType_select_output_device = 23,
   MessageType_MIN = MessageType_NONE,
   MessageType_MAX = MessageType_select_output_device
 };
 
-inline const MessageType (&EnumValuesMessageType())[23] {
+inline const MessageType (&EnumValuesMessageType())[24] {
   static const MessageType values[] = {
     MessageType_NONE,
     MessageType_next_song,
     MessageType_prev_song,
-    MessageType_play_song,
     MessageType_stop_song,
+    MessageType_request_play_song,
+    MessageType_reply_play_song,
     MessageType_loop_current,
     MessageType_randomize_playlist,
     MessageType_request_added_urls,
@@ -157,12 +159,13 @@ inline const MessageType (&EnumValuesMessageType())[23] {
 }
 
 inline const char * const *EnumNamesMessageType() {
-  static const char * const names[24] = {
+  static const char * const names[25] = {
     "NONE",
     "next_song",
     "prev_song",
-    "play_song",
     "stop_song",
+    "request_play_song",
+    "reply_play_song",
     "loop_current",
     "randomize_playlist",
     "request_added_urls",
@@ -331,31 +334,71 @@ inline flatbuffers::Offset<HippoPrevSong> CreateHippoPrevSong(
   return builder_.Finish();
 }
 
-struct HippoPlaySong FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+struct HippoRequestPlaySong FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_PAUSE_STATE = 4
+  };
+  bool pause_state() const {
+    return GetField<uint8_t>(VT_PAUSE_STATE, 0) != 0;
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint8_t>(verifier, VT_PAUSE_STATE) &&
+           verifier.EndTable();
+  }
+};
+
+struct HippoRequestPlaySongBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_pause_state(bool pause_state) {
+    fbb_.AddElement<uint8_t>(HippoRequestPlaySong::VT_PAUSE_STATE, static_cast<uint8_t>(pause_state), 0);
+  }
+  explicit HippoRequestPlaySongBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  HippoRequestPlaySongBuilder &operator=(const HippoRequestPlaySongBuilder &);
+  flatbuffers::Offset<HippoRequestPlaySong> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<HippoRequestPlaySong>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<HippoRequestPlaySong> CreateHippoRequestPlaySong(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    bool pause_state = false) {
+  HippoRequestPlaySongBuilder builder_(_fbb);
+  builder_.add_pause_state(pause_state);
+  return builder_.Finish();
+}
+
+struct HippoReplyPlaySong FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            verifier.EndTable();
   }
 };
 
-struct HippoPlaySongBuilder {
+struct HippoReplyPlaySongBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  explicit HippoPlaySongBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  explicit HippoReplyPlaySongBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  HippoPlaySongBuilder &operator=(const HippoPlaySongBuilder &);
-  flatbuffers::Offset<HippoPlaySong> Finish() {
+  HippoReplyPlaySongBuilder &operator=(const HippoReplyPlaySongBuilder &);
+  flatbuffers::Offset<HippoReplyPlaySong> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<HippoPlaySong>(end);
+    auto o = flatbuffers::Offset<HippoReplyPlaySong>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<HippoPlaySong> CreateHippoPlaySong(
+inline flatbuffers::Offset<HippoReplyPlaySong> CreateHippoReplyPlaySong(
     flatbuffers::FlatBufferBuilder &_fbb) {
-  HippoPlaySongBuilder builder_(_fbb);
+  HippoReplyPlaySongBuilder builder_(_fbb);
   return builder_.Finish();
 }
 
@@ -384,46 +427,6 @@ struct HippoStopSongBuilder {
 inline flatbuffers::Offset<HippoStopSong> CreateHippoStopSong(
     flatbuffers::FlatBufferBuilder &_fbb) {
   HippoStopSongBuilder builder_(_fbb);
-  return builder_.Finish();
-}
-
-struct HippoPauseSong FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
-  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_STATE = 4
-  };
-  bool state() const {
-    return GetField<uint8_t>(VT_STATE, 0) != 0;
-  }
-  bool Verify(flatbuffers::Verifier &verifier) const {
-    return VerifyTableStart(verifier) &&
-           VerifyField<uint8_t>(verifier, VT_STATE) &&
-           verifier.EndTable();
-  }
-};
-
-struct HippoPauseSongBuilder {
-  flatbuffers::FlatBufferBuilder &fbb_;
-  flatbuffers::uoffset_t start_;
-  void add_state(bool state) {
-    fbb_.AddElement<uint8_t>(HippoPauseSong::VT_STATE, static_cast<uint8_t>(state), 0);
-  }
-  explicit HippoPauseSongBuilder(flatbuffers::FlatBufferBuilder &_fbb)
-        : fbb_(_fbb) {
-    start_ = fbb_.StartTable();
-  }
-  HippoPauseSongBuilder &operator=(const HippoPauseSongBuilder &);
-  flatbuffers::Offset<HippoPauseSong> Finish() {
-    const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<HippoPauseSong>(end);
-    return o;
-  }
-};
-
-inline flatbuffers::Offset<HippoPauseSong> CreateHippoPauseSong(
-    flatbuffers::FlatBufferBuilder &_fbb,
-    bool state = false) {
-  HippoPauseSongBuilder builder_(_fbb);
-  builder_.add_state(state);
   return builder_.Finish();
 }
 
@@ -513,9 +516,13 @@ inline flatbuffers::Offset<HippoRemovePlaylistEntries> CreateHippoRemovePlaylist
 
 struct HippoRequestSelectSong FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_PATH = 4,
-    VT_PLAYLIST_INDEX = 6
+    VT_PAUSE_STATE = 4,
+    VT_PATH = 6,
+    VT_PLAYLIST_INDEX = 8
   };
+  bool pause_state() const {
+    return GetField<uint8_t>(VT_PAUSE_STATE, 0) != 0;
+  }
   const flatbuffers::String *path() const {
     return GetPointer<const flatbuffers::String *>(VT_PATH);
   }
@@ -524,6 +531,7 @@ struct HippoRequestSelectSong FLATBUFFERS_FINAL_CLASS : private flatbuffers::Tab
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
+           VerifyField<uint8_t>(verifier, VT_PAUSE_STATE) &&
            VerifyOffset(verifier, VT_PATH) &&
            verifier.VerifyString(path()) &&
            VerifyField<int32_t>(verifier, VT_PLAYLIST_INDEX) &&
@@ -534,6 +542,9 @@ struct HippoRequestSelectSong FLATBUFFERS_FINAL_CLASS : private flatbuffers::Tab
 struct HippoRequestSelectSongBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
+  void add_pause_state(bool pause_state) {
+    fbb_.AddElement<uint8_t>(HippoRequestSelectSong::VT_PAUSE_STATE, static_cast<uint8_t>(pause_state), 0);
+  }
   void add_path(flatbuffers::Offset<flatbuffers::String> path) {
     fbb_.AddOffset(HippoRequestSelectSong::VT_PATH, path);
   }
@@ -554,21 +565,25 @@ struct HippoRequestSelectSongBuilder {
 
 inline flatbuffers::Offset<HippoRequestSelectSong> CreateHippoRequestSelectSong(
     flatbuffers::FlatBufferBuilder &_fbb,
+    bool pause_state = false,
     flatbuffers::Offset<flatbuffers::String> path = 0,
     int32_t playlist_index = 0) {
   HippoRequestSelectSongBuilder builder_(_fbb);
   builder_.add_playlist_index(playlist_index);
   builder_.add_path(path);
+  builder_.add_pause_state(pause_state);
   return builder_.Finish();
 }
 
 inline flatbuffers::Offset<HippoRequestSelectSong> CreateHippoRequestSelectSongDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
+    bool pause_state = false,
     const char *path = nullptr,
     int32_t playlist_index = 0) {
   auto path__ = path ? _fbb.CreateString(path) : 0;
   return CreateHippoRequestSelectSong(
       _fbb,
+      pause_state,
       path__,
       playlist_index);
 }
@@ -1928,11 +1943,14 @@ struct HippoMessage FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const HippoPrevSong *message_as_prev_song() const {
     return message_type() == MessageType_prev_song ? static_cast<const HippoPrevSong *>(message()) : nullptr;
   }
-  const HippoPlaySong *message_as_play_song() const {
-    return message_type() == MessageType_play_song ? static_cast<const HippoPlaySong *>(message()) : nullptr;
-  }
   const HippoStopSong *message_as_stop_song() const {
     return message_type() == MessageType_stop_song ? static_cast<const HippoStopSong *>(message()) : nullptr;
+  }
+  const HippoRequestPlaySong *message_as_request_play_song() const {
+    return message_type() == MessageType_request_play_song ? static_cast<const HippoRequestPlaySong *>(message()) : nullptr;
+  }
+  const HippoReplyPlaySong *message_as_reply_play_song() const {
+    return message_type() == MessageType_reply_play_song ? static_cast<const HippoReplyPlaySong *>(message()) : nullptr;
   }
   const HippoLoopCurrent *message_as_loop_current() const {
     return message_type() == MessageType_loop_current ? static_cast<const HippoLoopCurrent *>(message()) : nullptr;
@@ -2064,12 +2082,16 @@ inline bool VerifyMessageType(flatbuffers::Verifier &verifier, const void *obj, 
       auto ptr = reinterpret_cast<const HippoPrevSong *>(obj);
       return verifier.VerifyTable(ptr);
     }
-    case MessageType_play_song: {
-      auto ptr = reinterpret_cast<const HippoPlaySong *>(obj);
-      return verifier.VerifyTable(ptr);
-    }
     case MessageType_stop_song: {
       auto ptr = reinterpret_cast<const HippoStopSong *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case MessageType_request_play_song: {
+      auto ptr = reinterpret_cast<const HippoRequestPlaySong *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case MessageType_reply_play_song: {
+      auto ptr = reinterpret_cast<const HippoReplyPlaySong *>(obj);
       return verifier.VerifyTable(ptr);
     }
     case MessageType_loop_current: {

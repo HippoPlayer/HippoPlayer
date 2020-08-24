@@ -3,7 +3,7 @@
 /* UNIX support tools
 
    Copyright 2000-2011 (C) Heikki Orsila <heikki.orsila@iki.fi>
-   
+
    This module is licensed under the GNU LGPL.
 */
 
@@ -226,15 +226,15 @@ int uade_find_amiga_file(char *realname, size_t maxlen, const char *aname,
 }
 
 int uadecore_main (int argc, char **argv);
-void uade_run_thread(void (*f)(void*), void *data);
-void uade_wait_thread();
+void uade_run_thread(void (*f)(void*), void *data, void* user_data);
+void uade_wait_thread(void* user_data);
 
-void uade_arch_kill_and_wait_uadecore(struct uade_ipc *ipc, pid_t *uadepid)
+void uade_arch_kill_and_wait_uadecore(struct uade_ipc *ipc, pid_t *uadepid, void* user_data)
 {
 	uade_atomic_close(ipc->in_fd);
 	uade_atomic_close(ipc->out_fd);
 
-	uade_wait_thread();
+	uade_wait_thread(user_data);
 }
 
 static void thread_func(void *data)
@@ -253,15 +253,15 @@ static void thread_func(void *data)
 
 static int spawn_fds[2];
 
-int uade_arch_spawn(struct uade_ipc *ipc, pid_t *uadepid, const char *uadename)
+int uade_arch_spawn(struct uade_ipc *ipc, pid_t *uadepid, const char *uadename, void* user_data)
 {
 	if (dumb_socketpair(spawn_fds, 0)) {
 		uade_warning("Can not create socketpair: %s\n",
 			     strerror(errno));
 		return -1;
 	}
-	
-	uade_run_thread(&thread_func, (void*)spawn_fds);
+
+	uade_run_thread(&thread_func, (void*)spawn_fds, user_data);
 
 	uade_set_peer(ipc, 1, spawn_fds[0], spawn_fds[0]);
 	return 0;

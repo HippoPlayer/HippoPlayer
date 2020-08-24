@@ -167,7 +167,7 @@ struct uade_state;
  * Free resources of a state. This also implies uade_stop().
  * A call does nothing if state == NULL.
  */
-void uade_cleanup_state(struct uade_state *state, int spawn);
+void uade_cleanup_state(struct uade_state *state, int spawn, void* user_data);
 
 /*
  * Return a config structure for setting playback options. The structure is
@@ -378,7 +378,7 @@ struct bencode *uade_get_rmc_from_state(const struct uade_state *state);
  * Each context is completely independent. A context is not thread-safe,
  * but different contexts can be used simultaneously in different threads.
  */
-struct uade_state *uade_new_state(const struct uade_config *uc, int spawn);
+struct uade_state *uade_new_state(const struct uade_config *uc, int spawn, void* user_data);
 
 /*
  * uade_load_amiga_file() loads a file by using AmigaOS path search.

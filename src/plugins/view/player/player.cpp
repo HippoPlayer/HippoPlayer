@@ -36,12 +36,16 @@ QWidget* PlayerView::create(struct HippoServiceAPI* service_api, QAbstractItemMo
     QObject::connect(stop_button, &QPushButton::pressed, this, &PlayerView::stop_song);
     QObject::connect(play_button, &QPushButton::pressed, this, &PlayerView::play_song);
 
+    m_play_icon = new QIcon("bin/player/buttons/hip_button_play.png");
+    m_pause_icon = new QIcon("bin/player/buttons/hip_button_pause.png");
+
     QHBoxLayout* hbox = new QHBoxLayout;
     hbox->addWidget(prev_button);
     hbox->addWidget(stop_button);
     hbox->addWidget(play_button);
     hbox->addWidget(next_button);
 
+    m_play_pause_button = play_button;
 
     QCheckBox* loop_current = new QCheckBox(QStringLiteral("Loop Current"));
     QCheckBox* randomize_playlist = new QCheckBox(QStringLiteral("Randomize Playlist"));
@@ -65,7 +69,7 @@ QWidget* PlayerView::create(struct HippoServiceAPI* service_api, QAbstractItemMo
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void PlayerView::event(const unsigned char* data, int len) {
+void PlayerView::incoming_messages(const unsigned char* data, int len) {
     const HippoMessage* message = GetHippoMessage(data);
 
     if (message->message_type() != MessageType_select_song)
@@ -74,6 +78,7 @@ void PlayerView::event(const unsigned char* data, int len) {
     auto title = message->message_as_select_song()->description()->title();
 
     m_song_title->setText(QString::fromUtf8(title->c_str(), title->size()));
+    m_play_pause_button->setIcon(*m_pause_icon);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -98,13 +103,24 @@ void PlayerView::stop_song() {
     flatbuffers::FlatBufferBuilder builder(1024);
     builder.Finish(CreateHippoMessageDirect(builder, MessageType_stop_song, CreateHippoStopSong(builder).Union()));
     HippoMessageAPI_send(m_message_api, builder.GetBufferPointer(), builder.GetSize());
+    m_play_pause_button->setIcon(*m_play_icon);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void PlayerView::play_song() {
+    if (m_play_state) {
+        m_play_pause_button->setIcon(*m_pause_icon);
+    } else {
+        m_play_pause_button->setIcon(*m_play_icon);
+    }
+
+    printf("playstate %d\n", m_play_state);
+
+    m_play_state = !m_play_state;
+
     flatbuffers::FlatBufferBuilder builder(1024);
-    builder.Finish(CreateHippoMessageDirect(builder, MessageType_play_song, CreateHippoPlaySong(builder).Union()));
+    builder.Finish(CreateHippoMessageDirect(builder, MessageType_request_play_song, CreateHippoRequestPlaySong(builder, m_play_state).Union()));
     HippoMessageAPI_send(m_message_api, builder.GetBufferPointer(), builder.GetSize());
 }
 

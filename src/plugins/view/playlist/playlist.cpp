@@ -156,7 +156,7 @@ void PlaylistView::select_song(const HippoSelectSong* msg) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void PlaylistView::play_entry(const QModelIndex& item) {
+void PlaylistView::play_entry(const QModelIndex& item, bool pause_state) {
     QAbstractItemModel* model = m_list->model();
 
     flatbuffers::FlatBufferBuilder builder(1024);
@@ -165,7 +165,7 @@ void PlaylistView::play_entry(const QModelIndex& item) {
 
     builder.Finish(CreateHippoMessageDirect(
         builder, MessageType_request_select_song,
-        CreateHippoRequestSelectSongDirect(builder, path.data(), model->buddy(item).row()).Union()));
+        CreateHippoRequestSelectSongDirect(builder, pause_state, path.data(), model->buddy(item).row()).Union()));
 
     HippoMessageAPI_send(m_message_api, builder.GetBufferPointer(), builder.GetSize());
 }
@@ -173,7 +173,7 @@ void PlaylistView::play_entry(const QModelIndex& item) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void PlaylistView::item_double_clicked(const QModelIndex& item) {
-    play_entry(item);
+    play_entry(item, false);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -197,7 +197,7 @@ void PlaylistView::delete_items() {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void PlaylistView::event(const unsigned char* data, int len) {
+void PlaylistView::incoming_messages(const unsigned char* data, int len) {
     const HippoMessage* message = GetHippoMessage(data);
 
     switch (message->message_type()) {
@@ -206,12 +206,13 @@ void PlaylistView::event(const unsigned char* data, int len) {
             break;
         }
 
-        case MessageType_play_song: {
+        case MessageType_request_play_song: {
+            auto msg = message->message_as_request_play_song();
             // TODO: this will leak but for some reason we crash here otherwise :(
             QModelIndexList* indices = new QModelIndexList(m_list->selectionModel()->selectedIndexes());
 
             if (indices->count() > 0) {
-                play_entry(indices->at(0));
+                play_entry(indices->at(0), msg->pause_state());
             }
             break;
         }

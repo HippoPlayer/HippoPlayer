@@ -6,6 +6,8 @@ class QWidget;
 class ScrollText;
 struct HippoMessageAPI;
 struct HippoServiceAPI;
+class QPushButton;
+class QIcon;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -17,7 +19,7 @@ class PlayerView : public QObject, HippoQtView
 
 public:
     QWidget* create(struct HippoServiceAPI* service_api, QAbstractItemModel* model);
-    void event(const unsigned char* data, int len);
+    void incoming_messages(const unsigned char* data, int len);
 
     Q_SLOT void next_song();
     Q_SLOT void stop_song();
@@ -30,5 +32,9 @@ public:
 private:
     const struct HippoMessageAPI* m_message_api = nullptr;
     ScrollText* m_song_title = nullptr;
+    QPushButton* m_play_pause_button = nullptr;
+    QIcon* m_play_icon;
+    QIcon* m_pause_icon;
+    bool m_play_state = true;
 };
 

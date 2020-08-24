@@ -36,7 +36,7 @@ impl Playlist {
     pub fn new() -> Playlist {
         Playlist {
             entries: Vec::new(),
-            current_song: 0,
+            current_song: -1,
             new_song: false,
             loop_current: false,
             randomize_playlist: false,

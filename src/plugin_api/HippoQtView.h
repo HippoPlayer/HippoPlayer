@@ -13,7 +13,7 @@ public:
     virtual QWidget* create(struct HippoServiceAPI* service_api, QAbstractItemModel* model = nullptr) = 0;
 
     // Events get sent with messages such as files added to playlist, new song etc
-    virtual void event(const unsigned char* data, int len) = 0;
+    virtual void incoming_messages(const unsigned char* data, int len) = 0;
 };
 
 

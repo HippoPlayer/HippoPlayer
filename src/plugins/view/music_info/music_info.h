@@ -23,7 +23,7 @@ class MusicInfoView : public QObject, HippoQtView
 
 public:
     QWidget* create(struct HippoServiceAPI* service_api, QAbstractItemModel* model);
-    void event(const unsigned char* data, int len);
+    void incoming_messages(const unsigned char* data, int len);
     void delete_items();
 
 private:
