@@ -33,7 +33,10 @@ static const char* get_file_name_from_path(const char* path) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef struct TfmxReplayerData {
+	uint16_t temp_data[BUFSIZE];
     void* tune;
+	int read_index;
+	int frames_decoded;
 } TfmxReplayerData;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -48,9 +51,9 @@ static const char* tfmx_supported_extensions(void* user_data) {
 enum HippoProbeResult tfmx_probe_can_play(const uint8_t* data, uint32_t data_size, const char* filename,
                                           uint64_t total_size) {
     if (strncmp("TFMX-SONG", (char*)data, 9)
-        && strncmp("TFMX_SONG", (char*)data, 9)
-        && strncasecmp("TFMXSONG", (char*)data, 8)
-        && strncasecmp("TFMX ", (char*)data, 5)) {
+      && strncmp("TFMX_SONG", (char*)data, 9)
+      && strncasecmp("TFMXSONG", (char*)data, 8)
+      && strncasecmp("TFMX ", (char*)data, 5)) {
         hp_debug("Unsupported: %s", filename);
         return HippoProbeResult_Unsupported;
     }
@@ -103,17 +106,68 @@ static int tfmx_close(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int tfmx_read_data(void* user_data, void* dest, uint32_t max_samples) {
-    int16_t temp_data[BUFSIZE] = {0};
+static int tfmx_read_data(void* user_data, void* dest, uint32_t samples_to_read_in) {
+	struct TfmxReplayerData* data = (TfmxReplayerData*)user_data;
+	int samples_to_read = (int)samples_to_read_in;
+	float* newDest = (float*)dest;
 
-    int block_size = (int)tfmx_get_block_size() / 2;
+    int block_size = (int)tfmx_get_block_size() / 4;
 
     assert(block_size < BUFSIZE);
 
-    if (tfmx_try_to_make_block() >= 0) {
-        tfmx_get_block(temp_data);
-    }
+	if (data->frames_decoded == 0) {
+		if (tfmx_try_to_make_block() >= 0) {
+			tfmx_get_block(data->temp_data);
+		}
 
+		data->frames_decoded = block_size;
+	}
+
+	const float scale = 1.0f / 32767.0f;
+
+
+	int16_t* data_read = (int16_t*)data->temp_data;
+
+	// if we have enough data we can just convert it to the output
+	if ((data->read_index + samples_to_read) < data->frames_decoded) {
+	    data_read += data->read_index * 2;
+
+        for (int i = 0; i < samples_to_read * 2; ++i) {
+            newDest[i] = ((float)data_read[i]) * scale;
+        }
+
+        data->read_index += samples_to_read;
+	} else {
+	    // else we need to copy what we have left, decode a new frame and copy the remainder from thata
+	    int diff = data->frames_decoded - data->read_index;
+	    data_read += data->read_index * 2;
+
+	    // copy what we have left in the buffer
+        for (int i = 0; i < diff * 2; ++i) {
+            newDest[i] = ((float)data_read[i]) * scale;
+        }
+
+        newDest += diff * 2;
+
+		if (tfmx_try_to_make_block() >= 0) {
+			tfmx_get_block(data->temp_data);
+		}
+
+		data->frames_decoded = block_size;
+
+        // decode some new output so we can fill up the remining data
+	    data_read = (int16_t*)data->temp_data;
+	    int new_samples = samples_to_read - diff;
+
+	    // copy what we have left in the buffer
+        for (int i = 0; i < new_samples * 2; ++i) {
+            newDest[i] = ((float)data_read[i]) * scale;
+        }
+
+        data->read_index = new_samples;
+	}
+
+	/*
     const float scale = 1.0f / 32767.0f;
 
     float* new_dest = (float*)dest;
@@ -121,6 +175,7 @@ static int tfmx_read_data(void* user_data, void* dest, uint32_t max_samples) {
     for (int i = 0; i < block_size; ++i) {
         new_dest[i] = ((float)temp_data[i]) * scale;
     }
+    */
 
     return block_size;
 }
