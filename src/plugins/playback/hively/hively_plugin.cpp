@@ -119,8 +119,6 @@ static int hively_read_data(void* user_data, void* dest, uint32_t samples_to_rea
 	// the player can request arbitary sized chunk. Later on it would be good to allow the backend
 	// to just deal with this insdeat
 
-    int frames_decoded = 0;
-
 	if (data->frames_decoded == 0) {
 	    data->frames_decoded = hvl_DecodeFrame(data->tune, ptr, ptr + 2, 4) / 4;
 	}
@@ -165,7 +163,7 @@ static int hively_read_data(void* user_data, void* dest, uint32_t samples_to_rea
 
 	//int frames_decoded = hvl_DecodeFrame(replayerData->tune, ptr, ptr + 2, 4) / 2;
 
-	return frames_decoded;
+	return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
