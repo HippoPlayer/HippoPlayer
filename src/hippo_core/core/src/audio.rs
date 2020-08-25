@@ -21,8 +21,8 @@ pub struct HippoPlayback {
 }
 
 pub struct Instance {
-    plugin_user_data: u64,
-    plugin: DecoderPlugin,
+    _plugin_user_data: u64,
+    _plugin: DecoderPlugin,
     pub write_stream: Producer<Box<[u8]>>,
 }
 
@@ -68,8 +68,8 @@ impl HippoPlayback {
             },
             Instance {
                 write_stream: prod,
-                plugin_user_data: user_data,
-                plugin: plugin.clone(),
+                _plugin_user_data: user_data,
+                _plugin: plugin.clone(),
             },
         ))
     }
