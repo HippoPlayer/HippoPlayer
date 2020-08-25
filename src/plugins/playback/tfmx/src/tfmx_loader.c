@@ -23,30 +23,6 @@
 #include <arpa/inet.h>
 #endif
 
-extern struct Hdb hdb[8];
-extern struct Pdblk pdb;
-extern struct Mdb mdb;
-extern char act[8];
-
-U32 outRate = 48000;
-unsigned int mlen = 0;
-U8* smplbuf = 0;
-U8* smplbuf_end = 0;
-int* macros = 0;
-int* patterns = 0;
-short ts[512][8];
-
-struct TFMXHeader mdat_header;
-
-U32 mdat_editbuf[MDAT_EDITBUF_LONGS];
-
-int num_ts;
-int num_pat;
-int num_mac;
-int gubed = 0;
-int printinfo = 0;
-int loops = 1;
-
 /* structure of of cyb tfmx module (mdat and smpl in one file) */
 /* format by my weird friend Alexis 'Cyb' Nasr, back in 1995, yeah ! */
 /* FYI, he stopped coding (used asm m68k back then), and is now a doctor ! */
@@ -65,11 +41,11 @@ static inline uint32_t GINT32_FROM_BE(uint32_t v) {
     return ((v >> 24) & 0x000000ff) | ((v >> 8) & 0x0000ff00) | ((v << 8) & 0x00ff0000) | ((v << 16) & 0xff000000);
 }
 
-static int tfmx_loader(char* mfn, char* sfn);
+static int tfmx_loader(TfmxState* state, char* mfn, char* sfn);
 
 /* loading of a single Cyb' TFMX file */
 /* return 0 on success */
-static int tfmx_cyb_file_load(char* fn) {
+static int tfmx_cyb_file_load(TfmxState* state, char* fn) {
     FILE* cybf = NULL;
     char* radix = NULL;
     uint8_t* cybmem = NULL;
@@ -172,7 +148,7 @@ static int tfmx_cyb_file_load(char* fn) {
     fclose(smplf);
 
     /* tfmx loading */
-    if (tfmx_loader(tmp_mdat, tmp_smpl) == 1) {
+    if (tfmx_loader(state, tmp_mdat, tmp_smpl) == 1) {
         goto cleanup;
     }
     retval = 0;
@@ -191,7 +167,7 @@ cleanup:
     return retval;
 }
 
-char LoadTFMXFile(char* fName) {
+char LoadTFMXFile(TfmxState* state, char* fName) {
     int suffixPos, suffixPosDat, status;
     char *mfn = fName, *sfn, *c;
 
@@ -218,7 +194,7 @@ char LoadTFMXFile(char* fName) {
         c -= 4;
     } else if (strncasecmp(c, "tfmx.", 5) == 0) { /* Single Cyb' TFMX file */
         free(sfn);
-        return tfmx_cyb_file_load(fName);
+        return tfmx_cyb_file_load(state, fName);
     } else if (suffixPos >= 0 && strncasecmp(c + suffixPos, ".tfx", 4) == 0) {
         /* Case-preserving conversion of ".tfx" to ".sam" */
         *(c + suffixPos + 1) ^= 't' ^ 's';
@@ -230,12 +206,12 @@ char LoadTFMXFile(char* fName) {
         *(c + suffixPosDat + 3) ^= 'a' ^ 'p';
         *(c + suffixPosDat + 4) ^= 't' ^ 'l';
     } else {
-        TFMXERR("LoadTFMX: Song name prefix / suffix missing ?!");
+        TFMXERR(state, "LoadTFMX: Song name prefix / suffix missing ?!");
         free(sfn);
         return 1;
     }
 
-    if ((status = tfmx_loader(mfn, sfn)) == 1) {
+    if ((status = tfmx_loader(state, mfn, sfn)) == 1) {
         /* TFMXERR("LoadTFMXFile: Loading of module failed"); */
         free(sfn);
         return 1;
@@ -249,68 +225,68 @@ char LoadTFMXFile(char* fName) {
     return 0;
 }
 
-static int tfmx_loader(char* mfn, char* sfn) {
+static int tfmx_loader(TfmxState* state, char* mfn, char* sfn) {
     FILE *gfd, *smplFile;
     /* struct stat s; */
     int x, y, z = 0;
     U16 *sh, *lg;
 
     if ((gfd = fopen(mfn, "rb")) <= 0) {
-        TFMXERR("LoadTFMX: Failed to open song");
+        TFMXERR(state, "LoadTFMX: Failed to open song");
         return (1);
     }
 
-    if (!fread(&mdat_header, sizeof(mdat_header), 1, gfd)) {
-        TFMXERR("LoadTFMX: Failed to read TFMX header");
+    if (!fread(&state->mdat_header, sizeof(state->mdat_header), 1, gfd)) {
+        TFMXERR(state, "LoadTFMX: Failed to read TFMX header");
         fclose(gfd);
         return (1);
     }
 
-    if (strncmp("TFMX-SONG", mdat_header.magic, 9) && strncmp("TFMX_SONG", mdat_header.magic, 9) &&
-        strncasecmp("TFMXSONG", mdat_header.magic, 8) && strncasecmp("TFMX ", mdat_header.magic, 5)) {
-        TFMXERR("LoadTFMX: Not a TFMX module");
+    if (strncmp("TFMX-SONG", state->mdat_header.magic, 9) && strncmp("TFMX_SONG", state->mdat_header.magic, 9) &&
+        strncasecmp("TFMXSONG", state->mdat_header.magic, 8) && strncasecmp("TFMX ", state->mdat_header.magic, 5)) {
+        TFMXERR(state, "LoadTFMX: Not a TFMX module");
         fclose(gfd);
         return (2);
     }
 
-    if (!(x = fread(&mdat_editbuf, sizeof(U32), MDAT_EDITBUF_LONGS, gfd))) {
-        TFMXERR("LoadTFMX: Read error in MDAT file");
+    if (!(x = fread(&state->mdat_editbuf, sizeof(U32), MDAT_EDITBUF_LONGS, gfd))) {
+        TFMXERR(state, "LoadTFMX: Read error in MDAT file");
         fclose(gfd);
         return (1);
     }
 
     fclose(gfd);
 
-    mlen = x;
+    state->mlen = x;
 
-    mdat_editbuf[x] = -1;
-    if (!mdat_header.trackstart)
-        mdat_header.trackstart = 0x180;
+    state->mdat_editbuf[x] = -1;
+    if (!state->mdat_header.trackstart)
+        state->mdat_header.trackstart = 0x180;
     else
-        mdat_header.trackstart = (ntohl(mdat_header.trackstart) - 0x200L) >> 2;
-    if (!mdat_header.pattstart)
-        mdat_header.pattstart = 0x80;
+        state->mdat_header.trackstart = (ntohl(state->mdat_header.trackstart) - 0x200L) >> 2;
+    if (!state->mdat_header.pattstart)
+        state->mdat_header.pattstart = 0x80;
     else
-        mdat_header.pattstart = (ntohl(mdat_header.pattstart) - 0x200L) >> 2;
-    if (!mdat_header.macrostart)
-        mdat_header.macrostart = 0x100;
+        state->mdat_header.pattstart = (ntohl(state->mdat_header.pattstart) - 0x200L) >> 2;
+    if (!state->mdat_header.macrostart)
+        state->mdat_header.macrostart = 0x100;
     else
-        mdat_header.macrostart = (ntohl(mdat_header.macrostart) - 0x200L) >> 2;
+        state->mdat_header.macrostart = (ntohl(state->mdat_header.macrostart) - 0x200L) >> 2;
     if (x < 136) {
         return (2);
     }
 
     for (x = 0; x < 32; x++) {
-        mdat_header.start[x] = ntohs(mdat_header.start[x]);
-        mdat_header.end[x] = ntohs(mdat_header.end[x]);
-        mdat_header.tempo[x] = ntohs(mdat_header.tempo[x]);
+        state->mdat_header.start[x] = ntohs(state->mdat_header.start[x]);
+        state->mdat_header.end[x] = ntohs(state->mdat_header.end[x]);
+        state->mdat_header.tempo[x] = ntohs(state->mdat_header.tempo[x]);
     }
 
     /* Calc the # of subsongs */
-    nSongs = 0;
+    state->nSongs = 0;
     for (x = 0; x < 31; x++) {
-        if ((mdat_header.start[x] <= mdat_header.end[x]) && !(x > 0 && mdat_header.end[x] == 0L)) {
-            nSongs++;
+        if ((state->mdat_header.start[x] <= state->mdat_header.end[x]) && !(x > 0 && state->mdat_header.end[x] == 0L)) {
+            state->nSongs++;
         }
     }
     /* Now that we have pointers to most everything, this would be a good time to
@@ -318,30 +294,30 @@ static int tfmx_loader(char* mfn, char* sfn) {
        indices, ntohl patterns and macros.  We fix the macros first, then the
        patterns, and then the tracksteps (because we have to know when the
        patterns begin to know when the tracksteps end...) */
-    z = mdat_header.macrostart;
-    macros = (int*)&(mdat_editbuf[z]);
+    z = state->mdat_header.macrostart;
+    state->macros = (int*)&(state->mdat_editbuf[z]);
 
     for (x = 0; x < 128; x++) {
-        y = (ntohl(mdat_editbuf[z]) - 0x200);
-        if ((y & 3) || ((y >> 2) > mlen)) /* probably not strictly right */
+        y = (ntohl(state->mdat_editbuf[z]) - 0x200);
+        if ((y & 3) || ((y >> 2) > state->mlen)) /* probably not strictly right */
             break;
-        mdat_editbuf[z++] = y >> 2;
+        state->mdat_editbuf[z++] = y >> 2;
     }
-    num_mac = x;
+    state->num_mac = x;
 
-    z = mdat_header.pattstart;
-    patterns = (int*)&mdat_editbuf[z];
+    z = state->mdat_header.pattstart;
+    state->patterns = (int*)&state->mdat_editbuf[z];
     for (x = 0; x < 128; x++) {
-        y = (ntohl(mdat_editbuf[z]) - 0x200);
-        if ((y & 3) || ((y >> 2) > mlen))
+        y = (ntohl(state->mdat_editbuf[z]) - 0x200);
+        if ((y & 3) || ((y >> 2) > state->mlen))
             break;
-        mdat_editbuf[z++] = y >> 2;
+        state->mdat_editbuf[z++] = y >> 2;
     }
-    num_pat = x;
+    state->num_pat = x;
 
-    lg = (U16*)&mdat_editbuf[patterns[0]];
-    sh = (U16*)&mdat_editbuf[mdat_header.trackstart];
-    num_ts = (patterns[0] - mdat_header.trackstart) >> 2;
+    lg = (U16*)&state->mdat_editbuf[state->patterns[0]];
+    sh = (U16*)&state->mdat_editbuf[state->mdat_header.trackstart];
+    state->num_ts = (state->patterns[0] - state->mdat_header.trackstart) >> 2;
     y = 0;
     while (sh < lg) {
         x = ntohs(*sh);
@@ -353,38 +329,38 @@ static int tfmx_loader(char* mfn, char* sfn) {
         long fileSize = 0;
 
         if ((smplFile = fopen(sfn, "rb")) == NULL) {
-            TFMXERR("LoadTFMX: Error opening SMPL file");
+            TFMXERR(state, "LoadTFMX: Error opening SMPL file");
             return (1);
         }
         if (fseek(smplFile, 0, SEEK_END)) {
-            TFMXERR("LoadTFMX: fseek failed in SMPL file");
+            TFMXERR(state, "LoadTFMX: fseek failed in SMPL file");
             fclose(smplFile);
             return (1);
         }
         if ((fileSize = ftell(smplFile)) < 0) {
-            TFMXERR("LoadTFMX: ftell failed in SMPL file");
+            TFMXERR(state, "LoadTFMX: ftell failed in SMPL file");
             fclose(smplFile);
             return (1);
         }
 
-        if (smplbuf) {  // Dealloc any left behind samplebuffer
-            free(smplbuf);
-            smplbuf = 0;
+        if (state->smplbuf) {  // Dealloc any left behind samplebuffer
+            free(state->smplbuf);
+            state->smplbuf = 0;
         }
 
-        if (!(smplbuf = (void*)malloc(fileSize))) {
-            TFMXERR("LoadTFMX: Error allocating samplebuffer");
+        if (!(state->smplbuf = (void*)malloc(fileSize))) {
+            TFMXERR(state, "LoadTFMX: Error allocating samplebuffer");
             fclose(smplFile);
             return (1);
         }
 
-        smplbuf_end = smplbuf + fileSize - 1;
+        state->smplbuf_end = state->smplbuf + fileSize - 1;
         rewind(smplFile);
 
-        if (!fread(smplbuf, 1, fileSize, smplFile)) {
-            TFMXERR("LoadTFMX: Error reading SMPL file");
+        if (!fread(state->smplbuf, 1, fileSize, smplFile)) {
+            TFMXERR(state, "LoadTFMX: Error reading SMPL file");
             fclose(smplFile);
-            free(smplbuf);
+            free(state->smplbuf);
             return (1);
         }
         fclose(smplFile);
@@ -396,8 +372,8 @@ static int tfmx_loader(char* mfn, char* sfn) {
     plugin_cfg.blend &= 1;
     */
 
-    tfmx_calc_sizes();
-    TFMXRewind();
+    tfmx_calc_sizes(state);
+    TFMXRewind(state);
 
     return 0;
 
@@ -405,35 +381,35 @@ static int tfmx_loader(char* mfn, char* sfn) {
        pattern and macro data. The routines that use the data do it for themselves.*/
 }
 
-void tfmx_fill_module_info(char* t) {
+void tfmx_fill_module_info(TfmxState* state, char* t) {
     int x;
 
     /* Don't print info if there's no song... */
-    if (!smplbuf) {
+    if (!state->smplbuf) {
         sprintf(t, "No song loaded!");
         return;
     }
 
     t += sprintf(t, "Module text section:\n\n");
     for (x = 0; x < 6; x++)
-        t += sprintf(t, ">%40.40s\n", mdat_header.text[x]);
+        t += sprintf(t, ">%40.40s\n", state->mdat_header.text[x]);
 
-    t += sprintf(t, "\n%d tracksteps at 0x%04d\n", num_ts, (mdat_header.trackstart << 2) + 0x200);
-    t += sprintf(t, "%d patterns at 0x%04dx\n", num_pat, (mdat_header.pattstart << 2) + 0x200);
-    t += sprintf(t, "%d macros at 0x%04dx\n", num_mac, (mdat_header.macrostart << 2) + 0x200);
+    t += sprintf(t, "\n%d tracksteps at 0x%04d\n", state->num_ts, (state->mdat_header.trackstart << 2) + 0x200);
+    t += sprintf(t, "%d patterns at 0x%04dx\n", state->num_pat, (state->mdat_header.pattstart << 2) + 0x200);
+    t += sprintf(t, "%d macros at 0x%04dx\n", state->num_mac, (state->mdat_header.macrostart << 2) + 0x200);
 
     t += sprintf(t, "\nSubsongs:\n\n");
     for (x = 0; x < 31; x++) {
-        if ((mdat_header.start[x] <= mdat_header.end[x]) && !(x > 0 && mdat_header.end[x] == 0L)) {
-            t += sprintf(t, "Song %2d: start %3x end %3x tempo %d\n", x, ntohs(mdat_header.start[x]),
-                         ntohs(mdat_header.end[x]), mdat_header.tempo[x]);
+        if ((state->mdat_header.start[x] <= state->mdat_header.end[x]) && !(x > 0 && state->mdat_header.end[x] == 0L)) {
+            t += sprintf(t, "Song %2d: start %3x end %3x tempo %d\n", x, ntohs(state->mdat_header.start[x]),
+                         ntohs(state->mdat_header.end[x]), state->mdat_header.tempo[x]);
         }
     }
 }
 
 
-void tfmx_fill_text_info(char* t) {
+void tfmx_fill_text_info(TfmxState* state, char* t) {
     for (int i = 0; i < 6; ++i) {
-        t += sprintf(t, "%40.40s\n", mdat_header.text[i]);
+        t += sprintf(t, "%40.40s\n", state->mdat_header.text[i]);
 	}
 }

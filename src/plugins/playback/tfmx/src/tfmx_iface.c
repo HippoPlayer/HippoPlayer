@@ -38,6 +38,6 @@ char IsTFMXFilename(char* fName) {
     return 0;
 }
 
-void TFMXError(char* err) {
+void TFMXError(TfmxState* state, char* err) {
     printf("TFMXError %s\n", err);
 }

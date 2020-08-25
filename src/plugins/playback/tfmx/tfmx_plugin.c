@@ -33,6 +33,7 @@ static const char* get_file_name_from_path(const char* path) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef struct TfmxReplayerData {
+	TfmxState state;
 	uint16_t temp_data[BUFSIZE];
     void* tune;
 	int read_index;
@@ -85,13 +86,15 @@ static int tfmx_open(void* user_data, const char* buffer, int subsong) {
     TfmxReplayerData* plugin = (TfmxReplayerData*)user_data;
     (void)plugin;
 
-    if (LoadTFMXFile((char*)buffer) != 0) {
+    TfmxState_init(&plugin->state);
+
+    if (LoadTFMXFile(&plugin->state, (char*)buffer) != 0) {
         hp_error("Unable to open %s", buffer);
         return -1;
     }
 
-    TFMXSetSubSong(subsong);
-    TFMXRewind();
+    TFMXSetSubSong(&plugin->state, subsong);
+    TFMXRewind(&plugin->state);
 
     hp_info("Starting to play %s (subsong %d)", buffer, subsong);
 
@@ -111,13 +114,13 @@ static int tfmx_read_data(void* user_data, void* dest, uint32_t samples_to_read_
 	int samples_to_read = (int)samples_to_read_in;
 	float* newDest = (float*)dest;
 
-    int block_size = (int)tfmx_get_block_size() / 4;
+    int block_size = (int)tfmx_get_block_size(&data->state) / 4;
 
     assert(block_size < BUFSIZE);
 
 	if (data->frames_decoded == 0) {
-		if (tfmx_try_to_make_block() >= 0) {
-			tfmx_get_block(data->temp_data);
+		if (tfmx_try_to_make_block(&data->state) >= 0) {
+			tfmx_get_block(&data->state, data->temp_data);
 		}
 
 		data->frames_decoded = block_size;
@@ -149,8 +152,8 @@ static int tfmx_read_data(void* user_data, void* dest, uint32_t samples_to_read_
 
         newDest += diff * 2;
 
-		if (tfmx_try_to_make_block() >= 0) {
-			tfmx_get_block(data->temp_data);
+		if (tfmx_try_to_make_block(&data->state) >= 0) {
+			tfmx_get_block(&data->state, data->temp_data);
 		}
 
 		data->frames_decoded = block_size;
@@ -189,11 +192,14 @@ static int tfmx_seek(void* user_data, int ms) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int tfmx_metadata(const char* url, const HippoServiceAPI* service_api) {
+	TfmxState state;
+	TfmxState_init(&state);
+
     // TODO: Fix that tfmx can load from a buffer, always from file now because of the lib code
 
     const HippoMetadataAPI* metadata_api = HippoServiceAPI_get_metadata_api(service_api, HIPPO_METADATA_API_VERSION);
 
-    if (LoadTFMXFile((char*)url) != 0) {
+    if (LoadTFMXFile(&state, (char*)url) != 0) {
         hp_error("Unable to get metadata for %s", url);
         return -1;
     }
@@ -209,10 +215,10 @@ static int tfmx_metadata(const char* url, const HippoServiceAPI* service_api) {
 
     // text info data for TFMX is 40 * 6 but * 2 for some saftey
     char text_info[(40 * 6) * 2] = {0};
-    tfmx_fill_text_info(text_info);
+    tfmx_fill_text_info(&state, text_info);
     HippoMetadata_set_tag(metadata_api, index, HippoMetadata_MessageTag, text_info);
 
-    int subsongs_count = TFMXGetSubSongs();
+    int subsongs_count = TFMXGetSubSongs(&state);
 
     if (subsongs_count > 1) {
         for (int i = 0; i < subsongs_count; ++i) {

@@ -18,70 +18,33 @@
 #include "tfmx_audio.h"
 #include "tfmx_player.h"
 
-typedef struct PluginCfg {
-    uint32_t filt;
-    uint32_t blend;
-    uint32_t over;
-} PluginCfg;
+static void conv_s16(TfmxState* state, S32* buf, int nsamples);
+static void mix_add(TfmxState* state, struct Hdb* hw, int n, S32* b);
 
-static PluginCfg plugin_cfg = {2, 1, 1};
+static void (*convert_func)(TfmxState*, S32*, int) = &conv_s16;
+static void (*mixing_func)(TfmxState*, struct Hdb*, int, S32*) = &mix_add;
 
-char active_voice[8] = {1, 1, 1, 1, 1, 1, 1, 1};
+static unsigned char* tfmx_get_next_buffer(TfmxState* state) {
+    unsigned char* buffer = &state->global_buf_union.b8[state->btail];
+    int n = state->blocksize * state->bytes_per_sample;
 
-// The time in milliseconds per buffer that the attempt to write another
-// buffer is delayed...
-#define BUFDELAY 50
-
-int bhead = 0;
-int btail = 0;
-int bqueue = 0;
-S32 tbuf[HALFBUFSIZE * 2];
-int bytes = 0;
-int bytes2 = 0;
-U32 blocksize = 0;
-U32 output_chans = 2;
-#ifndef NO_SCHED
-int sched = 1;
-#endif
-int isfile = 0;
-int eRem = 0; /* remainder of eclocks */
-
-static int force8 = 0;
-static U32 bytes_per_sample = 1; /* range : 1 to 4 (16 bits stereo) */
-static int nul = 0;
-
-static union {
-    S16 b16[BUFSIZE / 2];
-    U8 b8[BUFSIZE];
-} global_buf_union;
-
-static void conv_s16(S32* buf, int nsamples);
-static void mix_add(struct Hdb* hw, int n, S32* b);
-
-static void (*convert_func)(S32*, int) = &conv_s16;
-static void (*mixing_func)(struct Hdb*, int, S32*) = &mix_add;
-
-static unsigned char* tfmx_get_next_buffer() {
-    unsigned char* buffer = &global_buf_union.b8[btail];
-    int n = blocksize * bytes_per_sample;
-
-    if (!bqueue)
+    if (!state->bqueue)
         return NULL;
 
-    btail = (btail + n) & BOFSIZE;
-    bqueue--;
+    state->btail = (state->btail + n) & BOFSIZE;
+    state->bqueue--;
 
     return buffer;
 }
 
 /* Simple little three-position weighted-sum LPF. */
 
-static void filter(S32* buf, int nsamples) {
+static void filter(TfmxState* state, S32* buf, int nsamples) {
     static int wl = 0;
     static int wr = 0; /* actually backwards but who cares? */
     int i;
 
-    switch (plugin_cfg.filt) {
+    switch (state->plugin_cfg.filt) {
         case 3:
             for (i = 0; i < nsamples; i++) {
                 wl = ((buf[HALFBUFSIZE]) + wl * 3) / 4;
@@ -114,8 +77,8 @@ static void filter(S32* buf, int nsamples) {
 
 /* This one looks like a good candidate for high optimization... */
 
-static void stereoblend(S32* buf, int nsamples) {
-    if (plugin_cfg.blend) {
+static void stereoblend(TfmxState* state, S32* buf, int nsamples) {
+    if (state->plugin_cfg.blend) {
         int i;
 
         for (i = 0; i < nsamples; i++) {
@@ -129,18 +92,18 @@ static void stereoblend(S32* buf, int nsamples) {
     }
 }
 
-static void conv_u8(S32* buf, int nsamples) {
+static void conv_u8(TfmxState* state, S32* buf, int nsamples) {
     int i;
     S32* c = buf;
-    U8* a = (U8*)&global_buf_union.b8[bhead];
+    U8* a = (U8*)&state->global_buf_union.b8[state->bhead];
     // register int l;
 
-    bhead = (bhead + (nsamples * bytes_per_sample)) & BOFSIZE;
+    state->bhead = (state->bhead + (nsamples * state->bytes_per_sample)) & BOFSIZE;
 
-    filter(buf, nsamples);
-    stereoblend(buf, nsamples);
+    filter(state, buf, nsamples);
+    stereoblend(state, buf, nsamples);
 
-    if (output_chans == 2) {
+    if (state->output_chans == 2) {
         for (i = 0; i < nsamples; i++) {
             *a++ = ((buf[HALFBUFSIZE]) / 256) ^ 0x80;
             *a++ = ((*buf++) / 256) ^ 0x80;
@@ -152,25 +115,25 @@ static void conv_u8(S32* buf, int nsamples) {
         }
     }
 
-    bytes2 += nsamples;
+    state->bytes2 += nsamples;
     for (i = 0; i < nsamples; i++) {
         c[HALFBUFSIZE] = 0;
         *c++ = 0;
     }
 }
 
-static void conv_s16(S32* buf, int nsamples) {
+static void conv_s16(TfmxState* state, S32* buf, int nsamples) {
     int i;
     S32* c = buf;
-    S16* a = (S16*)&global_buf_union.b8[bhead];
+    S16* a = (S16*)&state->global_buf_union.b8[state->bhead];
     // register int l;
 
-    bhead = (bhead + (nsamples * bytes_per_sample)) & BOFSIZE;
+    state->bhead = (state->bhead + (nsamples * state->bytes_per_sample)) & BOFSIZE;
 
-    filter(buf, nsamples);
-    stereoblend(buf, nsamples);
+    filter(state, buf, nsamples);
+    stereoblend(state, buf, nsamples);
 
-    if (output_chans == 2) {
+    if (state->output_chans == 2) {
         for (i = 0; i < nsamples; i++) {
             *a++ = buf[HALFBUFSIZE];
             *a++ = *buf++;
@@ -183,7 +146,7 @@ static void conv_s16(S32* buf, int nsamples) {
         }
     }
 
-    bytes2 += nsamples;
+    state->bytes2 += nsamples;
 
     for (i = 0; i < nsamples; i++) {
         c[HALFBUFSIZE] = 0;
@@ -191,23 +154,23 @@ static void conv_s16(S32* buf, int nsamples) {
     }
 }
 
-static void mix_add(struct Hdb* hw, int n, S32* b) {
+static void mix_add(TfmxState* state, struct Hdb* hw, int n, S32* b) {
     register S8* smpl = hw->sbeg;
     register U32 pos = hw->pos;
     int vol = hw->vol;
     U32 delta = hw->delta;
     U32 l = hw->slen << 14;
 
-    if (hw->SampleStart < (S8*)smplbuf || hw->sbeg < (S8*)smplbuf)
+    if (hw->SampleStart < (S8*)state->smplbuf || hw->sbeg < (S8*)state->smplbuf)
         return;
-    if (hw->SampleStart >= (S8*)smplbuf_end || hw->sbeg >= (S8*)smplbuf_end)
+    if (hw->SampleStart >= (S8*)state->smplbuf_end || hw->sbeg >= (S8*)state->smplbuf_end)
         return;
 
     if (vol > 0x40)
         vol = 0x40;
 
     /* This used to have (p==&smplbuf).  Broke with GrandMonsterSlam */
-    if ((smpl == (S8*)&nul) || ((hw->mode & 1) == 0) || (l < 0x10000L))
+    if ((smpl == (S8*)&state->nul) || ((hw->mode & 1) == 0) || (l < 0x10000L))
         return;
 
     if ((hw->mode & 3) == 1) {
@@ -240,7 +203,7 @@ static void mix_add(struct Hdb* hw, int n, S32* b) {
             hw->slen = 0;
             pos = 0;
             delta = 0;
-            smpl = (S8*)smplbuf;
+            smpl = (S8*)state->smplbuf;
             break;
         }
     }
@@ -253,7 +216,7 @@ static void mix_add(struct Hdb* hw, int n, S32* b) {
         hw->mode = 0;
 }
 
-static void mix_add_ov(struct Hdb* hw, int n, S32* b) {
+static void mix_add_ov(TfmxState* state, struct Hdb* hw, int n, S32* b) {
     register S8* smpl = hw->sbeg;
     register U32 pos = hw->pos;
     register U32 psreal;
@@ -268,7 +231,7 @@ static void mix_add_ov(struct Hdb* hw, int n, S32* b) {
         v = 0x40;
 
     /* This used to have (p==&smplbuf).  Broke with GrandMonsterSlam */
-    if ((smpl == (S8*)&nul) || ((hw->mode & 1) == 0) || (l < 0x10000))
+    if ((smpl == (S8*)&state->nul) || ((hw->mode & 1) == 0) || (l < 0x10000))
         return;
 
     if ((hw->mode & 3) == 1) {
@@ -324,7 +287,7 @@ static void mix_add_ov(struct Hdb* hw, int n, S32* b) {
             hw->slen = 0;
             pos = 0;
             delta = 0;
-            smpl = (S8*)smplbuf;
+            smpl = (S8*)state->smplbuf;
             break;
         }
     }
@@ -350,133 +313,134 @@ static inline S32 clamp(S32 v, S32 low, S32 high) {
 /*
  * mix all used channels, depending of the user enabled voices
  */
-static void mixit(int nb, int bd) {
+static void mixit(TfmxState* state, int nb, int bd) {
     int i;
     S32* ptr;
 
-    if (multimode) {
-        if (active_voice[4])
-            mixing_func(&hdb[4], nb, &tbuf[bd]);
-        if (active_voice[5])
-            mixing_func(&hdb[5], nb, &tbuf[bd]);
-        if (active_voice[6])
-            mixing_func(&hdb[6], nb, &tbuf[bd]);
-        if (active_voice[7])
-            mixing_func(&hdb[7], nb, &tbuf[bd]);
+    if (state->multimode) {
+        if (state->active_voice[4])
+            mixing_func(state, &state->hdb[4], nb, &state->tbuf[bd]);
+        if (state->active_voice[5])
+            mixing_func(state, &state->hdb[5], nb, &state->tbuf[bd]);
+        if (state->active_voice[6])
+            mixing_func(state, &state->hdb[6], nb, &state->tbuf[bd]);
+        if (state->active_voice[7])
+            mixing_func(state, &state->hdb[7], nb, &state->tbuf[bd]);
 
-        ptr = &tbuf[HALFBUFSIZE + bd];
+        ptr = &state->tbuf[HALFBUFSIZE + bd];
         for (i = 0; i < nb; i++) {
             *ptr = clamp(*ptr, -16383, 16383);
             ptr++;
         }
-    } else if (active_voice[3])
-        mixing_func(&hdb[3], nb, &tbuf[bd]);
+    } else if (state->active_voice[3])
+        mixing_func(state, &state->hdb[3], nb, &state->tbuf[bd]);
 
-    if (active_voice[0])
-        mixing_func(&hdb[0], nb, &tbuf[bd]);
-    if (active_voice[1])
-        mixing_func(&hdb[1], nb, &tbuf[HALFBUFSIZE + bd]);
-    if (active_voice[2])
-        mixing_func(&hdb[2], nb, &tbuf[HALFBUFSIZE + bd]);
+    if (state->active_voice[0])
+        mixing_func(state, &state->hdb[0], nb, &state->tbuf[bd]);
+    if (state->active_voice[1])
+        mixing_func(state, &state->hdb[1], nb, &state->tbuf[HALFBUFSIZE + bd]);
+    if (state->active_voice[2])
+        mixing_func(state, &state->hdb[2], nb, &state->tbuf[HALFBUFSIZE + bd]);
 }
 
-static void mixem(U32 nb, U32 bd) {
+static void mixem(TfmxState* state, U32 nb, U32 bd) {
     //	int x;
     /*	printf("nb=%5d bd=%5d\n",nb,bd);*/
-    if (plugin_cfg.over)
+    if (state->plugin_cfg.over)
         mixing_func = &mix_add_ov;
     else
         mixing_func = &mix_add;
-    mixit(nb, bd);
+    mixit(state, nb, bd);
     /*	printf("%6d at byte %4x (made %4x bytes) %3xbpm\n",
                    jiffies,bd,nb,0x1B51F8/eClocks);*/
     /*	if (mix==&mix_set)*/
 }
 
-long tfmx_get_block_size(void) {
+long tfmx_get_block_size(TfmxState* state) {
+	(void)state;
     return HALFBUFSIZE;
 } /* *4; } */
 /*{ return blocksize*bytes_per_sample; }*/
 
-int tfmx_get_block(void* buffer) {
+int tfmx_get_block(TfmxState* state, void* buffer) {
     unsigned char* newBuf;
 
-    newBuf = tfmx_get_next_buffer();
+    newBuf = tfmx_get_next_buffer(state);
     if (!newBuf)
         return 0;
 
     /* Write a new buffered block */
-    memcpy((char*)buffer, newBuf, tfmx_get_block_size());
+    memcpy((char*)buffer, newBuf, tfmx_get_block_size(state));
 
     return 1;
 }
 
-void tfmx_calc_sizes(void) {
-    blocksize = HALFBUFSIZE;
+void tfmx_calc_sizes(TfmxState* state) {
+    state->blocksize = HALFBUFSIZE;
 
-    if (!force8) {
+    if (!state->force8) {
         convert_func = &conv_s16;
-        bytes_per_sample = 2;
+        state->bytes_per_sample = 2;
         printf("using 16 bit\n");
     } else {
         convert_func = &conv_u8;
-        bytes_per_sample = 1;
+        state->bytes_per_sample = 1;
     }
-    bytes_per_sample *= output_chans;
-    blocksize /= bytes_per_sample;
+    state->bytes_per_sample *= state->output_chans;
+    state->blocksize /= state->bytes_per_sample;
 
-    if (blocksize > HALFBUFSIZE) {
+    if (state->blocksize > HALFBUFSIZE) {
         // TFMXERR("tfmx_calc_sizes: Block size %d not supported!");
         exit(1);
     }
 }
 
-void TfmxTakedown(void) {
-    if (smplbuf) {
-        free(smplbuf);
-        smplbuf = 0;
+void TfmxTakedown(TfmxState* state) {
+    if (state->smplbuf) {
+        free(state->smplbuf);
+        state->smplbuf = 0;
     }
 }
 
-void TfmxResetBuffers(void) {
-    bhead = 0;
-    btail = 0;
-    bqueue = 0;
-    bytes = 0;
-    bytes2 = 0;
+void TfmxResetBuffers(TfmxState* state) {
+    state->bhead = 0;
+    state->btail = 0;
+    state->bqueue = 0;
+    state->bytes = 0;
+    state->bytes2 = 0;
 }
 
-int tfmx_try_to_make_block(void) {
+int tfmx_try_to_make_block(TfmxState* state) {
     static S32 nb = 0; /* num bytes */
     static S32 bd = 0; /* bytes done */
     int n;
     int r = 0;  //,m;
 
-    while ((r == 0) && ((bqueue + 2) < (BUFSIZE / (blocksize * bytes_per_sample)))) {
-        player_tfmxIrqIn();
-        nb = (eClocks * (outRate / 2));
-        eRem += (nb % 357955);
+    while ((r == 0) && ((state->bqueue + 2) < (BUFSIZE / (state->blocksize * state->bytes_per_sample)))) {
+        player_tfmxIrqIn(state);
+        nb = (state->eClocks * (state->outRate / 2));
+        state->eRem += (nb % 357955);
         nb /= 357955;
-        if (eRem > 357955) {
+        if (state->eRem > 357955) {
             nb++;
-            eRem -= 357955;
+            state->eRem -= 357955;
         }
         while (nb > 0) {
-            n = blocksize - bd;
+            n = state->blocksize - bd;
             if (n > nb)
                 n = nb;
-            mixem(n, bd);
-            bytes += n;
+            mixem(state, n, bd);
+            state->bytes += n;
             bd += n;
             nb -= n;
-            if (bd == blocksize) {
-                convert_func(tbuf, bd);
+            if (bd == state->blocksize) {
+                convert_func(state, state->tbuf, bd);
                 bd = 0;
-                bqueue++;
+                state->bqueue++;
                 // printf("make %d\n",bqueue);
                 r++;
             }
         }
     }
-    return ((mdb.PlayerEnable) ? r : -1);
+    return ((state->mdb.PlayerEnable) ? r : -1);
 }

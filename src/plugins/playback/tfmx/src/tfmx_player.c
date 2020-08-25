@@ -10,6 +10,10 @@
 #include <stdlib.h>
 #include "tfmx.h"
 
+#ifndef _WIN32
+#include <arpa/inet.h>
+#endif
+
 #define NOTSUPPORTED fprintf(stderr, "Found code %08x at step %04x in macro %02x", x.l, c->MacroStep - 1, c->MacroNum)
 
 #define MAYBEWAIT                  \
@@ -20,37 +24,22 @@
         return;                    \
     }
 
-extern int loops;
-
 int notevals[] = {0x6AE, 0x64E, 0x5F4, 0x59E, 0x54D, 0x501, 0x4B9, 0x475, 0x435, 0x3F9, 0x3C0, 0x38C, 0x358,
                   0x32A, 0x2FC, 0x2D0, 0x2A8, 0x282, 0x25E, 0x23B, 0x21B, 0x1FD, 0x1E0, 0x1C6, 0x1AC, 0x194,
                   0x17D, 0x168, 0x154, 0x140, 0x12F, 0x11E, 0x10E, 0x0FE, 0x0F0, 0x0E3, 0x0D6, 0x0CA, 0x0BF,
                   0x0B4, 0x0AA, 0x0A0, 0x097, 0x08F, 0x087, 0x07F, 0x078, 0x071, 0x0D6, 0x0CA, 0x0BF, 0x0B4,
                   0x0AA, 0x0A0, 0x097, 0x08F, 0x087, 0x07F, 0x078, 0x071, 0x0D6, 0x0CA, 0x0BF, 0x0B4};
 
-struct Hdb hdb[8];
-struct Mdb mdb;
-struct Cdb cdb[8];
-struct Pdblk pdb;
-/* seems that idb is always written, never read */
-/*  static struct Idb idb; */
-
-int nSongs = 0;
-int jiffies = 0;
-int multimode = 0;
-U32 eClocks = 14318;
-
-static int songnum = 0;
 
 /* 4 lowest b2 bits hold voice number ?
  * higher b2 bits hold various things
  */
-static void player_NotePort(U32 note) {
+static void player_NotePort(TfmxState* state, U32 note) {
     UNI uni;
     struct Cdb* c;
 
     uni.l = note;
-    c = &cdb[uni.b.b2 & (multimode ? 7 : 3)];
+    c = &state->cdb[uni.b.b2 & (state->multimode ? 7 : 3)];
 
     if (uni.b.b0 == 0xFC) { /* lock */
         c->SfxFlag = uni.b.b1;
@@ -69,7 +58,7 @@ static void player_NotePort(U32 note) {
         c->ReallyWait = 1;
         c->NewStyleMacro = 0xFF;
         c->MacroNum = uni.b.b1;
-        c->MacroPtr = macros[c->MacroNum];
+        c->MacroPtr = state->macros[c->MacroNum];
         c->MacroStep = c->EfxRun = c->MacroWait = 0;
         c->KeyUp = 1;
         c->Loop = -1;
@@ -104,11 +93,11 @@ static void player_NotePort(U32 note) {
         }
 }
 
-static int player_LoopOff(struct Hdb* hw) {
+static int player_LoopOff(TfmxState* state, struct Hdb* hw) {
     return 1;
 }
 
-static int player_LoopOn(struct Hdb* hw) {
+static int player_LoopOn(TfmxState* state, struct Hdb* hw) {
     if (!hw->c)
         return 1;
     if (hw->c->WaitDMACount--)
@@ -118,13 +107,13 @@ static int player_LoopOn(struct Hdb* hw) {
     return 1;
 }
 
-static void player_RunMacro(struct Cdb* c) {
+static void player_RunMacro(TfmxState* state, struct Cdb* c) {
     UNI x;
     register int a;
     /*int b;*/
     c->MacroWait = 0;
 loop:
-    x.l = ntohl(mdat_editbuf[c->MacroPtr + (c->MacroStep++)]);
+    x.l = ntohl(state->mdat_editbuf[c->MacroPtr + (c->MacroStep++)]);
     a = x.b.b0;
     x.b.b0 = 0;
     DEBUG(3) {
@@ -150,7 +139,7 @@ loop:
             if (!x.b.b1) {
                 c->hw->mode = 0;
                 if (c->NewStyleMacro) { /* Patch: S. Ohlsson */
-                    c->hw->SampleStart = (S8*)&smplbuf[c->SaveAddr];
+                    c->hw->SampleStart = (S8*)&state->smplbuf[c->SaveAddr];
                     c->hw->SampleLength = 1;
                     c->hw->sbeg = c->hw->SampleStart;
                     c->hw->slen = 1;
@@ -167,7 +156,7 @@ loop:
             c->EfxRun = x.b.b1;
             c->hw->mode = 1;
             if (!c->NewStyleMacro) {
-                c->hw->SampleStart = (S8*)&smplbuf[c->SaveAddr];
+                c->hw->SampleStart = (S8*)&state->smplbuf[c->SaveAddr];
                 // c->hw->_SampleLength=(c->SaveLen)?c->SaveLen<<1:131072;
                 // TODO: Investigate
                 c->hw->SampleLength = (c->SaveLen) ? c->SaveLen << 1 : 0;
@@ -289,7 +278,7 @@ loop:
             DEBUG(3) puts("Play macro");
             x.b.b0 = c->CurrNote;
             x.b.b2 |= c->Velocity << 4;
-            player_NotePort(x.l);
+            player_NotePort(state, x.l);
             break;
         case 0x1F: /* set prev note */
             DEBUG(3) puts("AddPrevNote");
@@ -363,7 +352,7 @@ loop:
             c->ReturnStep = c->MacroStep;
         case 0x6: /* cont */
             DEBUG(3) puts("Continue");
-            c->MacroPtr = c->MacroNum = macros[x.b.b1];
+            c->MacroPtr = c->MacroNum = state->macros[x.b.b1];
             c->MacroStep = x.w.w1;
             c->Loop = 0xFFFF;
             break;
@@ -400,7 +389,7 @@ loop:
     goto loop;
 }
 
-static void player_DoEffects(struct Cdb* c) {
+static void player_DoEffects(TfmxState* state, struct Cdb* c) {
     int a;
 
     if (c->EfxRun < 0)
@@ -482,16 +471,16 @@ static void player_DoEffects(struct Cdb* c) {
             c->ArpRun=0;
             }
     */
-    if ((mdb.FadeSlope) && ((--mdb.FadeTime) == 0)) {
-        mdb.FadeTime = mdb.FadeReset;
-        mdb.MasterVol += mdb.FadeSlope;
-        if (mdb.FadeDest == mdb.MasterVol)
-            mdb.FadeSlope = 0;
+    if ((state->mdb.FadeSlope) && ((--state->mdb.FadeTime) == 0)) {
+        state->mdb.FadeTime = state->mdb.FadeReset;
+        state->mdb.MasterVol += state->mdb.FadeSlope;
+        if (state->mdb.FadeDest == state->mdb.MasterVol)
+            state->mdb.FadeSlope = 0;
     }
 }
 
-static void player_DoMacro(int cc) {
-    struct Cdb* c = &cdb[cc];
+static void player_DoMacro(TfmxState* state, int cc) {
+    struct Cdb* c = &state->cdb[cc];
     int a;
 
     /* locking */
@@ -503,18 +492,18 @@ static void player_DoMacro(int cc) {
     a = c->SfxCode;
     if (a) {
         c->SfxFlag = c->SfxCode = 0;
-        player_NotePort(a);
+        player_NotePort(state, a);
         c->SfxFlag = c->SfxPriority;
     }
     DEBUG(3)
     printf("%01x:\t", cc);
     if ((c->MacroRun) && !(c->MacroWait--))
-        player_RunMacro(c);
+        player_RunMacro(state, c);
     DEBUG(3) puts("");
-    player_DoEffects(c);
+    player_DoEffects(state, c);
     /* has to be here because of if(efxrun=1) */
-    c->hw->delta = c->CurPeriod ? (3579545 * 512) / (c->CurPeriod * outRate / 32) : 0;
-    c->hw->SampleStart = (S8*)&smplbuf[c->SaveAddr];
+    c->hw->delta = c->CurPeriod ? (3579545 * 512) / (c->CurPeriod * state->outRate / 32) : 0;
+    c->hw->SampleStart = (S8*)&state->smplbuf[c->SaveAddr];
 
     // TODO: Invistigate
     // c->hw->SampleLength = c->SaveLen ? c->SaveLen * 2 : 131072;
@@ -523,27 +512,27 @@ static void player_DoMacro(int cc) {
         c->hw->sbeg = c->hw->SampleStart;
         c->hw->slen = c->hw->SampleLength;
     }
-    c->hw->vol = (c->CurVol * mdb.MasterVol) / 64;
+    c->hw->vol = (c->CurVol * state->mdb.MasterVol) / 64;
 }
 
-static void player_DoAllMacros() {
-    player_DoMacro(0);
-    player_DoMacro(1);
-    player_DoMacro(2);
+static void player_DoAllMacros(TfmxState* state) {
+    player_DoMacro(state, 0);
+    player_DoMacro(state, 1);
+    player_DoMacro(state, 2);
 
-    if (multimode) {
-        player_DoMacro(4);
-        player_DoMacro(5);
-        player_DoMacro(6);
-        player_DoMacro(7);
+    if (state->multimode) {
+        player_DoMacro(state, 4);
+        player_DoMacro(state, 5);
+        player_DoMacro(state, 6);
+        player_DoMacro(state, 7);
     } /* else -- DoMacro(3) should always run so fade speed is right */
-    player_DoMacro(3);
+    player_DoMacro(state, 3);
 }
 
-static void player_ChannelOff(int i) {
+static void player_ChannelOff(TfmxState* state, int i) {
     struct Cdb* c;
 
-    c = &cdb[i & 0xF];
+    c = &state->cdb[i & 0xF];
     if (!c->SfxFlag) {
         c->hw->mode = 0;
         c->AddBeginTime = c->AddBeginReset = c->MacroRun =
@@ -556,14 +545,14 @@ static void player_ChannelOff(int i) {
     }
 }
 
-static void player_DoFade(int sp, int dv) {
-    mdb.FadeDest = dv;
-    if (!(mdb.FadeTime = mdb.FadeReset = sp) || (mdb.MasterVol == sp)) {
-        mdb.MasterVol = dv;
-        mdb.FadeSlope = 0;
+static void player_DoFade(TfmxState* state, int sp, int dv) {
+    state->mdb.FadeDest = dv;
+    if (!(state->mdb.FadeTime = state->mdb.FadeReset = sp) || (state->mdb.MasterVol == sp)) {
+        state->mdb.MasterVol = dv;
+        state->mdb.FadeSlope = 0;
         return;
     }
-    mdb.FadeSlope = (mdb.MasterVol > mdb.FadeDest) ? -1 : 1;
+    state->mdb.FadeSlope = (state->mdb.MasterVol > state->mdb.FadeDest) ? -1 : 1;
 }
 
 // Track-step commands:
@@ -578,36 +567,36 @@ static void player_DoFade(int sp, int dv) {
 // ** This command only works with TFMX music routines that support 7-voice mode.
 // EFFE 0004 	00yy 00zz 	FADE 	The volume of the song is faded to zz with a speed of yy.
 
-static void player_GetTrackStep() {
+static void player_GetTrackStep(TfmxState* state) {
     U16* l;
     int x, y;
 loop:
 
     /*printf("GetTrackStep, loops = %d    ", loops);*/
 
-    if (loops > 0) {
-        if ((pdb.CurrPos == pdb.FirstPos) && (!(--loops))) {
-            mdb.PlayerEnable = 0;
+    if (state->loops > 0) {
+        if ((state->pdb.CurrPos == state->pdb.FirstPos) && (!(--state->loops))) {
+            state->mdb.PlayerEnable = 0;
             /*printf("Disabled mdb.PlayerEnable\n");*/
             return;
         }
     }
 
-    l = (U16*)&mdat_editbuf[mdat_header.trackstart + (pdb.CurrPos * 4)];
+    l = (U16*)&state->mdat_editbuf[state->mdat_header.trackstart + (state->pdb.CurrPos * 4)];
 
-    if (printinfo) {
-        printf("%04x:", pdb.CurrPos);
+    if (state->printinfo) {
+        printf("%04x:", state->pdb.CurrPos);
         for (x = 0; x < 8; x++)
             printf("%04x ", l[x]);
-        DEBUG(2) { printf("tempo=%d pre=%d jif=%d", 0x1B51F8 / mdb.CIASave, pdb.Prescale, jiffies); }
+        DEBUG(2) { printf("tempo=%d pre=%d jif=%d", 0x1B51F8 / state->mdb.CIASave, state->pdb.Prescale, state->jiffies); }
         puts("");
     }
 
-    jiffies = 0;
+    state->jiffies = 0;
     if ((l[0]) == 0xEFFE) {
         switch (l[1]) {
             case 0: /* stop */
-                mdb.PlayerEnable = 0;
+                state->mdb.PlayerEnable = 0;
                 return;
             case 1: /* loop */
                 /*if (loops>0) {
@@ -616,54 +605,54 @@ loop:
                   return;
                   }
                   }*/
-                if (!(mdb.TrackLoop--)) {
-                    mdb.TrackLoop = -1;
-                    pdb.CurrPos++;
+                if (!(state->mdb.TrackLoop--)) {
+                    state->mdb.TrackLoop = -1;
+                    state->pdb.CurrPos++;
                     goto loop;
-                } else if (mdb.TrackLoop < 0)
-                    mdb.TrackLoop = l[3];
-                pdb.CurrPos = l[2];
+                } else if (state->mdb.TrackLoop < 0)
+                    state->mdb.TrackLoop = l[3];
+                state->pdb.CurrPos = l[2];
                 goto loop;
             case 2: /* speed */
-                mdb.SpeedCnt = pdb.Prescale = l[2];
+                state->mdb.SpeedCnt = state->pdb.Prescale = l[2];
                 if (!(l[3] & 0xF200) && (x = (l[3] & 0x1FF) > 0xF))
-                    mdb.CIASave = eClocks = 0x1B51F8 / x;
-                pdb.CurrPos++;
+                    state->mdb.CIASave = state->eClocks = 0x1B51F8 / x;
+                state->pdb.CurrPos++;
                 goto loop;
             case 3: /* timeshare */
                 if (!((x = l[3]) & 0x8000)) {
                     x = ((char)x) < -0x20 ? -0x20 : (char)x;
-                    mdb.CIASave = eClocks = (14318 * (x + 100)) / 100;
-                    multimode = 1;
-                } /* else multimode=0;*/
-                pdb.CurrPos++;
+                    state->mdb.CIASave = state->eClocks = (14318 * (x + 100)) / 100;
+                    state->multimode = 1;
+                } /* else state->multimode=0;*/
+                state->pdb.CurrPos++;
                 goto loop;
             case 4: /* fade */
-                player_DoFade(l[2] & 0xFF, l[3] & 0xFF);
-                pdb.CurrPos++;
+                player_DoFade(state, l[2] & 0xFF, l[3] & 0xFF);
+                state->pdb.CurrPos++;
                 goto loop;
             default:
                 fprintf(stderr, "EFFE %04x in trackstep\n", l[1]);
-                pdb.CurrPos++;
+                state->pdb.CurrPos++;
                 goto loop;
         }
     } else {
         for (x = 0; x < 8; x++) {
-            pdb.p[x].PXpose = (int)(l[x] & 0xff);
-            pdb.p[x].PNum = l[x] / 256;
-            y = pdb.p[x].PNum;
+            state->pdb.p[x].PXpose = (int)(l[x] & 0xff);
+            state->pdb.p[x].PNum = l[x] / 256;
+            y = state->pdb.p[x].PNum;
             if (y < 0x80) {
-                pdb.p[x].PStep = 0;
-                pdb.p[x].PWait = 0;
-                pdb.p[x].PLoop = 0xFFFF;
-                pdb.p[x].PAddr = patterns[y];
+                state->pdb.p[x].PStep = 0;
+                state->pdb.p[x].PWait = 0;
+                state->pdb.p[x].PLoop = 0xFFFF;
+                state->pdb.p[x].PAddr = state->patterns[y];
             }
         }
     }
 }
 
 /* pp range : 0 .. 7 */
-static int player_DoTrack(struct Pdb* p, int pp) {
+static int player_DoTrack(TfmxState* state, struct Pdb* p, int pp) {
     UNI x;
     unsigned char t; /*was: int*/
 
@@ -679,7 +668,7 @@ static int player_DoTrack(struct Pdb* p, int pp) {
 
     if (p->PNum == 0xFE) {
         p->PNum++;
-        player_ChannelOff(p->PXpose);
+        player_ChannelOff(state, p->PXpose);
         return (0);
     }
 
@@ -692,7 +681,7 @@ static int player_DoTrack(struct Pdb* p, int pp) {
 
     while (1) {
     loop:
-        x.l = ntohl(mdat_editbuf[p->PAddr + p->PStep++]);
+        x.l = ntohl(state->mdat_editbuf[p->PAddr + p->PStep++]);
         t = x.b.b0;
 
         /*printf("%x: %02x:%02x:%02x:%02x (%04x)\n",pp,t,x.b.b1,x.b.b2,x.b.b3,jiffies);*/
@@ -708,7 +697,7 @@ static int player_DoTrack(struct Pdb* p, int pp) {
             if ((t & 0xC0) == 0xC0)
                 x.b.b0 |= 0xC0;
 
-            player_NotePort(x.l);
+            player_NotePort(state, x.l);
 
             if ((t & 0xC0) == 0x80)
                 return (0);
@@ -719,8 +708,8 @@ static int player_DoTrack(struct Pdb* p, int pp) {
                 break;
             case 0: /* End */
                 p->PNum = 0xFF;
-                pdb.CurrPos = (pdb.CurrPos == pdb.LastPos) ? pdb.FirstPos : pdb.CurrPos + 1;
-                player_GetTrackStep();
+                state->pdb.CurrPos = (state->pdb.CurrPos == state->pdb.LastPos) ? state->pdb.FirstPos : state->pdb.CurrPos + 1;
+                player_GetTrackStep(state);
                 return (1);
             case 1:
                 if (!(p->PLoop)) {
@@ -736,14 +725,14 @@ static int player_DoTrack(struct Pdb* p, int pp) {
                 p->PRoStep = p->PStep;
                 /* fall through to... */
             case 2: /* Cont */
-                p->PAddr = patterns[x.b.b1];
+                p->PAddr = state->patterns[x.b.b1];
                 p->PStep = x.w.w1;
                 break;
             case 3: /* Wait */
                 p->PWait = x.b.b1;
                 return (0);
             case 14: /* StCu */
-                mdb.PlayPattFlag = 0;
+                state->mdb.PlayPattFlag = 0;
             case 4: /* Stop */
                 p->PNum = 0xFF;
                 return (0);
@@ -751,40 +740,40 @@ static int player_DoTrack(struct Pdb* p, int pp) {
             case 6:  /* Vibr */
             case 7:  /* Enve */
             case 12: /* Lock */
-                player_NotePort(x.l);
+                player_NotePort(state, x.l);
                 break;
             case 9: /* RoPt */
                 p->PAddr = p->PRoAddr;
                 p->PStep = p->PRoStep;
                 break;
             case 10: /* Fade */
-                player_DoFade(x.b.b1, x.b.b3);
+                player_DoFade(state, x.b.b1, x.b.b3);
                 break;
             case 13: /* Cue */
                      /*  		idb.Cue[ x.b.b1 & 0x03] = x.w.w1; */
                 break;
             case 11: /* PPat */
                 t = x.b.b2 & 0x07;
-                pdb.p[t].PNum = x.b.b1;
-                pdb.p[t].PAddr = patterns[x.b.b1];
-                pdb.p[t].PXpose = x.b.b3;
-                pdb.p[t].PStep = 0;
-                pdb.p[t].PWait = 0;
-                pdb.p[t].PLoop = 0xFFFF;
+                state->pdb.p[t].PNum = x.b.b1;
+                state->pdb.p[t].PAddr = state->patterns[x.b.b1];
+                state->pdb.p[t].PXpose = x.b.b3;
+                state->pdb.p[t].PStep = 0;
+                state->pdb.p[t].PWait = 0;
+                state->pdb.p[t].PLoop = 0xFFFF;
                 break;
         }
     }
 }
 
-static void player_DoTracks() {
+static void player_DoTracks(TfmxState* state) {
     int i;
 
-    jiffies++;
-    if (!mdb.SpeedCnt--) {
-        mdb.SpeedCnt = pdb.Prescale;
+    state->jiffies++;
+    if (!state->mdb.SpeedCnt--) {
+        state->mdb.SpeedCnt = state->pdb.Prescale;
         for (i = 0; i < 8; i++) {
             DEBUG(3) printf("%01x:", i);
-            if (player_DoTrack(&pdb.p[i], i)) {
+            if (player_DoTrack(state, &state->pdb.p[i], i)) {
                 i = -1;
                 continue;
             }
@@ -792,91 +781,90 @@ static void player_DoTracks() {
     }
 }
 
-static void player_AllOff() {
+static void player_AllOff(TfmxState* state) {
     int x;
     struct Cdb* c;
-    mdb.PlayerEnable = 0;
+    state->mdb.PlayerEnable = 0;
     for (x = 0; x < 8; x++) {
-        c = &cdb[x];
-        c->hw = &hdb[x];
+        c = &state->cdb[x];
+        c->hw = &state->hdb[x];
         c->hw->c = c; /* wait on dma */
-        hdb[x].mode = 0;
-        c->MacroWait = c->MacroRun = c->SfxFlag = /*c->SIDSize=c->ArpRun=*/c->CurVol = c->SfxFlag = c->SfxCode =
-            c->SaveAddr = 0;
-        hdb[x].vol = 0;
+        state->hdb[x].mode = 0;
+        c->MacroWait = c->MacroRun = c->CurVol = c->SfxFlag = c->SfxCode = c->SaveAddr = 0;
+        state->hdb[x].vol = 0;
         c->Loop = c->NewStyleMacro = c->SfxLockTime = -1;
-        c->hw->sbeg = c->hw->SampleStart = (S8*)smplbuf;
+        c->hw->sbeg = c->hw->SampleStart = (S8*)state->smplbuf;
         c->hw->SampleLength = c->hw->slen = c->SaveLen = 2;
         c->hw->loop = &player_LoopOff;
     }
 }
 
-void player_tfmxIrqIn() {
-    if (!mdb.PlayerEnable)
+void player_tfmxIrqIn(TfmxState* state) {
+    if (!state->mdb.PlayerEnable)
         return;
-    player_DoAllMacros();
-    if (mdb.CurrSong >= 0)
-        player_DoTracks();
+    player_DoAllMacros(state);
+    if (state->mdb.CurrSong >= 0)
+        player_DoTracks(state);
 }
 
-void player_TfmxInit() {
+void player_TfmxInit(TfmxState* state) {
     int x;
-    player_AllOff();
+    player_AllOff(state);
     for (x = 0; x < 8; x++) {
-        hdb[x].c = &cdb[x];
-        pdb.p[x].PNum = 0xFF;
-        pdb.p[x].PAddr = 0;
-        player_ChannelOff(x);
+        state->hdb[x].c = &state->cdb[x];
+        state->pdb.p[x].PNum = 0xFF;
+        state->pdb.p[x].PAddr = 0;
+        player_ChannelOff(state, x);
     }
     return;
 }
 
-void player_StartSong(int song, int mode) {
+void player_StartSong(TfmxState* state, int song, int mode) {
     int x;
 
     /* Prevent # of loops to play from changing during init */
-    int oldLoopsVal = loops;
+    int oldLoopsVal = state->loops;
 
     /* No limitations on loops & jumps during init */
-    loops = -1;
+    state->loops = -1;
 
-    mdb.PlayerEnable = 0; /* sort of locking mechanism */
-    mdb.MasterVol = 0x40;
-    mdb.FadeSlope = 0;
-    mdb.TrackLoop = -1;
-    mdb.PlayPattFlag = 0;
-    mdb.CIASave = eClocks = 14318; /* assume 125bpm, NTSC timing */
+    state->mdb.PlayerEnable = 0; /* sort of locking mechanism */
+    state->mdb.MasterVol = 0x40;
+    state->mdb.FadeSlope = 0;
+    state->mdb.TrackLoop = -1;
+    state->mdb.PlayPattFlag = 0;
+    state->mdb.CIASave = state->eClocks = 14318; /* assume 125bpm, NTSC timing */
     if (mode != 2) {
-        pdb.CurrPos = pdb.FirstPos = mdat_header.start[song];
-        pdb.LastPos = mdat_header.end[song];
-        if ((x = mdat_header.tempo[song]) >= 0x10) {
-            mdb.CIASave = eClocks = 0x1B51F8 / x;
-            pdb.Prescale = 0;
+        state->pdb.CurrPos = state->pdb.FirstPos = state->mdat_header.start[song];
+        state->pdb.LastPos = state->mdat_header.end[song];
+        if ((x = state->mdat_header.tempo[song]) >= 0x10) {
+            state->mdb.CIASave = state->eClocks = 0x1B51F8 / x;
+            state->pdb.Prescale = 0;
         } else
-            pdb.Prescale = x;
+            state->pdb.Prescale = x;
     }
     for (x = 0; x < 8; x++) {
-        pdb.p[x].PAddr = 0;
-        pdb.p[x].PNum = 0xFF;
-        pdb.p[x].PXpose = 0;
-        pdb.p[x].PStep = 0;
+        state->pdb.p[x].PAddr = 0;
+        state->pdb.p[x].PNum = 0xFF;
+        state->pdb.p[x].PXpose = 0;
+        state->pdb.p[x].PStep = 0;
     }
     if (mode != 2)
-        player_GetTrackStep();
+        player_GetTrackStep(state);
     /* seems startPat was always -1 */
     /*  	if (startPat!=-1) { */
     /*  		pdb.CurrPos=pdb.FirstPos=startPat; */
     /*  		player_GetTrackStep(); */
     /*  		startPat=-1; */
     /*  	} */
-    mdb.SpeedCnt = mdb.EndFlag = 0;
-    mdb.PlayerEnable = 1;
+    state->mdb.SpeedCnt = state->mdb.EndFlag = 0;
+    state->mdb.PlayerEnable = 1;
 
-    loops = oldLoopsVal;
+    state->loops = oldLoopsVal;
 }
 
-char player_TFMXVoices() {
-    U16* trkstart = (U16*)&mdat_editbuf[mdat_header.trackstart];
+char player_TFMXVoices(TfmxState* state) {
+    U16* trkstart = (U16*)&state->mdat_editbuf[state->mdat_header.trackstart];
 
     /* Check for timeshare command at start of tracks */
     if (trkstart[0] == 0xeffe && trkstart[1] == 0x0003)
@@ -884,61 +872,62 @@ char player_TFMXVoices() {
     return 4;
 }
 
-void TfmxResetBuffers();
+void TfmxResetBuffers(TfmxState* state);
 
-void TFMXRewind() {
-    player_TfmxInit();
+void TFMXRewind(TfmxState* state) {
+    player_TfmxInit(state);
     /* printf("StartSong, loops = %d\n", loops); */
-    player_StartSong(songnum, 0);
+    player_StartSong(state, state->songnum, 0);
 
-    hdb[0].pos = 0;
-    hdb[0].delta = 0x1c01;
-    hdb[0].slen = 0x3200;
-    hdb[0].SampleLength = 0x15be;
-    hdb[0].sbeg = (S8*)&smplbuf[0x4];
-    hdb[0].SampleStart = (S8*)&smplbuf[0x4 + 0x1C42];
-    hdb[0].vol = 0x40;
-    hdb[0].mode = 3;
-    hdb[0].loop = &player_LoopOff;
-    hdb[0].loopcnt = 0;
-    hdb[0].c = NULL;
+    state->hdb[0].pos = 0;
+    state->hdb[0].delta = 0x1c01;
+    state->hdb[0].slen = 0x3200;
+    state->hdb[0].SampleLength = 0x15be;
+    state->hdb[0].sbeg = (S8*)&state->smplbuf[0x4];
+    state->hdb[0].SampleStart = (S8*)&state->smplbuf[0x4 + 0x1C42];
+    state->hdb[0].vol = 0x40;
+    state->hdb[0].mode = 3;
+    state->hdb[0].loop = &player_LoopOff;
+    state->hdb[0].loopcnt = 0;
+    state->hdb[0].c = NULL;
 
-    TfmxResetBuffers();
+    TfmxResetBuffers(state);
 }
 
-void TFMXStop() {
+void TFMXStop(TfmxState* state) {
     /* player_TfmxInit(); */
 }
 
-void TfmxTakedown();
+void TfmxTakedown(TfmxState* state);
 
-void TFMXQuit() {
-    if (smplbuf) {
-        free(smplbuf);
-        smplbuf = 0;
+void TFMXQuit(TfmxState* state) {
+    if (state->smplbuf) {
+        free(state->smplbuf);
+        state->smplbuf = 0;
     }
-    TfmxTakedown();
+    TfmxTakedown(state);
 }
 
 /* extern unsigned long blocksize,multiplier,stereo; */
 /* extern int bhead=0,btail=0,bqueue=0; */
 
-int TFMXGetSubSongs() {
-    return nSongs;
+int TFMXGetSubSongs(TfmxState* state) {
+    return state->nSongs;
 }
-int TFMXGetSubSong() {
-    return songnum;
+int TFMXGetSubSong(TfmxState* state) {
+    return state->songnum;
 }
 
-void TFMXSetSubSong(int num) {
+void TFMXSetSubSong(TfmxState* state, int num) {
     int x;
 
     /* Compensate for empty song slots */
     for (x = 0; x < num && x < 31; x++) {
-        if ((mdat_header.start[x] > mdat_header.end[x]) || (x > 0 && mdat_header.end[x] == 0L)) {
+        if ((state->mdat_header.start[x] > state->mdat_header.end[x]) ||
+            (x > 0 && state->mdat_header.end[x] == 0L)) {
             num++;
         }
     }
-    songnum = num;
-    TFMXRewind();
+    state->songnum = num;
+    TFMXRewind(state);
 }

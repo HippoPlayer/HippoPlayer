@@ -6,41 +6,41 @@
 #define TFMXIFACE_H
 
 /* Error function definition */
-#define TFMXERR(x) TFMXError(x)
-void TFMXError(char *err);
+#define TFMXERR(state, x) TFMXError(state, x)
+void TFMXError(TfmxState* state, char *err);
 
 /* TFMX file & playing management */
-char IsTFMXFilename(char *fName);
-char LoadTFMXFile(char *fName);
-void TFMXRewind();
-void TFMXStop();
-void TFMXQuit();
+char IsTFMXFilename(char* fName);
+char LoadTFMXFile(TfmxState* state, char *fName);
+void TFMXRewind(TfmxState* state);
+void TFMXStop(TfmxState* state);
+void TFMXQuit(TfmxState* state);
 
 /* Per-module info */
-void tfmx_fill_module_info(char *textBuffer);
-void tfmx_fill_text_info(char* text_buffer);
-int TFMXGetSubSongs();
+void tfmx_fill_module_info(TfmxState* state, char *textBuffer);
+void tfmx_fill_text_info(TfmxState* state, char* text_buffer);
+int TFMXGetSubSongs(TfmxState* state);
 
 /* TFMX player settings read/write */
-int TFMXGetSubSong();
-void TFMXSetSubSong(int num);
-void SetFilterState(char state);
-void SetBlendState(char state);
-void SetLoopState(char state);
-char GetFilterState();
-char GetBlendState();
-char GetLoopState();
+int TFMXGetSubSong(TfmxState* state);
+void TFMXSetSubSong(TfmxState* state, int num);
+void SetFilterState(TfmxState* g_state, char state);
+void SetBlendState(TfmxState* g_state, char state);
+void SetLoopState(TfmxState* g_state, char state);
+char GetFilterState(TfmxState* state);
+char GetBlendState(TfmxState* state);
+char GetLoopState(TfmxState* state);
 
 /* Sample buffer handling */
-long tfmx_get_block_size();
-int tfmx_get_block(void *buffer);
-int tfmx_try_to_make_block();
+long tfmx_get_block_size(TfmxState* state);
+int tfmx_get_block(TfmxState* state, void *buffer);
+int tfmx_try_to_make_block(TfmxState* state);
 
 
-void player_TfmxInit();
+void player_TfmxInit(TfmxState* state);
 void player_StartSong(int, int);
-void TfmxTakedown();
-void tfmxIrqIn();
+void TfmxTakedown(TfmxState* state);
+void tfmxIrqIn(TfmxState* state);
 
 
 #endif
