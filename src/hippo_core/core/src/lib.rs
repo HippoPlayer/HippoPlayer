@@ -4,9 +4,9 @@ use std::fs;
 use std::os::raw::{c_char, c_void};
 use std::path::{Path, PathBuf};
 use std::time::Instant;
-use std::io::{Error, ErrorKind};
 use song_db::SongDb;
 use logger::*;
+use anyhow::*;
 
 mod audio;
 mod core_config;
@@ -49,7 +49,7 @@ impl HippoCore {
     /// Play a file. Url is the thing to play (often a filename) and playlist_index is
     /// is the index into the playlist. This is needed in case we want to add more songs to the playlist
     /// (such as subsongs) and the playlist doesn't have to search for the file
-    pub fn play_file(&mut self, url: &str, playlist_index: usize) -> String {
+    pub fn play_file(&mut self, url: &str, playlist_index: usize) -> Result<String> {
         let mut buffer = [0; 4096];
         // TODO: Use Cow
         let url_no_sub;
@@ -64,9 +64,9 @@ impl HippoCore {
         // TODO: cleanup
         // TODO: Store the player to use for subsongs as we know it already?
 
-        let metadata = fs::metadata(&url_no_sub).unwrap();
-        let mut f = File::open(&url_no_sub).unwrap();
-        let buffer_read_size = f.read(&mut buffer[..]).unwrap();
+        let metadata = fs::metadata(&url_no_sub)?;
+        let mut f = File::open(&url_no_sub)?;
+        let buffer_read_size = f.read(&mut buffer[..])?;
         let song_db = self.plugin_service.get_song_db();
 
         // find a plugin that supports the file
@@ -93,10 +93,10 @@ impl HippoCore {
                     // add |0 at the end of url to mark it as a subsong
                     let sub_url = format!("{}|{}", url, subsongs[0].0);
                     self.audio.start_with_file(&plugin, &self.plugin_service, &sub_url);
-                    return sub_url;
+                    return Ok(sub_url);
                 } else {
                     if self.audio.start_with_file(&plugin, &self.plugin_service, url) {
-                        return url.to_owned();
+                        return Ok(url.to_owned());
                     }
                 }
             }
@@ -104,7 +104,7 @@ impl HippoCore {
 
         warn!("No playback plugin found for: {}", url);
 
-        String::new()
+        Ok(String::new())
     }
 
     ///
@@ -203,25 +203,32 @@ impl HippoCore {
             let new_song = self.playlist.get_current_song();
 
             if let Some(song) = new_song {
-                let songname = self.play_file(&song.0, song.1);
-                self.current_song_time = 5.0 * 60.0;
+                let song_name = self.play_file(&song.0, song.1);
 
-                let song_db = self.plugin_service.get_song_db();
+                if let Ok(songname) = &song_name {
+                    self.current_song_time = 5.0 * 60.0;
 
-                if self.plugin_service.get_song_db().is_present(&song.0) && songname != "" {
-                    self.current_song_time = song_db.get_tag_f64("length", &songname).unwrap() as f32;
-                    self.playlist.update_current_entry(song_db, &songname);
-                    self.start_time = Instant::now();
+                    let song_db = self.plugin_service.get_song_db();
 
-                    // TODO: Use setting
-                    if self.current_song_time == 0.0 {
-                        self.current_song_time = 5.0 * 60.0;
+                    if self.plugin_service.get_song_db().is_present(&song.0) {
+                        self.current_song_time = song_db.get_tag_f64("length", &songname).unwrap() as f32;
+                        self.playlist.update_current_entry(song_db, &songname);
+                        self.start_time = Instant::now();
+
+                        // TODO: Use setting
+                        if self.current_song_time == 0.0 {
+                            self.current_song_time = 5.0 * 60.0;
+                        }
+
+                        // Send playlist reply to frontend
+                        self.playlist.current_song_message().map(|reply| {
+                            Self::send_msgs(user_data, send_messages, &reply, count, std::usize::MAX);
+                        });
                     }
+                }
 
-                    // Send playlist reply to frontend
-                    self.playlist.current_song_message().map(|reply| {
-                        Self::send_msgs(user_data, send_messages, &reply, count, std::usize::MAX);
-                    });
+                if let Err(e) = song_name {
+                    warn!("Unable to play file {}", e);
                 }
             }
         }
@@ -253,29 +260,26 @@ impl HippoCore {
         }
     }
 
-    fn basic_error(text: &'static str) -> Error {
-         Error::new(ErrorKind::Other, text)
-    }
-
     /// Finds the data directory relative to the executable.
     /// This is because it's possible to have data next to the exe, but also running
     /// the applications as t2-output/path/exe and the location is in the root then
-    fn find_data_directory() -> std::io::Result<()>{
-        let current_path = std::env::current_dir().map_err(|_| Self::basic_error("Unable to get current dir!"))?;
+    fn find_data_directory() -> Result<()>{
+        let current_path = std::env::current_dir().map_err(|_| anyhow!("Unable to get current dir!"))?;
         if current_path.join("data").exists() {
             return Ok(());
         }
 
-        let mut path = current_path.parent().ok_or_else(|| Self::basic_error("Unable to get parent dir"))?;
+        let mut path = current_path.parent().ok_or_else(|| anyhow!("Unable to get parent dir"))?;
 
         loop {
             trace!("seaching for data in {:?}", path);
 
             if path.join("data").exists() {
-                return std::env::set_current_dir(path);
+                std::env::set_current_dir(path)?;
+                return Ok(());
             }
 
-            path = path.parent().ok_or_else(|| Self::basic_error("Unable to get parent dir"))?;
+            path = path.parent().ok_or_else(|| anyhow!("Unable to get parent dir"))?;
         }
     }
 
@@ -290,7 +294,7 @@ impl HippoCore {
 
 
 /// init the data directory used for configs, logs, databases, etec
-pub extern "C" fn init_config_dir() -> std::io::Result<PathBuf> {
+pub extern "C" fn init_config_dir() -> Result<PathBuf> {
     if let Some(config_dir) = dirs::config_dir() {
         let dir = config_dir.join("HippoPlayer");
         if std::fs::create_dir_all(&dir).is_ok() {
@@ -299,10 +303,7 @@ pub extern "C" fn init_config_dir() -> std::io::Result<PathBuf> {
     }
 
     error!("Unable to create data directory for user");
-
-    Err(Error::new(
-        ErrorKind::Other, "Unable to init output dir for generated files!"
-    ))
+    Err(anyhow!("Unable to init output dir for genertaed files!"))
 }
 
 #[no_mangle]
