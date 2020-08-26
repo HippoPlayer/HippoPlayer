@@ -102,6 +102,10 @@ unsafe extern "C" fn data_callback(
         playback = t[0].clone();
     }
 
+    if playback.is_paused {
+        return;
+    }
+
     ((playback.plugin.plugin_funcs).read_data)(
         playback.plugin_user_data as *mut c_void,
         output_ptr, frame_count);
@@ -177,11 +181,31 @@ impl HippoAudio {
         ))
     }
 
+    fn request_select_song(&mut self, msg: &HippoMessage) -> Option<Box<[u8]>> {
+        let select_song = msg.message_as_request_select_song().unwrap();
+        let pause = select_song.pause_state();
+        let force = select_song.force();
+
+        let players: &Mutex<Vec<HippoPlayback>> = unsafe { std::mem::transmute(self.players) };
+        let mut t = players.lock().unwrap();
+
+        if t.len() == 1 {
+            t[0].is_paused = pause;
+
+            if force {
+                t[0].is_paused = false;
+            }
+        }
+
+        None
+    }
+
     ///
     /// Handle incoming events
     ///
     pub fn event(&mut self, msg: &HippoMessage) -> Option<Box<[u8]>> {
         match msg.message_type() {
+            MessageType::request_select_song => self.request_select_song(msg),
             MessageType::request_output_devices => self.replay_output_devices(),
             MessageType::select_output_device => {
                 trace!("Trying to select new output from UI");

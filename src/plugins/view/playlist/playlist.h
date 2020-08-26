@@ -26,7 +26,7 @@ public:
 
 private:
 	void select_song(const HippoSelectSong* msg);
-    void play_entry(const QModelIndex& item, bool pause_state);
+    void play_entry(const QModelIndex& item, bool pause_state, bool force_play);
     const struct HippoMessageAPI* m_message_api = nullptr;
     TreeView* m_list = nullptr;
 

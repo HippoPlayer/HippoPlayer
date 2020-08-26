@@ -16,6 +16,7 @@ table HippoPrevSong {
 
 table HippoRequestPlaySong {
   pause_state: bool;
+  force: bool;
 }
 
 table HippoReplyPlaySong {
@@ -36,6 +37,7 @@ table HippoRemovePlaylistEntries {
 
 table HippoRequestSelectSong {
   pause_state: bool;
+  force: bool;
   path: string;
   playlist_index: int;
 }

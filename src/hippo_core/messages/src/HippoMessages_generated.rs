@@ -503,26 +503,34 @@ impl<'a> HippoRequestPlaySong<'a> {
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
         args: &'args HippoRequestPlaySongArgs) -> flatbuffers::WIPOffset<HippoRequestPlaySong<'bldr>> {
       let mut builder = HippoRequestPlaySongBuilder::new(_fbb);
+      builder.add_force(args.force);
       builder.add_pause_state(args.pause_state);
       builder.finish()
     }
 
     pub const VT_PAUSE_STATE: flatbuffers::VOffsetT = 4;
+    pub const VT_FORCE: flatbuffers::VOffsetT = 6;
 
   #[inline]
   pub fn pause_state(&self) -> bool {
     self._tab.get::<bool>(HippoRequestPlaySong::VT_PAUSE_STATE, Some(false)).unwrap()
   }
+  #[inline]
+  pub fn force(&self) -> bool {
+    self._tab.get::<bool>(HippoRequestPlaySong::VT_FORCE, Some(false)).unwrap()
+  }
 }
 
 pub struct HippoRequestPlaySongArgs {
     pub pause_state: bool,
+    pub force: bool,
 }
 impl<'a> Default for HippoRequestPlaySongArgs {
     #[inline]
     fn default() -> Self {
         HippoRequestPlaySongArgs {
             pause_state: false,
+            force: false,
         }
     }
 }
@@ -534,6 +542,10 @@ impl<'a: 'b, 'b> HippoRequestPlaySongBuilder<'a, 'b> {
   #[inline]
   pub fn add_pause_state(&mut self, pause_state: bool) {
     self.fbb_.push_slot::<bool>(HippoRequestPlaySong::VT_PAUSE_STATE, pause_state, false);
+  }
+  #[inline]
+  pub fn add_force(&mut self, force: bool) {
+    self.fbb_.push_slot::<bool>(HippoRequestPlaySong::VT_FORCE, force, false);
   }
   #[inline]
   pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> HippoRequestPlaySongBuilder<'a, 'b> {
@@ -896,17 +908,23 @@ impl<'a> HippoRequestSelectSong<'a> {
       let mut builder = HippoRequestSelectSongBuilder::new(_fbb);
       builder.add_playlist_index(args.playlist_index);
       if let Some(x) = args.path { builder.add_path(x); }
+      builder.add_force(args.force);
       builder.add_pause_state(args.pause_state);
       builder.finish()
     }
 
     pub const VT_PAUSE_STATE: flatbuffers::VOffsetT = 4;
-    pub const VT_PATH: flatbuffers::VOffsetT = 6;
-    pub const VT_PLAYLIST_INDEX: flatbuffers::VOffsetT = 8;
+    pub const VT_FORCE: flatbuffers::VOffsetT = 6;
+    pub const VT_PATH: flatbuffers::VOffsetT = 8;
+    pub const VT_PLAYLIST_INDEX: flatbuffers::VOffsetT = 10;
 
   #[inline]
   pub fn pause_state(&self) -> bool {
     self._tab.get::<bool>(HippoRequestSelectSong::VT_PAUSE_STATE, Some(false)).unwrap()
+  }
+  #[inline]
+  pub fn force(&self) -> bool {
+    self._tab.get::<bool>(HippoRequestSelectSong::VT_FORCE, Some(false)).unwrap()
   }
   #[inline]
   pub fn path(&self) -> Option<&'a str> {
@@ -920,6 +938,7 @@ impl<'a> HippoRequestSelectSong<'a> {
 
 pub struct HippoRequestSelectSongArgs<'a> {
     pub pause_state: bool,
+    pub force: bool,
     pub path: Option<flatbuffers::WIPOffset<&'a  str>>,
     pub playlist_index: i32,
 }
@@ -928,6 +947,7 @@ impl<'a> Default for HippoRequestSelectSongArgs<'a> {
     fn default() -> Self {
         HippoRequestSelectSongArgs {
             pause_state: false,
+            force: false,
             path: None,
             playlist_index: 0,
         }
@@ -941,6 +961,10 @@ impl<'a: 'b, 'b> HippoRequestSelectSongBuilder<'a, 'b> {
   #[inline]
   pub fn add_pause_state(&mut self, pause_state: bool) {
     self.fbb_.push_slot::<bool>(HippoRequestSelectSong::VT_PAUSE_STATE, pause_state, false);
+  }
+  #[inline]
+  pub fn add_force(&mut self, force: bool) {
+    self.fbb_.push_slot::<bool>(HippoRequestSelectSong::VT_FORCE, force, false);
   }
   #[inline]
   pub fn add_path(&mut self, path: flatbuffers::WIPOffset<&'b  str>) {

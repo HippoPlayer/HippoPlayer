@@ -84,6 +84,8 @@ void PlayerView::incoming_messages(const unsigned char* data, int len) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void PlayerView::prev_song() {
+    set_pause_state(false);
+
     flatbuffers::FlatBufferBuilder builder(1024);
     builder.Finish(CreateHippoMessageDirect(builder, MessageType_prev_song, CreateHippoPrevSong(builder).Union()));
     HippoMessageAPI_send(m_message_api, builder.GetBufferPointer(), builder.GetSize());
@@ -92,6 +94,8 @@ void PlayerView::prev_song() {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void PlayerView::next_song() {
+    set_pause_state(false);
+
     flatbuffers::FlatBufferBuilder builder(1024);
     builder.Finish(CreateHippoMessageDirect(builder, MessageType_next_song, CreateHippoNextSong(builder).Union()));
     HippoMessageAPI_send(m_message_api, builder.GetBufferPointer(), builder.GetSize());
@@ -100,28 +104,39 @@ void PlayerView::next_song() {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void PlayerView::stop_song() {
+    set_pause_state(false);
+
     flatbuffers::FlatBufferBuilder builder(1024);
     builder.Finish(CreateHippoMessageDirect(builder, MessageType_stop_song, CreateHippoStopSong(builder).Union()));
     HippoMessageAPI_send(m_message_api, builder.GetBufferPointer(), builder.GetSize());
-    m_play_pause_button->setIcon(*m_play_icon);
+
+    m_has_stopped = true;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void PlayerView::play_song() {
-    if (m_play_state) {
+void PlayerView::set_pause_state(bool state) {
+    if (state) {
         m_play_pause_button->setIcon(*m_pause_icon);
     } else {
         m_play_pause_button->setIcon(*m_play_icon);
     }
 
-    printf("playstate %d\n", m_play_state);
+    m_play_state = state;
+}
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void PlayerView::play_song() {
+    set_pause_state(m_play_state);
     m_play_state = !m_play_state;
 
     flatbuffers::FlatBufferBuilder builder(1024);
-    builder.Finish(CreateHippoMessageDirect(builder, MessageType_request_play_song, CreateHippoRequestPlaySong(builder, m_play_state).Union()));
+    builder.Finish(CreateHippoMessageDirect(builder, MessageType_request_play_song,
+    CreateHippoRequestPlaySong(builder, m_play_state, m_has_stopped).Union()));
     HippoMessageAPI_send(m_message_api, builder.GetBufferPointer(), builder.GetSize());
+
+    m_has_stopped = false;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
