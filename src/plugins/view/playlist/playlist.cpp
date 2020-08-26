@@ -156,7 +156,7 @@ void PlaylistView::select_song(const HippoSelectSong* msg) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void PlaylistView::play_entry(const QModelIndex& item, bool pause_state) {
+void PlaylistView::play_entry(const QModelIndex& item, bool pause_state, bool force) {
     QAbstractItemModel* model = m_list->model();
 
     flatbuffers::FlatBufferBuilder builder(1024);
@@ -165,7 +165,7 @@ void PlaylistView::play_entry(const QModelIndex& item, bool pause_state) {
 
     builder.Finish(CreateHippoMessageDirect(
         builder, MessageType_request_select_song,
-        CreateHippoRequestSelectSongDirect(builder, pause_state, path.data(), model->buddy(item).row()).Union()));
+        CreateHippoRequestSelectSongDirect(builder, pause_state, force, path.data(), model->buddy(item).row()).Union()));
 
     HippoMessageAPI_send(m_message_api, builder.GetBufferPointer(), builder.GetSize());
 }
@@ -173,7 +173,7 @@ void PlaylistView::play_entry(const QModelIndex& item, bool pause_state) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void PlaylistView::item_double_clicked(const QModelIndex& item) {
-    play_entry(item, false);
+    play_entry(item, false, true);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -212,7 +212,7 @@ void PlaylistView::incoming_messages(const unsigned char* data, int len) {
             QModelIndexList* indices = new QModelIndexList(m_list->selectionModel()->selectedIndexes());
 
             if (indices->count() > 0) {
-                play_entry(indices->at(0), msg->pause_state());
+                play_entry(indices->at(0), msg->pause_state(), msg->force());
             }
             break;
         }

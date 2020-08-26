@@ -336,14 +336,19 @@ inline flatbuffers::Offset<HippoPrevSong> CreateHippoPrevSong(
 
 struct HippoRequestPlaySong FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_PAUSE_STATE = 4
+    VT_PAUSE_STATE = 4,
+    VT_FORCE = 6
   };
   bool pause_state() const {
     return GetField<uint8_t>(VT_PAUSE_STATE, 0) != 0;
   }
+  bool force() const {
+    return GetField<uint8_t>(VT_FORCE, 0) != 0;
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint8_t>(verifier, VT_PAUSE_STATE) &&
+           VerifyField<uint8_t>(verifier, VT_FORCE) &&
            verifier.EndTable();
   }
 };
@@ -353,6 +358,9 @@ struct HippoRequestPlaySongBuilder {
   flatbuffers::uoffset_t start_;
   void add_pause_state(bool pause_state) {
     fbb_.AddElement<uint8_t>(HippoRequestPlaySong::VT_PAUSE_STATE, static_cast<uint8_t>(pause_state), 0);
+  }
+  void add_force(bool force) {
+    fbb_.AddElement<uint8_t>(HippoRequestPlaySong::VT_FORCE, static_cast<uint8_t>(force), 0);
   }
   explicit HippoRequestPlaySongBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -368,8 +376,10 @@ struct HippoRequestPlaySongBuilder {
 
 inline flatbuffers::Offset<HippoRequestPlaySong> CreateHippoRequestPlaySong(
     flatbuffers::FlatBufferBuilder &_fbb,
-    bool pause_state = false) {
+    bool pause_state = false,
+    bool force = false) {
   HippoRequestPlaySongBuilder builder_(_fbb);
+  builder_.add_force(force);
   builder_.add_pause_state(pause_state);
   return builder_.Finish();
 }
@@ -517,11 +527,15 @@ inline flatbuffers::Offset<HippoRemovePlaylistEntries> CreateHippoRemovePlaylist
 struct HippoRequestSelectSong FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_PAUSE_STATE = 4,
-    VT_PATH = 6,
-    VT_PLAYLIST_INDEX = 8
+    VT_FORCE = 6,
+    VT_PATH = 8,
+    VT_PLAYLIST_INDEX = 10
   };
   bool pause_state() const {
     return GetField<uint8_t>(VT_PAUSE_STATE, 0) != 0;
+  }
+  bool force() const {
+    return GetField<uint8_t>(VT_FORCE, 0) != 0;
   }
   const flatbuffers::String *path() const {
     return GetPointer<const flatbuffers::String *>(VT_PATH);
@@ -532,6 +546,7 @@ struct HippoRequestSelectSong FLATBUFFERS_FINAL_CLASS : private flatbuffers::Tab
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint8_t>(verifier, VT_PAUSE_STATE) &&
+           VerifyField<uint8_t>(verifier, VT_FORCE) &&
            VerifyOffset(verifier, VT_PATH) &&
            verifier.VerifyString(path()) &&
            VerifyField<int32_t>(verifier, VT_PLAYLIST_INDEX) &&
@@ -544,6 +559,9 @@ struct HippoRequestSelectSongBuilder {
   flatbuffers::uoffset_t start_;
   void add_pause_state(bool pause_state) {
     fbb_.AddElement<uint8_t>(HippoRequestSelectSong::VT_PAUSE_STATE, static_cast<uint8_t>(pause_state), 0);
+  }
+  void add_force(bool force) {
+    fbb_.AddElement<uint8_t>(HippoRequestSelectSong::VT_FORCE, static_cast<uint8_t>(force), 0);
   }
   void add_path(flatbuffers::Offset<flatbuffers::String> path) {
     fbb_.AddOffset(HippoRequestSelectSong::VT_PATH, path);
@@ -566,11 +584,13 @@ struct HippoRequestSelectSongBuilder {
 inline flatbuffers::Offset<HippoRequestSelectSong> CreateHippoRequestSelectSong(
     flatbuffers::FlatBufferBuilder &_fbb,
     bool pause_state = false,
+    bool force = false,
     flatbuffers::Offset<flatbuffers::String> path = 0,
     int32_t playlist_index = 0) {
   HippoRequestSelectSongBuilder builder_(_fbb);
   builder_.add_playlist_index(playlist_index);
   builder_.add_path(path);
+  builder_.add_force(force);
   builder_.add_pause_state(pause_state);
   return builder_.Finish();
 }
@@ -578,12 +598,14 @@ inline flatbuffers::Offset<HippoRequestSelectSong> CreateHippoRequestSelectSong(
 inline flatbuffers::Offset<HippoRequestSelectSong> CreateHippoRequestSelectSongDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     bool pause_state = false,
+    bool force = false,
     const char *path = nullptr,
     int32_t playlist_index = 0) {
   auto path__ = path ? _fbb.CreateString(path) : 0;
   return CreateHippoRequestSelectSong(
       _fbb,
       pause_state,
+      force,
       path__,
       playlist_index);
 }

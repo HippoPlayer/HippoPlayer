@@ -30,11 +30,13 @@ public:
     Q_SLOT void randomize_playlist(int state);
 
 private:
+    void set_pause_state(bool state);
     const struct HippoMessageAPI* m_message_api = nullptr;
     ScrollText* m_song_title = nullptr;
     QPushButton* m_play_pause_button = nullptr;
     QIcon* m_play_icon;
     QIcon* m_pause_icon;
     bool m_play_state = true;
+    bool m_has_stopped = false;
 };
 

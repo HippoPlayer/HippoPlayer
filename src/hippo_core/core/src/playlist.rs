@@ -51,6 +51,7 @@ impl Playlist {
 			self.new_song = true;
     	} else if self.randomize_playlist {
     		let rand_index = random::<usize>() % self.entries.len();
+    		println!("new song index 1 {}", self.current_song);
     		self.current_song = rand_index as isize;
     		self.new_song = true;
     	} else {
@@ -73,6 +74,7 @@ impl Playlist {
                 self.new_song = true;
             }
 
+    		println!("new song index 2 {}", self.current_song);
             self.current_song = new_song;
         }
 
@@ -320,6 +322,7 @@ impl Playlist {
     pub fn load(&mut self, filename: &str) -> io::Result<()> {
         let f = BufReader::new(File::open(filename)?);
         *self = serde_json::from_reader(f)?;
+        self.current_song = -1;
         Ok(())
     }
 
@@ -349,8 +352,14 @@ impl Playlist {
         }
 
         if let Some(id) = new_song_id {
-            self.current_song = id as isize;
-            self.new_song = true;
+            if self.current_song != id as isize {
+                self.current_song = id as isize;
+                self.new_song = true;
+            }
+
+            if select_song.force() {
+                self.new_song = true;
+            }
         }
 
         None
