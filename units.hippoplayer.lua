@@ -222,6 +222,22 @@ Program {
 
 -----------------------------------------------------------------------------------------------------------------------
 
+Program {
+    Name = "hippo_vis",
+
+    Sources = {
+        Glob {
+            Dir = "src/hippo_vis",
+            Extensions = { ".cpp" },
+            Recursive = true,
+        },
+    },
+
+    Depends = { "bgfx", "hippo_core_loader", "flatbuffers_lib" },
+}
+
+-----------------------------------------------------------------------------------------------------------------------
+
 local hippoBundle = OsxBundle
 {
     Depends = { "hippo_player" },
@@ -244,6 +260,8 @@ if native.host_platform == "macosx" then
 else
     Default "hippo_player"
 end
+
+Default "hippo_vis"
 
 -- vim: ts=4:sw=4:sts=4
 

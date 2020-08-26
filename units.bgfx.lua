@@ -5,6 +5,25 @@ require "tundra.syntax.rust-cargo"
 
 local native = require('tundra.native')
 
+local BIMG_DIR = "src/external/bimg/"
+local BX_DIR = "src/external/bx/"
+local BGFX_DIR = "src/external/bgfx/"
+local GLSL_OPTIMIZER = BGFX_DIR  .. "3rdparty/glsl-optimizer/"
+local FCPP_DIR = BGFX_DIR .. "3rdparty/fcpp/"
+-- setup target for shader
+local shaderc_platform = "windows"
+local shaderc_vs_extra_params = " -p vs_5_0"
+local shaderc_ps_extra_params = " -p ps_5_0"
+if native.host_platform == "macosx" then
+	shaderc_platform = "osx"
+	shaderc_vs_extra_params = ""
+	shaderc_ps_extra_params = ""
+elseif native.host_platform == "linux" then
+	shaderc_platform = "linux"
+	shaderc_vs_extra_params = ""
+	shaderc_ps_extra_params = ""
+end
+
 DefRule {
 	Name = "ShadercFS",
 	Command = "$(BGFX_SHADERC) -f $(<) -o $(@) --type fragment --platform " .. shaderc_platform .. shaderc_ps_extra_params,
@@ -141,44 +160,46 @@ Program {
 }
 
 StaticLibrary {
-    Name = "bgfx_native",
+    Name = "bgfx",
 
     Env = {
         CPPPATH = {
 		  {
-		  	{ "src/native/external/bx/include/compat/msvc",
-		  	  "src/native/external/bgfx/3rdparty/dxsdk/include" } ; Config = "win64-*-*" },
-          { "src/native/external/bx/include/compat/osx" ; Config = "macosx-*-*" },
-            "src/native/external/remotery/lib",
-            "src/native/external/bgfx/include",
-            "src/native/external/bx/include",
-            "src/native/external/bgfx/3rdparty/khronos",
+		  	{ "src/external/bx/include/compat/msvc",
+		  	  "src/external/bgfx/3rdparty/dxsdk/include" } ; Config = "win64-*-*" },
+          { "src/external/bx/include/compat/osx" ; Config = "macosx-*-*" },
+            "src/external/remotery/lib",
+            "src/external/bgfx/include",
+            "src/external/bx/include",
+            "src/external/bimg/include",
+            "src/external/bgfx/3rdparty/khronos",
+            "src/external/bgfx/3rdparty",
         },
 
         CXXOPTS = {
 			{ "-Wno-variadic-macros", "-Wno-everything" ; Config = "macosx-*-*" },
-			{ "/Isrc/native/external/bx/include/compat/msvc",
+			{ "/Isrc/external/bx/include/compat/msvc",
 			"/EHsc"; Config = "win64-*-*" },
         },
     },
 
     Sources = {
-		{ "src/native/external/bgfx/src/bgfx.cpp",
-		  "src/native/external/bgfx/src/image.cpp",
-		  "src/native/external/bgfx/src/vertexdecl.cpp",
-		  "src/native/external/bgfx/src/debug_renderdoc.cpp",
-		  "src/native/external/bgfx/src/topology.cpp",
-		  "src/native/external/bgfx/src/shader_dxbc.cpp",
-		  "src/native/external/bgfx/src/renderer_gl.cpp",
-		  "src/native/external/bgfx/src/renderer_vk.cpp",
-		  "src/native/external/bgfx/src/renderer_null.cpp",
-		  "src/native/external/bgfx/src/renderer_d3d9.cpp",
-		  "src/native/external/bgfx/src/renderer_d3d11.cpp",
-		  "src/native/external/bgfx/src/renderer_d3d12.cpp" },
-        { "src/native/external/bgfx/src/renderer_mtl.mm" ; Config = "macosx-*-*" },
-	    { "src/native/external/bgfx/src/glcontext_wgl.cpp" ; Config = "win64-*-*" },
-	    { "src/native/external/bgfx/src/glcontext_glx.cpp" ; Config = "linux-*-*" },
-	    { "src/native/external/bgfx/src/glcontext_nsgl.mm" ; Config = "macosx-*-*" },
+		{ "src/external/bgfx/src/bgfx.cpp",
+		  -- "src/external/bgfx/src/image.cpp",
+		  -- "src/external/bgfx/src/vertexdecl.cpp",
+		  "src/external/bgfx/src/debug_renderdoc.cpp",
+		  "src/external/bgfx/src/topology.cpp",
+		  "src/external/bgfx/src/shader_dxbc.cpp",
+		  "src/external/bgfx/src/renderer_gl.cpp",
+		  "src/external/bgfx/src/renderer_vk.cpp",
+		  -- "src/external/bgfx/src/renderer_null.cpp",
+		  "src/external/bgfx/src/renderer_d3d9.cpp",
+		  "src/external/bgfx/src/renderer_d3d11.cpp",
+		  "src/external/bgfx/src/renderer_d3d12.cpp" },
+        { "src/external/bgfx/src/renderer_mtl.mm" ; Config = "macosx-*-*" },
+	    { "src/external/bgfx/src/glcontext_wgl.cpp" ; Config = "win64-*-*" },
+	    { "src/external/bgfx/src/glcontext_glx.cpp" ; Config = "linux-*-*" },
+	    { "src/external/bgfx/src/glcontext_nsgl.mm" ; Config = "macosx-*-*" },
     },
 
 	IdeGenerationHints = { Msvc = { SolutionFolder = "External" } },
