@@ -49,7 +49,7 @@ typedef struct HippoIoAPI {
 	HippoIoErrorCode (*seek)(HippoIoHandle handle, HippoFileSeek type, int64_t step);
 
 	struct HippoApiPrivData* priv_data;
-} HippoFileAPI;
+} HippoIoAPI;
 
 #define HippoIo_read_file_to_memory(api, filename, dest, size) api->read_file_to_memory(api->priv_data, filename, dest, size)
 #define HippoIo_free_file_to_memory(api, dest) api->free_file_to_memory(api->priv_data, dest)
@@ -281,7 +281,7 @@ struct HippoServicePrivData;
 
 typedef struct HippoServiceAPI {
 	const HippoLogAPI* (*get_log_api)(struct HippoServicePrivData* private_data, int api_version);
-	const HippoFileAPI* (*get_io_api)(struct HippoServicePrivData* private_data, int api_version);
+	const HippoIoAPI* (*get_io_api)(struct HippoServicePrivData* private_data, int api_version);
 	const HippoMetadataAPI* (*get_metadata_api)(struct HippoServicePrivData* private_data, int api_version);
 	const HippoMessageAPI* (*get_message_api)(struct HippoServicePrivData* private_data, int api_version);
 	struct HippoServicePrivData* private_data;
