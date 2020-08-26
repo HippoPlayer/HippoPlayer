@@ -1,3 +1,7 @@
+# 1.0.2
+
+* [Fixed] Fixed samples for tfm files
+
 # 1.0.1
 
 * [Added] support loading mdat.<filename>, smpl.<filename>

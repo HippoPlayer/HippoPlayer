@@ -181,10 +181,11 @@ static int tfmx_load_tfm(const HippoIoAPI* io_api, TfmxState* state, const char*
 	uint32_t mdat_size = smpl_offs - 20 - sizeof(struct TFMXHeader);
 
 	if (mdat_size > 0x10000) {
-		smpl_data_ptr = data + smpl_offs;
+		smpl_data_ptr = saved_data + smpl_offs;
 		mdat_size = 0x10000;
 	} else {
-		smpl_data_ptr = data + mdat_size;
+		smpl_data_ptr = saved_data + smpl_offs;
+		//smpl_data_ptr = saved_data + mdat_size;
 	}
 
 	mdat.data = data;
@@ -439,7 +440,7 @@ static void tfmx_set_log(struct HippoLogAPI* log) {
 static HippoPlaybackPlugin g_tfmx_plugin = {
     HIPPO_PLAYBACK_PLUGIN_API_VERSION,
     "tfmx",
-    "1.0.0",
+    "1.0.2",
     "",
     tfmx_probe_can_play,
     tfmx_supported_extensions,
