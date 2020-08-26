@@ -193,11 +193,6 @@ static int tfmx_load_tfm(const HippoIoAPI* io_api, TfmxState* state, const char*
 	smpl.data = smpl_data_ptr;
 	smpl.size = tag_offs - smpl_offs;
 
-	printf("sample offset %d\n", smpl_offs);
-	printf("tag    offset %d\n", tag_offs);
-
-	printf("mdat size %d sample size %ld (total %ld)\n", mdat_size, smpl.size, size);
-
 	int ret_value = LoadTFMXFile(state, &mdat, &smpl);
 
 	HippoIo_free_file_to_memory(io_api, saved_data);
@@ -380,8 +375,6 @@ static int tfmx_seek(void* user_data, int ms) {
 static int tfmx_metadata(const char* url, const HippoServiceAPI* service_api) {
 	TfmxState* state = malloc(sizeof(TfmxState));
 	TfmxState_init(state);
-
-	printf("size of tfmx state %ld\n", sizeof(TfmxState));
 
     const HippoIoAPI* io_api = HippoServiceAPI_get_io_api(service_api, HIPPO_FILE_API_VERSION);
     const HippoMetadataAPI* metadata_api = HippoServiceAPI_get_metadata_api(service_api, HIPPO_METADATA_API_VERSION);
