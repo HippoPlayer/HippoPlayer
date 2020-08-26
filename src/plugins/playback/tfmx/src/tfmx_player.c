@@ -93,11 +93,11 @@ static void player_NotePort(TfmxState* state, U32 note) {
         }
 }
 
-static int player_LoopOff(TfmxState* state, struct Hdb* hw) {
+static int player_LoopOff(struct Hdb* hw) {
     return 1;
 }
 
-static int player_LoopOn(TfmxState* state, struct Hdb* hw) {
+static int player_LoopOn(struct Hdb* hw) {
     if (!hw->c)
         return 1;
     if (hw->c->WaitDMACount--)

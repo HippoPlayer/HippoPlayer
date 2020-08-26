@@ -4,8 +4,10 @@
  * jhp 29Feb96
  */
 
+#include <HippoPlugin.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -22,6 +24,8 @@
 #else
 #include <arpa/inet.h>
 #endif
+
+extern HippoLogAPI* g_hp_log;
 
 /* structure of of cyb tfmx module (mdat and smpl in one file) */
 /* format by my weird friend Alexis 'Cyb' Nasr, back in 1995, yeah ! */
@@ -41,7 +45,10 @@ static inline uint32_t GINT32_FROM_BE(uint32_t v) {
     return ((v >> 24) & 0x000000ff) | ((v >> 8) & 0x0000ff00) | ((v << 8) & 0x00ff0000) | ((v << 16) & 0xff000000);
 }
 
-static int tfmx_loader(TfmxState* state, char* mfn, char* sfn);
+
+static int tfmx_loader(TfmxState* state, TfmxData* mdata_data, TfmxData* sample_data);
+
+#if 0
 
 /* loading of a single Cyb' TFMX file */
 /* return 0 on success */
@@ -167,7 +174,12 @@ cleanup:
     return retval;
 }
 
-char LoadTFMXFile(TfmxState* state, char* fName) {
+#endif
+
+int LoadTFMXFile(TfmxState* state, TfmxData* mdat_data, TfmxData* sample_data) {
+	return tfmx_loader(state, mdat_data, sample_data);
+
+/*
     int suffixPos, suffixPosDat, status;
     char *mfn = fName, *sfn, *c;
 
@@ -182,21 +194,21 @@ char LoadTFMXFile(TfmxState* state, char* fName) {
     else
         c++;
 
-    suffixPos = strlen(c) - 4;    /* Get filename length */
-    suffixPosDat = strlen(c) - 5; /* Get filename length */
+    suffixPos = strlen(c) - 4;    // Get filename length
+    suffixPosDat = strlen(c) - 5; // Get filename length
 
     if (strncasecmp(c, "mdat.", 5) == 0) {
-        /* Case-preserving conversion of "mdat" to "smpl" */
+        // Case-preserving conversion of "mdat" to "smpl"
         (*c++) ^= 'm' ^ 's';
         (*c++) ^= 'd' ^ 'm';
         (*c++) ^= 'a' ^ 'p';
         (*c++) ^= 't' ^ 'l';
         c -= 4;
-    } else if (strncasecmp(c, "tfmx.", 5) == 0) { /* Single Cyb' TFMX file */
+    } else if (strncasecmp(c, "tfmx.", 5) == 0) { // Single Cyb' TFMX fil
         free(sfn);
         return tfmx_cyb_file_load(state, fName);
     } else if (suffixPos >= 0 && strncasecmp(c + suffixPos, ".tfx", 4) == 0) {
-        /* Case-preserving conversion of ".tfx" to ".sam" */
+        // Case-preserving conversion of ".tfx" to ".sam"
         *(c + suffixPos + 1) ^= 't' ^ 's';
         *(c + suffixPos + 2) ^= 'f' ^ 'a';
         *(c + suffixPos + 3) ^= 'x' ^ 'm';
@@ -212,52 +224,59 @@ char LoadTFMXFile(TfmxState* state, char* fName) {
     }
 
     if ((status = tfmx_loader(state, mfn, sfn)) == 1) {
-        /* TFMXERR("LoadTFMXFile: Loading of module failed"); */
+        // TFMXERR("LoadTFMXFile: Loading of module failed");
         free(sfn);
         return 1;
     } else if (status == 2) {
-        /* TFMXERR("LoadTFMXFile: Not an MDAT file"); */
+        // TFMXERR("LoadTFMXFile: Not an MDAT file");
         free(sfn);
         return 1;
     }
 
     free(sfn);
     return 0;
+*/
 }
 
-static int tfmx_loader(TfmxState* state, char* mfn, char* sfn) {
-    FILE *gfd, *smplFile;
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static int read_data(void* dest, int size, TfmxData* data) {
+	if (size + data->read_offset > data->size) {
+		size = ((int)data->size) - data->read_offset;
+	}
+
+	memcpy(dest, data->data + data->read_offset, size);
+	data->read_offset += size;
+
+	return size;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static int tfmx_loader(TfmxState* state, TfmxData* mdat_data, TfmxData* smpl_data) {
     /* struct stat s; */
     int x, y, z = 0;
     U16 *sh, *lg;
 
-    if ((gfd = fopen(mfn, "rb")) <= 0) {
-        TFMXERR(state, "LoadTFMX: Failed to open song");
-        return (1);
-    }
-
-    if (!fread(&state->mdat_header, sizeof(state->mdat_header), 1, gfd)) {
+    if (!read_data(&state->mdat_header, sizeof(state->mdat_header), mdat_data)) {
         TFMXERR(state, "LoadTFMX: Failed to read TFMX header");
-        fclose(gfd);
-        return (1);
+        return -1;
     }
 
-    if (strncmp("TFMX-SONG", state->mdat_header.magic, 9) && strncmp("TFMX_SONG", state->mdat_header.magic, 9) &&
-        strncasecmp("TFMXSONG", state->mdat_header.magic, 8) && strncasecmp("TFMX ", state->mdat_header.magic, 5)) {
-        TFMXERR(state, "LoadTFMX: Not a TFMX module");
-        fclose(gfd);
-        return (2);
+    if (strncmp("TFMX-SONG", state->mdat_header.magic, 9)
+     && strncmp("TFMX_SONG", state->mdat_header.magic, 9)
+     && strncasecmp("TFMXSONG", state->mdat_header.magic, 8)
+     && strncasecmp("TFMX ", state->mdat_header.magic, 5)) {
+        hp_error("%s", "LoadTFMX: Not a TFMX module");
+        return -1;
     }
 
-    if (!(x = fread(&state->mdat_editbuf, sizeof(U32), MDAT_EDITBUF_LONGS, gfd))) {
-        TFMXERR(state, "LoadTFMX: Read error in MDAT file");
-        fclose(gfd);
-        return (1);
+    if (!(x = read_data(&state->mdat_editbuf, MDAT_EDITBUF_LONGS * 4, mdat_data))) {
+        hp_error("%s", "LoadTFMX: Read error in MDAT file");
+        return -1;
     }
 
-    fclose(gfd);
-
-    state->mlen = x;
+    state->mlen = x >> 2;
 
     state->mdat_editbuf[x] = -1;
     if (!state->mdat_header.trackstart)
@@ -272,8 +291,9 @@ static int tfmx_loader(TfmxState* state, char* mfn, char* sfn) {
         state->mdat_header.macrostart = 0x100;
     else
         state->mdat_header.macrostart = (ntohl(state->mdat_header.macrostart) - 0x200L) >> 2;
+
     if (x < 136) {
-        return (2);
+        return -1;
     }
 
     for (x = 0; x < 32; x++) {
@@ -324,46 +344,18 @@ static int tfmx_loader(TfmxState* state, char* mfn, char* sfn) {
         *sh++ = x;
     }
 
-    /* Now at long last we calc the size of and load the sample file. */
-    {
-        long fileSize = 0;
+    // Now at long last we calc the size of and load the sample file.
+	if (!(state->smplbuf = (void*)malloc(smpl_data->size))) {
+		hp_error("%s", "LoadTFMX: Error allocating samplebuffer");
+		return -1;
+	}
 
-        if ((smplFile = fopen(sfn, "rb")) == NULL) {
-            TFMXERR(state, "LoadTFMX: Error opening SMPL file");
-            return (1);
-        }
-        if (fseek(smplFile, 0, SEEK_END)) {
-            TFMXERR(state, "LoadTFMX: fseek failed in SMPL file");
-            fclose(smplFile);
-            return (1);
-        }
-        if ((fileSize = ftell(smplFile)) < 0) {
-            TFMXERR(state, "LoadTFMX: ftell failed in SMPL file");
-            fclose(smplFile);
-            return (1);
-        }
+	state->smplbuf_end = state->smplbuf + smpl_data->size - 1;
 
-        if (state->smplbuf) {  // Dealloc any left behind samplebuffer
-            free(state->smplbuf);
-            state->smplbuf = 0;
-        }
-
-        if (!(state->smplbuf = (void*)malloc(fileSize))) {
-            TFMXERR(state, "LoadTFMX: Error allocating samplebuffer");
-            fclose(smplFile);
-            return (1);
-        }
-
-        state->smplbuf_end = state->smplbuf + fileSize - 1;
-        rewind(smplFile);
-
-        if (!fread(state->smplbuf, 1, fileSize, smplFile)) {
-            TFMXERR(state, "LoadTFMX: Error reading SMPL file");
-            fclose(smplFile);
-            free(state->smplbuf);
-            return (1);
-        }
-        fclose(smplFile);
+	if (!read_data(state->smplbuf, smpl_data->size, smpl_data)) {
+		hp_error("%s", "LoadTFMX: Error reading SMPL file");
+		free(state->smplbuf);
+		return -1;
     }
 
     /*
@@ -375,7 +367,7 @@ static int tfmx_loader(TfmxState* state, char* mfn, char* sfn) {
     tfmx_calc_sizes(state);
     TFMXRewind(state);
 
-    return 0;
+    return 1;
 
     /* Now the song is fully loaded.  Everything is done but ntohl'ing the actual
        pattern and macro data. The routines that use the data do it for themselves.*/

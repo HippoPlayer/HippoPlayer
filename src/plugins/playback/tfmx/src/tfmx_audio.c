@@ -381,7 +381,6 @@ void tfmx_calc_sizes(TfmxState* state) {
     if (!state->force8) {
         convert_func = &conv_s16;
         state->bytes_per_sample = 2;
-        printf("using 16 bit\n");
     } else {
         convert_func = &conv_u8;
         state->bytes_per_sample = 1;

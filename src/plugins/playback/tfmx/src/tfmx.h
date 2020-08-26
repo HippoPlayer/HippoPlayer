@@ -36,6 +36,12 @@ typedef union {
     } b;
 } UNI;
 
+typedef struct TfmxData {
+    U8* data;
+    uint64_t size;
+    U32 read_offset;
+} TfmxData;
+
 #define MDAT_EDITBUF_LONGS 16384
 //extern U32 mdat_editbuf[MDAT_EDITBUF_LONGS];
 
@@ -83,7 +89,7 @@ struct Hdb {
     S8* SampleStart;
     U8 vol;
     U8 mode;
-    int (*loop)();
+    int (*loop)(struct Hdb* hw);
     int loopcnt;
     struct Cdb* c;
 };

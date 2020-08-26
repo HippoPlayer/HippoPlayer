@@ -5,13 +5,15 @@
 #ifndef TFMXIFACE_H
 #define TFMXIFACE_H
 
+struct TfmxData;
+
 /* Error function definition */
 #define TFMXERR(state, x) TFMXError(state, x)
 void TFMXError(TfmxState* state, char *err);
 
 /* TFMX file & playing management */
 char IsTFMXFilename(char* fName);
-char LoadTFMXFile(TfmxState* state, char *fName);
+int LoadTFMXFile(TfmxState* state, struct TfmxData* mdat, struct TfmxData* samp);
 void TFMXRewind(TfmxState* state);
 void TFMXStop(TfmxState* state);
 void TFMXQuit(TfmxState* state);
