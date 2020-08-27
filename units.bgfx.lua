@@ -24,6 +24,18 @@ elseif native.host_platform == "linux" then
 	shaderc_ps_extra_params = ""
 end
 
+-----------------------------------------------------------------------------------------------------------------------
+
+local function get_c_cpp_src(dir)
+    return Glob {
+        Dir = dir,
+        Extensions = { ".cpp", ".c", ".h" },
+        Recursive = true,
+}
+end
+
+
+
 DefRule {
 	Name = "ShadercFS",
 	Command = "$(BGFX_SHADERC) -f $(<) -o $(@) --type fragment --platform " .. shaderc_platform .. shaderc_ps_extra_params,
@@ -159,6 +171,76 @@ Program {
 	IdeGenerationHints = { Msvc = { SolutionFolder = "Tools" } },
 }
 
+-----------------------------------------------------------------------------------------
+
+StaticLibrary {
+    Name = "glfw",
+
+    Env = {
+        CPPPATH = {
+            "src/external/glfw/src",
+            "src/external/glfw/include",
+        },
+
+        CPPDEFS = {
+            { "_GLFW_WIN32", "_GLFW_WGL", "WIN32"; Config = "win64-*-*" },
+            { "_GLFW_X11", "_GLFW_GFX", "LINUX"; Config = "linux-*-*" },
+            { "_GLFW_NSGL", "MACOSX"; Config = "macosx-*-*" },
+        },
+    },
+
+    Sources = {
+		"src/external/glfw/src/window.c",
+		"src/external/glfw/src/context.c",
+		"src/external/glfw/src/init.c",
+		"src/external/glfw/src/input.c",
+		"src/external/glfw/src/monitor.c",
+		-- "src/external/glfw/src/null_init.c",
+		-- "src/external/glfw/src/null_joystick.c",
+		-- "src/external/glfw/src/null_monitor.c",
+		-- "src/external/glfw/src/null_window.c",
+		"src/external/glfw/src/vulkan.c",
+
+        {
+			"src/external/glfw/src/cocoa_init.m",
+			"src/external/glfw/src/cocoa_joystick.m",
+			"src/external/glfw/src/cocoa_monitor.m",
+			"src/external/glfw/src/cocoa_time.c",
+			"src/external/glfw/src/cocoa_window.m",
+			"src/external/glfw/src/nsgl_context.h",
+			"src/external/glfw/src/nsgl_context.m" ; Config = "macosx-*-*"
+		},
+
+		{
+			"src/external/glfw/src/glx_context.c",
+			"src/external/glfw/src/egl_context.c",
+			-- "src/external/glfw/src/wl_init.c",
+			-- "src/external/glfw/src/wl_monitor.c",
+			-- "src/external/glfw/src/wl_window.c",
+			"src/external/glfw/src/x11_init.c",
+			"src/external/glfw/src/x11_monitor.c",
+			"src/external/glfw/src/x11_window.c",
+			"src/external/glfw/src/linux_joystick.c",
+			"src/external/glfw/src/osmesa_context.c",
+			"src/external/glfw/src/posix_thread.c",
+			"src/external/glfw/src/posix_time.c",
+			"src/external/glfw/src/xkb_unicode.c" ; Config = "linux-*-*",
+		},
+
+		{
+			"src/external/glfw/src/wgl_context.c",
+			"src/external/glfw/src/win32_init.c",
+			"src/external/glfw/src/win32_joystick.c",
+			"src/external/glfw/src/win32_monitor.c",
+			"src/external/glfw/src/win32_thread.c",
+			"src/external/glfw/src/win32_time.c",
+			"src/external/glfw/src/win32_window.c" ; Config = "win64-*-*",
+		},
+    },
+}
+
+-----------------------------------------------------------------------------------------
+
 StaticLibrary {
     Name = "bgfx",
 
@@ -186,13 +268,13 @@ StaticLibrary {
     Sources = {
 		{ "src/external/bgfx/src/bgfx.cpp",
 		  -- "src/external/bgfx/src/image.cpp",
-		  -- "src/external/bgfx/src/vertexdecl.cpp",
+		  "src/external/bgfx/src/vertexlayout.cpp",
 		  "src/external/bgfx/src/debug_renderdoc.cpp",
 		  "src/external/bgfx/src/topology.cpp",
 		  "src/external/bgfx/src/shader_dxbc.cpp",
 		  "src/external/bgfx/src/renderer_gl.cpp",
 		  "src/external/bgfx/src/renderer_vk.cpp",
-		  -- "src/external/bgfx/src/renderer_null.cpp",
+		  "src/external/bgfx/src/renderer_noop.cpp",
 		  "src/external/bgfx/src/renderer_d3d9.cpp",
 		  "src/external/bgfx/src/renderer_d3d11.cpp",
 		  "src/external/bgfx/src/renderer_d3d12.cpp" },

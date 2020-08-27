@@ -225,7 +225,13 @@ Program {
 Program {
     Name = "hippo_vis",
 
+	Includes = {
+		"src/external/glfw/include",
+		"src/external/glfw/deps",
+	},
+
     Sources = {
+		"src/external/glfw/deps/glad_gl.c",
         Glob {
             Dir = "src/hippo_vis",
             Extensions = { ".cpp" },
@@ -233,7 +239,13 @@ Program {
         },
     },
 
-    Depends = { "bgfx", "hippo_core_loader", "flatbuffers_lib" },
+    Env = {
+		PROGCOM = {
+			{  "-lX11", "-lpthread", "-ldl"; Config = "linux-*-*" },
+		},
+	},
+
+    Depends = { "bgfx", "glfw", "hippo_core_loader", "flatbuffers_lib" },
 }
 
 -----------------------------------------------------------------------------------------------------------------------
