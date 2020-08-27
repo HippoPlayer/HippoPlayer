@@ -19,13 +19,13 @@ static void error_callback(int error, const char* description) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void* glfwNativeWindowHandle(GLFWwindow* _window) {
-//#	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
+#	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
     return (void*)(uintptr_t)glfwGetX11Window(_window);
-//#	elif BX_PLATFORM_OSX
-//    return glfwGetCocoaWindow(_window);
-//#	elif BX_PLATFORM_WINDOWS
-//    return glfwGetWin32Window(_window);
-//#	endif // BX_PLATFORM_
+#	elif BX_PLATFORM_OSX
+    return glfwGetCocoaWindow(_window);
+#	elif BX_PLATFORM_WINDOWS
+    return glfwGetWin32Window(_window);
+#	endif // BX_PLATFORM_
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -51,9 +51,9 @@ int main(void) {
     }
 
     bgfx::PlatformData pd;
-//#if defined(GLFW_EXPOSE_NATIVE_X11)
+#if defined(GLFW_EXPOSE_NATIVE_X11)
     pd.ndt = glfwGetX11Display();
-//#endif
+#endif
     pd.nwh = glfwNativeWindowHandle(window);
     pd.context = NULL;
     pd.backBuffer = NULL;
@@ -62,10 +62,12 @@ int main(void) {
     bgfx::setPlatformData(pd);
 
     bgfx::Init bgfxInit;
-    bgfxInit.type = bgfx::RendererType::OpenGL;
+    //bgfxInit.type = bgfx::RendererType::OpenGL;
+    bgfxInit.type = bgfx::RendererType::Count;
     bgfxInit.resolution.width = WINDOW_WIDTH;
     bgfxInit.resolution.height = WINDOW_HEIGHT;
     bgfxInit.resolution.reset = BGFX_RESET_VSYNC;
+    bgfxInit.platformData = pd;
 
     if (!bgfx::init(bgfxInit)) {
         printf("failed to init bgfx\n");

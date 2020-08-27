@@ -228,7 +228,9 @@ StaticLibrary {
 		},
 
 		{
+			"src/external/glfw/src/egl_context.c",
 			"src/external/glfw/src/wgl_context.c",
+			"src/external/glfw/src/osmesa_context.c",
 			"src/external/glfw/src/win32_init.c",
 			"src/external/glfw/src/win32_joystick.c",
 			"src/external/glfw/src/win32_monitor.c",
@@ -278,6 +280,9 @@ StaticLibrary {
 		"BGFX_CONFIG_RENDERER_WEBGPU=0",
 		"BGFX_CONFIG_RENDERER_GNM=0",
 		"BGFX_CONFIG_RENDERER_VULKAN=0",
+		{ "BGFX_CONFIG_RENDERER_OPENGL" ; Config = { "linux-*-*", "win64-*-*" } },
+		{ "BGFX_CONFIG_RENDERER_METAL" ; Config = "macosx-*-*" },
+		{ "BGFX_CONFIG_RENDERER_DIRECT3D11"  ; Config = "win64-*-*" },
 	},
 
     Sources = {
@@ -300,7 +305,11 @@ StaticLibrary {
 		  "src/external/bgfx/src/renderer_d3d11.cpp",
 		  "src/external/bgfx/src/renderer_d3d12.cpp" },
         { "src/external/bgfx/src/renderer_mtl.mm" ; Config = "macosx-*-*" },
-	    { "src/external/bgfx/src/glcontext_wgl.cpp" ; Config = "win64-*-*" },
+	    { 
+			"src/external/bgfx/src/glcontext_wgl.cpp",
+			"src/external/bgfx/src/nvapi.cpp",
+			"src/external/bgfx/src/dxgi.cpp" ; Config = "win64-*-*" 
+		},
 	    { "src/external/bgfx/src/glcontext_glx.cpp" ; Config = "linux-*-*" },
 	    { "src/external/bgfx/src/glcontext_nsgl.mm" ; Config = "macosx-*-*" },
     },

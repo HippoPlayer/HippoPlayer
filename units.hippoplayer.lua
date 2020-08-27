@@ -248,6 +248,7 @@ Program {
 
     Env = {
 		PROGCOM = {
+            { "opengl32.lib", "shell32.lib", "gdi32.lib", "user32.lib"; Config = "win64-*-*" },
 			{  "-lGL", "-lX11", "-lpthread", "-ldl"; Config = "linux-*-*" },
 		},
 	},

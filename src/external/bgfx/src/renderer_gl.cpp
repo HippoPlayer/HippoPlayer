@@ -7002,8 +7002,6 @@ namespace bgfx { namespace gl
 			renderDocTriggerCapture();
 		}
 
-		printf("submit\n");
-
 		m_glctx.makeCurrent(NULL);
 
 		BGFX_GL_PROFILER_BEGIN_LITERAL("rendererSubmit", kColorView);

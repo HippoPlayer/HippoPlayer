@@ -18,6 +18,7 @@ local macosx = {
 		QT5_INC = native.getenv("QT5_INC"),
 		QT5_BIN = native.getenv("QT5_BIN"),
 		QT5_LIB = native.getenv("QT5_LIB"),
+		BGFX_SHADERC = "$(OBJECTDIR)$(SEP)bgfx_shaderc$(PROGSUFFIX)",
 
         RUST_CARGO_OPTS = {
             { "test"; Config = "*-*-*-test" },
@@ -132,6 +133,7 @@ local win64 = {
 		QT5_INC = native.getenv("QT5_INC"),
 		QT5_BIN = native.getenv("QT5_BIN"),
 		QT5_LIB = native.getenv("QT5_LIB"),
+		BGFX_SHADERC = "$(OBJECTDIR)$(SEP)bgfx_shaderc$(PROGSUFFIX)",
 
         RUST_CARGO_OPTS = {
             { "test"; Config = "*-*-*-test" },
