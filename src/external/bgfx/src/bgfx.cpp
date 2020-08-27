@@ -4,6 +4,7 @@
  */
 
 #include <bx/platform.h>
+#include <stdio.h>
 
 #include "bgfx_p.h"
 #include <bgfx/embedded_shader.h>

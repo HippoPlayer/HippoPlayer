@@ -226,12 +226,19 @@ Program {
     Name = "hippo_vis",
 
 	Includes = {
+		"src/external/bx/include",
+		"src/external/bgfx/include",
 		"src/external/glfw/include",
-		"src/external/glfw/deps",
+	},
+
+	Defines = {
+		"BX_CONFIG_DEBUG=1",
+		{ "GLFW_EXPOSE_NATIVE_WIN32" ; Config = "win64-*-*" },
+		{ "GLFW_EXPOSE_NATIVE_COCOA" ; Config = "macos*-*-*" },
+		{ "GLFW_EXPOSE_NATIVE_X11" ; Config = "linux-*-*" },
 	},
 
     Sources = {
-		"src/external/glfw/deps/glad_gl.c",
         Glob {
             Dir = "src/hippo_vis",
             Extensions = { ".cpp" },
@@ -241,7 +248,7 @@ Program {
 
     Env = {
 		PROGCOM = {
-			{  "-lX11", "-lpthread", "-ldl"; Config = "linux-*-*" },
+			{  "-lGL", "-lX11", "-lpthread", "-ldl"; Config = "linux-*-*" },
 		},
 	},
 

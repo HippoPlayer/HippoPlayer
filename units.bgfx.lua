@@ -239,10 +239,15 @@ StaticLibrary {
     },
 }
 
+
 -----------------------------------------------------------------------------------------
 
 StaticLibrary {
     Name = "bgfx",
+
+    Defines = {
+		"BX_CONFIG_DEBUG=1",
+    },
 
     Env = {
         CPPPATH = {
@@ -253,7 +258,11 @@ StaticLibrary {
             "src/external/remotery/lib",
             "src/external/bgfx/include",
             "src/external/bx/include",
+            "src/external/bx/3rdparty",
             "src/external/bimg/include",
+            "src/external/bimg/3rdparty",
+            "src/external/bimg/3rdparty/iqa/include",
+            "src/external/bimg/3rdparty/astc-codec/include",
             "src/external/bgfx/3rdparty/khronos",
             "src/external/bgfx/3rdparty",
         },
@@ -265,13 +274,25 @@ StaticLibrary {
         },
     },
 
+    Defines = {
+		"BGFX_CONFIG_RENDERER_WEBGPU=0",
+		"BGFX_CONFIG_RENDERER_GNM=0",
+		"BGFX_CONFIG_RENDERER_VULKAN=0",
+	},
+
     Sources = {
+    	get_c_cpp_src("src/external/bimg/src"),
+
+		"src/external/bx/src/amalgamated.cpp",
 		{ "src/external/bgfx/src/bgfx.cpp",
 		  -- "src/external/bgfx/src/image.cpp",
 		  "src/external/bgfx/src/vertexlayout.cpp",
 		  "src/external/bgfx/src/debug_renderdoc.cpp",
 		  "src/external/bgfx/src/topology.cpp",
 		  "src/external/bgfx/src/shader_dxbc.cpp",
+		  "src/external/bgfx/src/renderer_gnm.cpp",
+		  "src/external/bgfx/src/renderer_webgpu.cpp",
+		  "src/external/bgfx/src/renderer_nvn.cpp",
 		  "src/external/bgfx/src/renderer_gl.cpp",
 		  "src/external/bgfx/src/renderer_vk.cpp",
 		  "src/external/bgfx/src/renderer_noop.cpp",
