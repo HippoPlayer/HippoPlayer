@@ -8,8 +8,15 @@ local native = require('tundra.native')
 local BIMG_DIR = "src/external/bimg/"
 local BX_DIR = "src/external/bx/"
 local BGFX_DIR = "src/external/bgfx/"
+local GLFW_DIR = "src/external/glfw/"
+
 local GLSL_OPTIMIZER = BGFX_DIR  .. "3rdparty/glsl-optimizer/"
 local FCPP_DIR = BGFX_DIR .. "3rdparty/fcpp/"
+local SPIRV_CROSS = BGFX_DIR .. "3rdparty/spirv-cross/"
+local GLSLANG_DIR = BGFX_DIR .. "3rdparty/glslang/"
+local SPIRV_TOOLS = BGFX_DIR .. "3rdparty/spirv-tools/"
+local SPIRV_HEADERS = BGFX_DIR .. "3rdparty/spirv-headers/"
+
 -- setup target for shader
 local shaderc_platform = "windows"
 local shaderc_vs_extra_params = " -p vs_5_0"
@@ -31,10 +38,34 @@ local function get_c_cpp_src(dir)
         Dir = dir,
         Extensions = { ".cpp", ".c", ".h" },
         Recursive = true,
-}
+	}
 end
 
+local function glob_no_main(dir, ext, rec)
+	return FGlob {
+		Dir = dir,
+		Extensions = { ext, ".h" },
+		Filters = {
+			{ Pattern = "main.cpp", Config = "never" }
+		},
+        Recursive = rec,
+	}
+end
 
+-----------------------------------------------------------------------------------------------------------------------
+
+local function glob_c_cpp_no_main(dir)
+	return FGlob {
+		Dir = dir,
+		Extensions = { ".cpp", ".c", ".h" },
+		Filters = {
+			{ Pattern = "main.cpp", Config = "never" }
+		},
+        Recursive = false,
+	}
+end
+
+-----------------------------------------------------------------------------------------------------------------------
 
 DefRule {
 	Name = "ShadercFS",
@@ -53,6 +84,8 @@ DefRule {
 	end,
 }
 
+-----------------------------------------------------------------------------------------------------------------------
+
 DefRule {
 	Name = "ShadercVS",
 	Command = "$(BGFX_SHADERC) -f $(<) -o $(@) --type vertex --platform " .. shaderc_platform .. shaderc_vs_extra_params,
@@ -68,6 +101,70 @@ DefRule {
 			OutputFiles   = { "$(OBJECTDIR)/_generated/" .. path.drop_suffix(data.Source) .. ".vs" },
 		}
 	end,
+}
+
+-----------------------------------------------------------------------------------------------------------------------
+
+StaticLibrary {
+	Name = "glslang",
+	Pass = "BuildTools",
+
+    Env = {
+        CXXOPTS = {
+			{ "-fno-strict-aliasing"; Config = { "macosx-*-*", "linux-*-*" } },
+        },
+    },
+
+    Defines = {
+    	"ENABLE_OPT=1",
+    },
+
+    Includes = {
+		GLSLANG_DIR .. "glslang/Include",
+		GLSLANG_DIR .. "glslang",
+		GLSLANG_DIR,
+		BGFX_DIR .. "3rdparty",
+		SPIRV_TOOLS .. "include",
+    },
+
+    Sources = {
+		get_c_cpp_src(GLSLANG_DIR .. "OGLCompilersDLL"),
+		get_c_cpp_src(GLSLANG_DIR .. "StandAlone"),
+		get_c_cpp_src(GLSLANG_DIR .. "glslang/GenericCodeGen"),
+		get_c_cpp_src(GLSLANG_DIR .. "glslang/MachineIndependent"),
+		 get_c_cpp_src(GLSLANG_DIR .. "SPIRV"),
+		-- get_c_cpp_src(GLSLANG_DIR .. "glslang/HLSL"),
+		get_c_cpp_src(GLSLANG_DIR .. "glslang/CInterface"),
+		{ get_c_cpp_src(GLSLANG_DIR .. "glslang/OSDependent/Windows") ; Config = "win64-*-*" },
+		{ get_c_cpp_src(GLSLANG_DIR .. "glslang/OSDependent/Unix") ; Config = { "linux-*-*", "macosx-*-*" } },
+    }
+}
+
+-----------------------------------------------------------------------------------------------------------------------
+
+StaticLibrary {
+	Name = "spirv_tools",
+	Pass = "BuildTools",
+
+    Env = {
+        CXXOPTS = {
+			{ "-fno-strict-aliasing"; Config = { "macosx-*-*", "linux-*-*" } },
+        },
+    },
+
+    Includes = {
+		SPIRV_TOOLS,
+		SPIRV_TOOLS .. "include",
+		SPIRV_TOOLS .. "include/generated",
+		SPIRV_HEADERS .. "include",
+    },
+
+    Sources = {
+		glob_no_main(SPIRV_TOOLS .. "source", ".cpp", false),
+		glob_no_main(SPIRV_TOOLS .. "source/opt", ".cpp", false),
+		glob_no_main(SPIRV_TOOLS .. "source/util", ".cpp", false),
+		glob_no_main(SPIRV_TOOLS .. "source/val", ".cpp", false),
+    }
 }
 
 -----------------------------------------------------------------------------------------------------------------------
@@ -96,8 +193,17 @@ Program {
 
 		CPPPATH = {
 			{
+				BIMG_DIR .. "include",
+				SPIRV_CROSS,
+				BX_DIR .. "3rdparty",
 				BX_DIR .. "include",
+				BGFX_DIR  .. "3rdparty/glslang/glslang/Public",
+				BGFX_DIR  .. "3rdparty/glslang/glslang/Include",
+				BGFX_DIR  .. "3rdparty/glslang",
+				BGFX_DIR  .. "3rdparty/spirv-cross",
+				BGFX_DIR  .. "3rdparty/spirv-tools/include",
 				BGFX_DIR .. "include",
+				BGFX_DIR  .. "3rdparty/webgpu/include",
 				FCPP_DIR,
 				GLSL_OPTIMIZER .. "src",
 				GLSL_OPTIMIZER .. "include",
@@ -123,11 +229,16 @@ Program {
 	},
 
 	Sources = {
+		BX_DIR .. "src/amalgamated.cpp",
 		BGFX_DIR .. "tools/shaderc/shaderc.cpp",
+		BGFX_DIR .. "tools/shaderc/shaderc_spirv.cpp",
 		BGFX_DIR .. "tools/shaderc/shaderc_glsl.cpp",
 		BGFX_DIR .. "tools/shaderc/shaderc_hlsl.cpp",
-		BGFX_DIR .. "src/vertexdecl.cpp",
-		BGFX_DIR .. "src/vertexdecl.h",
+		BGFX_DIR .. "tools/shaderc/shaderc_pssl.cpp",
+		BGFX_DIR .. "tools/shaderc/shaderc_metal.cpp",
+		BGFX_DIR .. "src/vertexlayout.cpp",
+		BGFX_DIR .. "src/vertexlayout.h",
+		BGFX_DIR .. "src/shader_spirv.cpp",
 
 		FCPP_DIR .. "cpp1.c",
 		FCPP_DIR .. "cpp2.c",
@@ -136,27 +247,11 @@ Program {
 		FCPP_DIR .. "cpp5.c",
 		FCPP_DIR .. "cpp6.c",
 
-		FGlob {
-			Dir = GLSL_OPTIMIZER .. "src/mesa",
-			Extensions = { ".c", ".h" },
-			Filters = {
-				{ Pattern = "main.cpp", Config = "never" }
-			}
-		},
-		FGlob {
-			Dir = GLSL_OPTIMIZER .. "src/glsl",
-			Extensions = { ".cpp", ".c", ".h" },
-			Filters = {
-				{ Pattern = "main.cpp", Config = "never" }
-			}
-		},
-		FGlob {
-			Dir = GLSL_OPTIMIZER .. "src/util",
-			Extensions = { ".c", ".h" },
-			Filters = {
-				{ Pattern = "main.cpp", Config = "never" }
-			}
-		},
+		glob_no_main(SPIRV_CROSS, ".cpp", true),
+		glob_no_main(GLSL_OPTIMIZER .. "src/mesa", ".c", true),
+		glob_no_main(GLSL_OPTIMIZER .. "src/util",  ".c", true),
+		glob_c_cpp_no_main(GLSL_OPTIMIZER .. "src/glsl"),
+		glob_c_cpp_no_main(GLSL_OPTIMIZER .. "src/glsl/glcpp"),
 	},
 
     Libs = { { "kernel32.lib", "d3dcompiler.lib", "dxguid.lib" ; Config = "win64-*-*" } },
@@ -168,6 +263,8 @@ Program {
         { "OpenGL" }
     },
 
+    Depends = { "glslang", "spirv_tools" },
+
 	IdeGenerationHints = { Msvc = { SolutionFolder = "Tools" } },
 }
 
@@ -178,8 +275,8 @@ StaticLibrary {
 
     Env = {
         CPPPATH = {
-            "src/external/glfw/src",
-            "src/external/glfw/include",
+            GLFW_DIR .. "src",
+            GLFW_DIR .. "include",
         },
 
         CPPDEFS = {
@@ -190,89 +287,84 @@ StaticLibrary {
     },
 
     Sources = {
-		"src/external/glfw/src/window.c",
-		"src/external/glfw/src/context.c",
-		"src/external/glfw/src/init.c",
-		"src/external/glfw/src/input.c",
-		"src/external/glfw/src/monitor.c",
-		-- "src/external/glfw/src/null_init.c",
-		-- "src/external/glfw/src/null_joystick.c",
-		-- "src/external/glfw/src/null_monitor.c",
-		-- "src/external/glfw/src/null_window.c",
-		"src/external/glfw/src/vulkan.c",
+		GLFW_DIR .. "src/window.c",
+		GLFW_DIR .. "src/context.c",
+		GLFW_DIR .. "src/init.c",
+		GLFW_DIR .. "src/input.c",
+		GLFW_DIR .. "src/monitor.c",
+		GLFW_DIR .. "src/vulkan.c",
 
         {
-			"src/external/glfw/src/cocoa_init.m",
-			"src/external/glfw/src/cocoa_joystick.m",
-			"src/external/glfw/src/cocoa_monitor.m",
-			"src/external/glfw/src/cocoa_time.c",
-			"src/external/glfw/src/cocoa_window.m",
-			"src/external/glfw/src/nsgl_context.h",
-			"src/external/glfw/src/nsgl_context.m" ; Config = "macosx-*-*"
+			GLFW_DIR .. "src/cocoa_init.m",
+			GLFW_DIR .. "src/cocoa_joystick.m",
+			GLFW_DIR .. "src/cocoa_monitor.m",
+			GLFW_DIR .. "src/cocoa_time.c",
+			GLFW_DIR .. "src/cocoa_window.m",
+			GLFW_DIR .. "src/nsgl_context.h",
+			GLFW_DIR .. "src/nsgl_context.m" ; Config = "macosx-*-*"
 		},
 
 		{
-			"src/external/glfw/src/glx_context.c",
-			"src/external/glfw/src/egl_context.c",
-			-- "src/external/glfw/src/wl_init.c",
-			-- "src/external/glfw/src/wl_monitor.c",
-			-- "src/external/glfw/src/wl_window.c",
-			"src/external/glfw/src/x11_init.c",
-			"src/external/glfw/src/x11_monitor.c",
-			"src/external/glfw/src/x11_window.c",
-			"src/external/glfw/src/linux_joystick.c",
-			"src/external/glfw/src/osmesa_context.c",
-			"src/external/glfw/src/posix_thread.c",
-			"src/external/glfw/src/posix_time.c",
-			"src/external/glfw/src/xkb_unicode.c" ; Config = "linux-*-*",
+			GLFW_DIR .. "src/glx_context.c",
+			GLFW_DIR .. "src/egl_context.c",
+			-- GLFW_DIR .. "src/wl_init.c",
+			-- GLFW_DIR .. "src/wl_monitor.c",
+			-- GLFW_DIR .. "src/wl_window.c",
+			GLFW_DIR .. "src/x11_init.c",
+			GLFW_DIR .. "src/x11_monitor.c",
+			GLFW_DIR .. "src/x11_window.c",
+			GLFW_DIR .. "src/linux_joystick.c",
+			GLFW_DIR .. "src/osmesa_context.c",
+			GLFW_DIR .. "src/posix_thread.c",
+			GLFW_DIR .. "src/posix_time.c",
+			GLFW_DIR .. "src/xkb_unicode.c" ; Config = "linux-*-*",
 		},
 
 		{
-			"src/external/glfw/src/egl_context.c",
-			"src/external/glfw/src/wgl_context.c",
-			"src/external/glfw/src/osmesa_context.c",
-			"src/external/glfw/src/win32_init.c",
-			"src/external/glfw/src/win32_joystick.c",
-			"src/external/glfw/src/win32_monitor.c",
-			"src/external/glfw/src/win32_thread.c",
-			"src/external/glfw/src/win32_time.c",
-			"src/external/glfw/src/win32_window.c" ; Config = "win64-*-*",
+			GLFW_DIR .. "src/egl_context.c",
+			GLFW_DIR .. "src/wgl_context.c",
+			GLFW_DIR .. "src/osmesa_context.c",
+			GLFW_DIR .. "src/win32_init.c",
+			GLFW_DIR .. "src/win32_joystick.c",
+			GLFW_DIR .. "src/win32_monitor.c",
+			GLFW_DIR .. "src/win32_thread.c",
+			GLFW_DIR .. "src/win32_time.c",
+			GLFW_DIR .. "src/win32_window.c" ; Config = "win64-*-*",
 		},
     },
 }
-
 
 -----------------------------------------------------------------------------------------
 
 StaticLibrary {
     Name = "bgfx",
+	Pass = "BuildTools",
 
-    Defines = {
-		"BX_CONFIG_DEBUG=1",
-    },
+    Includes = {
+		{
+			BX_DIR .. "include/compat/msvc",
+			BGFX_DIR .. "3rdparty/dxsdk/include" ; Config = "win64-*-*"
+		},
+
+		{
+			BX_DIR .. "include/compat/osx" ; Config = "macosx-*-*"
+		},
+
+		BGFX_DIR .. "3rdparty/khronos",
+		BGFX_DIR .. "3rdparty",
+		BGFX_DIR .. "include",
+		BX_DIR .. "include",
+		BX_DIR .. "3rdparty",
+		BIMG_DIR .. "include",
+		BIMG_DIR .. "3rdparty",
+		BIMG_DIR .. "3rdparty/iqa/include",
+		BIMG_DIR .. "3rdparty/astc-codec/include",
+	},
 
     Env = {
-        CPPPATH = {
-		  {
-		  	{ "src/external/bx/include/compat/msvc",
-		  	  "src/external/bgfx/3rdparty/dxsdk/include" } ; Config = "win64-*-*" },
-          { "src/external/bx/include/compat/osx" ; Config = "macosx-*-*" },
-            "src/external/remotery/lib",
-            "src/external/bgfx/include",
-            "src/external/bx/include",
-            "src/external/bx/3rdparty",
-            "src/external/bimg/include",
-            "src/external/bimg/3rdparty",
-            "src/external/bimg/3rdparty/iqa/include",
-            "src/external/bimg/3rdparty/astc-codec/include",
-            "src/external/bgfx/3rdparty/khronos",
-            "src/external/bgfx/3rdparty",
-        },
-
         CXXOPTS = {
 			{ "-Wno-variadic-macros", "-Wno-everything" ; Config = "macosx-*-*" },
-			{ "/Isrc/external/bx/include/compat/msvc",
-			"/EHsc"; Config = "win64-*-*" },
+			{ "/EHsc"; Config = "win64-*-*" },
         },
     },
 
@@ -287,32 +379,32 @@ StaticLibrary {
 
     Sources = {
     	get_c_cpp_src("src/external/bimg/src"),
-
-		"src/external/bx/src/amalgamated.cpp",
-		{ "src/external/bgfx/src/bgfx.cpp",
-		  -- "src/external/bgfx/src/image.cpp",
-		  "src/external/bgfx/src/vertexlayout.cpp",
-		  "src/external/bgfx/src/debug_renderdoc.cpp",
-		  "src/external/bgfx/src/topology.cpp",
-		  "src/external/bgfx/src/shader_dxbc.cpp",
-		  "src/external/bgfx/src/renderer_gnm.cpp",
-		  "src/external/bgfx/src/renderer_webgpu.cpp",
-		  "src/external/bgfx/src/renderer_nvn.cpp",
-		  "src/external/bgfx/src/renderer_gl.cpp",
-		  "src/external/bgfx/src/renderer_vk.cpp",
-		  "src/external/bgfx/src/renderer_noop.cpp",
-		  "src/external/bgfx/src/renderer_d3d9.cpp",
-		  "src/external/bgfx/src/renderer_d3d11.cpp",
-		  "src/external/bgfx/src/renderer_d3d12.cpp" },
-        { "src/external/bgfx/src/renderer_mtl.mm" ; Config = "macosx-*-*" },
-	    { 
-			"src/external/bgfx/src/glcontext_wgl.cpp",
-			"src/external/bgfx/src/nvapi.cpp",
-			"src/external/bgfx/src/dxgi.cpp" ; Config = "win64-*-*" 
+		BX_DIR .. "src/amalgamated.cpp",
+		BGFX_DIR .. "src/bgfx.cpp",
+		BGFX_DIR .. "src/vertexlayout.cpp",
+		BGFX_DIR .. "src/debug_renderdoc.cpp",
+		BGFX_DIR .. "src/topology.cpp",
+		BGFX_DIR .. "src/shader_dxbc.cpp",
+		BGFX_DIR .. "src/renderer_gnm.cpp",
+		BGFX_DIR .. "src/renderer_webgpu.cpp",
+		BGFX_DIR .. "src/renderer_nvn.cpp",
+		BGFX_DIR .. "src/renderer_gl.cpp",
+		BGFX_DIR .. "src/renderer_vk.cpp",
+		BGFX_DIR .. "src/renderer_noop.cpp",
+		BGFX_DIR .. "src/renderer_d3d9.cpp",
+		BGFX_DIR .. "src/renderer_d3d11.cpp",
+		BGFX_DIR .. "src/renderer_d3d12.cpp",
+        { BGFX_DIR .. "src/renderer_mtl.mm" ; Config = "macosx-*-*" },
+	    {
+			BGFX_DIR .. "src/glcontext_wgl.cpp",
+			BGFX_DIR .. "src/nvapi.cpp",
+			BGFX_DIR .. "src/dxgi.cpp" ; Config = "win64-*-*"
 		},
-	    { "src/external/bgfx/src/glcontext_glx.cpp" ; Config = "linux-*-*" },
-	    { "src/external/bgfx/src/glcontext_nsgl.mm" ; Config = "macosx-*-*" },
+	    { BGFX_DIR .. "src/glcontext_glx.cpp" ; Config = "linux-*-*" },
+	    { BGFX_DIR .. "src/glcontext_nsgl.mm" ; Config = "macosx-*-*" },
     },
 
 	IdeGenerationHints = { Msvc = { SolutionFolder = "External" } },
 }
+
+Default "bgfx_shaderc"
