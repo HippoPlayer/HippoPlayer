@@ -282,7 +282,7 @@ StaticLibrary {
         CPPDEFS = {
             { "_GLFW_WIN32", "_GLFW_WGL", "WIN32"; Config = "win64-*-*" },
             { "_GLFW_X11", "_GLFW_GFX", "LINUX"; Config = "linux-*-*" },
-            { "_GLFW_NSGL", "MACOSX"; Config = "macosx-*-*" },
+            { "_GLFW_COCOA", "MACOSX"; Config = "macosx-*-*" },
         },
     },
 
@@ -293,6 +293,8 @@ StaticLibrary {
 		GLFW_DIR .. "src/input.c",
 		GLFW_DIR .. "src/monitor.c",
 		GLFW_DIR .. "src/vulkan.c",
+        GLFW_DIR .. "src/osmesa_context.c",
+        GLFW_DIR .. "src/egl_context.c",
 
         {
 			GLFW_DIR .. "src/cocoa_init.m",
@@ -300,6 +302,7 @@ StaticLibrary {
 			GLFW_DIR .. "src/cocoa_monitor.m",
 			GLFW_DIR .. "src/cocoa_time.c",
 			GLFW_DIR .. "src/cocoa_window.m",
+			GLFW_DIR .. "src/posix_thread.c",
 			GLFW_DIR .. "src/nsgl_context.h",
 			GLFW_DIR .. "src/nsgl_context.m" ; Config = "macosx-*-*"
 		},
@@ -314,16 +317,13 @@ StaticLibrary {
 			GLFW_DIR .. "src/x11_monitor.c",
 			GLFW_DIR .. "src/x11_window.c",
 			GLFW_DIR .. "src/linux_joystick.c",
-			GLFW_DIR .. "src/osmesa_context.c",
 			GLFW_DIR .. "src/posix_thread.c",
 			GLFW_DIR .. "src/posix_time.c",
 			GLFW_DIR .. "src/xkb_unicode.c" ; Config = "linux-*-*",
 		},
 
 		{
-			GLFW_DIR .. "src/egl_context.c",
 			GLFW_DIR .. "src/wgl_context.c",
-			GLFW_DIR .. "src/osmesa_context.c",
 			GLFW_DIR .. "src/win32_init.c",
 			GLFW_DIR .. "src/win32_joystick.c",
 			GLFW_DIR .. "src/win32_monitor.c",
@@ -372,9 +372,9 @@ StaticLibrary {
 		"BGFX_CONFIG_RENDERER_WEBGPU=0",
 		"BGFX_CONFIG_RENDERER_GNM=0",
 		"BGFX_CONFIG_RENDERER_VULKAN=0",
-		{ "BGFX_CONFIG_RENDERER_OPENGL" ; Config = { "linux-*-*", "win64-*-*" } },
-		{ "BGFX_CONFIG_RENDERER_METAL" ; Config = "macosx-*-*" },
-		{ "BGFX_CONFIG_RENDERER_DIRECT3D11"  ; Config = "win64-*-*" },
+		{ "BGFX_CONFIG_RENDERER_OPENGL=1" ; Config = { "linux-*-*", "win64-*-*" } },
+		{ "BGFX_CONFIG_RENDERER_METAL=1" ; Config = "macosx-*-*" },
+		{ "BGFX_CONFIG_RENDERER_DIRECT3D11=1"  ; Config = "win64-*-*" },
 	},
 
     Sources = {
@@ -394,14 +394,18 @@ StaticLibrary {
 		BGFX_DIR .. "src/renderer_d3d9.cpp",
 		BGFX_DIR .. "src/renderer_d3d11.cpp",
 		BGFX_DIR .. "src/renderer_d3d12.cpp",
-        { BGFX_DIR .. "src/renderer_mtl.mm" ; Config = "macosx-*-*" },
+        {
+	        BGFX_DIR .. "src/glcontext_nsgl.mm",
+            BGFX_DIR .. "src/renderer_mtl.mm" ; Config = "macosx-*-*"
+        },
 	    {
 			BGFX_DIR .. "src/glcontext_wgl.cpp",
 			BGFX_DIR .. "src/nvapi.cpp",
 			BGFX_DIR .. "src/dxgi.cpp" ; Config = "win64-*-*"
 		},
-	    { BGFX_DIR .. "src/glcontext_glx.cpp" ; Config = "linux-*-*" },
-	    { BGFX_DIR .. "src/glcontext_nsgl.mm" ; Config = "macosx-*-*" },
+	    {
+	        BGFX_DIR .. "src/glcontext_glx.cpp" ; Config = "linux-*-*"
+	    },
     },
 
 	IdeGenerationHints = { Msvc = { SolutionFolder = "External" } },

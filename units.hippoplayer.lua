@@ -250,8 +250,11 @@ Program {
 		PROGCOM = {
             { "opengl32.lib", "shell32.lib", "gdi32.lib", "user32.lib"; Config = "win64-*-*" },
 			{  "-lGL", "-lX11", "-lpthread", "-ldl"; Config = "linux-*-*" },
+			{  "-lc++"; Config = "macosx-*-*" },
 		},
 	},
+
+    Frameworks = { "Cocoa", "IOKit", "Metal", "QuartzCore", "MetalKit" },
 
     Depends = { "bgfx", "glfw", "hippo_core_loader", "flatbuffers_lib" },
 }
