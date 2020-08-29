@@ -364,6 +364,7 @@ typedef struct HippoServiceAPI {
 struct HippoSaveAPI;
 struct HippoLoadAPI;
 struct HippoMetadataAPI;
+struct HippoSettingsAPI;
 
 typedef struct HippoPlaybackPlugin {
 	uint64_t api_version;
@@ -380,9 +381,8 @@ typedef struct HippoPlaybackPlugin {
 	int (*read_data)(void* user_data, void* dest, uint32_t max_sample_count);
 	int (*seek)(void* user_data, int ms);
 	int (*metadata)(const char* url, const HippoServiceAPI* services);
-	void (*set_log)(struct HippoLogAPI* log);
-	int (*save)(void* user_data, const struct HippoSaveAPI* save_api);
-	int (*load)(void* user_data, const struct HippoLoadAPI* load_api);
+	void (*static_init)(struct HippoLogAPI* log);
+	int (*settings)(void* user_data, const struct HippoSettingsAPI* settings);
 } HippoPlaybackPlugin;
 
 

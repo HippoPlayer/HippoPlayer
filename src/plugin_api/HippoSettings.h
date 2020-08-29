@@ -1,68 +1,94 @@
 #pragma once
 
-#define HU_FLOAT_TYPE 0x1000
-#define HU_INTEGER_TYPE 0x1001
-#define HU_BOOL_TYPE 0x1002
-#define HU_INTEGER_RANGE_TYPE 0x1003
-#define HU_STRING_RANGE_TYPE 0x1003
+#include <stdbool.h>
 
-typedef struct HUBase {
+#define HS_FLOAT_TYPE 0x1000
+#define HS_INTEGER_TYPE 0x1001
+#define HS_BOOL_TYPE 0x1002
+#define HS_INTEGER_RANGE_TYPE 0x1003
+#define HS_STRING_RANGE_TYPE 0x1003
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef struct HSBase {
 	int widget_type;
 	int widget_id;
 	const char* name;
 	const char* desc;
-} HUBase;
-
-typedef struct HUFloat {
-	HUBase base;
-	float start_value;
-	float start_range;
-	float end_range;
-} HUFloat;
-
-typedef struct Integer {
-	HUBase base;
-	int start_value;
-	int start_range;
-	int end_range;
-} HUInteger;
-
-typedef struct HUBool {
-	HUBase base;
-	bool value;
-} HUBool;
-
-typedef struct HUIntegerRangeValue {
-	const char* name;
-	int value;
-} HUIntegerRangeValue;
-
-typedef struct HUStringRangeValue {
-	const char* name;
-	const char* value;
-} HUStringRangeValue;
-
-typedef struct HUIntegerFixedRange {
-	HUBase base;
-	int value;
-	HUIntegerRangeValue* values;
-	int values_count;
-} HUIntegerFixedRange;
-
-typedef struct StringFixedRange {
-	HUBase base;
-	const char* value;
-	HUStringRangeValue* values;
-	int values_count;
-} HUStringFixedRange;
+} HSBase;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-typedef union HUWidget {
-	HUInteger int_value;
-	HUFloat float_value;
-	HUIntegerFixedRange int_fixed_value;
-	HUStringFixedRange string_fixed_value;
-	HUBool bool_value;
-} HUWidget;
+typedef struct HSFloat {
+	HSBase base;
+	float start_value;
+	float start_range;
+	float end_range;
+} HSFloat;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef struct HSInteger {
+	HSBase base;
+	int start_value;
+	int start_range;
+	int end_range;
+} HSInteger;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef struct HSBool {
+	HSBase base;
+	bool value;
+} HSBool;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef struct HSIntegerRangeValue {
+	const char* name;
+	int value;
+} HSIntegerRangeValue;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef struct HSStringRangeValue {
+	const char* name;
+	const char* value;
+} HSStringRangeValue;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef struct HSIntegerFixedRange {
+	HSBase base;
+	int value;
+	HSIntegerRangeValue* values;
+	int values_count;
+} HSIntegerFixedRange;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef struct StringFixedRange {
+	HSBase base;
+	const char* value;
+	HSStringRangeValue* values;
+	int values_count;
+} HSStringFixedRange;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef union HSSetting {
+	HSInteger int_value;
+	HSFloat float_value;
+	HSIntegerFixedRange int_fixed_value;
+	HSStringFixedRange string_fixed_value;
+	HSBool bool_value;
+} HSSetting;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef struct HippoSettingsAPI {
+    void* priv_data;
+    int (*register_filetype_settings)(void* priv_data, const HSSetting* settings, int count, const char* error);
+    int (*register_global_settings)(void* priv_data, const HSSetting* settings, int count, const char* error);
+} HippoSettingsAPI;
 
