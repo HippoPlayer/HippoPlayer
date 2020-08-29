@@ -309,7 +309,6 @@ StaticLibrary {
 
 		{
 			GLFW_DIR .. "src/glx_context.c",
-			GLFW_DIR .. "src/egl_context.c",
 			-- GLFW_DIR .. "src/wl_init.c",
 			-- GLFW_DIR .. "src/wl_monitor.c",
 			-- GLFW_DIR .. "src/wl_window.c",
@@ -338,7 +337,6 @@ StaticLibrary {
 
 StaticLibrary {
     Name = "bgfx",
-	Pass = "BuildTools",
 
     Includes = {
 		{
