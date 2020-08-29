@@ -382,7 +382,7 @@ typedef struct HippoPlaybackPlugin {
 	int (*seek)(void* user_data, int ms);
 	int (*metadata)(const char* url, const HippoServiceAPI* services);
 	void (*static_init)(struct HippoLogAPI* log);
-	int (*settings)(void* user_data, const struct HippoSettingsAPI* settings);
+	int (*register_settings)(const struct HippoSettingsAPI* settings);
 	int (*update_settings)(void* user_data, const struct HippoSettingsAPI* settings);
 } HippoPlaybackPlugin;
 

@@ -107,8 +107,13 @@ typedef enum HippoSettingError {
 
 typedef struct HippoSettingsAPI {
     void* priv_data;
-    HippoSettingError (*register_filetype_settings)(void* priv_data, const HSSetting* settings, int count, const char* error);
-    HippoSettingError (*register_global_settings)(void* priv_data, const HSSetting* settings, int count, const char* error);
+
+    // Register the settings to be used for the playback plugin
+    HippoSettingError (*register_filetype_settings)(void* priv_data, const HSSetting* settings, int count);
+    HippoSettingError (*register_global_settings)(void* priv_data, const HSSetting* settings, int count);
+
+    // This will be used to allow structring the layout a bit better
+    HippoSettingError (*layout_hints(void* priv_data, void* data);
 
     // access settings
     HippoSettingError (*get_string)(void* priv_data, int id, char* value);
@@ -123,7 +128,16 @@ typedef struct HippoSettingsAPI {
     // makes it possible to disable / enable a control
     HippoSettingError (*enable_ctl)(void* priv_data, int id, bool state);
 
+    HippoSettingError (*get_last_error(void* priv_data, const char*
+
 } HippoRegisterSettingsAPI;
+
+#define HippoSettings_register_filetype_settings(api, settings, count) \
+    api->register_filetype_settings(api->priv_data, (HSSettings*)&settings, hp_sizeof_array(settings))
+
+#define HippoSettings_register_global_settings(api, settings, count) \
+    api->register_global_settings(api->priv_data, (HSSettings*)&settings, hp_sizeof_array(settings))
+
 
 
 
