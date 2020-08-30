@@ -409,4 +409,4 @@ StaticLibrary {
 	IdeGenerationHints = { Msvc = { SolutionFolder = "External" } },
 }
 
-Default "bgfx_shaderc"
+-- Default "bgfx_shaderc"
