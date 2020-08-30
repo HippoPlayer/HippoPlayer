@@ -128,7 +128,7 @@ static inline int max_t(int a, int b) {
 static int adplug_read_data(void* user_data, void* dest, uint32_t samples_to_read) {
     AdplugPlugin* plugin = (AdplugPlugin*)user_data;
 
-    int i = 0;
+    uint32_t i = 0;
     int towrite = 0;
     char* sndbufpos = nullptr;
     const int buffer_size = 2048;
@@ -243,7 +243,8 @@ static void adplug_event(void* user_data, const unsigned char* data, int len) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void adplug_set_log(struct HippoLogAPI* log) {
+static void adplug_static_init(struct HippoLogAPI* log, const HippoServiceAPI* service_api) {
+    (void)service_api;
     g_hp_log = log;
 }
 
@@ -283,7 +284,7 @@ static HippoPlaybackPlugin g_adplug_plugin = {
     adplug_read_data,
     adplug_plugin_seek,
     adplug_metadata,
-    adplug_set_log,
+    adplug_static_init,
     NULL,
     NULL,
 };

@@ -424,7 +424,7 @@ static void tfmx_event(void* user_data, const unsigned char* data, int len) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void tfmx_set_log(struct HippoLogAPI* log) {
+static void tfmx_static_init(struct HippoLogAPI* log, const HippoServiceAPI* service_api) {
     g_hp_log = log;
 }
 
@@ -445,7 +445,7 @@ static HippoPlaybackPlugin g_tfmx_plugin = {
     tfmx_read_data,
     tfmx_seek,
     tfmx_metadata,
-    tfmx_set_log,
+    tfmx_static_init,
     NULL,
     NULL,
 };

@@ -179,25 +179,6 @@ typedef enum HippoSettingResult {
 struct HippoMessageAPI;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-typedef struct HippoSettingsAPI {
-    // Private internal data
-	struct HippoSettingsAPI* priv_data;
-	HippoSettingResult (*get_int)(
-	    struct HippoMessageAPI* handle,
-	    void* user_data,
-	    const char* setting,
-	    const char* key,
-        int* res);
-	HippoSettingResult (*get_float)(
-	    struct HippoMessageAPI* handle,
-	    void* user_data,
-	    const char* setting,
-	    const char* key,
-        float* res);
-} HippoSettingsAPI;
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Plugins can use the MessageAPI to subscribe to events and post data that is being requested
 
 typedef struct HippoMessageAPI {
@@ -278,19 +259,22 @@ typedef struct HippoLogAPI {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct HippoServicePrivData;
+struct HippoSettingsAPI;
 
 typedef struct HippoServiceAPI {
-	const HippoLogAPI* (*get_log_api)(struct HippoServicePrivData* private_data, int api_version);
-	const HippoIoAPI* (*get_io_api)(struct HippoServicePrivData* private_data, int api_version);
-	const HippoMetadataAPI* (*get_metadata_api)(struct HippoServicePrivData* private_data, int api_version);
-	const HippoMessageAPI* (*get_message_api)(struct HippoServicePrivData* private_data, int api_version);
-	struct HippoServicePrivData* private_data;
+	void* private_data;
+	const struct HippoLogAPI* (*get_log_api)(void* private_data, int api_version);
+	const struct HippoIoAPI* (*get_io_api)(void* private_data, int api_version);
+	const struct HippoMetadataAPI* (*get_metadata_api)(void* private_data, int api_version);
+	const struct HippoMessageAPI* (*get_message_api)(void* private_data, int api_version);
+	const struct HippoSettingsAPI* (*get_settings_api)(void* private_data, int api_version);
 } HippoServiceAPI;
 
 #define HippoServiceAPI_get_log_api(api, version) api->get_log_api(api->private_data, version)
 #define HippoServiceAPI_get_io_api(api, version) api->get_io_api(api->private_data, version)
 #define HippoServiceAPI_get_metadata_api(api, version) api->get_metadata_api(api->private_data, version)
 #define HippoServiceAPI_get_message_api(api, version) api->get_message_api(api->private_data, version)
+#define HippoServiceAPI_get_settings_api(api, version) api->get_settings_api(api->private_data, version)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -381,7 +365,7 @@ typedef struct HippoPlaybackPlugin {
 	int (*read_data)(void* user_data, void* dest, uint32_t max_sample_count);
 	int (*seek)(void* user_data, int ms);
 	int (*metadata)(const char* url, const HippoServiceAPI* services);
-	void (*static_init)(struct HippoLogAPI* log);
+	void (*static_init)(struct HippoLogAPI* log, const HippoServiceAPI* services);
 	int (*register_settings)(const struct HippoSettingsAPI* settings);
 	int (*update_settings)(void* user_data, const struct HippoSettingsAPI* settings);
 } HippoPlaybackPlugin;

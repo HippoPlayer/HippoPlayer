@@ -173,7 +173,7 @@ static int nsf_read_data(void* user_data, void* dest, uint32_t samples_to_read) 
 
 	plugin->player.Render(data, samples_to_read);
 
-	for (int i = 0; i < samples_to_read * 2; ++i) {
+	for (uint32_t i = 0; i < samples_to_read * 2; ++i) {
 		new_dest[i] = ((float)data[i]) * scale;
 	}
 
@@ -196,7 +196,10 @@ static void nsf_event(void* user_data, const unsigned char* data, int len) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void nsf_set_log(struct HippoLogAPI* log) { g_hp_log = log; }
+static void nsf_static_init(struct HippoLogAPI* log, const HippoServiceAPI* service) {
+    (void)service;
+    g_hp_log = log;
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -215,7 +218,7 @@ static HippoPlaybackPlugin g_nsf_plugin = {
 	nsf_read_data,
 	nsf_plugin_seek,
 	nsf_metadata,
-	nsf_set_log,
+	nsf_static_init,
 	NULL,
 	NULL,
 };

@@ -1,17 +1,14 @@
-#include "../../plugin_api/HippoPlugin.h"
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include "../../plugin_api/HippoPlugin.h"
 //#include <unistd.h>
 #include <math.h>
-
-
 
 #include <codecvt>
 #include <locale>
 
-extern "C"
-{
+extern "C" {
 
 #include "VGMPlay/chips/mamedef.h"
 #include "stdbool.h"
@@ -25,7 +22,6 @@ extern bool EndPlay;
 extern UINT32 VGMMaxLoop;
 extern UINT32 FadeTime;
 extern GD3_TAG VGMTag;
-
 }
 
 HippoLogAPI* g_hp_log = NULL;
@@ -38,23 +34,22 @@ HippoLogAPI* g_hp_log = NULL;
 void get_file_stem(char* dest, const char* path) {
     const char* end_path = nullptr;
 
-	for(size_t i = strlen(path) - 1;  i > 0; i--) {
-		if (path[i] == '/') {
-            end_path = &path[i+1];
+    for (size_t i = strlen(path) - 1; i > 0; i--) {
+        if (path[i] == '/') {
+            end_path = &path[i + 1];
             break;
-		}
+        }
     }
 
     strcpy(dest, end_path);
 
-    for(size_t i = strlen(dest) - 1;  i > 0; i--) {
+    for (size_t i = strlen(dest) - 1; i > 0; i--) {
         if (dest[i] == '.') {
             dest[i] = 0;
             break;
         }
     }
 }
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -67,11 +62,11 @@ static void init() {
     }
     */
 
-	VGMPlay_Init();
-	VGMPlay_Init2();
+    VGMPlay_Init();
+    VGMPlay_Init2();
 
-	VGMMaxLoop = 2;
-	FadeTime = 5000;
+    VGMMaxLoop = 2;
+    FadeTime = 5000;
 
     has_init = true;
 }
@@ -79,118 +74,117 @@ static void init() {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct VgmReplayerData {
-	char title[4096];
-	int has_data;
-	int length;
+    char title[4096];
+    int has_data;
+    int length;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static const char* vgm_supported_extensions() {
-	return "vgm,vgz";
+    return "vgm,vgz";
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void* vgm_create(const HippoServiceAPI* service_api) {
-	void* data = malloc(sizeof(struct VgmReplayerData));
-	memset(data, 0, sizeof(struct VgmReplayerData));
+    void* data = malloc(sizeof(struct VgmReplayerData));
+    memset(data, 0, sizeof(struct VgmReplayerData));
 
-	init();
+    init();
 
-	return data;
+    return data;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int vgm_destroy(void* user_data) {
-	struct VgmReplayerData* data = (struct VgmReplayerData*)user_data;
-	free(data);
-	return 0;
+    struct VgmReplayerData* data = (struct VgmReplayerData*)user_data;
+    free(data);
+    return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int vgm_open(void* user_data, const char* buffer, int subsong) {
-	// TODO: Add reader functions etc to be used instead of fopen as file may come from zip, etc
+    // TODO: Add reader functions etc to be used instead of fopen as file may come from zip, etc
 
-	struct VgmReplayerData* replayer_data = (struct VgmReplayerData*)user_data;
+    struct VgmReplayerData* replayer_data = (struct VgmReplayerData*)user_data;
 
-	if (!OpenVGMFile(buffer)) {
-		hp_error("Unable to open %s\n", buffer);
-		return -1;
-	}
+    if (!OpenVGMFile(buffer)) {
+        hp_error("Unable to open %s\n", buffer);
+        return -1;
+    }
 
-	PlayVGM();
+    PlayVGM();
 
     replayer_data->length = VGMHead.lngTotalSamples / (44100 / 2);
-	replayer_data->has_data = 1;
+    replayer_data->has_data = 1;
 
-	hp_info("Starting to play %s (subsong %d)", buffer, subsong);
+    hp_info("Starting to play %s (subsong %d)", buffer, subsong);
 
-	return 0;
+    return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int vgm_close(void* user_data) {
-	return 0;
+    return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int vgm_read_data(void* user_data, void* dest, uint32_t samples_to_read) {
-	WAVE_16BS temp_data[FRAME_SIZE * 2];
+    WAVE_16BS temp_data[FRAME_SIZE * 2];
 
-	struct VgmReplayerData* replayer_data = (struct VgmReplayerData*)user_data;
+    struct VgmReplayerData* replayer_data = (struct VgmReplayerData*)user_data;
 
-	if (!replayer_data->has_data) {
-		return 0 ;
-	}
+    if (!replayer_data->has_data) {
+        return 0;
+    }
 
-	float* newDest = (float*)dest;
+    float* newDest = (float*)dest;
 
-	FillBuffer(temp_data, samples_to_read);
+    FillBuffer(temp_data, samples_to_read);
 
-	const float scale = 1.0f / 32767.0f;
+    const float scale = 1.0f / 32767.0f;
 
-	for (int i = 0; i < samples_to_read; ++i) {
-		newDest[(i * 2) + 0] = ((float)temp_data[i].Left) * scale;
-		newDest[(i * 2) + 1] = ((float)temp_data[i].Right) * scale;
-	}
+    for (uint32_t i = 0; i < samples_to_read; ++i) {
+        newDest[(i * 2) + 0] = ((float)temp_data[i].Left) * scale;
+        newDest[(i * 2) + 1] = ((float)temp_data[i].Right) * scale;
+    }
 
-	return samples_to_read;
+    return samples_to_read;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Right now we assume gz files are vgm which of course isn't the case but will do for now until we a
 // better implementation of this
 
-HippoProbeResult vgm_probe_can_play(const uint8_t* data, uint32_t data_size, const char* filename, uint64_t total_size) {
-	if ((data[0] == 'V') &&
-		(data[1] == 'g') &&
-		(data[2] == 'm')) {
-		hp_info("Supported %s", filename);
-		return HippoProbeResult_Supported;
-	}
+HippoProbeResult vgm_probe_can_play(const uint8_t* data, uint32_t data_size, const char* filename,
+                                    uint64_t total_size) {
+    if ((data[0] == 'V') && (data[1] == 'g') && (data[2] == 'm')) {
+        hp_info("Supported %s", filename);
+        return HippoProbeResult_Supported;
+    }
 
-	// gzip header bytes
+    // gzip header bytes
 
-	if ((data[0] == 0x1f) &&    // id1
-		(data[1] == 0x8b) &&    // id2
-		(data[2] == 0x08)) {    // deflate method (only one supported
-		hp_info("Supported %s", filename);
-		return HippoProbeResult_Supported;
-	}
+    if ((data[0] == 0x1f) &&  // id1
+        (data[1] == 0x8b) &&  // id2
+        (data[2] == 0x08)) {  // deflate method (only one supported
+        hp_info("Supported %s", filename);
+        return HippoProbeResult_Supported;
+    }
 
     hp_debug("Unsupported: %s", filename);
-	return HippoProbeResult_Unsupported;
+    return HippoProbeResult_Unsupported;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int vgm_seek(void* user_data, int ms) {
-	return 0;
+    return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -241,21 +235,21 @@ static void append_to_message(std::string& dest, const std::string& data, const 
 static int vgm_metadata(const char* filename, const HippoServiceAPI* service_api) {
     init();
 
-	if (!OpenVGMFile(filename)) {
-		hp_error("Unable to metadata open %s\n", filename);
-		return -1;
-	}
+    if (!OpenVGMFile(filename)) {
+        hp_error("Unable to metadata open %s\n", filename);
+        return -1;
+    }
 
-	PlayVGM();
+    PlayVGM();
 
     hp_info("Updating metadata for %s", filename);
 
-	auto track_name = get_tag(VGMTag.strTrackNameE, VGMTag.strTrackNameJ);
-	auto game_name = get_tag(VGMTag.strGameNameE, VGMTag.strGameNameJ);
-	auto system_name = get_tag(VGMTag.strSystemNameE, VGMTag.strSystemNameJ);
-	auto author_name = get_tag(VGMTag.strAuthorNameE, VGMTag.strAuthorNameJ);
-	auto creator = get_string(VGMTag.strCreator);
-	auto notes = get_string(VGMTag.strNotes);
+    auto track_name = get_tag(VGMTag.strTrackNameE, VGMTag.strTrackNameJ);
+    auto game_name = get_tag(VGMTag.strGameNameE, VGMTag.strGameNameJ);
+    auto system_name = get_tag(VGMTag.strSystemNameE, VGMTag.strSystemNameJ);
+    auto author_name = get_tag(VGMTag.strAuthorNameE, VGMTag.strAuthorNameJ);
+    auto creator = get_string(VGMTag.strCreator);
+    auto notes = get_string(VGMTag.strNotes);
 
     const HippoMetadataAPI* metadata_api = HippoServiceAPI_get_metadata_api(service_api, HIPPO_METADATA_API_VERSION);
     HippoMetadataId index = HippoMetadata_create_url(metadata_api, filename);
@@ -267,7 +261,7 @@ static int vgm_metadata(const char* filename, const HippoServiceAPI* service_api
     if (track_name != "") {
         HippoMetadata_set_tag(metadata_api, index, HippoMetadata_TitleTag, track_name.c_str());
     } else {
-        char buffer[1024] = { 0 };
+        char buffer[1024] = {0};
         get_file_stem(buffer, filename);
         HippoMetadata_set_tag(metadata_api, index, HippoMetadata_TitleTag, buffer);
     }
@@ -291,33 +285,35 @@ static int vgm_metadata(const char* filename, const HippoServiceAPI* service_api
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void vgm_set_log(struct HippoLogAPI* log) { g_hp_log = log; }
+static void vgm_set_log(struct HippoLogAPI* log, const HippoServiceAPI* service_api) {
+    (void)service_api;
+    g_hp_log = log;
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static HippoPlaybackPlugin g_vgm_plugin = {
-	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
-	"VGM",
-	"0.0.1",
+    HIPPO_PLAYBACK_PLUGIN_API_VERSION,
+    "VGM",
+    "0.0.1",
     "VGMPlay 0.40.8",
-	vgm_probe_can_play,
-	vgm_supported_extensions,
-	vgm_create,
-	vgm_destroy,
-	vgm_event,
-	vgm_open,
-	vgm_close,
-	vgm_read_data,
-	vgm_seek,
-	vgm_metadata,
-	vgm_set_log,
-	NULL,
-	NULL,
+    vgm_probe_can_play,
+    vgm_supported_extensions,
+    vgm_create,
+    vgm_destroy,
+    vgm_event,
+    vgm_open,
+    vgm_close,
+    vgm_read_data,
+    vgm_seek,
+    vgm_metadata,
+    vgm_set_log,
+    NULL,
+    NULL,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 extern "C" HIPPO_EXPORT HippoPlaybackPlugin* hippo_playback_plugin() {
-	return &g_vgm_plugin;
+    return &g_vgm_plugin;
 }
-

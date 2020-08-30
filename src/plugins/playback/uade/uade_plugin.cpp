@@ -253,7 +253,8 @@ static void uade_event(void* user_data, const unsigned char* data, int len) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void uade_set_log(struct HippoLogAPI* log) {
+static void uade_static_init(struct HippoLogAPI* log, const HippoServiceAPI* service) {
+    (void)service;
     g_hp_log = log;
 }
 
@@ -274,7 +275,7 @@ static HippoPlaybackPlugin g_uade_plugin = {
     uade_read_data,
     uade_plugin_seek,
     uade_metadata,
-    uade_set_log,
+    uade_static_init,
     NULL,
     NULL,
 };
