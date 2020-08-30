@@ -8,6 +8,8 @@
 #define HS_INTEGER_RANGE_TYPE 0x1003
 #define HS_STRING_RANGE_TYPE 0x1003
 
+#define HIPPO_SETTINGS_API_VERSION 1
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef struct HSBase {
@@ -128,7 +130,8 @@ typedef struct HippoSettingsAPI {
     // makes it possible to disable / enable a control
     HippoSettingError (*enable_ctl)(void* priv_data, int id, bool state);
 
-    HippoSettingError (*get_last_error(void* priv_data, const char*
+    // get the last error (null if no error)
+    const char* (*get_last_error(void* priv_data);
 
 } HippoRegisterSettingsAPI;
 
