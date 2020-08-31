@@ -39,8 +39,7 @@ double OpAmp::solve(double n, double vi) const
 
     const double a = n + 1.;
     const double b = kVddt;
-    double b_vi = (b - vi);
-    if (b_vi < 0.) b_vi = 0.;
+    const double b_vi = (b > vi) ? (b - vi) : 0.;
     const double c = n * (b_vi * b_vi);
 
     for (;;)
@@ -53,10 +52,8 @@ double OpAmp::solve(double n, double vi) const
         const double vo = out.x;
         const double dvo = out.y;
 
-        double b_vx = b - x;
-        if (b_vx < 0.) b_vx = 0.;
-        double b_vo = b - vo;
-        if (b_vo < 0.) b_vo = 0.;
+        const double b_vx = (b > x) ? b - x : 0.;
+        const double b_vo = (b > vo) ? b - vo : 0.;
 
         // f = a*(b - vx)^2 - c - (b - vo)^2
         const double f = a * (b_vx * b_vx) - c - (b_vo * b_vo);

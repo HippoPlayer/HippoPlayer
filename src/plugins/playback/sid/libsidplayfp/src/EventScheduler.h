@@ -79,7 +79,7 @@ private:
         Event **scan = &firstEvent;
         for (;;)
         {
-            if (*scan == nullptr || (*scan)->triggerTime > event.triggerTime)
+            if ((*scan == nullptr) || ((*scan)->triggerTime > event.triggerTime))
             {
                  event.next = *scan;
                  *scan = &event;
@@ -165,23 +165,13 @@ public:
     }
 
     /**
-     * Get clocks since specified clock in given phase.
-     *
-     * @param clock the time to compare to
-     * @param phase the phase to comapre to
-     * @return the time between specified clock and now
-     */
-    event_clock_t getTime(event_clock_t clock, event_phase_t phase) const
-    {
-        return getTime(phase) - clock;
-    }
-
-    /**
      * Return current clock phase.
      *
      * @return The current phase
      */
     event_phase_t phase() const { return static_cast<event_phase_t>(currentTime & 1); }
+
+    event_clock_t remaining(Event &event) const { return event.triggerTime - currentTime; }
 };
 
 }

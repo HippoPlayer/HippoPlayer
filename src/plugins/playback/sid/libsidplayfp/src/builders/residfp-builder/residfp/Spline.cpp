@@ -90,7 +90,7 @@ Spline::Spline(const Point input[], size_t inputLength) :
 
 Spline::Point Spline::evaluate(double x) const
 {
-    if (x < c->x1 || x > c->x2)
+    if ((x < c->x1) || (x > c->x2))
     {
         for (size_t i = 0; i < params.size(); i++)
         {

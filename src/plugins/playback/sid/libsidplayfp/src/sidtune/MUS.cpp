@@ -64,6 +64,7 @@ const size_t player2size = sizeof(sidplayer2) - o65headersize;
 
 bool detect(const uint8_t* buffer, size_t bufsize, uint_least32_t& voice3Index)
 {
+    // sanity check
     if ((buffer == nullptr) || (bufsize < 8))
         return false;
 
@@ -226,7 +227,7 @@ void MUS::tryLoad(buffer_t& musBuf,
     musDataLen = musBuf.size();
     info->m_loadAddr = SIDTUNE_MUS_DATA_ADDR;
 
-    SmartPtr_sidtt<const uint8_t> spPet(&musBuf[fileOffset], musBuf.size() - fileOffset);
+    SmartPtr_sidtt<const uint8_t> spPet(&musBuf[fileOffset], musDataLen - fileOffset);
 
     // Voice3Index now is offset to text lines (uppercase Pet-strings).
     spPet += voice3Index;

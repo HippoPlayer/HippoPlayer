@@ -163,19 +163,19 @@ void MOS656X::write(uint_least8_t addr, uint8_t data)
         // This is the funniest part... handle bad line tricks.
         const bool wasBadLinesEnabled = areBadLinesEnabled;
 
-        if (rasterY == FIRST_DMA_LINE && lineCycle == 0)
+        if ((rasterY == FIRST_DMA_LINE) && (lineCycle == 0))
         {
             areBadLinesEnabled = readDEN();
         }
 
-        if (oldRasterY() == FIRST_DMA_LINE && readDEN())
+        if ((oldRasterY() == FIRST_DMA_LINE) && readDEN())
         {
             areBadLinesEnabled = true;
         }
 
-        if ((oldYscroll != yscroll || areBadLinesEnabled != wasBadLinesEnabled)
-            && rasterY >= FIRST_DMA_LINE
-            && rasterY <= LAST_DMA_LINE)
+        if (((oldYscroll != yscroll) || (areBadLinesEnabled != wasBadLinesEnabled))
+            && (rasterY >= FIRST_DMA_LINE)
+            && (rasterY <= LAST_DMA_LINE))
         {
             // Check whether bad line state has changed.
             const bool wasBadLine = (wasBadLinesEnabled && (oldYscroll == (rasterY & 7)));
@@ -257,7 +257,7 @@ void MOS656X::handleIrqState()
 
 void MOS656X::event()
 {
-    const event_clock_t cycles = eventScheduler.getTime(rasterClk, eventScheduler.phase());
+    const event_clock_t cycles = eventScheduler.getTime(eventScheduler.phase()) - rasterClk;
 
     event_clock_t delay;
 

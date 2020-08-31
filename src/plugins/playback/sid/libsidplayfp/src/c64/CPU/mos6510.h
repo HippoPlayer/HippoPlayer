@@ -129,10 +129,8 @@ private:
 
     bool d1x1;
 
-#ifdef CORRECT_SH_INSTRUCTIONS
     /// The RDY pin state during last throw away read.
     bool rdyOnThrowAwayRead;
-#endif
 
     /// Status register
     Flags flags;
@@ -168,8 +166,11 @@ private:
     /// Represents an instruction subcycle that reads
     EventCallback<MOS6510> m_steal;
 
+    EventCallback<MOS6510> clearInt;
+
     void eventWithoutSteals();
     void eventWithSteals();
+    void removeIRQ();
 
     inline void Initialise();
 
@@ -235,7 +236,6 @@ private:
     inline void branch_instr(bool condition);
     inline void fix_branch();
     inline void bpl_instr();
-    inline void brk_instr();
     inline void bvc_instr();
     inline void bvs_instr();
     inline void clc_instr();
@@ -328,10 +328,6 @@ protected:
     virtual void cpuWrite(uint_least16_t addr, uint8_t data) =0;
 
 public:
-#ifdef PC64_TESTSUITE
-    virtual void loadFile(const char *file) =0;
-#endif
-
     void reset();
 
     static const char *credits();

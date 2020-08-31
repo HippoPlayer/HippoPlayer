@@ -151,7 +151,7 @@ bool c64::addExtraSid(c64sid *s, int address)
 
     // Only allow second SID chip in SID area ($d400-$d7ff)
     // or IO Area ($de00-$dfff)
-    if (idx < 0x4 || (idx > 0x7 && idx < 0xe))
+    if ((idx < 0x4) || ((idx > 0x7) && (idx < 0xe)))
         return false;
 
     // Add new SID bank

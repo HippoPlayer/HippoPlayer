@@ -39,7 +39,7 @@ namespace reSIDfp
  */
 class Voice
 {
-public:
+private:
     std::unique_ptr<WaveformGenerator> const waveformGenerator;
 
     std::unique_ptr<EnvelopeGenerator> const envelopeGenerator;

@@ -1,7 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2011-2018 Leandro Nini <drfiemost@users.sourceforge.net>
+ * Copyright 2011-2020 Leandro Nini <drfiemost@users.sourceforge.net>
  * Copyright 2007-2010 Antti Lankila
  * Copyright 2000 Simon White
  *
@@ -52,19 +52,26 @@ public:
         INTERRUPT_REQUEST      = 1 << 7  ///< control bit
     };
 
-protected:
+private:
     /// Pointer to the MOS6526 which this Interrupt belongs to.
     MOS6526 &parent;
 
+protected:
     /// Event scheduler.
     EventScheduler &eventScheduler;
 
-private:
+    /// Clock when clear was called last
+    event_clock_t last_clear;
+
     /// Interrupt control register
     uint8_t icr;
 
     /// Interrupt data register
     uint8_t idr;
+
+private:
+    /// Have we already scheduled CIA->CPU interrupt transition?
+    bool scheduled;
 
 protected:
     bool interruptMasked() const { return icr & idr; }
@@ -72,8 +79,6 @@ protected:
     bool interruptTriggered() const { return idr & INTERRUPT_REQUEST; }
 
     void triggerInterrupt() { idr |= INTERRUPT_REQUEST; }
-
-    void triggerBug() { idr &= ~INTERRUPT_UNDERFLOW_B; }
 
 protected:
     /**
@@ -86,9 +91,25 @@ protected:
         Event("CIA Interrupt"),
         parent(parent),
         eventScheduler(scheduler),
+        last_clear(0),
         icr(0),
-        idr(0)
+        idr(0),
+        scheduled(false)
     {}
+
+    /**
+     * Schedules an IRQ asserting state transition for next cycle.
+     */
+    void schedule()
+    {
+        if (!scheduled)
+        {
+            eventScheduler.schedule(*this, 1, EVENT_CLOCK_PHI1);
+            scheduled = true;
+        }
+    }
+
+    void interrupt(bool state);
 
 public:
     virtual ~InterruptSource() {}
@@ -105,12 +126,7 @@ public:
      * 
      * @return old interrupt state
      */
-    virtual uint8_t clear()
-    {
-        uint8_t const old = idr;
-        idr = 0;
-        return old;
-    }
+    virtual uint8_t clear();
 
     /**
      * Clear pending interrupts, but do not signal to CPU we lost them.
@@ -121,6 +137,7 @@ public:
         icr = 0;
         idr = 0;
         eventScheduler.cancel(*this);
+        scheduled = false;
     }
 
     /**
@@ -140,6 +157,11 @@ public:
             icr &= ~interruptMask;
         }
     }
+
+    /**
+     * Signal interrupt to CPU.
+     */
+    void event() override;
 };
 
 }

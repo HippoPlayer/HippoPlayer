@@ -1,7 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2011-2015 Leandro Nini <drfiemost@users.sourceforge.net>
+ * Copyright 2011-2020 Leandro Nini <drfiemost@users.sourceforge.net>
  * Copyright 2007-2010 Antti Lankila
  * Copyright 2004 Dag Lem <resid@nimrod.no>
  *
@@ -27,7 +27,6 @@
 #include <cmath>
 #include <iostream>
 #include <sstream>
-#include <limits>
 
 #include "siddefs-fp.h"
 
@@ -232,14 +231,6 @@ SincResampler::SincResampler(double clockFrequency, double samplingFrequency, do
     }
 }
 
-template<typename I, typename O>
-inline O clip(I input)
-{
-    if (input < std::numeric_limits<O>::min()) input = std::numeric_limits<O>::min();
-    if (input > std::numeric_limits<O>::max()) input = std::numeric_limits<O>::max();
-    return static_cast<O>(input);
-}
-
 bool SincResampler::input(int input)
 {
     bool ready = false;
@@ -248,10 +239,10 @@ bool SincResampler::input(int input)
      * Clip the input as it may overflow the 16 bit range.
      *
      * Approximate measured input ranges:
-     * 6581: ]-20000,+20000[
-     * 8580: ]-33000,+33000[
+     * 6581: [-24262,+25080]  (Kawasaki_Synthesizer_Demo)
+     * 8580: [-21514,+35232]  (64_Forever, Drum_Fool)
      */
-    sample[sampleIndex] = sample[sampleIndex + RINGSIZE] = clip<int, short>(input);
+    sample[sampleIndex] = sample[sampleIndex + RINGSIZE] = softClip(input);
     sampleIndex = (sampleIndex + 1) & (RINGSIZE - 1);
 
     if (sampleOffset < 1024)

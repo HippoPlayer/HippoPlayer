@@ -210,9 +210,9 @@ class Integrator;
  * Note that these are only approximate values for one particular SID chip,
  * due to process variations the values can be substantially different in
  * other chips.
- * 
- * 
- * 
+ *
+ *
+ *
  * Filter frequency cutoff DAC
  * ---------------------------
  *
@@ -368,9 +368,9 @@ public:
 
     ~Filter6581();
 
-    int clock(int voice1, int voice2, int voice3) override;
+    unsigned short clock(int voice1, int voice2, int voice3) override;
 
-    void input(int sample) override { ve = (sample * voiceScaleS14 * 3 >> 10) + mixer[0][0]; }
+    void input(int sample) override { ve = (sample * voiceScaleS14 * 3 >> 14) + mixer[0][0]; }
 
     /**
      * Set filter curve type based on single parameter.
@@ -390,12 +390,12 @@ namespace reSIDfp
 {
 
 RESID_INLINE
-int Filter6581::clock(int voice1, int voice2, int voice3)
+unsigned short Filter6581::clock(int voice1, int voice2, int voice3)
 {
     voice1 = (voice1 * voiceScaleS14 >> 18) + voiceDC;
     voice2 = (voice2 * voiceScaleS14 >> 18) + voiceDC;
     // Voice 3 is silenced by voice3off if it is not routed through the filter.
-    voice3 = filt3 || !voice3off ? (voice3 * voiceScaleS14 >> 18) + voiceDC : 0;
+    voice3 = (filt3 || !voice3off) ? (voice3 * voiceScaleS14 >> 18) + voiceDC : 0;
 
     int Vi = 0;
     int Vo = 0;
@@ -413,7 +413,7 @@ int Filter6581::clock(int voice1, int voice2, int voice3)
     if (bp) Vo += Vbp;
     if (hp) Vo += Vhp;
 
-    return currentGain[currentMixer[Vo]] - (1 << 15);
+    return currentGain[currentMixer[Vo]];
 }
 
 } // namespace reSIDfp

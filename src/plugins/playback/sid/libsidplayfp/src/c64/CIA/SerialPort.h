@@ -1,7 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2011-2019 Leandro Nini <drfiemost@users.sourceforge.net>
+ * Copyright 2011-2020 Leandro Nini <drfiemost@users.sourceforge.net>
  * Copyright 2009-2014 VICE Project
  * Copyright 2007-2010 Antti Lankila
  * Copyright 2000 Simon White
@@ -42,27 +42,54 @@ private:
     /// Event context.
     EventScheduler &eventScheduler;
 
+    EventCallback<SerialPort> flipCntEvent;
+    EventCallback<SerialPort> flipFakeEvent;
+    EventCallback<SerialPort> startSdrEvent;
+
+    event_clock_t lastSync;
+
     int count;
 
-    bool buffered;
+    uint8_t cnt;
+    uint8_t cntHistory;
 
-    uint8_t out;
+    bool loaded;
+    bool pending;
+
+    bool forceFinish;
+
+    bool model4485;
 
 private:
     void event() override;
+
+    void flipCnt();
+    void flipFake();
+
+    void doStartSdr();
+
+    void syncCntHistory();
 
 public:
     explicit SerialPort(EventScheduler &scheduler, MOS6526 &parent) :
         Event("Serial Port interrupt"),
         parent(parent),
-        eventScheduler(scheduler)
+        eventScheduler(scheduler),
+        flipCntEvent("flip CNT", *this, &SerialPort::flipCnt),
+        flipFakeEvent("flip fake", *this, &SerialPort::flipFake),
+        startSdrEvent("start SDR", *this, &SerialPort::doStartSdr),
+        model4485(false)
     {}
 
     void reset();
 
-    void setBuffered() { buffered = true; }
+    void setModel4485(bool is4485) { model4485 = is4485; }
 
-    void handle(uint8_t serialDataReg);
+    void startSdr();
+
+    void switchSerialDirection(bool input);
+
+    void handle();
 };
 
 }

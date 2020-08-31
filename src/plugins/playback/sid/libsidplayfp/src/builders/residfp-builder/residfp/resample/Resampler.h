@@ -1,7 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2011-2013 Leandro Nini <drfiemost@users.sourceforge.net>
+ * Copyright 2011-2020 Leandro Nini <drfiemost@users.sourceforge.net>
  * Copyright 2007-2010 Antti Lankila
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,6 +22,12 @@
 #ifndef RESAMPLER_H
 #define RESAMPLER_H
 
+#include <cmath>
+
+#include "sidcxx11.h"
+
+#include "siddefs-fp.h"
+
 namespace reSIDfp
 {
 
@@ -32,6 +38,21 @@ namespace reSIDfp
 class Resampler
 {
 protected:
+    inline short softClip(int x) const
+    {
+        constexpr int threshold = 28000;
+        if (likely(x < threshold))
+            return x;
+
+        constexpr double t = threshold / 32768.;
+        constexpr double a = 1. - t;
+        constexpr double b = 1. / a;
+
+        double value = static_cast<double>(x - threshold) / 32768.;
+        value = t + a * tanh(b * value);
+        return static_cast<short>(value * 32768.);
+    }
+
     virtual int output() const = 0;
 
     Resampler() {}
@@ -54,13 +75,7 @@ public:
      */
     short getOutput() const
     {
-        int value = output();
-
-        // Clip signed integer value into the [-32768,32767] range.
-        if (value < -32768) value = -32768;
-        if (value > 32767) value = 32767;
-
-        return value;
+        return softClip(output());
     }
 
     virtual void reset() = 0;
