@@ -253,7 +253,7 @@ static void sid_set_log(struct HippoLogAPI* log) { g_hp_log = log; }
 static HippoPlaybackPlugin g_sid_plugin = {
 	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
 	"SID",
-	"0.0.1",
+	"1.0.0",
 	"sidplayfp 2.0.0beta",
 	sid_probe_can_play,
 	sid_supported_extensions,
