@@ -39,11 +39,8 @@ pub struct HippoPlaybackPluginFFI {
     pub metadata: Option<
         unsafe extern "C" fn(buffer: *const i8, services: *const ffi::HippoServiceAPI) -> i32,
     >,
-    pub save: Option<
-        unsafe extern "C" fn(user_data: *mut c_void, save_api: *const ffi::HippoSaveAPI) -> i32,
-    >,
-    pub load: Option<
-        unsafe extern "C" fn(user_data: *mut c_void, load_api: *const ffi::HippoLoadAPI) -> i32,
+    pub update_settings: Option<
+        unsafe extern "C" fn(user_data: *mut c_void, settings_api: *const ffi::HippoSettingsAPI) -> i32,
     >,
 }
 
@@ -151,13 +148,12 @@ impl Plugins {
                 read_data: native_plugin.read_data.unwrap(),
                 seek: native_plugin.seek.unwrap(),
                 metadata: native_plugin.metadata,
-                save: native_plugin.save,
-                load: native_plugin.load,
+                update_settings: native_plugin.update_settings,
             };
 
             trace!("Loaded playback plugin {} {}", plugin_funcs.name, plugin_funcs.version);
 
-            if let Some(set_log) = native_plugin.set_log {
+            if let Some(static_init) = native_plugin.static_init {
                 // TODO: Memory leak
                 let name = format!("{} {}", plugin_funcs.name, plugin_funcs.version);
                 let c_name = CString::new(name).unwrap();
@@ -165,7 +161,7 @@ impl Plugins {
 
                 unsafe {
                     (*log_api).log_set_base_name.unwrap()((*log_api).priv_data, c_name.as_ptr());
-                    (set_log)(log_api);
+                    (static_init)(log_api, std::ptr::null());
                 }
             }
 

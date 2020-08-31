@@ -131,7 +131,7 @@ extern "C" fn file_seek_wrapper(
 }
 
 extern "C" fn get_log_api(
-    priv_data: *mut ffi::HippoServicePrivData,
+    priv_data: *mut c_void,
     _version: i32,
 ) -> *const ffi::HippoLogAPI {
     let service_api: &mut ServiceApi = unsafe { &mut *(priv_data as *mut ServiceApi) };
@@ -139,7 +139,7 @@ extern "C" fn get_log_api(
 }
 
 extern "C" fn get_io_api_wrapper(
-    priv_data: *mut ffi::HippoServicePrivData,
+    priv_data: *mut c_void,
     _version: i32,
 ) -> *const ffi::HippoIoAPI {
     let service_api: &mut ServiceApi = unsafe { &mut *(priv_data as *mut ServiceApi) };
@@ -147,7 +147,7 @@ extern "C" fn get_io_api_wrapper(
 }
 
 extern "C" fn get_metadata_api(
-    priv_data: *mut ffi::HippoServicePrivData,
+    priv_data: *mut c_void,
     _version: i32,
 ) -> *const ffi::HippoMetadataAPI {
     let service_api: &mut ServiceApi = unsafe { &mut *(priv_data as *mut ServiceApi) };
@@ -155,7 +155,7 @@ extern "C" fn get_metadata_api(
 }
 
 extern "C" fn get_message_api(
-    priv_data: *mut ffi::HippoServicePrivData,
+    priv_data: *mut c_void,
     _version: i32,
 ) -> *const ffi::HippoMessageAPI {
     let service_api: &mut ServiceApi = unsafe { &mut *(priv_data as *mut ServiceApi) };
@@ -508,11 +508,12 @@ impl PluginService {
         let service_api = Box::into_raw(Box::new(ServiceApi::new(song_db)));
 
         let c_service_api = Box::new(ffi::HippoServiceAPI {
+            private_data: service_api as *mut c_void,
             get_log_api: Some(get_log_api),
             get_io_api: Some(get_io_api_wrapper),
             get_metadata_api: Some(get_metadata_api),
             get_message_api: Some(get_message_api),
-            private_data: service_api as *mut ffi::HippoServicePrivData,
+            get_settings_api: None,
         });
 
         Box::into_raw(c_service_api) as *const ffi::HippoServiceAPI

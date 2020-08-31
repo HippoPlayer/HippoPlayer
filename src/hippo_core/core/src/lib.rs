@@ -12,6 +12,7 @@ mod audio;
 mod core_config;
 mod playlist;
 mod plugin_handler;
+mod playback_settings;
 
 pub mod ffi;
 mod service;
