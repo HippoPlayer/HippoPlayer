@@ -153,9 +153,9 @@ static int sid_read_data(void* user_data, void* dest, uint32_t samples_to_read) 
 
 	data->engine.play(temp_data, samples_to_read);
 
-	const float scale = 1.0f / 32767.0f;
+	const float scale = 1.0f / 32768.0f;
 
-	for (int i = 0; i < samples_to_read; ++i) {
+	for (uint32_t i = 0; i < samples_to_read; ++i) {
 		const float v = ((float)temp_data[i]) * scale;
 		*output++ = v;
 		*output++ = v;
@@ -246,7 +246,10 @@ static int sid_metadata(const char* url, const HippoServiceAPI* service_api) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void sid_set_log(struct HippoLogAPI* log) { g_hp_log = log; }
+static void sid_set_log(struct HippoLogAPI* log, const HippoServiceAPI* service_api) {
+    (void)service_api;
+    g_hp_log = log;
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
