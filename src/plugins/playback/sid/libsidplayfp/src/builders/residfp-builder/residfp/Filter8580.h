@@ -249,7 +249,7 @@ class Integrator8580;
  *
  *
  *
- * Crystal stabilized precision swithced capacitor voltage divider
+ * Crystal stabilized precision switched capacitor voltage divider
  * ---------------------------------------------------------------
  * There is a FET working as a temperature sensor close to the DACs which changes the gate voltage
  * of the frequency control DACs according to the temperature of the DACs,
@@ -334,15 +334,14 @@ public:
 
     ~Filter8580();
 
-    int clock(int voice1, int voice2, int voice3) override;
+    unsigned short clock(int voice1, int voice2, int voice3) override;
 
     void input(int sample) override { ve = (sample * voiceScaleS14 * 3 >> 14) + mixer[0][0]; }
 
     /**
      * Set filter curve type based on single parameter.
      *
-     * FIXME find a reasonable range of values
-     * @param curvePosition
+     * @param curvePosition 0 .. 1, where 0 sets center frequency high ("light") and 1 sets it low ("dark"), default is 0.5
      */
     void setFilterCurve(double curvePosition);
 };
@@ -355,12 +354,12 @@ namespace reSIDfp
 {
 
 RESID_INLINE
-int Filter8580::clock(int voice1, int voice2, int voice3)
+unsigned short Filter8580::clock(int voice1, int voice2, int voice3)
 {
     voice1 = (voice1 * voiceScaleS14 >> 18) + voiceDC;
     voice2 = (voice2 * voiceScaleS14 >> 18) + voiceDC;
     // Voice 3 is silenced by voice3off if it is not routed through the filter.
-    voice3 = filt3 || !voice3off ? (voice3 * voiceScaleS14 >> 18) + voiceDC : 0;
+    voice3 = (filt3 || !voice3off) ? (voice3 * voiceScaleS14 >> 18) + voiceDC : 0;
 
     int Vi = 0;
     int Vo = 0;
@@ -378,7 +377,7 @@ int Filter8580::clock(int voice1, int voice2, int voice3)
     if (bp) Vo += Vbp;
     if (hp) Vo += Vhp;
 
-    return currentGain[currentMixer[Vo]] - (1 << 15);
+    return currentGain[currentMixer[Vo]];
 }
 
 } // namespace reSIDfp

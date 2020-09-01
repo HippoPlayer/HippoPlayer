@@ -34,11 +34,12 @@ namespace reSIDfp
  * the waveform register to 0.
  *
  * FIXME
- * This value has been adjusted aleatorily to ~1 sec
+ * This value has been adjusted aleatorily
  * from the original reSID value (0x4000)
  * to fix /MUSICIANS/H/Hatlelid_Kris/Grand_Prix_Circuit.sid#2
  * and /MUSICIANS/P/PVCF/Thomkat_with_Strange_End.sid;
  * see [VICE Bug #290](http://sourceforge.net/p/vice-emu/bugs/290/)
+ * and [VICE Bug #1128](http://sourceforge.net/p/vice-emu/bugs/1128/)
  */
 const int FLOATING_OUTPUT_TTL_6581 = 200000;  // ~200ms
 const int FLOATING_OUTPUT_TTL_8580 = 5000000; // ~5s;
@@ -48,7 +49,7 @@ const int FLOATING_OUTPUT_TTL_8580 = 5000000; // ~5s;
  * when the test bit is set.
  * Values measured on warm chips (6581R3 and 8580R5).
  * Times vary wildly with temperature and may differ
- * from chip to chip so the numbers here represents
+ * from chip to chip so the numbers here represent
  * only the big difference between the old and new models.
  */
 const int SHIFT_REGISTER_RESET_6581 = 200000;  // ~200ms
@@ -183,13 +184,15 @@ bool do_pre_writeback(unsigned int waveform_prev, unsigned int waveform, bool is
     // no writeback without combined waveforms
     if (likely(waveform_prev <= 0x8))
         return false;
-    // This need more investigation
+    // no writeback when changing to noise
     if (waveform == 8)
         return false;
     // What's happening here?
     if (is6581 &&
             ((((waveform_prev & 0x3) == 0x1) && ((waveform & 0x3) == 0x2))
             || (((waveform_prev & 0x3) == 0x2) && ((waveform & 0x3) == 0x1))))
+        return false;
+    if (waveform_prev == 0xc)
         return false;
     // ok do the writeback
     return true;
@@ -239,9 +242,6 @@ void WaveformGenerator::writeCONTROL_REG(unsigned char control)
 
             // Set reset time for shift register.
             shift_register_reset = model_shift_register_reset;
-
-            // New noise waveform output.
-            set_noise_output();
         }
         else
         {
@@ -251,12 +251,16 @@ void WaveformGenerator::writeCONTROL_REG(unsigned char control)
             // During first phase of the shift the bits are interconnected
             // and the output of each bit is latched into the following.
             // The output may overwrite the latched value.
-            if (do_pre_writeback(waveform_prev, waveform, is6581)) {
+            if (do_pre_writeback(waveform_prev, waveform, is6581))
+            {
                 shift_register &= get_noise_writeback();
             }
 
             // bit0 = (bit22 | test) ^ bit17 = 1 ^ bit17 = ~bit17
             clock_shift_register((~shift_register << 17) & (1 << 22));
+
+            // New noise waveform output.
+            set_noise_output();
         }
     }
 }

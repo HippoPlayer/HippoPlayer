@@ -1,7 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2011-2019 Leandro Nini <drfiemost@users.sourceforge.net>
+ * Copyright 2011-2020 Leandro Nini <drfiemost@users.sourceforge.net>
  * Copyright 2009-2014 VICE Project
  * Copyright 2007-2010 Antti Lankila
  * Copyright 2001 Simon White
@@ -181,7 +181,7 @@ private:
      */
     unsigned int readRasterLineIRQ() const
     {
-        return (regs[0x12] & 0xff) + ((regs[0x11] & 0x80) << 1);
+        return regs[0x12] + ((regs[0x11] & 0x80) << 1);
     }
 
     /**

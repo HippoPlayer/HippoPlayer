@@ -1,7 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2011-2019 Leandro Nini <drfiemost@users.sourceforge.net>
+ * Copyright 2011-2020 Leandro Nini <drfiemost@users.sourceforge.net>
  * Copyright 2009-2014 VICE Project
  * Copyright 2007-2010 Antti Lankila
  * Copyright 2000 Simon White
@@ -78,8 +78,16 @@ void InterruptSource8521::trigger(uint8_t interruptMask)
 
     if (interruptMasked() && !interruptTriggered())
     {
-        triggerInterrupt();
-        parent.interrupt(true);
+        if (eventScheduler.getTime(EVENT_CLOCK_PHI2) == last_clear+1)
+        {
+            // Interrupt delayed by 1/2 cycle if acknowledged on assert
+            schedule();
+        }
+        else
+        {
+            triggerInterrupt();
+            interrupt(true);
+        }
     }
 }
 
@@ -87,7 +95,7 @@ uint8_t InterruptSource8521::clear()
 {
     if (interruptTriggered())
     {
-        parent.interrupt(false);
+        interrupt(false);
     }
 
     return InterruptSource::clear();
@@ -121,20 +129,13 @@ void InterruptSource6526::trigger(uint8_t interruptMask)
 
     if (!interruptTriggered())
     {
+        // interrupts are delayed by 1 clk on old CIAs
         schedule();
     }
 }
 
 uint8_t InterruptSource6526::clear()
 {
-    last_clear = eventScheduler.getTime(EVENT_CLOCK_PHI2);
-
-    if (scheduled)
-    {
-        eventScheduler.cancel(*this);
-        scheduled = false;
-    }
-
     if (tbBug)
     {
         triggerBug();
@@ -143,18 +144,10 @@ uint8_t InterruptSource6526::clear()
 
     if (interruptTriggered())
     {
-        parent.interrupt(false);
+        interrupt(false);
     }
 
     return InterruptSource::clear();
-}
-
-void InterruptSource6526::event()
-{
-    triggerInterrupt();
-    parent.interrupt(true);
-
-    scheduled = false;
 }
 
 void InterruptSource6526::reset()
@@ -162,7 +155,6 @@ void InterruptSource6526::reset()
     InterruptSource::reset();
 
     tbBug = false;
-    scheduled = false;
 }
 
 const char *MOS6526::credits()
@@ -172,7 +164,7 @@ const char *MOS6526::credits()
             "\tCopyright (C) 2001-2004 Simon White\n"
             "\tCopyright (C) 2007-2010 Antti S. Lankila\n"
             "\tCopyright (C) 2009-2014 VICE Project\n"
-            "\tCopyright (C) 2011-2018 Leandro Nini\n";
+            "\tCopyright (C) 2011-2020 Leandro Nini\n";
 }
 
 MOS6526::MOS6526(EventScheduler &scheduler) :
@@ -195,7 +187,7 @@ void MOS6526::handleSerialPort()
 {
     if (regs[CRA] & 0x40)
     {
-        serialPort.handle(regs[SDR]);
+        serialPort.handle();
     }
 }
 
@@ -218,6 +210,23 @@ void MOS6526::reset()
     eventScheduler.cancel(bTickEvent);
 }
 
+uint8_t MOS6526::adjustDataPort(uint8_t data)
+{
+    if (regs[CRA] & 0x02)
+    {
+        data &= 0xbf;
+        if (timerA.getPb(regs[CRA]))
+            data |= 0x40;
+    }
+    if (regs[CRB] & 0x02)
+    {
+        data &= 0x7f;
+        if (timerB.getPb(regs[CRB]))
+            data |= 0x80;
+    }
+    return data;
+}
+
 uint8_t MOS6526::read(uint_least8_t addr)
 {
     addr &= 0x0f;
@@ -232,23 +241,7 @@ uint8_t MOS6526::read(uint_least8_t addr)
     case PRA: // Simulate a serial port
         return (regs[PRA] | ~regs[DDRA]);
     case PRB:
-    {
-        uint8_t data = regs[PRB] | ~regs[DDRB];
-        // Timers can appear on the port
-        if (regs[CRA] & 0x02)
-        {
-            data &= 0xbf;
-            if (timerA.getPb(regs[CRA]))
-                data |= 0x40;
-        }
-        if (regs[CRB] & 0x02)
-        {
-            data &= 0x7f;
-            if (timerB.getPb(regs[CRB]))
-                data |= 0x80;
-        }
-        return data;
-    }
+        return adjustDataPort(regs[PRB] | ~regs[DDRB]);
     case TAL:
         return endian_16lo8(timerA.getTimer());
     case TAH:
@@ -312,13 +305,14 @@ void MOS6526::write(uint_least8_t addr, uint8_t data)
         tod.write(addr - TOD_TEN, data);
         break;
     case SDR:
-        if (regs[CRA] & 0x40)
-            serialPort.setBuffered();
+        serialPort.startSdr();
         break;
     case ICR:
         interruptSource->set(data);
         break;
     case CRA:
+        if ((data ^ oldData) & 0x40)
+            serialPort.switchSerialDirection((data & 0x40) == 0);
         if ((data & 1) && !(oldData & 1))
         {
             // Reset the underflow flipflop for the data port
@@ -379,6 +373,8 @@ void MOS6526::setModel(bool newModel)
         interruptSource.reset(new InterruptSource8521(eventScheduler, *this));
     else
         interruptSource.reset(new InterruptSource6526(eventScheduler, *this));
+
+    //serialPort.setNewModel(newModel);
 }
 
 }

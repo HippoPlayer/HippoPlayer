@@ -1,7 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2011-2019 Leandro Nini <drfiemost@users.sourceforge.net>
+ * Copyright 2011-2020 Leandro Nini <drfiemost@users.sourceforge.net>
  * Copyright 2007-2010 Antti Lankila
  * Copyright 2001 Simon White
  *
@@ -57,7 +57,10 @@ protected:
 
     void portB() override
     {
-        m_env.lightpen((prb | ~ddrb) & 0x10);
+        const uint8_t pb = prb | ~ddrb;
+        // We should call adjustDataPort here
+        // but we're only interested in bit 4
+        m_env.lightpen(pb & 0x10);
     }
 
 public:
@@ -67,10 +70,11 @@ public:
 
     void poke(uint_least16_t address, uint8_t value) override
     {
-        write(endian_16lo8(address), value);
+        const uint8_t addr = endian_16lo8(address);
+        write(addr, value);
 
         // Save the value written to Timer A
-        if (address == 0xDC04 || address == 0xDC05)
+        if ((addr == 0x04) || (addr == 0x05))
         {
             if (timerA.getTimer() != 0)
                 last_ta = timerA.getTimer();

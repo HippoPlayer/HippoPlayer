@@ -1,7 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2011-2015 Leandro Nini <drfiemost@users.sourceforge.net>
+ * Copyright 2011-2020 Leandro Nini <drfiemost@users.sourceforge.net>
  * Copyright 2009-2014 VICE Project
  * Copyright 2007-2010 Antti Lankila
  * Copyright 2001 Simon White
@@ -48,6 +48,23 @@ private:
 
     /// Has light pen IRQ been triggered in this frame already?
     bool isTriggered;
+
+private:
+    /**
+     * Transform line cycle into x coordinate.
+     *
+     * @param lineCycle
+     * @return x position divided by two
+     */
+    uint8_t getXpos(unsigned int lineCycle) const
+    {
+        if (lineCycle < 12)
+            lineCycle += cyclesPerLine-1;
+
+        lineCycle -= 12;
+        
+        return lineCycle << 2;
+    }
 
 public:
     /**
@@ -114,22 +131,20 @@ public:
      */
     bool trigger(unsigned int lineCycle, unsigned int rasterY)
     {
-        if (!isTriggered)
+        if (isTriggered)
+            return false;
+
+        isTriggered = true;
+
+        // don't latch on the last line, except on the first cycle
+        if ((rasterY != lastLine) || (lineCycle == 0))
         {
-            // don't trigger on the last line, except on the first cycle
-            if ((rasterY == lastLine) && (lineCycle > 0))
-            {
-                return false;
-            }
-
-            isTriggered = true;
-
             // Latch current coordinates
-            lpx = (lineCycle << 2) + 2;
+            lpx = getXpos(lineCycle) + 2;
             lpy = rasterY;
-            return true;
         }
-        return false;
+
+        return true;
     }
 
     /**

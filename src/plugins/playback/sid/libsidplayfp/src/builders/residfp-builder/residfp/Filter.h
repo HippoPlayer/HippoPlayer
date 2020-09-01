@@ -127,7 +127,7 @@ public:
      * @param v3 voice 3 in
      * @return filtered output
      */
-    virtual int clock(int v1, int v2, int v3) = 0;
+    virtual unsigned short clock(int v1, int v2, int v3) = 0;
 
     /**
      * Enable filter.

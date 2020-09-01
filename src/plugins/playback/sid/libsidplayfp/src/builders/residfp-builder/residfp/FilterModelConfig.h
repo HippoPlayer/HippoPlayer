@@ -1,7 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2011-2016 Leandro Nini <drfiemost@users.sourceforge.net>
+ * Copyright 2011-2020 Leandro Nini <drfiemost@users.sourceforge.net>
  * Copyright 2007-2010 Antti Lankila
  * Copyright 2004,2010 Dag Lem
  *
@@ -62,9 +62,9 @@ private:
     //@{
     const double Vdd;
     const double Vth;           ///< Threshold voltage
-    const double Ut;            ///< Thermal voltage: Ut = k*T/q = 8.61734315e-5*T ~ 26mV
-    const double k;             ///< Gate coupling coefficient: K = Cox/(Cox+Cdep) ~ 0.7
-    const double uCox;          ///< u*Cox
+    const double Ut;            ///< Thermal voltage: Ut = kT/q = 8.61734315e-5*T ~ 26mV
+    const double k;             ///< Gate coupling coefficient: k = Cox/(Cox+Cdep) ~ 0.7
+    const double uCox;          ///< Transconductance coefficient: u*Cox
     const double WL_vcr;        ///< W/L for VCR
     const double WL_snake;      ///< W/L for "snake"
     const double kVddt;         ///< k * (Vdd - Vth)
@@ -103,7 +103,7 @@ private:
     unsigned short opamp_rev[1 << 16];
 
 private:
-    double getDacZero(double adjustment) const { return dac_zero - (adjustment - 0.5) * 2.; }
+    double getDacZero(double adjustment) const { return dac_zero + (1. - adjustment); }
 
     FilterModelConfig();
     ~FilterModelConfig();

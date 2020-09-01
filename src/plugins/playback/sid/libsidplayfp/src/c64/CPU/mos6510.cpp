@@ -1,7 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2011-2019 Leandro Nini <drfiemost@users.sourceforge.net>
+ * Copyright 2011-2020 Leandro Nini <drfiemost@users.sourceforge.net>
  * Copyright 2007-2010 Antti Lankila
  * Copyright 2000 Simon White
  *
@@ -37,20 +37,16 @@ namespace libsidplayfp
 {
 
 /**
- * Magic value for lxa and ane undocumented instructions.
+ * Magic values for lxa and ane undocumented instructions.
  * Magic may be EE, EF, FE or FF, but most emulators seem to use EE.
- * Based on tests on a couple of chips at
- * http://visual6502.org/wiki/index.php?title=6502_Opcode_8B_(XAA,_ANE)
- * the value of magic for the MOS 6510 is FF.
- * However the Lorentz test suite assumes this to be EE.
+ * The constants here defined are based on VICE testsuite which
+ * refers to some real case usage of the opcodes.
  */
-const uint8_t magic =
-#ifdef VICE_TESTSUITE
-    0xef
-#else
-    0xff
-#endif
-;
+const uint8_t lxa_magic = 0xee;
+const uint8_t ane_magic = 0xef;
+
+const int interruptDelay = 2;
+
 //-------------------------------------------------------------------------//
 
 /**
@@ -76,22 +72,44 @@ void MOS6510::eventWithSteals()
     }
     else
     {
-#ifdef CORRECT_SH_INSTRUCTIONS
-        // Save rdy state for SH* instructions
-        if (instrTable[cycleCount].func == &MOS6510::throwAwayRead)
+        switch (cycleCount)
         {
-            rdyOnThrowAwayRead = false;
+        case (CLIn << 3):
+            flags.setI(false);
+            if (irqAssertedOnPin && (interruptCycle == MAX))
+                interruptCycle = -MAX;
+            break;
+        case (SEIn << 3):
+            flags.setI(true);
+            if (!rstFlag && !nmiFlag && (cycleCount <= interruptCycle + interruptDelay))
+                interruptCycle = MAX;
+            break;
+        case (SHAiy << 3) + 3:
+        case (SHSay << 3) + 2:
+        case (SHYax << 3) + 2:
+        case (SHXay << 3) + 2:
+        case (SHAay << 3) + 2:
+            // Save rdy state for SH* instructions
+            rdyOnThrowAwayRead = true;
+            break;
+        default:
+            break;
         }
-#endif
+
         // Even while stalled, the CPU can still process first clock of
         // interrupt delay, but only the first one.
         if (interruptCycle == cycleCount)
         {
-            interruptCycle --;
+            interruptCycle--;
         }
     }
 }
 
+void MOS6510::removeIRQ()
+{
+    if (!rstFlag && !nmiFlag && (interruptCycle != MAX))
+        interruptCycle = MAX;
+}
 
 /**
  * Handle bus access signals. When RDY line is asserted, the CPU
@@ -196,12 +214,12 @@ void MOS6510::triggerIRQ()
 void MOS6510::clearIRQ()
 {
     irqAssertedOnPin = false;
-    calculateInterruptTriggerCycle();
+    eventScheduler.schedule(clearInt, interruptDelay, EVENT_CLOCK_PHI1);
 }
 
 void MOS6510::interruptsAndNextOpcode()
 {
-    if (cycleCount > interruptCycle + 2)
+    if (cycleCount > interruptCycle + interruptDelay)
     {
 #ifdef DEBUG
         if (dodump)
@@ -237,9 +255,8 @@ void MOS6510::fetchNextOpcode()
     instrStartPC = Register_ProgramCounter;
 #endif
 
-#ifdef CORRECT_SH_INSTRUCTIONS
-    rdyOnThrowAwayRead = true;
-#endif
+    rdyOnThrowAwayRead = false;
+
     cycleCount = cpuRead(Register_ProgramCounter) << 3;
     Register_ProgramCounter++;
 
@@ -247,7 +264,7 @@ void MOS6510::fetchNextOpcode()
     {
         interruptCycle = MAX;
     }
-    if (interruptCycle != MAX)
+    else if (interruptCycle != MAX)
     {
         interruptCycle = -MAX;
     }
@@ -272,12 +289,13 @@ void MOS6510::calculateInterruptTriggerCycle()
 void MOS6510::IRQLoRequest()
 {
     endian_16lo8(Register_ProgramCounter, cpuRead(Cycle_EffectiveAddress));
+    d1x1 = false;
 }
 
 void MOS6510::IRQHiRequest()
 {
     endian_16hi8(Register_ProgramCounter, cpuRead(Cycle_EffectiveAddress + 1));
-    d1x1 = false;
+    flags.setI(true);
 }
 
 /**
@@ -601,6 +619,7 @@ void MOS6510::WasteCycle() {}
 void MOS6510::brkPushLowPC()
 {
     PushLowPC();
+
     if (rstFlag)
     {
         /* rst = %10x */
@@ -628,12 +647,6 @@ void MOS6510::brkPushLowPC()
 // See and 6510 Assembly Book for more information on these instructions   //
 //-------------------------------------------------------------------------//
 //-------------------------------------------------------------------------//
-
-void MOS6510::brk_instr()
-{
-    flags.setI(true);
-    fetchNextOpcode();
-}
 
 void MOS6510::cld_instr()
 {
@@ -745,7 +758,6 @@ void MOS6510::sh_instr(uint8_t offset)
 {
     const uint8_t tmp = Cycle_Data & (endian_16hi8(Cycle_EffectiveAddress - offset) + 1);
 
-#ifdef CORRECT_SH_INSTRUCTIONS
     /*
      * When a DMA is going on (the CPU is halted by the VIC-II)
      * while the instruction sha/shx/shy executes then the last
@@ -753,11 +765,10 @@ void MOS6510::sh_instr(uint8_t offset)
      *
      * http://sourceforge.net/p/vice-emu/bugs/578/
      */
-    if (rdyOnThrowAwayRead)
+    if (!rdyOnThrowAwayRead)
     {
         Cycle_Data = tmp;
     }
-#endif
 
     /*
      * When the addressing/indexing causes a page boundary crossing
@@ -911,7 +922,7 @@ void MOS6510::and_instr()
  */
 void MOS6510::ane_instr()
 {
-    flags.setNZ(Register_Accumulator = (Register_Accumulator | magic) & Register_X & Cycle_Data);
+    flags.setNZ(Register_Accumulator = (Register_Accumulator | ane_magic) & Register_X & Cycle_Data);
     interruptsAndNextOpcode();
 }
 
@@ -1402,7 +1413,7 @@ void MOS6510::lse_instr()
  */
 void MOS6510::oal_instr()
 {
-    flags.setNZ(Register_X = (Register_Accumulator = (Cycle_Data & (Register_Accumulator | magic))));
+    flags.setNZ(Register_X = (Register_Accumulator = (Cycle_Data & (Register_Accumulator | lxa_magic))));
     interruptsAndNextOpcode();
 }
 
@@ -1450,7 +1461,8 @@ MOS6510::MOS6510(EventScheduler &scheduler) :
     m_fdbg(stdout),
 #endif
     m_nosteal("CPU-nosteal", *this, &MOS6510::eventWithoutSteals),
-    m_steal("CPU-steal", *this, &MOS6510::eventWithSteals)
+    m_steal("CPU-steal", *this, &MOS6510::eventWithSteals),
+    clearInt("Remove IRQ", *this, &MOS6510::removeIRQ)
 {
     buildInstructionTable();
 
@@ -1522,6 +1534,7 @@ void MOS6510::buildInstructionTable()
         case ASLz: case DCPz: case DECz: case INCz: case ISBz: case LSRz:
         case ROLz: case RORz: case SREz: case SLOz: case RLAz: case RRAz:
             access = READ;
+            // fallthrough
         case SAXz: case STAz: case STXz: case STYz:
             instrTable[buildCycle++].func = &MOS6510::FetchLowAddr;
             break;
@@ -1535,6 +1548,7 @@ void MOS6510::buildInstructionTable()
         case ASLzx: case DCPzx: case DECzx: case INCzx: case ISBzx: case LSRzx:
         case RLAzx:    case ROLzx: case RORzx: case RRAzx: case SLOzx: case SREzx:
             access = READ;
+            // fallthrough
         case STAzx: case STYzx:
             instrTable[buildCycle++].func = &MOS6510::FetchLowAddrX;
             // operates on 0 page in read mode. Truly side-effect free.
@@ -1544,6 +1558,7 @@ void MOS6510::buildInstructionTable()
         // Zero Page with Y Offset Addressing Mode Handler
         case LDXzy: case LAXzy:
             access = READ;
+            // fallthrough
         case STXzy: case SAXzy:
             instrTable[buildCycle++].func = &MOS6510::FetchLowAddrY;
             // operates on 0 page in read mode. Truly side-effect free.
@@ -1557,6 +1572,7 @@ void MOS6510::buildInstructionTable()
         case ASLa: case DCPa: case DECa: case INCa: case ISBa: case LSRa:
         case ROLa: case RORa: case SLOa: case SREa: case RLAa: case RRAa:
             access = READ;
+            // fallthrough
         case JMPw: case SAXa: case STAa: case STXa: case STYa:
             instrTable[buildCycle++].func = &MOS6510::FetchLowAddr;
             instrTable[buildCycle++].func = &MOS6510::FetchHighAddr;
@@ -1582,6 +1598,7 @@ void MOS6510::buildInstructionTable()
         case LSRax: case RLAax: case ROLax: case RORax: case RRAax:
         case SLOax: case SREax:
             access = READ;
+            // fallthrough
         case SHYax: case STAax:
             instrTable[buildCycle++].func = &MOS6510::FetchLowAddr;
             instrTable[buildCycle++].func = &MOS6510::FetchHighAddrX;
@@ -1592,6 +1609,7 @@ void MOS6510::buildInstructionTable()
         case ADCay: case ANDay: case CMPay: case EORay: case LASay:
         case LAXay: case LDAay: case LDXay: case ORAay: case SBCay:
             access = READ;
+            // fallthrough
             instrTable[buildCycle++].func = &MOS6510::FetchLowAddr;
             instrTable[buildCycle++].func = &MOS6510::FetchHighAddrY2;
             instrTable[buildCycle++].func = &MOS6510::throwAwayRead;
@@ -1601,6 +1619,7 @@ void MOS6510::buildInstructionTable()
         case DCPay: case ISBay: case RLAay: case RRAay: case SLOay:
         case SREay:
             access = READ;
+            // fallthrough
         case SHAay: case SHSay: case SHXay: case STAay:
             instrTable[buildCycle++].func = &MOS6510::FetchLowAddr;
             instrTable[buildCycle++].func = &MOS6510::FetchHighAddrY;
@@ -1620,6 +1639,7 @@ void MOS6510::buildInstructionTable()
         case ORAix: case SBCix:
         case DCPix: case ISBix: case SLOix: case SREix: case RLAix: case RRAix:
             access = READ;
+            // fallthrough
         case SAXix: case STAix:
             instrTable[buildCycle++].func = &MOS6510::FetchLowPointer;
             instrTable[buildCycle++].func = &MOS6510::FetchLowPointerX;
@@ -1641,6 +1661,7 @@ void MOS6510::buildInstructionTable()
         case DCPiy: case ISBiy: case RLAiy: case RRAiy: case SLOiy:
         case SREiy:
             access = READ;
+            // fallthrough
         case SHAiy: case STAiy:
             instrTable[buildCycle++].func = &MOS6510::FetchLowPointer;
             instrTable[buildCycle++].func = &MOS6510::FetchLowEffAddr;
@@ -1743,7 +1764,7 @@ void MOS6510::buildInstructionTable()
             instrTable[buildCycle++].func = &MOS6510::PushSR;
             instrTable[buildCycle++].func = &MOS6510::IRQLoRequest;
             instrTable[buildCycle++].func = &MOS6510::IRQHiRequest;
-            instrTable[buildCycle++].func = &MOS6510::brk_instr;
+            instrTable[buildCycle++].func = &MOS6510::fetchNextOpcode;
             break;
 
         case BVCr:
@@ -1851,6 +1872,7 @@ void MOS6510::buildInstructionTable()
             instrTable[buildCycle].nosteal = true;
             instrTable[buildCycle++].func = &MOS6510::PushLowPC;
             instrTable[buildCycle++].func = &MOS6510::FetchHighAddr;
+            // fallthrough
         case JMPw: case JMPi:
             instrTable[buildCycle++].func = &MOS6510::jmp_instr;
             break;
@@ -2169,7 +2191,7 @@ const char *MOS6510::credits()
         "MOS6510 Cycle Exact Emulation\n"
         "\t(C) 2000 Simon A. White\n"
         "\t(C) 2008-2010 Antti S. Lankila\n"
-        "\t(C) 2011-2019 Leandro Nini\n";
+        "\t(C) 2011-2020 Leandro Nini\n";
 }
 
 void MOS6510::debug(bool enable, FILE *out)

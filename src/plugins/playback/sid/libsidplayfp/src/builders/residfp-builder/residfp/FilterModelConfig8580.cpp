@@ -1,7 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2011-2019 Leandro Nini <drfiemost@users.sourceforge.net>
+ * Copyright 2011-2020 Leandro Nini <drfiemost@users.sourceforge.net>
  * Copyright 2007-2010 Antti Lankila
  * Copyright 2010 Dag Lem
  *
@@ -122,17 +122,16 @@ FilterModelConfig8580* FilterModelConfig8580::getInstance()
 }
 
 FilterModelConfig8580::FilterModelConfig8580() :
-    voice_voltage_range(0.4), // FIXME measure
+    voice_voltage_range(0.2), // FIXME measure
     voice_DC_voltage(4.80), // FIXME was 4.76
     C(22e-9),
     Vdd(9.09),
     Vth(0.80),
     Ut(26.0e-3),
-    k(1.0),
-    uCox(55e-6), // FIXME measure
-    kVddt(k * (Vdd - Vth)),
+    uCox(100e-6),
+    Vddt(Vdd - Vth),
     vmin(opamp_voltage[0].x),
-    vmax(kVddt < opamp_voltage[0].y ? opamp_voltage[0].y : kVddt),
+    vmax(Vddt < opamp_voltage[0].y ? opamp_voltage[0].y : Vddt),
     denorm(vmax - vmin),
     norm(1.0 / denorm),
     N16(norm * ((1 << 16) - 1))
@@ -155,14 +154,13 @@ FilterModelConfig8580::FilterModelConfig8580() :
     {
         const Spline::Point out = s.evaluate(x);
         double tmp = out.x;
-        if (tmp < 0.) tmp = 0.;
-        assert(tmp < 65535.5);
+        assert(tmp > -0.5 && tmp < 65535.5);
         opamp_rev[x] = static_cast<unsigned short>(tmp + 0.5);
     }
 
     // Create lookup tables for gains / summers.
 
-    OpAmp opampModel(opamp_voltage, OPAMP_SIZE, kVddt);
+    OpAmp opampModel(opamp_voltage, OPAMP_SIZE, Vddt);
 
     // The filter summer operates at n ~ 1, and has 5 fundamentally different
     // input configurations (2 - 6 input "resistors").
@@ -272,7 +270,8 @@ FilterModelConfig8580::~FilterModelConfig8580()
 
 std::unique_ptr<Integrator8580> FilterModelConfig8580::buildIntegrator()
 {
-    return std::unique_ptr<Integrator8580>(new Integrator8580(opamp_rev, Vth, denorm, C, k, uCox, vmin, N16));
+    const double nKp = denorm* (uCox / 2. * 1.0e-6 / C);
+    return std::unique_ptr<Integrator8580>(new Integrator8580(opamp_rev, Vth, nKp, vmin, N16));
 }
 
 } // namespace reSIDfp

@@ -1,7 +1,7 @@
 /*
  * This file is part of libsidplayfp, a SID player engine.
  *
- * Copyright 2011-2018 Leandro Nini <drfiemost@users.sourceforge.net>
+ * Copyright 2011-2020 Leandro Nini <drfiemost@users.sourceforge.net>
  * Copyright 2018 VICE Project
  * Copyright 2007-2010 Antti Lankila
  * Copyright 2004,2010 Dag Lem <resid@nimrod.no>
@@ -92,6 +92,7 @@ void EnvelopeGenerator::reset()
 
     exponential_counter = 0;
     exponential_counter_period = 1;
+    new_exponential_counter_period = 0;
 
     state = RELEASE;
     counter_enabled = true;
@@ -113,10 +114,8 @@ void EnvelopeGenerator::writeCONTROL_REG(unsigned char control)
         {
             // Gate bit on:  Start attack, decay, sustain.
             next_state = ATTACK;
-            state = DECAY_SUSTAIN;
-            // The decay rate register is "accidentally" enabled during first cycle of attack phase
-            rate = adsrtable[decay];
             state_pipeline = 2;
+
             if (resetLfsr || (exponential_pipeline == 2))
             {
                 envelope_pipeline = (exponential_counter_period == 1) || (exponential_pipeline == 2) ? 2 : 4;
@@ -130,10 +129,7 @@ void EnvelopeGenerator::writeCONTROL_REG(unsigned char control)
         {
             // Gate bit off: Start release.
             next_state = RELEASE;
-            if (counter_enabled)
-            {
-                state_pipeline = envelope_pipeline > 0 ? 3 : 2;
-            }
+            state_pipeline = envelope_pipeline > 0 ? 3 : 2;
         }
     }
 }

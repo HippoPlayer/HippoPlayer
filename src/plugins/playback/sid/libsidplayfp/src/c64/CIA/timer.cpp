@@ -79,7 +79,7 @@ void Timer::cycleSkippingEvent()
 
 void Timer::clock()
 {
-    if (timer != 0 && (state & CIAT_COUNT3) != 0)
+    if ((state & CIAT_COUNT3) != 0)
     {
         timer--;
     }
@@ -100,7 +100,7 @@ void Timer::clock()
     state = adj;
     /* ciatimer.c block end */
 
-    if (timer == 0 && (state & CIAT_COUNT3) != 0)
+    if ((timer == 0) && ((state & CIAT_COUNT3) != 0))
     {
         state |= CIAT_LOAD | CIAT_OUT;
 
@@ -142,16 +142,18 @@ void Timer::reset()
 void Timer::latchLo(uint8_t data)
 {
     endian_16lo8(latch, data);
-    if (state & CIAT_LOAD)
-        endian_16lo8(timer, data);
+    if ((state & CIAT_LOAD) != 0)
+        timer = latch;
 }
 
 void Timer::latchHi(uint8_t data)
 {
     endian_16hi8(latch, data);
-    // Reload timer if stopped
-    if ((state & CIAT_LOAD) || !(state & CIAT_CR_START))
+    if ((state & CIAT_LOAD) != 0)
         timer = latch;
+    // Reload timer if stopped
+    else if ((state & CIAT_CR_START) == 0)
+        state |= CIAT_LOAD1;
 }
 
 }
