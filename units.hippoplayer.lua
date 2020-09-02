@@ -205,13 +205,12 @@ Program {
         PROGCOM = {
             {  "-Wl,-rpath,$(QT5_LIB)", "-F$(QT5_LIB)", "-lstdc++", Config = "macosx-clang-*" },
             {  "-Wl,-rpath,$(QT5_LIB)", "-ldl"; Config = "linux-*-*" },
-            --{  "/SUBSYSTEM:WINDOWS" ; Config = "win64-*-*" },
+            { "/SUBSYSTEM:WINDOWS" ; Config = "win64-*-*" },
         },
     },
 
 	Libs = {
-        -- { "Qt5Gui.lib", "Qt5Core.lib", "Qt5Widgets.lib", "qtmain.lib", "shell32.lib"; Config = "win64-*-*" },
-        { "Qt5Gui.lib", "Qt5Core.lib", "Qt5Widgets.lib", "shell32.lib"; Config = "win64-*-*" },
+        { "data/windows/hippo.res", "Qt5Gui.lib", "Qt5Core.lib", "Qt5Widgets.lib", "qtmain.lib", "shell32.lib"; Config = "win64-*-*" },
 		{ "Qt5Widgets", "Qt5Gui", "Qt5Core"; Config = "linux-*-*" },
 	},
 
