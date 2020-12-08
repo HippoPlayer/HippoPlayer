@@ -20,6 +20,13 @@ pub struct HippoPlayback {
     is_paused: bool,
 }
 
+struct DataCallback {
+    players: Mutex<Vec<HippoPlayback>>,
+    mix_buffer: Vec<f32>,
+    read_index: isize,
+    frames_decoded: isize,
+}
+
 pub struct Instance {
     _plugin_user_data: u64,
     _plugin: DecoderPlugin,
@@ -77,7 +84,7 @@ impl HippoPlayback {
 pub struct HippoAudio {
     //players: Box<Mutex<Vec<HippoPlayback>>>,
     pub device_name: String,
-    players: *mut c_void,
+    data_callback: *mut c_void,
     output_device: Option<Device>,
     output_devices: Option<Devices>,
     pub playbacks: Vec<Instance>,
@@ -114,11 +121,16 @@ unsafe extern "C" fn data_callback(
 impl HippoAudio {
     pub fn new() -> HippoAudio {
         // This is a bit hacky so it can be shared with the device and HippoAudio
-        let players = Box::new(Mutex::new(Vec::<HippoPlayback>::new()));
-
+        let data_callback = Box::new(DataCallback {
+			players: Mutex::new(Vec::<HippoPlayback>::new()),
+			mix_buffer: vec![0.0; 4800 * 2],
+			read_index: 0,
+			frames_decoded: 0,
+        });
+        
         HippoAudio {
             device_name: DEFAULT_DEVICE_NAME.to_owned(),
-            players: Box::into_raw(players) as *mut c_void,
+            data_callback: Box::into_raw(data_callback) as *mut c_void,
             output_devices: None,
             output_device: None,
             playbacks: Vec::new(),
@@ -126,8 +138,9 @@ impl HippoAudio {
     }
 
     pub fn stop(&mut self) {
-        let players: &Mutex<Vec<HippoPlayback>> = unsafe { std::mem::transmute(self.players) };
-        let mut t = players.lock().unwrap();
+        //let data_callback: &Mutex<Vec<HippoPlayback>> = unsafe { std::mem::transmute(self.players) };
+        let data_callback: &DataCallback = unsafe { std::mem::transmute(self.data_callback) };
+        let mut t = data_callback.players.lock().unwrap();
         t.clear();
         self.playbacks.clear();
     }
@@ -186,8 +199,9 @@ impl HippoAudio {
         let pause = select_song.pause_state();
         let force = select_song.force();
 
-        let players: &Mutex<Vec<HippoPlayback>> = unsafe { std::mem::transmute(self.players) };
-        let mut t = players.lock().unwrap();
+        //let players: &Mutex<Vec<HippoPlayback>> = unsafe { std::mem::transmute(self.players) };
+        let data_callback: &DataCallback = unsafe { std::mem::transmute(self.data_callback) };
+        let mut t = data_callback.players.lock().unwrap();
 
         if t.len() == 1 {
             t[0].is_paused = pause;
@@ -229,7 +243,7 @@ impl HippoAudio {
 
         self.output_device = Some(Device::new(
             data_callback,
-            self.players,
+            self.data_callback,
             context,
             None)?);
 
@@ -263,7 +277,7 @@ impl HippoAudio {
                     self.close_device();
                     self.output_device = Some(Device::new(
                         data_callback,
-                        self.players,
+                        self.data_callback,
                         context,
                         Some(&device_id))?);
                     break;
@@ -298,8 +312,8 @@ impl HippoAudio {
         let playback = HippoPlayback::start_with_file(plugin, service, filename);
 
         if let Some(pb) = playback {
-            let players: &Mutex<Vec<HippoPlayback>> = unsafe { std::mem::transmute(self.players) };
-            let mut t = players.lock().unwrap();
+            let data_callback: &DataCallback = unsafe { std::mem::transmute(self.data_callback) };
+            let mut t = data_callback.players.lock().unwrap();
 
             if t.len() == 1 {
                 t[0] = pb.0;
