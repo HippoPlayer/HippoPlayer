@@ -257,8 +257,8 @@ static int sc68_plugin_destroy(void* user_data) {
 static int sc68_plugin_read_data(void* user_data, void* dest, uint32_t samples_to_read) {
 	Sc68Plugin* plugin = (Sc68Plugin*)user_data;
 
-	int16_t data[1024 * 2] = { 0 };
-    int n = samples_to_read;
+	int16_t data[4096 * 2] = { 0 };
+    int n = 4096;
 
     // TODO: Handle error
     int code = sc68_process(plugin->instance, data, &n);
@@ -271,7 +271,7 @@ static int sc68_plugin_read_data(void* user_data, void* dest, uint32_t samples_t
 		new_dest[i] = ((float)data[i]) * scale;
 	}
 
-	return n;
+	return n * 2;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

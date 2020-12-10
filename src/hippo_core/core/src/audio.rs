@@ -6,6 +6,9 @@ use crate::plugin_handler::DecoderPlugin;
 use std::ffi::CString;
 use std::os::raw::c_void;
 use std::sync::{Mutex};
+use std::fs::OpenOptions;
+
+use std::io::Write;
 
 use crate::service_ffi::PluginService;
 //use ringbuf::{Consumer, Producer, RingBuffer};
@@ -23,8 +26,8 @@ pub struct HippoPlayback {
 struct DataCallback {
     players: Mutex<Vec<HippoPlayback>>,
     mix_buffer: Vec<f32>,
-    read_index: isize,
-    frames_decoded: isize,
+    read_index: usize,
+    frames_decoded: usize,
 }
 
 pub struct Instance {
@@ -82,7 +85,6 @@ impl HippoPlayback {
     }
 }
 pub struct HippoAudio {
-    //players: Box<Mutex<Vec<HippoPlayback>>>,
     pub device_name: String,
     data_callback: *mut c_void,
     output_device: Option<Device>,
@@ -94,14 +96,16 @@ unsafe extern "C" fn data_callback(
     device_ptr: *mut miniaudio::ma_device,
     output_ptr: *mut c_void,
     _input_ptr: *const c_void,
-    frame_count: u32,
+    samples_to_read: u32,
 ) {
-    let source: &Mutex<Vec<HippoPlayback>> = std::mem::transmute((*device_ptr).pUserData);
+    let samples_to_read = (samples_to_read * 2) as usize;
+    let output = std::slice::from_raw_parts_mut(output_ptr as *mut f32, samples_to_read as usize);
+    let data: &mut DataCallback = std::mem::transmute((*device_ptr).pUserData);
     let playback;
 
     {
         // miniaudio will clear the buffer so we don't have to do it here
-        let t = source.lock().unwrap();
+        let t = data.players.lock().unwrap();
         if t.len() == 0 {
             return;
         }
@@ -113,9 +117,52 @@ unsafe extern "C" fn data_callback(
         return;
     }
 
-    ((playback.plugin.plugin_funcs).read_data)(
-        playback.plugin_user_data as *mut c_void,
-        output_ptr, frame_count);
+    // if we have no frames decoded, call the callback
+    if data.frames_decoded == 0 {
+		data.frames_decoded = ((playback.plugin.plugin_funcs).read_data)(
+			playback.plugin_user_data as *mut c_void,
+			data.mix_buffer.as_mut_ptr() as *mut _, (samples_to_read / 2) as u32) as usize;
+    }
+
+    // if we have decoded enough data we can just copy it  
+	if (data.read_index + samples_to_read) <= data.frames_decoded {
+        output.copy_from_slice(&data.mix_buffer[data.read_index..data.read_index + samples_to_read]);
+        data.read_index += samples_to_read;
+    } else {
+	    // else we need to copy what we have left, decode new frame(s) and put that into the output buffer 
+	    let diff = data.frames_decoded - data.read_index;
+
+        if diff != 0 {
+            let read_end = data.read_index + diff;
+			// copy the remaining stored data
+			output[0..diff].copy_from_slice(&data.mix_buffer[data.read_index..read_end]);
+        }
+
+        let mut write_offset = diff; 
+
+        // Start produce new frames to fill up the whole buffer
+        loop {
+            let data_left = samples_to_read - write_offset;
+
+            let frame_count = ((playback.plugin.plugin_funcs).read_data)(
+				playback.plugin_user_data as *mut c_void,
+				data.mix_buffer.as_mut_ptr() as *mut _, (samples_to_read / 2) as u32) as usize;
+
+            // if we have decoded more data than we need just copy
+            // the bit we need and update the read pointer
+            if frame_count >= data_left {
+                output[write_offset..].copy_from_slice(&data.mix_buffer[0..data_left]);
+                data.read_index = data_left;
+                data.frames_decoded = frame_count; 
+                break;
+            } else {
+                // if here we haven't filled up the buffer just yet, copy what we have and processed to decode another frame
+                let offset_end = write_offset + frame_count;
+                output[write_offset..offset_end].copy_from_slice(&data.mix_buffer[0..frame_count]);
+                write_offset += frame_count;
+            }
+        }
+    }
 }
 
 impl HippoAudio {
@@ -138,7 +185,6 @@ impl HippoAudio {
     }
 
     pub fn stop(&mut self) {
-        //let data_callback: &Mutex<Vec<HippoPlayback>> = unsafe { std::mem::transmute(self.players) };
         let data_callback: &DataCallback = unsafe { std::mem::transmute(self.data_callback) };
         let mut t = data_callback.players.lock().unwrap();
         t.clear();
@@ -199,7 +245,6 @@ impl HippoAudio {
         let pause = select_song.pause_state();
         let force = select_song.force();
 
-        //let players: &Mutex<Vec<HippoPlayback>> = unsafe { std::mem::transmute(self.players) };
         let data_callback: &DataCallback = unsafe { std::mem::transmute(self.data_callback) };
         let mut t = data_callback.players.lock().unwrap();
 

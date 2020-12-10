@@ -163,7 +163,7 @@ static int nsf_read_data(void* user_data, void* dest, uint32_t samples_to_read) 
 	NsfPlugin* plugin = (NsfPlugin*)user_data;
 	(void)plugin;
 
-	assert(samples_to_read < 1024);
+    samples_to_read = 1024;
 
 	int16_t data[1024 * 2] = { 0 };
 

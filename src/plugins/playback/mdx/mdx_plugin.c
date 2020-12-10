@@ -116,9 +116,9 @@ static int mdx_plugin_read_data(void* user_data, void* dest, uint32_t samples_to
 	MDXPlugin* plugin = (MDXPlugin*)user_data;
 	(void)plugin;
 
-	short data[1024 * 2] = { 0 };
+	short data[4096 * 2] = { 0 };
 
-	assert(samples_to_read < 1024);
+	samples_to_read = 4096;
 
 	mdx_calc_sample(&plugin->mdx_tune, data, (samples_to_read * 2) / 2);
 

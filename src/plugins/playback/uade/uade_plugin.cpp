@@ -168,7 +168,7 @@ static int uade_read_data(void* user_data, void* dest, uint32_t samples_to_read)
 
     int16_t data[FRAME_SIZE * 2];
 
-    assert(samples_to_read < FRAME_SIZE);
+    samples_to_read = FRAME_SIZE / 2;
 
     // * 4 as count is number of bytes (and each frame is two, 16-bit values)
     int rc = uade_read(data, samples_to_read * 4, plugin->state);
