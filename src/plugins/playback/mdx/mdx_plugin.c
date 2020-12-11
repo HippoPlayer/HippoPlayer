@@ -118,7 +118,7 @@ static int mdx_plugin_read_data(void* user_data, void* dest, uint32_t samples_to
 
 	short data[4096 * 2] = { 0 };
 
-	samples_to_read = 4096;
+	samples_to_read = hippo_min(4096, samples_to_read);
 
 	mdx_calc_sample(&plugin->mdx_tune, data, (samples_to_read * 2) / 2);
 

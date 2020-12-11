@@ -136,7 +136,7 @@ static int adplug_read_data(void* user_data, void* dest, uint32_t samples_to_rea
     const int freq = 48000;
     char sndbuf[buffer_size * sampsize * 2] = {0};
 
-    samples_to_read = buffer_size;
+    samples_to_read = hippo_min(buffer_size, samples_to_read);
     float* new_dest = (float*)dest;
 
     // fill sound buffer

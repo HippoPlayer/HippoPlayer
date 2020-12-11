@@ -302,12 +302,10 @@ static int tfmx_close(void* user_data) {
 static int tfmx_read_data(void* user_data, void* dest, uint32_t max_samples) {
     int16_t temp_data[BUFSIZE] = {0};
 	struct TfmxReplayerData* data = (TfmxReplayerData*)user_data;
-	int samples_to_read = (int)max_samples;
+
 	float* newDest = (float*)dest;
 
     int block_size = (int)tfmx_get_block_size(&data->state) / 2;
-
-    assert(block_size < BUFSIZE);
 
     if (tfmx_try_to_make_block(&data->state) >= 0) {
         tfmx_get_block(&data->state, temp_data);

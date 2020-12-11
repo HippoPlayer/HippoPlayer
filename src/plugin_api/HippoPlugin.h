@@ -392,6 +392,8 @@ typedef struct HippoPlaybackPlugin {
 //#define HIPPO_NAME(name) (u64)name
 //#define HIPPO_VERSION(text) (u64)text
 
+#define hippo_min(x, y) (((x) < (y)) ? (x) : (y))
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef _WIN32
