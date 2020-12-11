@@ -136,12 +136,11 @@ static int adplug_read_data(void* user_data, void* dest, uint32_t samples_to_rea
     const int freq = 48000;
     char sndbuf[buffer_size * sampsize * 2] = {0};
 
-    assert(samples_to_read < buffer_size);
-
+    samples_to_read = buffer_size;
     float* new_dest = (float*)dest;
 
     // fill sound buffer
-    towrite = samples_to_read;
+    towrite = buffer_size;
     sndbufpos = sndbuf;
 
     while (towrite > 0) {
@@ -165,7 +164,7 @@ static int adplug_read_data(void* user_data, void* dest, uint32_t samples_to_rea
         new_dest[i] = ((float)t[i]) * scale;
     }
 
-    return samples_to_read;
+    return samples_to_read * 2;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -251,6 +250,7 @@ static void adplug_static_init(struct HippoLogAPI* log, const HippoServiceAPI* s
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 extern "C" void AdPlug_LogWrite(const char* fmt, ...) {
+    /*
     char buffer[2048];
 
     va_list argptr;
@@ -265,6 +265,7 @@ extern "C" void AdPlug_LogWrite(const char* fmt, ...) {
     }
 
     hp_trace("%s", buffer);
+    */
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
