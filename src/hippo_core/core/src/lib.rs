@@ -50,7 +50,7 @@ impl HippoCore {
     /// is the index into the playlist. This is needed in case we want to add more songs to the playlist
     /// (such as subsongs) and the playlist doesn't have to search for the file
     pub fn play_file(&mut self, url: &str, playlist_index: usize) -> Result<String> {
-        let mut buffer = [0; 4096];
+        let mut buffer = [0; 32768];
         // TODO: Use Cow
         let url_no_sub;
 

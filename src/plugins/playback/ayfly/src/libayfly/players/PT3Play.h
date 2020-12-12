@@ -1096,8 +1096,10 @@ bool PT3_Detect(unsigned char *module, unsigned long length)
             return false;
         j2++;
     }
+    /*
     if(((j - (int)(PT3_PatternsPointer)) / 6) != ((j1 / 3) + 1))
         return false;
+    */
 
     j = 15;
     while((j > 0) && (PT3_OrnamentsPointers(j) == 0))
