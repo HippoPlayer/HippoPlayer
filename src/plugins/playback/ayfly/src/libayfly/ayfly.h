@@ -21,15 +21,19 @@
 #ifndef AYFLY_H_
 #    define AYFLY_H_
 
+/*
 #ifdef _UNICODE
 #   ifndef UNICODE
 #       define UNICODE
 #   endif
 #   define AY_CHAR wchar_t
 #else
+*/
 #   define ANSI
 #   define AY_CHAR char
-#endif
+//#endif
+
+#undef UNICODE
 
 #    ifdef WIN32
 #		ifndef _WINDOWS
@@ -79,7 +83,10 @@
 /* this turns off full timings support in z80ex */
 #define Z80EX_OPSTEP_FAST_AND_ROUGH 1
 
+#define AYFLY_API
+
 #    include "z80ex.h"
+/*
 #    ifdef WINDOWS
 #        pragma warning(disable:4309)
 #        ifdef AYFLY_EXPORTS
@@ -94,6 +101,7 @@
 #    else
 #        define AYFLY_API
 #    endif
+*/
 #    ifndef __SYMBIAN32__
 #        define AUDIO_FREQ 44100
 #        ifdef UNICODE

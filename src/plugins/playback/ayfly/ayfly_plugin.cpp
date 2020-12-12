@@ -112,15 +112,13 @@ static int ayfly_read_data(void* user_data, void* dest, uint32_t samples_to_read
 
     int written = (int)ay_rendersongbuffer(replayer_data->song, ptr, samples_to_read);
 
-    printf("written %d size %d\n", written, samples_to_read);
-
 	const float scale = 1.0f / 32767.0f;
 
 	for (int i = 0; i < written; ++i) {
 		newDest[i] = ((float)temp_data[i]) * scale;
 	}
 
-	return written;
+	return written / 2;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -145,14 +143,7 @@ static int ayfly_metadata(const char* filename, const HippoServiceAPI* service_a
         return -1;
     }
 
-    printf("ptr %p size %d\n", data, (int)size);
-    printf("ptr %p\n", io_api);
-
     AYSongInfo* song = (AYSongInfo*)ay_initsongindirect((uint8_t*)data, FREQ, size);
-    //AYSongInfo* song = (AYSongInfo*)ay_initsongindirect((uint8_t*)data, FREQ, size);
-
-    printf("ptr %p\n", data);
-    printf("ptr %p\n", io_api);
 
     HippoIo_free_file_to_memory(io_api, data);
 
@@ -166,9 +157,12 @@ static int ayfly_metadata(const char* filename, const HippoServiceAPI* service_a
     HippoMetadataId index = HippoMetadata_create_url(metadata_api, filename);
 
     HippoMetadata_set_tag(metadata_api, index, HippoMetadata_TitleTag, song->Name.c_str());
-    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_SongTypeTag, "Unknown");
-    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_AuthoringToolTag, song->PrgName.c_str());
-    HippoMetadata_set_tag_f64(metadata_api, index, HippoMetadata_LengthTag, song->Length);
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_SongTypeTag, "ayfly (temp)");
+    if (song->PrgName.length() != 0) {
+        HippoMetadata_set_tag(metadata_api, index, HippoMetadata_AuthoringToolTag, song->PrgName.c_str());
+    }
+
+    HippoMetadata_set_tag_f64(metadata_api, index, HippoMetadata_LengthTag, song->Length / 50);
 
     ay_closesong((void**)&song);
 
