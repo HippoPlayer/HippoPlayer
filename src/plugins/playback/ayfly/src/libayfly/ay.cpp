@@ -354,8 +354,6 @@ unsigned long ay::ayProcess(unsigned char *stream, unsigned long len)
     unsigned long to_process = (len >> 1);
     float s0, s1, s2;
 
-    printf("processing\n");
-
     unsigned long i = 0;
     short *stream16 = (short *)stream;
     while(i < to_process)
