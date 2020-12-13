@@ -141,6 +141,7 @@ static int vgm_close(void* user_data) {
 
 static int vgm_read_data(void* user_data, void* dest, uint32_t samples_to_read) {
 	WAVE_16BS temp_data[FRAME_SIZE * 2];
+	samples_to_read = hippo_min(FRAME_SIZE, samples_to_read);
 
 	struct VgmReplayerData* replayer_data = (struct VgmReplayerData*)user_data;
 
@@ -150,16 +151,16 @@ static int vgm_read_data(void* user_data, void* dest, uint32_t samples_to_read) 
 
 	float* newDest = (float*)dest;
 
-	FillBuffer(temp_data, FRAME_SIZE);
+	FillBuffer(temp_data, samples_to_read);
 
 	const float scale = 1.0f / 32767.0f;
 
-	for (int i = 0; i < FRAME_SIZE; ++i) {
+	for (int i = 0; i < samples_to_read; ++i) {
 		newDest[(i * 2) + 0] = ((float)temp_data[i].Left) * scale;
 		newDest[(i * 2) + 1] = ((float)temp_data[i].Right) * scale;
 	}
 
-	return FRAME_SIZE * 2;
+	return samples_to_read * 2;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

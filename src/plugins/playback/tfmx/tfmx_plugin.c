@@ -307,8 +307,6 @@ static int tfmx_read_data(void* user_data, void* dest, uint32_t max_samples) {
 
     int block_size = (int)tfmx_get_block_size(&data->state) / 2;
 
-    assert(block_size < BUFSIZE);
-
     if (tfmx_try_to_make_block(&data->state) >= 0) {
         tfmx_get_block(&data->state, temp_data);
     }

@@ -350,6 +350,40 @@ SharedLibrary {
 
 -----------------------------------------------------------------------------------------------------------------------
 
+SharedLibrary {
+	Name = "ayfly",
+
+	Includes = {
+	    "src/plugin_api",
+        "src/plugins/playback/ayfly/src/libayfly",
+        "src/plugins/playback/ayfly/src/libayfly/z80ex/include",
+	},
+
+	Defines = {
+        "DISABLE_AUDIO",
+    },
+
+	Sources = {
+        "src/plugins/playback/ayfly/ayfly_plugin.cpp",
+        "src/plugins/playback/ayfly/src/ayfly_detect.cpp",
+        "src/plugins/playback/ayfly/src/libayfly/ay.cpp",
+        "src/plugins/playback/ayfly/src/libayfly/ayfly.h",
+        "src/plugins/playback/ayfly/src/libayfly/AbstractAudio.cpp",
+        "src/plugins/playback/ayfly/src/libayfly/AbstractAudio.h",
+        "src/plugins/playback/ayfly/src/libayfly/ayflyString.cpp",
+        "src/plugins/playback/ayfly/src/libayfly/ayflyString.h",
+        "src/plugins/playback/ayfly/src/libayfly/ay.h",
+        "src/plugins/playback/ayfly/src/libayfly/common.cpp",
+        "src/plugins/playback/ayfly/src/libayfly/formats.cpp",
+        "src/plugins/playback/ayfly/src/libayfly/Filter3.cpp",
+        "src/plugins/playback/ayfly/src/libayfly/lha.cpp",
+        "src/plugins/playback/ayfly/src/libayfly/speccy.cpp",
+        "src/plugins/playback/ayfly/src/libayfly/z80ex/z80ex.c",
+	},
+}
+
+-----------------------------------------------------------------------------------------------------------------------
+
 StaticLibrary {
 	Name = "sc68_file",
 
@@ -690,18 +724,16 @@ SharedLibrary {
 
 -- Decoders
 
-Default "tfmx"
-Default "hively"
-
-Default "openmpt"
-Default(openmpt_cfg)
-
-Default "vgm"
-Default "nsf"
-Default "sc68"
-Default "mdx"
-Default "sid"
 Default "adplug"
+Default "ayfly"
+Default "hively"
+Default "mdx"
+Default "nsf"
+Default "openmpt"
+Default "sc68"
+Default "sid"
+Default "tfmx"
+Default "vgm"
 
 -- Views
 

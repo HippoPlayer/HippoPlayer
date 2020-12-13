@@ -147,9 +147,8 @@ static int sid_read_data(void* user_data, void* dest, uint32_t samples_to_read) 
 	SidReplayerData* data = (SidReplayerData*)user_data;
 	float* output = (float*)dest;
 
-	assert(samples_to_read < FRAME_SIZE);
-
 	int16_t temp_data[FRAME_SIZE * 2] = { 0 };
+    samples_to_read = hippo_min(samples_to_read, FRAME_SIZE);
 
 	data->engine.play(temp_data, samples_to_read);
 
@@ -161,7 +160,7 @@ static int sid_read_data(void* user_data, void* dest, uint32_t samples_to_read) 
 		*output++ = v;
 	}
 
-	return samples_to_read;
+	return samples_to_read * 2;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

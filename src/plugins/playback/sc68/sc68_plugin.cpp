@@ -9,6 +9,7 @@ extern "C" {
 
 #define SAMPLE_RATE 48000
 #define CHANNELS 2
+#define FRAME_SIZE 4096
 
 HippoLogAPI* g_hp_log = NULL;
 static const struct HippoIoAPI* g_io_api = 0;
@@ -99,7 +100,7 @@ static int sc68_plugin_metadata(const char* filename, const HippoServiceAPI* ser
     }
 
     sc68_create_t create = { 0 };
-    create.log2mem = 19;
+    create.log2mem = 23;
     create.name = "test";
     create.sampling_rate = SAMPLE_RATE;
     sc68_t* inst = sc68_create(&create);
@@ -164,8 +165,9 @@ static int sc68_plugin_metadata(const char* filename, const HippoServiceAPI* ser
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void* sc68_plugin_create(const struct HippoServiceAPI* service_api) {
+
     sc68_create_t create = { 0 };
-    create.log2mem = 19;
+    create.log2mem = 23;
     create.name = "test";
     create.sampling_rate = SAMPLE_RATE;
     sc68_t* instance = sc68_create(&create);
@@ -240,8 +242,8 @@ static int sc68_plugin_destroy(void* user_data) {
 static int sc68_plugin_read_data(void* user_data, void* dest, uint32_t samples_to_read) {
 	Sc68Plugin* plugin = (Sc68Plugin*)user_data;
 
-	int16_t data[4096 * 2] = { 0 };
-    int n = 4096;
+	int16_t data[FRAME_SIZE * 2] = { 0 };
+    int n = hippo_min(FRAME_SIZE, samples_to_read);
 
     // TODO: Handle error
     int code = sc68_process(plugin->instance, data, &n);
@@ -250,7 +252,7 @@ static int sc68_plugin_read_data(void* user_data, void* dest, uint32_t samples_t
 	float* new_dest = (float*)dest;
 	const float scale = 1.0f / 32767.0f;
 
-	for (uint32_t i = 0; i < samples_to_read * 2; ++i) {
+	for (int i = 0; i < n * 2; ++i) {
 		new_dest[i] = ((float)data[i]) * scale;
 	}
 

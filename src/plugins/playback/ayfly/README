@@ -1,0 +1,20 @@
+How-to compile Ayfly:
+
+wxWidgets is required to build the program. Tested with version 3.0.x.
+For Linux SDL library is also required.
+
+Installing build dependencies on Debian 10 ("buster"):
+    sudo apt install build-essential automake libwxgtk3.0-dev libsdl1.2-dev
+
+Ayfly uses standard automake tools. You can build it as follows:
+
+For Linux:
+    autoreconf -i && ./configure && make && sudo make install
+
+For Windows (mingw32):
+    autoreconf -i && ./configure mingw32 && make && make install
+
+s60 directory is for symbian 9 build.
+
+* When (cross-)compiling ayfly with mingw you need mingw-g++, mingw-gcc, wxWidgets library and friends in your PATH.
+* DirectX libraties are required. You should copy headers in /path/to/directx/include and libs in /path/to/directx/lib. Default path is /opt/directx
