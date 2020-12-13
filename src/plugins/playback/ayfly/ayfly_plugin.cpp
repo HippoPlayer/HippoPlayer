@@ -179,7 +179,10 @@ static void ayfly_event(void* user_data, const unsigned char* data, int len) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void ayfly_set_log(struct HippoLogAPI* log) { g_hp_log = log; }
+static void ayfly_static_init(struct HippoLogAPI* log, const struct HippoServiceAPI* service_api) {
+    (void)service_api;
+    g_hp_log = log;
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -198,7 +201,7 @@ static HippoPlaybackPlugin g_ayfly_plugin = {
 	ayfly_read_data,
 	ayfly_seek,
 	ayfly_metadata,
-    ayfly_set_log,
+    ayfly_static_init,
 	NULL,
 	NULL,
 };
