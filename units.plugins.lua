@@ -384,6 +384,21 @@ SharedLibrary {
 
 -----------------------------------------------------------------------------------------------------------------------
 
+SharedLibrary {
+	Name = "stsound",
+
+	Includes = {
+	    "src/plugin_api",
+        "src/plugins/playback/stsound/src/StSoundLibrary",
+	},
+
+	Sources = {
+		get_c_cpp_src("src/plugins/playback/stsound"),
+	},
+}
+
+-----------------------------------------------------------------------------------------------------------------------
+
 StaticLibrary {
 	Name = "sc68_file",
 
@@ -732,6 +747,7 @@ Default "nsf"
 Default "openmpt"
 Default "sc68"
 Default "sid"
+Default "stsound"
 Default "tfmx"
 Default "vgm"
 

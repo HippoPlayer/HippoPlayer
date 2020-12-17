@@ -134,7 +134,7 @@ static const _Players Players[] =
 {
 { TXT(".ay"), AY_Init, AY_Play, AY_Cleanup, AY_GetInfo, AY_Detect, true },
 { TXT(".vtx"), VTX_Init, VTX_Play, VTX_Cleanup, VTX_GetInfo, VTX_Detect, false },
-{ TXT(".ym"), YM_Init, YM6i_Play, YM_Cleanup, YM_GetInfo, YM_Detect, false },
+//{ TXT(".ym"), YM_Init, YM6i_Play, YM_Cleanup, YM_GetInfo, YM_Detect, false },
 { TXT(".psg"), PSG_Init, PSG_Play, PSG_Cleanup, PSG_GetInfo, PSG_Detect, false },
 { TXT(".asc"), ASC_Init, ASC_Play, ASC_Cleanup, ASC_GetInfo, ASC_Detect, false },
 { TXT(".pt2"), PT2_Init, PT2_Play, PT2_Cleanup, PT2_GetInfo, PT2_Detect, false },
