@@ -32,7 +32,6 @@ enum {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/*(
 static const HSIntegerRangeValue s_interpolation_filter_ranges[] = {
     {"Default recommended", 0},  {"No Interpolation (zero order hold)", 1}, {"Cubic Interpolation", 2},
     {"Linear Interpolation", 4}, {"Windowed sinc with 8 taps", 8},
@@ -74,7 +73,6 @@ static HSSetting s_global_settings[] = {
     HSStringValue_DescRange(ID_AMIGA_RESAMPLER_FILTER, "Filter type for Amiga Resampler",
                                "Filter type for Amiga filter if enabled", "auto", s_amiga_filter_values),
 };
-*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // eww eww!
@@ -441,7 +439,6 @@ void openmpt_event(void* user_data, const unsigned char* data, int len) {
 
 static void openmpt_static_init(struct HippoLogAPI* log, const HippoServiceAPI* service_api) {
     g_hp_log = log;
-/*
     auto api = HippoServiceAPI_get_settings_api(service_api, HIPPO_SETTINGS_API_VERSION);
 
     if (HippoSettings_register_filetype_settings(api, PLUGIN_NAME, s_settings_template) != HippoSettingsError_Ok) {
@@ -451,13 +448,6 @@ static void openmpt_static_init(struct HippoLogAPI* log, const HippoServiceAPI* 
     if (HippoSettings_register_global_settings(api, PLUGIN_NAME, s_global_settings) != HippoSettingsError_Ok) {
         hp_error("Unable to register settings, error: %s", HippoSettings_get_last_error(api));
     }
-*/
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static int openmpt_register_settings(const struct HippoSettingsAPI* api) {
-    return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -478,7 +468,6 @@ static HippoPlaybackPlugin g_openmptPlugin = {
     openmpt_seek,
     openmpt_metadata,
     openmpt_static_init,
-    openmpt_register_settings,
     NULL,
 };
 
