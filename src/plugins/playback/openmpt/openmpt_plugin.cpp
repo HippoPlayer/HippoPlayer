@@ -282,7 +282,7 @@ static int openmpt_open(void* user_data, const char* filename, int subsong) {
 
     hp_info("Started to play %s (subsong %d)", filename, subsong);
 
-    replayer_data->length = replayer_data->mod->get_duration_seconds();
+    replayer_data->length = (float)replayer_data->mod->get_duration_seconds();
     replayer_data->mod->select_subsong(subsong);
 
     return 0;
@@ -310,14 +310,14 @@ static int openmpt_read_data(void* user_data, void* dest, uint32_t samples_to_re
 
     // count is number of frames per channel and div by 2 as we have 2 channels
     // const int count = 480;
-    int gen_count = replayer_data->mod->read_interleaved_stereo(48000, samples_to_read, (float*)dest) * 2;
+    int gen_count = (int)replayer_data->mod->read_interleaved_stereo(48000, samples_to_read, (float*)dest) * 2;
 
     // Send current positions back to frontend if we have some more data
     if (gen_count > 0) {
         flatbuffers::FlatBufferBuilder builder(1024);
         builder.Finish(CreateHippoMessageDirect(
             builder, MessageType_current_position,
-            CreateHippoCurrentPosition(builder, replayer_data->mod->get_position_seconds(),
+            CreateHippoCurrentPosition(builder, replayer_data->length,
                                        replayer_data->mod->get_current_pattern(), replayer_data->mod->get_current_row(),
                                        replayer_data->mod->get_current_speed(), replayer_data->length)
                 .Union()));
@@ -415,7 +415,7 @@ static int openmpt_metadata(const char* filename, const HippoServiceAPI* service
             }
 
             mod->select_subsong(i);
-            HippoMetadata_add_subsong(metadata_api, index, i, subsong_name, mod->get_duration_seconds());
+            HippoMetadata_add_subsong(metadata_api, index, i, subsong_name, (float)mod->get_duration_seconds());
 
             ++i;
         }

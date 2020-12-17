@@ -176,7 +176,7 @@ typedef struct HippoSettingsAPI {
 #define HippoSettings_register_filetype_settings(api, name, settings) \
     api->register_filetype_settings(api->priv_data, name, (HSSetting*)&settings, hp_sizeof_array(settings))
 
-#define HippoSettings_register_global_settings(api, settings) \
+#define HippoSettings_register_global_settings(api, name, settings) \
     api->register_global_settings(api->priv_data, name, (HSSetting*)&settings, hp_sizeof_array(settings))
 
 #define HippoSettings_get_last_error(api) api->get_last_error(api->priv_data)
