@@ -84,38 +84,7 @@ static inline void i18n_init(void) {}
 
 #endif
 
-#include <sys/param.h>
-
-#ifndef BYTE_ORDER
-
-#  define BIG_ENDIAN 1
-#  define LITTLE_ENDIAN 2
-
-#  ifdef _BIG_ENDIAN
-#    define BYTE_ORDER BIG_ENDIAN
-#  endif
-
-#  ifdef _LITTLE_ENDIAN
-#    define BYTE_ORDER LITTLE_ENDIAN
-#  endif
-
-#endif /* BYTE_ORDER */
-
-#if !BYTE_ORDER || !BIG_ENDIAN || !LITTLE_ENDIAN
-#  error endian defines missing
-#endif
-
-#if BYTE_ORDER == BIG_ENDIAN
-
-static inline long is_le_machine() {
-	return false;
-}
-
-static inline long is_be_machine() {
-	return true;
-}
-
-#else
+//#include <sys/param.h>
 
 static inline long is_le_machine() {
 	return true;
@@ -124,7 +93,5 @@ static inline long is_le_machine() {
 static inline long is_be_machine() {
 	return false;
 }
-
-#endif
 
 #endif
