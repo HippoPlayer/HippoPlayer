@@ -34,6 +34,7 @@
 *
 -----------------------------------------------------------------------------*/
 
+#define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -117,31 +118,6 @@ yms32	ReadBigEndian32(ymu8 *pBig)
 	return v;
 }
 
-typedef struct {
-    unsigned char HSize;
-    unsigned char ChkSum;
-    char Method[5];
-    unsigned char CompSize0, CompSize1, CompSize2, CompSize3; //int
-    unsigned char UCompSize0, UCompSize1, UCompSize2, UCompSize3; //int
-    unsigned char Dos_DT0, Dos_DT1, Dos_DT2, Dos_DT3; //int
-    unsigned char Attr0, Attr1; //unsigned short
-    unsigned char FileNameLen;
-} LzhHeaderTemp;
-/*
-typedef struct
-{
-	ymu8	size;
-	ymu8	sum;
-	char	id[5];
-	ymu32	packed;
-	ymu32	original;
-	ymu8	reserved[5];
-	ymu8	level;
-	ymu8	name_lenght;
-} lzhHeader_t;
-*/
-
-
 unsigned char	*CYmMusic::depackFile(ymu32 checkOriginalSize)
  {
  lzhHeader_t *pHeader;
@@ -168,11 +144,10 @@ unsigned char	*CYmMusic::depackFile(ymu32 checkOriginalSize)
 			return NULL;
 		}
 
-		//pSrc = pBigMalloc+sizeof(lzhHeader_t)+pHeader->name_lenght;			// NOTE: Endianness works because name_lenght is a byte
-		pSrc = pBigMalloc + pHeader->size + 2;
-
+		pSrc = pBigMalloc + pHeader->size;
 		ymu32		packedSize = ReadLittleEndian32((ymu8*)&pHeader->packed);
 
+		pSrc += 2;		// skip CRC16
 		checkOriginalSize -= ymu32(pSrc - pBigMalloc);
 
 		if (packedSize > checkOriginalSize)
