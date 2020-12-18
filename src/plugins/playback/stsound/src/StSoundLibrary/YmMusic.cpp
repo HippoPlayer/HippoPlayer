@@ -59,7 +59,7 @@ CYmMusic::CYmMusic(ymint _replayRate)
 
 	pBigSampleBuffer = NULL;
 	pMixBlock = NULL;
-	
+
 	replayRate = _replayRate;
 	innerSamplePos = 0;
 	currentPos = 0;
@@ -221,12 +221,12 @@ ymbool	CYmMusic::isSeekable(void)
 		return getAttrib()&A_TIMECONTROL;
 }
 
-void	CYmMusic::setLastError(char *pError)
+void	CYmMusic::setLastError(const char *pError)
 {
 		pLastError = pError;
 }
 
-char	*CYmMusic::getLastError(void)
+const char	*CYmMusic::getLastError(void)
 {
 		return pLastError;
 }

@@ -57,7 +57,7 @@ static	void	signeSample(ymu8 *ptr,yms32 size)
 		}
 }
 
-char	*mstrdup(char *in)
+char	*mstrdup(const char *in)
 {
 	const int size = (int)strlen(in)+1;
 	char *out = (char*)malloc(size);
@@ -149,8 +149,6 @@ unsigned char	*CYmMusic::depackFile(ymu32 checkOriginalSize)
  ymu8	*pSrc;
 
 		pHeader = (lzhHeader_t*)pBigMalloc;
-		int t0 = sizeof(LzhHeaderTemp);
-		int t1 = sizeof(lzhHeader_t);
 
 		if ((pHeader->size==0) ||					// NOTE: Endianness works because value is 0
 			(strncmp(pHeader->id,"-lh5-",5)))
@@ -159,16 +157,6 @@ unsigned char	*CYmMusic::depackFile(ymu32 checkOriginalSize)
 		}
 
 		fileSize = (ymu32)-1;
-
-		/*
-		if (pHeader->level != 0)					// NOTE: Endianness works because value is 0
-		{ // Compression LH5, header !=0 : Error.
-			free(pBigMalloc);
-			pBigMalloc = NULL;
-			setLastError("LHARC Header must be 0 !");
-			return NULL;
-		}
-		*/
 
 		fileSize = ReadLittleEndian32((ymu8*)&pHeader->original);
 		pNew = (ymu8*)malloc(fileSize);

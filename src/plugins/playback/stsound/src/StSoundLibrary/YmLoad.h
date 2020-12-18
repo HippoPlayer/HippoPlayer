@@ -41,14 +41,13 @@
 extern "C" {
 #endif
 
-#ifdef __GNUC__
-#define PACKED( class_to_pack ) class_to_pack __attribute__((__packed__))
-#else
-#define PACKED( class_to_pack ) __pragma( pack(push, 1) ) class_to_pack __pragma( pack(pop) )
+#ifdef _MSC_VER
+#define PACKED_STRUCT( __Declaration__ ) __pragma( pack(push, 1) ) struct __Declaration__ __pragma( pack(pop) )
+#elif defined(__GNUC__)
+#  define PACKED_STRUCT( __Declaration__ ) struct __Declaration__ __attribute__((__packed__))
 #endif
 
-PACKED(
-typedef struct
+typedef PACKED_STRUCT()
 {
 	ymu8	size;
 	ymu8	sum;
@@ -59,7 +58,6 @@ typedef struct
 	ymu8	level;
 	ymu8	name_lenght;
 } lzhHeader_t;
-);
 
 #ifdef __cplusplus
 }
