@@ -41,10 +41,10 @@
 extern "C" {
 #endif
 
-#ifdef _WIN32
+#ifdef _MSC_VER
 #define PACKED_STRUCT( __Declaration__ ) __pragma( pack(push, 1) ) struct __Declaration__ __pragma( pack(pop) )
 #elif defined(__GNUC__)
-#  define PACKED_STRUCT( __Declaration__ ) struct __Declaration__ __attribute__((__packed__))
+#define PACKED_STRUCT( __Declaration__ ) struct __attribute__((__packed__)) __Declaration__
 #endif
 
 typedef PACKED_STRUCT({
