@@ -1,0 +1,59 @@
+
+gbsplay INSTALL instructions
+
+
+### BASIC INSTRUCTIONS
+
+Run "make".  This should autoconfigure and build all files.  If you
+have GTK and XMMS development files installed, the XMMS library will
+also be built.
+
+Run "make install" (as root) to install everything to your system.
+Run "make uninstall" (as root) to remove it afterwards.
+
+Be aware that you need a GNU make!
+So on FreeBSD, you need to run "gmake" instead of "make".
+
+If you want to build the XMMS plugin, you must have the XMMS
+development files installed (header files etc.).  If you have
+installed XMMS but the configure script does not detect it, you
+probably need to install an extra package named something like
+"xmms-dev".
+
+Note to Solaris users:
+Solaris /bin/sh is not POSIX compatible (${foo#bar} and ${foo%bar} are
+not supported), please change the first line of configure to from /bin/sh
+to /usr/bin/ksh.
+
+
+### CUSTOMIZING THE INSTALLATION TARGET
+
+To change the installation target, run the configure script manually
+and pass some parameters (see "./configure --help" for a list):
+
+$ ./configure --prefix=/tmp/GBSPLAY
+$ make
+$ make install
+
+Remember to use the same prefix on uninstall!
+
+
+
+### CUSTOMIZING THE XMMS PLUGIN PATH
+
+Installing the XMMS plugin to another directory is a bit tricky :-)
+Upon configure, the XMMS plugin target path is detected by running
+`xmms-config --input-plugin-dir`.  You can not change this path!
+But you can prepend it with another path.  Use XMMSPREFIX= for this.
+
+Example:
+
+$ ./configure --prefix=/tmp/GBSPLAY/usr
+$ make
+$ make install XMMSPREFIX=/tmp/GBSPLAY
+
+This will install to /tmp/GBSPLAY/usr/(bin|man|share/doc) and put the
+XMMS plugin to /tmp/GBSPLAY/$(xmms-config --input-plugin-dir).
+
+This is probably what you want to do if you plan to
+"install everything under /tmp/GBSPLAY".

@@ -1,0 +1,16 @@
+
+gbsplay - A Gameboy sound player
+
+(C) 2003-2006 by Tobias Diedrich <ranma+gbsplay@tdiedrich.de>
+                 Christian Garbs <mitch@cgarbs.de>
+                 Maximilian Rehkopf <otakon@gmx.net>
+
+Source Code licensed under GNU GPL v1 or, at your option, any later version.
+Individual copyright notices can be found in the file headers.
+
+Additionally, the following files are included under different licenses:
+
+File:       examples/nightmode.gbs
+Copyright:  Laxity of Dual Crew Shining (Nightmode Demo)
+License:    Public Domain
+Homepage:   http://www.dc-s.com/

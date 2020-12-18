@@ -399,6 +399,21 @@ SharedLibrary {
 
 -----------------------------------------------------------------------------------------------------------------------
 
+SharedLibrary {
+	Name = "gbsplay",
+
+	Includes = {
+	    "src/plugin_api",
+        "src/plugins/playback/gbsplay/src",
+	},
+
+	Sources = {
+		get_c_cpp_src("src/plugins/playback/gbsplay"),
+	},
+}
+
+-----------------------------------------------------------------------------------------------------------------------
+
 StaticLibrary {
 	Name = "sc68_file",
 
@@ -741,6 +756,7 @@ SharedLibrary {
 
 Default "adplug"
 Default "ayfly"
+Default "gbsplay"
 Default "hively"
 Default "mdx"
 Default "nsf"
