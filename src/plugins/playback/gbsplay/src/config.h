@@ -12,7 +12,7 @@
 #undef PLUGOUT_PULSE
 #undef PLUGOUT_STDOUT
 #undef PLUGOUT_SDL
-#define USE_I18N 1
+#undef USE_I18N
 #undef USE_ZLIB
 #undef HAVE_ESTRPIPE
 #endif
