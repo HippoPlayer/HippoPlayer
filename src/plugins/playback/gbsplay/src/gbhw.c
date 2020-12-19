@@ -774,7 +774,12 @@ static void gb_sound(long cycles)
 			if (gbhw_ch[2].div_ctr <= 0) {
 				long val = ch3_next_nibble;
 				long pos = ch3pos++;
-				ch3_next_nibble = GET_NIBBLE(&ioregs[0x30], pos) * 2;
+				{
+					long index = ((pos) >> 1) & 0xf;
+					long shift = (~(pos) & 1) << 2;
+					ch3_next_nibble = (((&ioregs[0x30])[index] >> shift) & 0xf) * 2;
+				}
+
 				gbhw_ch[2].div_ctr = gbhw_ch[2].div_tc*2;
 				if (gbhw_ch[2].volume) {
 					val = val >> (gbhw_ch[2].volume-1);
@@ -891,6 +896,11 @@ static void gbhw_update_filter()
 	double cap_constant = pow(filter_constant, (double)GBHW_CLOCK / sample_rate);
 	cap_factor = round(65536.0 * cap_constant);
 }
+
+#ifdef _MSC_VER 
+#define strncasecmp _strnicmp
+#define strcasecmp _stricmp
+#endif
 
 long gbhw_setfilter(const char *type)
 {
@@ -1065,11 +1075,6 @@ long gbhw_step(long time_to_work)
 	long cycles_total = 0;
 
 	if (pause_output) {
-		struct timespec waittime = {
-			.tv_sec = 0,
-			.tv_nsec = time_to_work*1000
-		};
-		nanosleep(&waittime, NULL);
 		return 0;
 	}
 

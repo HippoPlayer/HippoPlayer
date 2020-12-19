@@ -179,7 +179,7 @@ static int gbsplay_metadata(const char* filename, const HippoServiceAPI* service
 
     HippoMetadata_set_tag(metadata_api, index, HippoMetadata_TitleTag, song->title);
     HippoMetadata_set_tag(metadata_api, index, HippoMetadata_ArtistTag, song->author);
-    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_SongTypeTag, "Gameboy Song");
+    HippoMetadata_set_tag(metadata_api, index, HippoMetadata_SongTypeTag, "Game Boy Sound System");
     HippoMetadata_set_tag(metadata_api, index, HippoMetadata_MessageTag, song->copyright);
 	HippoMetadata_set_tag_f64(metadata_api, index, HippoMetadata_LengthTag, 0.0f);
 

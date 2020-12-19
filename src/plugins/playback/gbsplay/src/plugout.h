@@ -36,7 +36,7 @@ typedef int     (*plugout_skip_fn )(int subsong);
 typedef void    (*plugout_pause_fn)(int pause);
 typedef int     (*plugout_io_fn   )(long cycles, uint32_t addr, uint8_t val);
 typedef int     (*plugout_step_fn )(const long cycles, const struct gbhw_channel[]);
-typedef ssize_t (*plugout_write_fn)(const void *buf, size_t count);
+typedef int     (*plugout_write_fn)(const void *buf, size_t count);
 typedef void    (*plugout_close_fn)(void);
 
 #define PLUGOUT_USES_STDOUT	1

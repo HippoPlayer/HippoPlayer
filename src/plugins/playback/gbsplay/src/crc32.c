@@ -6,7 +6,7 @@
  * @brief implementation of CRC32
  **/
 
-#include <unistd.h>
+//#include <unistd.h>
 #include "common.h"
 
 #define POLYNOMIAL (unsigned long)0xedb88320
