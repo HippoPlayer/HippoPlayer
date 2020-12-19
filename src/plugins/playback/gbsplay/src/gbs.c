@@ -10,7 +10,6 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-//#include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <string.h>
@@ -24,6 +23,10 @@
 
 #ifdef USE_ZLIB
 #include <zlib.h>
+#endif
+
+#ifndef _MSC_VER
+#include <unistd.h>
 #endif
 
 /* Max GB rom size is 4MiB (mapper with 256 banks) */
