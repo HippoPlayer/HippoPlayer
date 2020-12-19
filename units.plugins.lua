@@ -414,6 +414,21 @@ SharedLibrary {
 
 -----------------------------------------------------------------------------------------------------------------------
 
+SharedLibrary {
+	Name = "asap",
+
+	Includes = {
+	    "src/plugin_api",
+        "src/plugins/playback/asap/src",
+	},
+
+	Sources = {
+		get_c_cpp_src("src/plugins/playback/asap"),
+	},
+}
+
+-----------------------------------------------------------------------------------------------------------------------
+
 StaticLibrary {
 	Name = "sc68_file",
 
@@ -755,6 +770,7 @@ SharedLibrary {
 -- Decoders
 
 Default "adplug"
+Default "asap"
 Default "ayfly"
 Default "gbsplay"
 Default "hively"
