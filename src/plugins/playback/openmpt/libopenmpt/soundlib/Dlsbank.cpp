@@ -1021,7 +1021,7 @@ bool CDLSBank::ConvertSF2ToDLS(SF2LoaderInfo &sf2info)
 	{
 		DLSENVELOPE dlsEnv;
 		std::vector<uint32> instruments;
-		int32 lAttenuation = 0;
+		int32 instrAttenuation = 0;
 		// Default Envelope Values
 		dlsEnv.wVolAttack = 0;
 		dlsEnv.wVolDecay = 0;
@@ -1063,10 +1063,11 @@ bool CDLSBank::ConvertSF2ToDLS(SF2LoaderInfo &sf2info)
 					dlsEnv.wVolRelease = SF2TimeToDLS(gen.genAmount);
 					break;
 				case SF2_GEN_INSTRUMENT:
-					instruments.push_back(gen.genAmount);
+					if(std::find(instruments.begin(), instruments.end(), gen.genAmount) == instruments.end())
+						instruments.push_back(gen.genAmount);
 					break;
 				case SF2_GEN_ATTENUATION:
-					lAttenuation = - (int)(uint16)(gen.genAmount);
+					instrAttenuation = -static_cast<int16>(gen.genAmount);
 					break;
 #if 0
 				default:
@@ -1110,7 +1111,7 @@ bool CDLSBank::ConvertSF2ToDLS(SF2LoaderInfo &sf2info)
 					pDlsEnv = &m_Envelopes[dlsIns.nMelodicEnv - 1];
 				}
 				// Region Default Values
-				int32 lAttn = lAttenuation;
+				int32 regionAttn = 0;
 				pRgn->uKeyMin = 0;
 				pRgn->uKeyMax = 127;
 				pRgn->uUnityNote = 0xFF;  // 0xFF means undefined -> use sample root note
@@ -1170,7 +1171,7 @@ bool CDLSBank::ConvertSF2ToDLS(SF2LoaderInfo &sf2info)
 						}
 						break;
 					case SF2_GEN_ATTENUATION:
-						lAttn = -static_cast<int32>(value);
+						regionAttn = -static_cast<int16>(value);
 						break;
 					case SF2_GEN_SAMPLEID:
 						if (value < m_SamplesEx.size())
@@ -1224,9 +1225,9 @@ bool CDLSBank::ConvertSF2ToDLS(SF2LoaderInfo &sf2info)
 					hasGlobalZone = true;
 					pRgn->fuOptions |= DLSREGION_ISGLOBAL;
 				}
-				int32 lVolume = DLS32BitRelativeGainToLinear((lAttn/10) << 16) / 256;
-				Limit(lVolume, 16, 256);
-				pRgn->usVolume = static_cast<uint16>(lVolume);
+				int32 linearVol = DLS32BitRelativeGainToLinear(((instrAttenuation + regionAttn) * 65536) / 10) / 256;
+				Limit(linearVol, 16, 256);
+				pRgn->usVolume = static_cast<uint16>(linearVol);
 				//Log("\n");
 			}
 		}
@@ -1510,7 +1511,7 @@ bool CDLSBank::ExtractWaveForm(uint32 nIns, uint32 nRgn, std::vector<uint8> &wav
 	if (nIns >= m_Instruments.size() || !m_dwWavePoolOffset)
 	{
 	#ifdef DLSBANK_LOG
-		MPT_LOG(LogDebug, "DLSBANK", mpt::format(U_("ExtractWaveForm(%d) failed: m_Instruments.size()=%1 m_dwWavePoolOffset=%2 m_WaveForms.size()=%3"))(nIns, m_Instruments.size(), m_dwWavePoolOffset, m_WaveForms.size()));
+		MPT_LOG(LogDebug, "DLSBANK", mpt::format(U_("ExtractWaveForm(%1) failed: m_Instruments.size()=%2 m_dwWavePoolOffset=%3 m_WaveForms.size()=%4"))(nIns, m_Instruments.size(), m_dwWavePoolOffset, m_WaveForms.size()));
 	#endif
 		return false;
 	}

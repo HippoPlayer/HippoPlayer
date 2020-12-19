@@ -387,8 +387,8 @@ static void openmpt_set_log(struct HippoLogAPI* log) {
 static HippoPlaybackPlugin g_openmptPlugin = {
     HIPPO_PLAYBACK_PLUGIN_API_VERSION,
     "openmpt",
-    "0.0.1",
-    "libopenmpt 0.5.0",
+    "0.0.2",
+    "libopenmpt 0.5.4",
     openmpt_probe_can_play,
     openmpt_supported_extensions,
     openmpt_create,

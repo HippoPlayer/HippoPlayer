@@ -31,11 +31,11 @@ OPENMPT_NAMESPACE_BEGIN
 
 // Formats which have 7-bit (0...128) instead of 6-bit (0...64) global volume commands, or which are imported to this range (mostly formats which are converted to IT internally)
 #ifdef MODPLUG_TRACKER
-#define GLOBALVOL_7BIT_FORMATS_EXT (MOD_TYPE_MT2)
+static constexpr auto GLOBALVOL_7BIT_FORMATS_EXT = MOD_TYPE_MT2;
 #else
-#define GLOBALVOL_7BIT_FORMATS_EXT (MOD_TYPE_NONE)
+static constexpr auto GLOBALVOL_7BIT_FORMATS_EXT = MOD_TYPE_NONE;
 #endif // MODPLUG_TRACKER
-#define GLOBALVOL_7BIT_FORMATS (MOD_TYPE_IT | MOD_TYPE_MPT | MOD_TYPE_IMF | MOD_TYPE_J2B | MOD_TYPE_MID | MOD_TYPE_AMS | MOD_TYPE_DBM | MOD_TYPE_PTM | MOD_TYPE_MDL | MOD_TYPE_DTM | GLOBALVOL_7BIT_FORMATS_EXT)
+static constexpr auto GLOBALVOL_7BIT_FORMATS = MOD_TYPE_IT | MOD_TYPE_MPT | MOD_TYPE_IMF | MOD_TYPE_J2B | MOD_TYPE_MID | MOD_TYPE_AMS | MOD_TYPE_DBM | MOD_TYPE_PTM | MOD_TYPE_MDL | MOD_TYPE_DTM | GLOBALVOL_7BIT_FORMATS_EXT;
 
 
 // Compensate frequency slide LUTs depending on whether we are handling periods or frequency - "up" and "down" in function name are seen from frequency perspective.
@@ -244,7 +244,7 @@ std::vector<GetLengthType> CSoundFile::GetLength(enmGetLengthResetMode adjustMod
 	retval.startRow = target.startRow;
 
 	// Are we trying to reach a certain pattern position?
-	const bool hasSearchTarget = target.mode != GetLengthTarget::NoTarget;
+	const bool hasSearchTarget = target.mode != GetLengthTarget::NoTarget && target.mode != GetLengthTarget::GetAllSubsongs;
 	const bool adjustSamplePos = (adjustMode & eAdjustSamplePositions) == eAdjustSamplePositions;
 
 	SEQUENCEINDEX sequence = target.sequence;
@@ -300,14 +300,6 @@ std::vector<GetLengthType> CSoundFile::GetLength(enmGetLengthResetMode adjustMod
 
 	for (;;)
 	{
-		// Time target reached.
-		if(target.mode == GetLengthTarget::SeekSeconds && memory.elapsedTime >= target.time)
-		{
-			retval.targetReached = true;
-			break;
-		}
-
-		uint32 rowDelay = 0, tickDelay = 0;
 		playState.m_nRow = playState.m_nNextRow;
 		playState.m_nCurrentOrder = playState.m_nNextOrder;
 
@@ -320,6 +312,13 @@ std::vector<GetLengthType> CSoundFile::GetLength(enmGetLengthResetMode adjustMod
 				playState.m_nNextPatStartRow = 0;
 			}
 			playState.m_nCurrentOrder = ++playState.m_nNextOrder;
+		}
+
+		// Time target reached.
+		if(target.mode == GetLengthTarget::SeekSeconds && memory.elapsedTime >= target.time)
+		{
+			retval.targetReached = true;
+			break;
 		}
 
 		// Check if pattern is valid
@@ -352,7 +351,12 @@ std::vector<GetLengthType> CSoundFile::GetLength(enmGetLengthResetMode adjustMod
 			playState.m_nNextOrder = playState.m_nCurrentOrder;
 			if((!Patterns.IsValidPat(playState.m_nPattern)) && visitedRows.IsVisited(playState.m_nCurrentOrder, 0, true))
 			{
-				if(!hasSearchTarget || !visitedRows.GetFirstUnvisitedRow(playState.m_nNextOrder, playState.m_nRow, true))
+				if(!hasSearchTarget)
+				{
+					retval.lastOrder = playState.m_nCurrentOrder;
+					retval.lastRow = 0;
+				}
+				if(target.mode == GetLengthTarget::NoTarget || !visitedRows.GetFirstUnvisitedRow(playState.m_nNextOrder, playState.m_nRow, true))
 				{
 					// We aren't searching for a specific row, or we couldn't find any more unvisited rows.
 					break;
@@ -384,7 +388,7 @@ std::vector<GetLengthType> CSoundFile::GetLength(enmGetLengthResetMode adjustMod
 			// If there isn't even a tune, we should probably stop here.
 			if(playState.m_nCurrentOrder == orderList.GetRestartPos())
 			{
-				if(!hasSearchTarget || !visitedRows.GetFirstUnvisitedRow(playState.m_nNextOrder, playState.m_nRow, true))
+				if(target.mode == GetLengthTarget::NoTarget || !visitedRows.GetFirstUnvisitedRow(playState.m_nNextOrder, playState.m_nRow, true))
 				{
 					// We aren't searching for a specific row, or we couldn't find any more unvisited rows.
 					break;
@@ -416,7 +420,12 @@ std::vector<GetLengthType> CSoundFile::GetLength(enmGetLengthResetMode adjustMod
 
 		if(visitedRows.IsVisited(playState.m_nCurrentOrder, playState.m_nRow, true))
 		{
-			if(!hasSearchTarget || !visitedRows.GetFirstUnvisitedRow(playState.m_nNextOrder, playState.m_nRow, true))
+			if(!hasSearchTarget)
+			{
+				retval.lastOrder = playState.m_nCurrentOrder;
+				retval.lastRow = playState.m_nRow;
+			}
+			if(target.mode == GetLengthTarget::NoTarget || !visitedRows.GetFirstUnvisitedRow(playState.m_nNextOrder, playState.m_nRow, true))
 			{
 				// We aren't searching for a specific row, or we couldn't find any more unvisited rows.
 				break;
@@ -455,6 +464,7 @@ std::vector<GetLengthType> CSoundFile::GetLength(enmGetLengthResetMode adjustMod
 		}
 
 		// For various effects, we need to know first how many ticks there are in this row.
+		uint32 rowDelay = 0, tickDelay = 0;
 		const ModCommand *p = Patterns[playState.m_nPattern].GetpModCommand(playState.m_nRow, 0);
 		for(CHANNELINDEX nChn = 0; nChn < GetNumChannels(); nChn++, p++)
 		{
@@ -1033,7 +1043,7 @@ std::vector<GetLengthType> CSoundFile::GetLength(enmGetLengthResetMode adjustMod
 						SampleOffset(chn, offset);
 					} else if(m.command == CMD_OFFSETPERCENTAGE)
 					{
-						SampleOffset(chn, Util::muldiv_unsigned(chn.nLength, m.param, 255));
+						SampleOffset(chn, Util::muldiv_unsigned(chn.nLength, m.param, 256));
 					} else if(m.command == CMD_REVERSEOFFSET && chn.pModSample != nullptr)
 					{
 						memory.RenderChannel(nChn, oldTickDuration);	// Re-sync what we've got so far
@@ -1224,14 +1234,15 @@ std::vector<GetLengthType> CSoundFile::GetLength(enmGetLengthResetMode adjustMod
 					startTimes[start] = std::lcm(startTimes[start], 1 + (param & 0x0F));
 				}
 			}
-			for(const auto &i : startTimes)
+			for(const auto &[startTime, loopCount] : startTimes)
 			{
-				memory.elapsedTime += (memory.elapsedTime - i.first) * (double)(i.second - 1);
+				memory.elapsedTime += (memory.elapsedTime - startTime) * (loopCount - 1);
+				//memory.elapsedBeats += 1.0 / playState.m_nCurrentRowsPerBeat;
 				for(CHANNELINDEX nChn = 0; nChn < GetNumChannels(); nChn++)
 				{
-					if(memory.chnSettings[nChn].patLoop == i.first)
+					if(memory.chnSettings[nChn].patLoop == startTime)
 					{
-						playState.m_lTotalSampleCount += (playState.m_lTotalSampleCount - memory.chnSettings[nChn].patLoopSmp) * (i.second - 1);
+						playState.m_lTotalSampleCount += (playState.m_lTotalSampleCount - memory.chnSettings[nChn].patLoopSmp) * (loopCount - 1);
 						if(m_playBehaviour[kITPatternLoopTargetReset] || (GetType() == MOD_TYPE_S3M))
 						{
 							memory.chnSettings[nChn].patLoop = memory.elapsedTime;
@@ -1270,7 +1281,7 @@ std::vector<GetLengthType> CSoundFile::GetLength(enmGetLengthResetMode adjustMod
 		}
 	}
 
-	if(retval.targetReached || target.mode == GetLengthTarget::NoTarget)
+	if(retval.targetReached)
 	{
 		retval.lastOrder = playState.m_nCurrentOrder;
 		retval.lastRow = playState.m_nRow;
@@ -1344,11 +1355,11 @@ std::vector<GetLengthType> CSoundFile::GetLength(enmGetLengthResetMode adjustMod
 		{
 			Order.SetSequence(sequence);
 		}
-		visitedSongRows.MoveVisitedRowsFrom(visitedRows);
 	}
+	if(adjustMode & (eAdjust | eAdjustOnlyVisitedRows))
+		visitedSongRows.MoveVisitedRowsFrom(visitedRows);
 
 	return results;
-
 }
 
 
@@ -1484,7 +1495,7 @@ void CSoundFile::InstrumentChange(ModChannel &chn, uint32 instr, bool bPorta, bo
 			chn.nFineTune = pSmp->nFineTune;
 		// ST3 does it similarly for middle-C speed.
 		// Test case: PortaSwap.s3m, SampleSwap.s3m
-		if(GetType() == MOD_TYPE_S3M)
+		if(GetType() == MOD_TYPE_S3M && pSmp->HasSampleData())
 			chn.nC5Speed = pSmp->nC5Speed;
 	}
 
@@ -2804,7 +2815,7 @@ bool CSoundFile::ProcessEffects()
 
 				if(oldSample != nullptr)
 				{
-					if(!oldSample->uFlags[SMP_NODEFAULTVOLUME])
+					if(!oldSample->uFlags[SMP_NODEFAULTVOLUME] && (GetType() != MOD_TYPE_S3M || oldSample->HasSampleData()))
 						chn.nVolume = oldSample->nVolume;
 					if(reloadSampleSettings)
 					{
@@ -3281,7 +3292,7 @@ bool CSoundFile::ProcessEffects()
 		case CMD_OFFSETPERCENTAGE:
 			if(triggerNote)
 			{
-				SampleOffset(chn, Util::muldiv_unsigned(chn.nLength, param, 255));
+				SampleOffset(chn, Util::muldiv_unsigned(chn.nLength, param, 256));
 			}
 			break;
 
@@ -4972,7 +4983,22 @@ void CSoundFile::ProcessMIDIMacro(CHANNELINDEX nChn, bool isSmooth, const char *
 		{
 			// MIDI channel
 			isNibble = true;
-			data = GetBestMidiChannel(nChn);
+			data = 0xFF;
+			const PLUGINDEX plug = (plugin != 0) ? plugin : GetBestPlugin(nChn, PrioritiseChannel, EvenIfMuted);
+			if(plug > 0 && plug <= MAX_MIXPLUGINS)
+			{
+				auto midiPlug = dynamic_cast<const IMidiPlugin *>(m_MixPlugins[plug - 1u].pMixPlugin);
+				if(midiPlug)
+					data = midiPlug->GetMidiChannel(nChn);
+			}
+			if(data == 0xFF)
+			{
+				// Fallback if no plugin was found
+				if(pIns)
+					data = pIns->GetMIDIChannel(*this, nChn);
+				else
+					data = 0;
+			}
 		} else if(macro[pos] == 'n')
 		{
 			// Last triggered note
@@ -5588,7 +5614,8 @@ void CSoundFile::RetrigNote(CHANNELINDEX nChn, int param, int offset)
 		}
 		uint32 note = chn.nNewNote;
 		int32 oldPeriod = chn.nPeriod;
-		if(note >= NOTE_MIN && note <= NOTE_MAX && chn.nLength)
+		const bool retrigAdlib = chn.dwFlags[CHN_ADLIB] && m_playBehaviour[kOPLRealRetrig];
+		if(note >= NOTE_MIN && note <= NOTE_MAX && chn.nLength && retrigAdlib)
 			CheckNNA(nChn, 0, note, true);
 		bool resetEnv = false;
 		if(GetType() & (MOD_TYPE_XM | MOD_TYPE_MT2))
@@ -5601,6 +5628,12 @@ void CSoundFile::RetrigNote(CHANNELINDEX nChn, int param, int offset)
 			if(param < 0x100)
 				resetEnv = true;
 		}
+		if(retrigAdlib && chn.pModSample && m_opl)
+		{
+			m_opl->NoteCut(nChn);
+			m_opl->Patch(nChn, chn.pModSample->adlib);
+		}
+
 		const bool fading = chn.dwFlags[CHN_NOTEFADE];
 		const auto oldPrevNoteOffset = chn.prevNoteOffset;
 		chn.prevNoteOffset = 0;  // Retriggered notes should not use previous offset (test case: OxxMemoryWithRetrig.s3m)
@@ -5805,7 +5838,8 @@ TEMPO CSoundFile::ConvertST2Tempo(uint8 tempo)
 	static constexpr uint32 st2MixingRate = 23863; // Highest possible setting in ST2
 
 	// This underflows at tempo 06...0F, and the resulting tick lengths depend on the mixing rate.
-	int32 samplesPerTick = st2MixingRate / (49 - ((ST2TempoFactor[tempo >> 4u] * (tempo & 0x0F)) >> 4u));
+	// Note: ST2.3 uses the constant 50 below, earlier versions use 49 but they also play samples at a different speed.
+	int32 samplesPerTick = st2MixingRate / (50 - ((ST2TempoFactor[tempo >> 4u] * (tempo & 0x0F)) >> 4u));
 	if(samplesPerTick <= 0)
 		samplesPerTick += 65536;
 	return TEMPO().SetRaw(Util::muldivrfloor(st2MixingRate, 5 * TEMPO::fractFact, samplesPerTick * 2));
@@ -5817,7 +5851,7 @@ void CSoundFile::SetTempo(TEMPO param, bool setFromUI)
 	const CModSpecifications &specs = GetModSpecifications();
 
 	// Anything lower than the minimum tempo is considered to be a tempo slide
-	const TEMPO minTempo = (GetType() == MOD_TYPE_MDL) ? TEMPO(1, 0) : TEMPO(32, 0);
+	const TEMPO minTempo = (GetType() & (MOD_TYPE_MDL | MOD_TYPE_MED)) ? TEMPO(1, 0) : TEMPO(32, 0);
 
 	if(setFromUI)
 	{
@@ -6169,7 +6203,7 @@ PLUGINDEX CSoundFile::GetChannelPlugin(CHANNELINDEX nChn, PluginMutePriority res
 	const ModChannel &channel = m_PlayState.Chn[nChn];
 
 	PLUGINDEX plugin;
-	if((respectMutes == RespectMutes && channel.dwFlags[CHN_MUTE]) || channel.dwFlags[CHN_NOFX])
+	if((respectMutes == RespectMutes && channel.dwFlags[CHN_MUTE | CHN_SYNCMUTE]) || channel.dwFlags[CHN_NOFX])
 	{
 		plugin = 0;
 	} else
@@ -6241,31 +6275,6 @@ IMixPlugin *CSoundFile::GetChannelInstrumentPlugin(CHANNELINDEX chn) const
 	MPT_UNREFERENCED_PARAMETER(chn);
 #endif // NO_PLUGINS
 	return nullptr;
-}
-
-
-// Get the MIDI channel currently associated with a given tracker channel
-uint8 CSoundFile::GetBestMidiChannel(CHANNELINDEX trackerChn) const
-{
-	if(trackerChn >= std::size(m_PlayState.Chn))
-	{
-		return 0;
-	}
-
-	const ModChannel &chn = m_PlayState.Chn[trackerChn];
-	const ModInstrument *ins = chn.pModInstrument;
-	if(ins != nullptr)
-	{
-		if(ins->nMidiChannel == MidiMappedChannel)
-		{
-			// For mapped channels, return their pattern channel, modulo 16 (because there are only 16 MIDI channels)
-			return static_cast<uint8>((chn.nMasterChn ? (chn.nMasterChn - 1u) : trackerChn) % 16u);
-		} else if(ins->HasValidMIDIChannel())
-		{
-			return (ins->nMidiChannel - 1u) % 16u;
-		}
-	}
-	return 0;
 }
 
 

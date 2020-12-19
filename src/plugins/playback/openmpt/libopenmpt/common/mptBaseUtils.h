@@ -30,6 +30,10 @@
 #include <math.h>
 #include <stdlib.h>
 
+#if MPT_COMPILER_MSVC
+#include <intrin.h>
+#endif
+
 
 
 OPENMPT_NAMESPACE_BEGIN
@@ -54,7 +58,7 @@ namespace mpt
 template <typename T, std::size_t N, typename Tx>
 MPT_CONSTEXPR14_FUN std::array<T, N> init_array(const Tx & x)
 {
-	std::array<T, N> result;
+	std::array<T, N> result{};
 	for(std::size_t i = 0; i < N; ++i)
 	{
 		result[i] = x;
@@ -67,17 +71,42 @@ MPT_CONSTEXPR14_FUN std::array<T, N> init_array(const Tx & x)
 
 namespace mpt
 {
+
 // Work-around for the requirement of at least 1 non-throwing function argument combination in C++ (17,2a).
+
 template <typename Exception>
 MPT_CONSTEXPR14_FUN bool constexpr_throw_helper(Exception && e, bool really = true)
 {
-	return !really ? really : throw std::forward<Exception>(e);
+	//return !really ? really : throw std::forward<Exception>(e);
+	if(really)
+	{
+		throw std::forward<Exception>(e);
+	}
+	// cppcheck-suppress identicalConditionAfterEarlyExit
+	return really;
 }
 template <typename Exception>
 MPT_CONSTEXPR14_FUN bool constexpr_throw(Exception && e)
 {
 	return mpt::constexpr_throw_helper(std::forward<Exception>(e));
 }
+
+template <typename T, typename Exception>
+constexpr T constexpr_throw_helper(Exception && e, bool really = true)
+{
+	//return !really ? really : throw std::forward<Exception>(e);
+	if(really)
+	{
+		throw std::forward<Exception>(e);
+	}
+	return T{};
+}
+template <typename T, typename Exception>
+constexpr T constexpr_throw(Exception && e)
+{
+	return mpt::constexpr_throw_helper<T>(std::forward<Exception>(e));
+}
+
 }  // namespace mpt
 
 
@@ -186,30 +215,13 @@ inline Tdst saturate_cast(float src)
 }
 
 
-template <typename T>
-MPT_CONSTEXPR14_FUN std::size_t weight(T val) noexcept
-{
-	static_assert(std::numeric_limits<T>::is_integer);
-	typedef typename std::make_unsigned<T>::type Tunsigned;
-	Tunsigned uval = static_cast<Tunsigned>(val);
-	std::size_t result = 0;
-	while(uval > 0)
-	{
-		if(uval & 0x1)
-		{
-			result++;
-		}
-		uval >>= 1;
-	}
-	return result;
-}
-
 #if MPT_CXX_AT_LEAST(20)
 
-using std::ispow2;
-using std::ceil2;
-using std::floor2;
-using std::log2p1;
+using std::popcount;
+using std::has_single_bit;
+using std::bit_ceil;
+using std::bit_floor;
+using std::bit_width;
 using std::rotl;
 using std::rotr;
 
@@ -217,19 +229,34 @@ using std::rotr;
 
 // C++20 <bit> header.
 // Note that we do not use SFINAE here but instead rely on static_assert.
-// Also note that for C++11 compilers, these functions are not constexpr.
-// They could be implemented recursively to make them C++11 constexpr compatible if needed.
 
 template <typename T>
-MPT_CONSTEXPR14_FUN bool ispow2(T x) noexcept
+MPT_CONSTEXPR14_FUN int popcount(T val) noexcept
 {
 	static_assert(std::numeric_limits<T>::is_integer);
 	static_assert(std::is_unsigned<T>::value);
-	return mpt::weight(x) == 1;
+	int result = 0;
+	while(val > 0)
+	{
+		if(val & 0x1)
+		{
+			result++;
+		}
+		val >>= 1;
+	}
+	return result;
 }
 
 template <typename T>
-MPT_CONSTEXPR14_FUN T ceil2(T x) noexcept
+MPT_CONSTEXPR14_FUN bool has_single_bit(T x) noexcept
+{
+	static_assert(std::numeric_limits<T>::is_integer);
+	static_assert(std::is_unsigned<T>::value);
+	return mpt::popcount(x) == 1;
+}
+
+template <typename T>
+MPT_CONSTEXPR14_FUN T bit_ceil(T x) noexcept
 {
 	static_assert(std::numeric_limits<T>::is_integer);
 	static_assert(std::is_unsigned<T>::value);
@@ -247,7 +274,7 @@ MPT_CONSTEXPR14_FUN T ceil2(T x) noexcept
 }
 
 template <typename T>
-MPT_CONSTEXPR14_FUN T floor2(T x) noexcept
+MPT_CONSTEXPR14_FUN T bit_floor(T x) noexcept
 {
 	static_assert(std::numeric_limits<T>::is_integer);
 	static_assert(std::is_unsigned<T>::value);
@@ -269,7 +296,7 @@ MPT_CONSTEXPR14_FUN T floor2(T x) noexcept
 }
  
 template <typename T>
-MPT_CONSTEXPR14_FUN T log2p1(T x) noexcept
+MPT_CONSTEXPR14_FUN T bit_width(T x) noexcept
 {
 	static_assert(std::numeric_limits<T>::is_integer);
 	static_assert(std::is_unsigned<T>::value);

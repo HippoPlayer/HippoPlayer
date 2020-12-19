@@ -608,8 +608,23 @@ bool CSoundFile::ProcessRow()
 				// Let's check again if this really is the end of the song.
 				// The visited rows vector might have been screwed up while editing...
 				// This is of course not possible during rendering to WAV, so we ignore that case.
-				GetLengthType t = GetLength(eNoAdjust).back();
-				if(IsRenderingToDisc() || (t.lastOrder == m_PlayState.m_nCurrentOrder && t.lastRow == m_PlayState.m_nRow))
+				bool isReallyAtEnd = false;
+				if(IsRenderingToDisc())
+				{
+					isReallyAtEnd = true;
+				} else
+				{
+					for(const auto &t : GetLength(eNoAdjust, GetLengthTarget(true)))
+					{
+						if(t.lastOrder == m_PlayState.m_nCurrentOrder && t.lastRow == m_PlayState.m_nRow)
+						{
+							isReallyAtEnd = true;
+							break;
+						}
+					}
+				}
+				
+				if(isReallyAtEnd)
 				{
 					// This is really the song's end!
 					visitedSongRows.Initialize(true);
@@ -617,7 +632,7 @@ bool CSoundFile::ProcessRow()
 				} else
 				{
 					// Ok, this is really dirty, but we have to update the visited rows vector...
-					GetLength(eAdjustOnSuccess, GetLengthTarget(m_PlayState.m_nCurrentOrder, m_PlayState.m_nRow));
+					GetLength(eAdjustOnlyVisitedRows, GetLengthTarget(m_PlayState.m_nCurrentOrder, m_PlayState.m_nRow));
 				}
 #else
 				if(m_SongFlags[SONG_PLAYALLSONGS])
@@ -747,7 +762,9 @@ bool CSoundFile::ProcessRow()
 	if (m_PlayState.m_nTickCount)
 	{
 		m_SongFlags.reset(SONG_FIRSTTICK);
-		if(!(GetType() & (MOD_TYPE_XM | MOD_TYPE_MT2)) && m_PlayState.m_nTickCount < GetNumTicksOnCurrentRow())
+		if(!(GetType() & (MOD_TYPE_XM | MOD_TYPE_MT2))
+		   && (GetType() != MOD_TYPE_MOD || m_SongFlags[SONG_PT_MODE])  // Fix infinite loop in "GamerMan " by MrGamer, which was made with FT2
+		   && m_PlayState.m_nTickCount < GetNumTicksOnCurrentRow())
 		{
 			// Emulate first tick behaviour if Row Delay is set.
 			// Test cases: PatternDelaysRetrig.it, PatternDelaysRetrig.s3m, PatternDelaysRetrig.xm, PatternDelaysRetrig.mod
@@ -1493,30 +1510,40 @@ void CSoundFile::ProcessArpeggio(CHANNELINDEX nChn, int &period, Tuning::NOTEIND
 					// Arpeggio is added on top of current note, but cannot do it the IT way because of
 					// the behaviour in ArpeggioClamp.xm.
 					// Test case: ArpSlide.xm
-					auto note = GetNoteFromPeriod(period, chn.nFineTune, chn.nC5Speed);
+					uint32 note = 0;
 
 					// The fact that arpeggio behaves in a totally fucked up way at 16 ticks/row or more is that the arpeggio offset LUT only has 16 entries in FT2.
 					// At more than 16 ticks/row, FT2 reads into the vibrato table, which is placed right after the arpeggio table.
 					// Test case: Arpeggio.xm
 					int arpPos = m_PlayState.m_nMusicSpeed - (m_PlayState.m_nTickCount % m_PlayState.m_nMusicSpeed);
-					if(arpPos > 16) arpPos = 2;
-					else if(arpPos == 16) arpPos = 0;
-					else arpPos %= 3;
+					if(arpPos > 16)
+						arpPos = 2;
+					else if(arpPos == 16)
+						arpPos = 0;
+					else
+						arpPos %= 3;
 					switch(arpPos)
 					{
-					case 1: note += (chn.nArpeggio >> 4); break;
-					case 2: note += (chn.nArpeggio & 0x0F); break;
+					case 1: note = (chn.nArpeggio >> 4); break;
+					case 2: note = (chn.nArpeggio & 0x0F); break;
 					}
 
-					period = GetPeriodFromNote(note, chn.nFineTune, chn.nC5Speed);
-
-					// FT2 compatibility: FT2 has a different note limit for Arpeggio.
-					// Test case: ArpeggioClamp.xm
-					if(note >= 108 + NOTE_MIN && arpPos != 0)
+					if(arpPos != 0)
 					{
-						period = std::max(static_cast<uint32>(period), GetPeriodFromNote(108 + NOTE_MIN, 0, chn.nC5Speed));
-					}
+						// Arpeggio is added on top of current note, but cannot do it the IT way because of
+						// the behaviour in ArpeggioClamp.xm.
+						// Test case: ArpSlide.xm
+						note += GetNoteFromPeriod(period, chn.nFineTune, chn.nC5Speed);
 
+						period = GetPeriodFromNote(note, chn.nFineTune, chn.nC5Speed);
+
+						// FT2 compatibility: FT2 has a different note limit for Arpeggio.
+						// Test case: ArpeggioClamp.xm
+						if(note >= 108 + NOTE_MIN)
+						{
+							period = std::max(static_cast<uint32>(period), GetPeriodFromNote(108 + NOTE_MIN, 0, chn.nC5Speed));
+						}
+					}
 				}
 			}
 			// Other trackers
@@ -2287,7 +2314,8 @@ bool CSoundFile::ReadNote()
 					&& ins->VolEnv.back().value == 0)
 				{
 					m_opl->NoteCut(nChn);
-					chn.dwFlags.reset(CHN_ADLIB);
+					if(!m_playBehaviour[kOPLNoResetAtEnvelopeEnd])
+						chn.dwFlags.reset(CHN_ADLIB);
 					chn.dwFlags.set(CHN_NOTEFADE);
 					chn.nFadeOutVol = 0;
 				} else if(m_playBehaviour[kOPLFlexibleNoteOff] && chn.dwFlags[CHN_NOTEFADE] && chn.nFadeOutVol == 0)
