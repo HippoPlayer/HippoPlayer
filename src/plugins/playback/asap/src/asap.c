@@ -2504,12 +2504,12 @@ int ASAP_GetBlocksPlayed(const ASAP *self)
 
 int ASAP_GetPosition(const ASAP *self)
 {
-	return self->blocksPlayed * 10 / 441;
+	return self->blocksPlayed * 10 / 448;
 }
 
 static int ASAP_MillisecondsToBlocks(int milliseconds)
 {
-	return milliseconds * 441 / 10;
+	return milliseconds * 448 / 10;
 }
 
 bool ASAP_SeekSample(ASAP *self, int block)

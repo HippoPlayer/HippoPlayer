@@ -33,7 +33,7 @@ void ASAP_Delete(ASAP *self);
 /**
  * Output sample rate.
  */
-#define ASAP_SAMPLE_RATE 44100
+#define ASAP_SAMPLE_RATE 48000
 
 /**
  * Enables silence detection.
@@ -224,7 +224,7 @@ const char *ASAPInfo_GetTitleOrFilename(const ASAPInfo *self);
 
 /**
  * Returns music creation date.
- * 
+ *
  * <p>Some of the possible formats are:
  * <ul>
  * <li>YYYY</li>
@@ -239,7 +239,7 @@ const char *ASAPInfo_GetDate(const ASAPInfo *self);
 
 /**
  * Sets music creation date.
- * 
+ *
  * <p>Some of the possible formats are:
  * <ul>
  * <li>YYYY</li>
@@ -319,7 +319,7 @@ bool ASAPInfo_SetDuration(ASAPInfo *self, int song, int duration);
 
 /**
  * Returns information whether the specified song loops.
- * 
+ *
  * <p>Returns:
  * <ul>
  * <li><code>true</code> if the song loops</li>
@@ -332,7 +332,7 @@ bool ASAPInfo_GetLoop(const ASAPInfo *self, int song);
 
 /**
  * Sets information whether the specified song loops.
- * 
+ *
  * <p>Use:
  * <ul>
  * <li><code>true</code> if the song loops</li>
