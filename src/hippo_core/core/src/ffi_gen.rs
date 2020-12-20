@@ -290,12 +290,6 @@ pub struct HippoSettingsAPI {
             count: ::std::os::raw::c_int,
         ) -> HippoSettingsError,
     >,
-    pub layout_hints: ::std::option::Option<
-        unsafe extern "C" fn(
-            priv_data: *mut ::std::os::raw::c_void,
-            data: *mut ::std::os::raw::c_void,
-        ) -> HippoSettingsError,
-    >,
     pub get_string: ::std::option::Option<
         unsafe extern "C" fn(
             priv_data: *mut ::std::os::raw::c_void,

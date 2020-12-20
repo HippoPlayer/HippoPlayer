@@ -151,7 +151,7 @@ typedef struct HippoSettingsAPI {
                                                    int count);
 
     // This will be used to allow structring the layout a bit better
-    HippoSettingsError (*layout_hints)(void* priv_data, void* data);
+    //HippoSettingsError (*layout_hints)(void* priv_data, void* data);
 
     // access settings
     HippoSettingsError (*get_string)(void* priv_data, int id, char* value);
