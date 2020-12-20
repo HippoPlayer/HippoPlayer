@@ -203,11 +203,6 @@ SharedLibrary {
 	},
 }
 
-local openmpt_cfg = CopyFile {
-	Source = "src/plugins/playback/openmpt/libopenmpt.cfg",
-	Target = "$(OBJECTDIR)/libopenmpt.cfg"
-}
-
 -----------------------------------------------------------------------------------------------------------------------
 
 SharedLibrary {
