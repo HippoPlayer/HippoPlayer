@@ -393,6 +393,7 @@ typedef struct HippoPlaybackPlugin {
 //#define HIPPO_VERSION(text) (u64)text
 
 #define hippo_min(x, y) (((x) < (y)) ? (x) : (y))
+#define hippo_max(x, y) (((x) > (y)) ? (x) : (y))
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

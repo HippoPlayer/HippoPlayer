@@ -393,6 +393,7 @@ SharedLibrary {
 }
 
 -----------------------------------------------------------------------------------------------------------------------
+--[[
 
 SharedLibrary {
 	Name = "gbsplay",
@@ -404,6 +405,26 @@ SharedLibrary {
 
 	Sources = {
 		get_c_cpp_src("src/plugins/playback/gbsplay"),
+	},
+}
+--]]
+
+-----------------------------------------------------------------------------------------------------------------------
+
+SharedLibrary {
+	Name = "gme",
+
+	Defines = {
+        "VGM_YM2612_MAME",
+	},
+
+	Includes = {
+	    "src/plugin_api",
+        "src/plugins/playback/gme/src",
+	},
+
+	Sources = {
+		get_c_cpp_src("src/plugins/playback/gme"),
 	},
 }
 
@@ -767,7 +788,8 @@ SharedLibrary {
 Default "adplug"
 Default "asap"
 Default "ayfly"
-Default "gbsplay"
+Default "gme"
+-- Default "gbsplay"
 Default "hively"
 Default "mdx"
 Default "nsf"
