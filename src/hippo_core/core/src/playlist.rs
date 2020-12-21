@@ -67,7 +67,11 @@ impl Playlist {
         let count = self.entries.len() as isize;
 
         if count > 0 {
-            let new_song = (self.current_song + direction) % count;
+            let mut new_song = (self.current_song + direction) % count;
+
+            if new_song < 0 {
+                new_song = count - 1;
+            }
 
             if new_song != self.current_song {
                 self.new_song = true;
