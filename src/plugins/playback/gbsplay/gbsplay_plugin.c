@@ -185,11 +185,6 @@ static int gbsplay_metadata(const char* filename, const HippoServiceAPI* service
     HippoMetadata_set_tag(metadata_api, index, HippoMetadata_MessageTag, song->copyright);
 	HippoMetadata_set_tag_f64(metadata_api, index, HippoMetadata_LengthTag, 0.0f);
 
-	for (int i = 0; i < song->songs; ++i) {
-		const struct gbs_subsong_info* info = &song->subsong_info[i];
-		printf("%d - %d %s\n", i, info->len, info->title);
-	}
-
     if (song->songs > 1) {
         for (int i = 0; i < song->songs; ++i) {
         	const struct gbs_subsong_info* info = &song->subsong_info[i];
