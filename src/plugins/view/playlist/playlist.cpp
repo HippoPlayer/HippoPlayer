@@ -1,5 +1,6 @@
 #include "playlist.h"
 #include <QtCore/QDebug>
+#include <QtCore/QMimeData>
 #include <QtGui/QIcon>
 #include <QtGui/QMouseEvent>
 #include <QtGui/QPainter>
@@ -62,8 +63,18 @@ private:
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class TreeView : public QTreeView {
-   public:
-    TreeView(QWidget* parent) : QTreeView(parent) { _pixmapBg.load("data/hippo.png"); }
+public:
+    TreeView(const struct HippoMessageAPI* message_api, QWidget* parent) : QTreeView(parent) {
+        m_message_api = message_api;
+        setAcceptDrops(true);
+        setDragEnabled(true);
+        setDropIndicatorShown(true);
+        viewport()->setAcceptDrops(true);
+        ///setDefaultDropAction(Qt::MoveAction);
+        //setDragDropMode(QTableView::InternalMove);
+        setDragDropOverwriteMode(false);
+        _pixmapBg.load("data/hippo.png");
+    }
 
     void paintEvent(QPaintEvent* event) {
         QPainter painter(viewport());
@@ -90,12 +101,52 @@ class TreeView : public QTreeView {
         return QTreeView::paintEvent(event);
     }
 
-    /*
-    const QModelIndexList& selection() {
-        return selectedIndexes();
+    void dragEnterEvent(QDragEnterEvent* event) {
+        if (event->mimeData()->hasUrls()) {
+            event->acceptProposedAction();
+        }
     }
-    */
 
+    void dragMoveEvent(QDragMoveEvent* event) {
+        event->acceptProposedAction();
+    }
+
+    void dragLeaveEvent(QDragLeaveEvent* event) {
+        event->accept();
+    }
+
+    void dropEvent(QDropEvent* event) {
+        const QMimeData* mimeData = event->mimeData();
+
+        // check for our needed mime type, here a file or a list of files
+        if (!mimeData->hasUrls()) {
+            return;
+        }
+
+        QStringList pathList;
+        QList<QUrl> urlList = mimeData->urls();
+
+        std::vector<flatbuffers::Offset<flatbuffers::String>> urls;
+        flatbuffers::FlatBufferBuilder builder(4096);
+
+        urls.reserve(urlList.size());
+
+        // extract the local paths of the files
+        for (int i = 0; i < urlList.size(); ++i) {
+            QByteArray filename_data = urlList.at(i).toLocalFile().toUtf8();
+            const char* filename_utf8 = filename_data.constData();
+
+            urls.push_back(builder.CreateString(filename_utf8));
+        }
+
+        builder.Finish(CreateHippoMessageDirect(builder, MessageType_request_add_urls,
+                                                CreateHippoRequestAddUrls(builder, builder.CreateVector(urls)).Union()));
+        HippoMessageAPI_send(m_message_api, builder.GetBufferPointer(), builder.GetSize());
+
+        event->acceptProposedAction();
+    }
+
+    const struct HippoMessageAPI* m_message_api;
     QPixmap _pixmapBg;
 };
 
@@ -109,7 +160,7 @@ QWidget* PlaylistView::create(struct HippoServiceAPI* service_api, QAbstractItem
 
     QPushButton* delete_items_button = new QPushButton(QStringLiteral("Delete items.."));
 
-    m_list = new TreeView(nullptr);
+    m_list = new TreeView(m_message_api, nullptr);
     m_list->setModel(model);
     m_list->setEditTriggers(QAbstractItemView::NoEditTriggers);
     // m_list->setStyleSheet(QStringLiteral("QTreeView { border-image: url(data/hippo.png) no-repeat center center
@@ -165,7 +216,8 @@ void PlaylistView::play_entry(const QModelIndex& item, bool pause_state, bool fo
 
     builder.Finish(CreateHippoMessageDirect(
         builder, MessageType_request_select_song,
-        CreateHippoRequestSelectSongDirect(builder, pause_state, force, path.data(), model->buddy(item).row()).Union()));
+        CreateHippoRequestSelectSongDirect(builder, pause_state, force, path.data(), model->buddy(item).row())
+            .Union()));
 
     HippoMessageAPI_send(m_message_api, builder.GetBufferPointer(), builder.GetSize());
 }
