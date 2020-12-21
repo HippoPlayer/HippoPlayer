@@ -24,6 +24,21 @@ static const char* gme_supported_extensions() {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static const char* find_filename_start(const char* path, int* offset) {
+    for (size_t i = strlen(path) - 1; i > 0; i--) {
+    	char c = path[i];
+        if (c == '/' || c == '\\') {
+        	*offset = (int)(i + 1);
+        	return &path[i + 1];
+        }
+    }
+
+	*offset = 0;
+    return path;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static void* gme_create(const HippoServiceAPI* service_api) {
 	void* data = malloc(sizeof(struct ReplayerData));
 	memset(data, 0, sizeof(struct ReplayerData));
@@ -180,6 +195,19 @@ static int gme_metadata(const char* filename, const HippoServiceAPI* service_api
     char title_name[1024];
     strcpy(title_name, info->song);
 
+    if (title_name[0] == 0) {
+	    int filename_start = 0;
+		const char* filename_only = find_filename_start(filename, &filename_start);
+		strcpy(title_name, filename_only);
+
+		for (int i = 0, count = (int)strlen(title_name); i < count; ++i) {
+			if (title_name[i] == '.') {
+				title_name[i] = 0;
+				break;
+			}
+		}
+    }
+
     HippoMetadata_set_tag(metadata_api, index, HippoMetadata_TitleTag, title_name);
     HippoMetadata_set_tag(metadata_api, index, HippoMetadata_ArtistTag, info->author);
     HippoMetadata_set_tag(metadata_api, index, HippoMetadata_SongTypeTag, info->system);
@@ -191,7 +219,7 @@ static int gme_metadata(const char* filename, const HippoServiceAPI* service_api
     int track_count = gme_track_count(song);
 
     if (track_count > 1) {
-        for (int i = 1; i < track_count; ++i) {
+        for (int i = 0; i < track_count; ++i) {
             if ((error = gme_track_info(song, &info, i)) == nullptr) {
                 char subsong_name[1024] = {0};
 
