@@ -200,7 +200,7 @@ static int gme_metadata(const char* filename, const HippoServiceAPI* service_api
 		const char* filename_only = find_filename_start(filename, &filename_start);
 		strcpy(title_name, filename_only);
 
-		for (int i = 0, count = (int)strlen(title_name); i < count; ++i) {
+		for (int i = (int)strlen(title_name) - 1; i > 0; --i) {
 			if (title_name[i] == '.') {
 				title_name[i] = 0;
 				break;
