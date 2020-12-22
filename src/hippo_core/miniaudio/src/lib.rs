@@ -94,25 +94,15 @@ pub struct Devices {
     pub devices: Vec<OutputDevice>,
 }
 
+//
 impl Devices {
     pub fn new() -> Result<Devices, Error> {
-        // backends prio, alsa over pulse audio and wasapi over dsound
-        /*
-        let backends: &[u32] = &[
-            sys::ma_backend_alsa,
-            sys::ma_backend_pulseaudio,
-            sys::ma_backend_wasapi,
-            sys::ma_backend_dsound,
-        ];
-        */
-
         let mut config = unsafe { sys::ma_context_config_init() };
         config.logCallback = Some(log_callback);
         config.pUserData = std::ptr::null_mut();
 
         let mut context = MaybeUninit::<sys::ma_context>::uninit();
 
-        //let result = unsafe { sys::ma_context_init(backends.as_ptr(), 4, &config, context.as_mut_ptr()) };
         let result =
             unsafe { sys::ma_context_init(std::ptr::null_mut(), 0, &config, context.as_mut_ptr()) };
 
@@ -197,7 +187,7 @@ impl Device {
         device_config.playback.pDeviceID = dev;
         device_config.playback.format = sys::ma_format_f32;
         device_config.playback.channels = 2;
-        device_config.sampleRate = 48000;
+        device_config.sampleRate = 0;
         device_config.dataCallback = Some(callback);
         device_config.stopCallback = Some(stop_callback);
         device_config.pUserData = user_data;
