@@ -251,12 +251,7 @@ static HippoReadInfo openmpt_read_data(void* user_data, void* dest, uint32_t max
 
     const int samples_to_generate = hippo_min(512, max_output_bytes / 8);
 
-    //uint32_t rate = native_sample_rate;
-    uint32_t rate = 80000;
-
-    // count is number of frames per channel and div by 2 as we have 2 channels
-    //const int count = 480;
-    uint16_t gen_count = (uint16_t)replayer_data->mod->read_interleaved_stereo(rate, samples_to_generate, (float*)dest);
+    uint16_t gen_count = (uint16_t)replayer_data->mod->read_interleaved_stereo(native_sample_rate, samples_to_generate, (float*)dest);
 
     // Send current positions back to frontend if we have some more data
     if (gen_count > 0) {
@@ -271,14 +266,11 @@ static HippoReadInfo openmpt_read_data(void* user_data, void* dest, uint32_t max
     }
 
     return HippoReadInfo {
-        rate,
+        native_sample_rate,
         gen_count,
         2,
         HippoOutputType_f32
     };
-
-    //return HIPPO_READ_DESC(native_sample_rate, gen_count, 2, HippoOutputType_f32);
-    //return gen_count * 2;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
