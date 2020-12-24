@@ -1,12 +1,12 @@
-use miniaudio::{Device, Devices};
-use messages::*;
 use logger::*;
+use messages::*;
+use miniaudio::{Device, Devices};
 
 use crate::plugin_handler::DecoderPlugin;
+use miniaudio::{DataConverter, DataConverterConfig, Format, ResampleAlgorithm};
 use std::ffi::CString;
 use std::os::raw::c_void;
-use std::sync::{Mutex};
-use std::fs::OpenOptions;
+use std::sync::Mutex;
 
 use std::io::Write;
 
@@ -25,9 +25,44 @@ pub struct HippoPlayback {
 
 struct DataCallback {
     players: Mutex<Vec<HippoPlayback>>,
-    mix_buffer: Vec<f32>,
+    mix_buffer: Vec<u8>,
+    temp_gen: Vec<u8>,
     read_index: usize,
     frames_decoded: usize,
+    converter: DataConverter,
+}
+
+impl DataCallback {
+    fn new() -> Box<DataCallback> {
+        let input_output_channels = 2;
+        let input_output_sample_rate = 48000;
+        let input_output_format = Format::S16;
+
+        let cfg = DataConverterConfig::new(
+            Format::F32,
+            input_output_format,
+            input_output_channels,
+            input_output_channels,
+            input_output_sample_rate,
+            input_output_sample_rate,
+            /*
+            ResampleAlgorithm::Linear {
+            	lpf_order: 1,
+            	lpf_nyquist_factor: 1.0,
+            }
+            */
+            ResampleAlgorithm::Speex { quality: 3 },
+        );
+
+        Box::new(DataCallback {
+            players: Mutex::new(Vec::<HippoPlayback>::new()),
+            mix_buffer: vec![0; 48000 * 32 * 4], // mix buffer of 48k, 32ch * int, should be enough for temp
+            temp_gen: vec![0; 48000 * 32 * 4], // mix buffer of 48k, 32ch * int, should be enough for temp
+            read_index: 0,
+            frames_decoded: 0,
+            converter: DataConverter::new(&cfg).unwrap(),
+        })
+    }
 }
 
 pub struct Instance {
@@ -59,8 +94,9 @@ impl HippoPlayback {
             unsafe { ((plugin.plugin_funcs).create)(plugin_service.get_c_service_api()) } as u64;
         let ptr_user_data = user_data as *mut c_void;
         //let frame_size = (((plugin.plugin_funcs).frame_size)(ptr_user_data)) as usize;
-        let open_state =
-            unsafe { ((plugin.plugin_funcs).open)(ptr_user_data, c_filename.as_ptr(), subsong_index) };
+        let open_state = unsafe {
+            ((plugin.plugin_funcs).open)(ptr_user_data, c_filename.as_ptr(), subsong_index)
+        };
 
         if open_state < 0 {
             return None;
@@ -96,10 +132,8 @@ unsafe extern "C" fn data_callback(
     device_ptr: *mut miniaudio::ma_device,
     output_ptr: *mut c_void,
     _input_ptr: *const c_void,
-    samples_to_read: u32,
+    frame_count: u32,
 ) {
-    let samples_to_read = (samples_to_read * 2) as usize;
-    let output = std::slice::from_raw_parts_mut(output_ptr as *mut f32, samples_to_read as usize);
     let data: &mut DataCallback = std::mem::transmute((*device_ptr).pUserData);
     let playback;
 
@@ -117,64 +151,119 @@ unsafe extern "C" fn data_callback(
         return;
     }
 
-    // if we have no frames decoded, call the callback
-    if data.frames_decoded == 0 {
-		data.frames_decoded = ((playback.plugin.plugin_funcs).read_data)(
+    // calculate the output frame size
+    let cfg = data.converter.config();
+    let frame_count = frame_count as usize;
+    let format_size_bytes = Format::from_c(cfg.formatOut).size_in_bytes();
+    let channel_count = cfg.channelsOut as usize;
+    let frame_stride = format_size_bytes * channel_count;
+    let frames_to_read = frame_count * frame_stride;
+    let output_sample_rate = cfg.sampleRateOut;
+
+    let output = std::slice::from_raw_parts_mut(output_ptr as *mut u8, frames_to_read);
+
+    println!("frames to read {} -------------------- ", frames_to_read);
+
+    // if we have decoded enough data we can just copy it
+    if (data.read_index + frames_to_read) <= data.frames_decoded {
+    	println!("[COPY ALL]  Remaining from last offset {} size {} ", data.read_index, frames_to_read);
+        output.copy_from_slice(&data.mix_buffer[data.read_index..data.read_index + frames_to_read]);
+        data.read_index += frames_to_read;
+        return;
+    }
+	// else we need to copy what we have left, decode new frame(s) and put that into the output buffer
+	let diff = data.frames_decoded - data.read_index;
+
+	if diff != 0 {
+		let read_end = data.read_index + diff;
+		println!("[COPY]     Remaining from last offset {} size {} ", data.read_index, diff);
+		// copy the remaining stored data
+		output[0..diff].copy_from_slice(&data.mix_buffer[data.read_index..read_end]);
+	}
+
+	let mut write_offset = diff;
+
+	println!("[WRITE ST] {}", write_offset);
+
+	// Start produce new frames to fill up the whole buffer
+	loop {
+		let data_left = frames_to_read - write_offset;
+
+		//println!("data left to generate {} (bytes) frames {}", data_left, data_left / frame_stride);
+
+		let info = ((playback.plugin.plugin_funcs).read_data)(
 			playback.plugin_user_data as *mut c_void,
-			data.mix_buffer.as_mut_ptr() as *mut _, (samples_to_read / 2) as u32) as usize;
-    }
+			data.temp_gen.as_mut_ptr() as *mut _,
+			data.temp_gen.len() as u32,
+			output_sample_rate);
 
-    // if we have decoded enough data we can just copy it  
-	if (data.read_index + samples_to_read) <= data.frames_decoded {
-        output.copy_from_slice(&data.mix_buffer[data.read_index..data.read_index + samples_to_read]);
-        data.read_index += samples_to_read;
-    } else {
-	    // else we need to copy what we have left, decode new frame(s) and put that into the output buffer 
-	    let diff = data.frames_decoded - data.read_index;
+		let read_format = Format::from_c(info.output_format as u32);
+		let frames_read = info.sample_count;// * info.channel_count as u16;
 
-        if diff != 0 {
-            let read_end = data.read_index + diff;
-			// copy the remaining stored data
-			output[0..diff].copy_from_slice(&data.mix_buffer[data.read_index..read_end]);
-        }
+		//println!("updating converter with channel count {}, format {:#?} sample rate {}",
+		//	info.channel_count, read_format, info.sample_rate);
 
-        let mut write_offset = diff; 
+		// update the data converter with the current format (will re-init if needed)
+		data.converter.update(info.channel_count, read_format, info.sample_rate);
 
-        // Start produce new frames to fill up the whole buffer
-        loop {
-            let data_left = samples_to_read - write_offset;
+		// We calculate how how much data we will generate with the converter.
+		let frames_out = data.converter.expected_output_frame_count(frames_read as _) as usize;
+		let expected_output = frames_out * frame_stride;
 
-            let frame_count = ((playback.plugin.plugin_funcs).read_data)(
-				playback.plugin_user_data as *mut c_void,
-				data.mix_buffer.as_mut_ptr() as *mut _, (samples_to_read / 2) as u32) as usize;
+		println!("[GEN]      Expected output frames {} from input {}", frames_out, frames_read);
 
-            // if we have decoded more data than we need just copy
-            // the bit we need and update the read pointer
-            if frame_count >= data_left {
-                output[write_offset..].copy_from_slice(&data.mix_buffer[0..data_left]);
-                data.read_index = data_left;
-                data.frames_decoded = frame_count; 
-                break;
-            } else {
-                // if here we haven't filled up the buffer just yet, copy what we have and processed to decode another frame
-                let offset_end = write_offset + frame_count;
-                output[write_offset..offset_end].copy_from_slice(&data.mix_buffer[0..frame_count]);
-                write_offset += frame_count;
-            }
-        }
-    }
+		// if we are about to generate more frames than we have place for in the output buffer
+		// we generate them to a temporary mix buffer, copy the part we need and will copy the rest during the next update.
+		if expected_output >= data_left {
+			//println!("sample count {}", info.sample_count);
+
+			let p = data.converter.process_pcm_frames(
+				data.mix_buffer.as_mut_ptr() as *mut _,
+				data.temp_gen.as_ptr() as *const _,
+				frames_out,
+				frames_read as _).unwrap();
+			println!("{:#?}", p);
+
+			output[write_offset..].copy_from_slice(&data.mix_buffer[0..data_left]);
+			data.read_index = data_left;
+			data.frames_decoded = expected_output;
+
+			println!("[GEN BR]   Generate to temp size {}", expected_output);
+			println!("[GEN BR]   Copy frome slice to offset {} - len {}", write_offset, data_left);
+
+			break;
+		} else {
+			println!("[GEN]      Generate to output offset {} - size {}", write_offset, expected_output);
+
+			// if here we haven't filled up the buffer just yet, copy what we have and processed to decode another frame
+			let offset_end = write_offset + expected_output;
+
+			data.converter.process_pcm_frames(
+				output[write_offset..offset_end].as_mut_ptr() as *mut _,
+				data.temp_gen.as_ptr() as *const _,
+				frames_out,
+				frames_read as _).unwrap();
+
+			write_offset += expected_output;
+		}
+	}
+
+	/*
+    let mut file = std::fs::OpenOptions::new()
+        .write(true)
+        .append(true)
+        .open("/home/emoon/temp/dump.raw")
+        .unwrap();
+
+    file.write_all(&output).unwrap();
+    */
 }
 
 impl HippoAudio {
     pub fn new() -> HippoAudio {
         // This is a bit hacky so it can be shared with the device and HippoAudio
-        let data_callback = Box::new(DataCallback {
-			players: Mutex::new(Vec::<HippoPlayback>::new()),
-			mix_buffer: vec![0.0; 4800 * 2],
-			read_index: 0,
-			frames_decoded: 0,
-        });
-        
+        let data_callback = DataCallback::new();
+
         HippoAudio {
             device_name: DEFAULT_DEVICE_NAME.to_owned(),
             data_callback: Box::into_raw(data_callback) as *mut c_void,
@@ -191,14 +280,17 @@ impl HippoAudio {
         self.playbacks.clear();
     }
 
-    fn select_output_device(&mut self, msg: &HippoSelectOutputDevice) -> Result<(), miniaudio::Error> {
+    fn select_output_device(
+        &mut self,
+        msg: &HippoSelectOutputDevice,
+    ) -> Result<(), miniaudio::Error> {
         let name = msg.name().unwrap();
         self.init_device(name)?;
         self.device_name = name.to_owned();
         Ok(())
     }
 
-    fn replay_output_devices(&self) -> Option<Box<[u8]>> {
+    fn reply_output_devices(&self) -> Option<Box<[u8]>> {
         let output_devices = self.output_devices.as_ref()?;
 
         let mut builder = messages::FlatBufferBuilder::new_with_capacity(8192);
@@ -265,7 +357,7 @@ impl HippoAudio {
     pub fn event(&mut self, msg: &HippoMessage) -> Option<Box<[u8]>> {
         match msg.message_type() {
             MessageType::request_select_song => self.request_select_song(msg),
-            MessageType::request_output_devices => self.replay_output_devices(),
+            MessageType::request_output_devices => self.reply_output_devices(),
             MessageType::select_output_device => {
                 trace!("Trying to select new output from UI");
                 let select_output = msg.message_as_select_output_device().unwrap();
@@ -290,7 +382,8 @@ impl HippoAudio {
             data_callback,
             self.data_callback,
             context,
-            None)?);
+            None,
+        )?);
 
         Ok(())
     }
@@ -304,7 +397,6 @@ impl HippoAudio {
     }
 
     pub fn init_device(&mut self, playback_device: &str) -> Result<(), miniaudio::Error> {
-        // Try to init output devices if we have none.
         if self.output_devices.is_none() {
             self.output_devices = Some(Devices::new()?);
         }
@@ -324,13 +416,22 @@ impl HippoAudio {
                         data_callback,
                         self.data_callback,
                         context,
-                        Some(&device_id))?);
+                        Some(&device_id),
+                    )?);
                     break;
                 }
             }
         }
 
-        self.output_device.as_ref().unwrap().start()
+        let device = self.output_device.as_ref().unwrap();
+        println!(
+            "output device rate {} format {:#?} channels {}",
+            device.sample_rate(),
+            device.format(),
+            device.channels()
+        );
+
+        device.start()
     }
 
     //pub fn pause(&mut self) {
@@ -347,9 +448,11 @@ impl HippoAudio {
         service: &PluginService,
         filename: &str,
     ) -> bool {
-
         if self.output_device.is_none() || self.output_devices.is_none() {
-            error!("Unable to play {} because system has no audio device(s)", filename);
+            error!(
+                "Unable to play {} because system has no audio device(s)",
+                filename
+            );
             return false;
         }
 

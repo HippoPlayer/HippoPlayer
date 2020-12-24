@@ -785,20 +785,20 @@ SharedLibrary {
 
 -- Decoders
 
-Default "adplug"
-Default "asap"
-Default "ayfly"
-Default "gme"
+-- Default "adplug"
+-- Default "asap"
+-- Default "ayfly"
+-- Default "gme"
 -- Default "gbsplay"
-Default "hively"
-Default "mdx"
-Default "nsf"
+-- Default "hively"
+-- Default "mdx"
+-- Default "nsf"
 Default "openmpt"
-Default "sc68"
-Default "sid"
-Default "stsound"
-Default "tfmx"
-Default "vgm"
+-- Default "sc68"
+-- Default "sid"
+-- Default "stsound"
+-- Default "tfmx"
+-- Default "vgm"
 
 -- Views
 

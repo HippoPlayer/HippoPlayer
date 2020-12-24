@@ -1374,6 +1374,7 @@ pub struct ma_data_converter_config {
     pub channelWeights: [[f32; 32usize]; 32usize],
     pub resampling: ma_data_converter_config__bindgen_ty_1,
 }
+
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ma_data_converter_config__bindgen_ty_1 {

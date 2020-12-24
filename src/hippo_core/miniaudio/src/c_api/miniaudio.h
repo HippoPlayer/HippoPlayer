@@ -2577,10 +2577,10 @@ typedef struct
     ma_data_converter_config config;
     ma_channel_converter channelConverter;
     ma_resampler resampler;
+    ma_bool32 hasResampler;
     ma_bool8 hasPreFormatConversion;
     ma_bool8 hasPostFormatConversion;
     ma_bool8 hasChannelConverter;
-    ma_bool8 hasResampler;
     ma_bool8 isPassthrough;
 } ma_data_converter;
 
@@ -39594,6 +39594,8 @@ MA_API ma_uint64 ma_resampler_get_expected_output_frame_count(ma_resampler* pRes
         return 0;
     }
 
+    printf("algo %d\n", pResampler->config.algorithm);
+
     switch (pResampler->config.algorithm)
     {
         case ma_resample_algorithm_linear:
@@ -40697,7 +40699,6 @@ MA_API ma_result ma_data_converter_init(const ma_data_converter_config* pConfig,
         pConverter->hasResampler = MA_TRUE;
     }
 
-
     /* We can simplify pre- and post-format conversion if we have neither channel conversion nor resampling. */
     if (pConverter->hasChannelConverter == MA_FALSE && pConverter->hasResampler == MA_FALSE) {
         /* We have neither channel conversion nor resampling so we'll only need one of pre- or post-format conversion, or none if the input and output formats are the same. */
@@ -40727,6 +40728,8 @@ MA_API ma_result ma_data_converter_init(const ma_data_converter_config* pConfig,
         pConverter->hasResampler            == MA_FALSE) {
         pConverter->isPassthrough = MA_TRUE;
     }
+
+    printf("has resampler %d %p\n", pConverter->hasResampler, &pConverter->hasResampler);
 
     return MA_SUCCESS;
 }
@@ -41365,6 +41368,9 @@ static ma_result ma_data_converter_process_pcm_frames__channels_first(ma_data_co
 
 MA_API ma_result ma_data_converter_process_pcm_frames(ma_data_converter* pConverter, const void* pFramesIn, ma_uint64* pFrameCountIn, void* pFramesOut, ma_uint64* pFrameCountOut)
 {
+    ///printf("framesIn %p framesOut %p\n", pFramesIn, pFramesOut);
+    //printf("frames in %d framesOut %d\n", (int)*pFrameCountIn, (int)*pFrameCountOut);
+
     if (pConverter == NULL) {
         return MA_INVALID_ARGS;
     }
@@ -41456,6 +41462,8 @@ MA_API ma_uint64 ma_data_converter_get_expected_output_frame_count(ma_data_conve
     if (pConverter == NULL) {
         return 0;
     }
+
+    printf("has resampler %d %p\n", pConverter->hasResampler, &pConverter->hasResampler);
 
     if (pConverter->hasResampler) {
         return ma_resampler_get_expected_output_frame_count(&pConverter->resampler, inputFrameCount);
