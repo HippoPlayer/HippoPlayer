@@ -160,11 +160,11 @@ unsafe extern "C" fn data_callback(
 
     let output = std::slice::from_raw_parts_mut(output_ptr as *mut u8, frames_to_read);
 
-    println!("frames to read {} -------------------- ", frames_to_read);
+    //println!("frames to read {} -------------------- ", frames_to_read);
 
     // if we have decoded enough data we can just copy it
     if (data.read_index + frames_to_read) <= data.frames_decoded {
-    	println!("[COPY ALL]  Remaining from last offset {} size {} ", data.read_index, frames_to_read);
+    	//println!("[COPY ALL]  Remaining from last offset {} size {} ", data.read_index, frames_to_read);
         output.copy_from_slice(&data.mix_buffer[data.read_index..data.read_index + frames_to_read]);
         data.read_index += frames_to_read;
         return;
@@ -174,14 +174,14 @@ unsafe extern "C" fn data_callback(
 
 	if diff != 0 {
 		let read_end = data.read_index + diff;
-		println!("[COPY]     Remaining from last offset {} size {} ", data.read_index, diff);
+		//println!("[COPY]     Remaining from last offset {} size {} ", data.read_index, diff);
 		// copy the remaining stored data
 		output[0..diff].copy_from_slice(&data.mix_buffer[data.read_index..read_end]);
 	}
 
 	let mut write_offset = diff;
 
-	println!("[WRITE ST] {}", write_offset);
+	//println!("[WRITE ST] {}", write_offset);
 
 	// Start produce new frames to fill up the whole buffer
 	loop {
@@ -208,30 +208,28 @@ unsafe extern "C" fn data_callback(
 		let frames_out = data.converter.expected_output_frame_count(frames_read as _) as usize;
 		let expected_output = frames_out * frame_stride;
 
-		println!("[GEN]      Expected output frames {} from input {}", frames_out, frames_read);
+		//println!("[GEN]      Expected output frames {} from input {}", frames_out, frames_read);
 
 		// if we are about to generate more frames than we have place for in the output buffer
 		// we generate them to a temporary mix buffer, copy the part we need and will copy the rest during the next update.
 		if expected_output >= data_left {
-			//println!("sample count {}", info.sample_count);
-
-			let p = data.converter.process_pcm_frames(
+			data.converter.process_pcm_frames(
 				data.mix_buffer.as_mut_ptr() as *mut _,
 				data.temp_gen.as_ptr() as *const _,
 				frames_out,
 				frames_read as _).unwrap();
-			println!("{:#?}", p);
+			//println!("{:#?}", p);
 
 			output[write_offset..].copy_from_slice(&data.mix_buffer[0..data_left]);
 			data.read_index = data_left;
 			data.frames_decoded = expected_output;
 
-			println!("[GEN BR]   Generate to temp size {}", expected_output);
-			println!("[GEN BR]   Copy frome slice to offset {} - len {}", write_offset, data_left);
+			//println!("[GEN BR]   Generate to temp size {}", expected_output);
+			//println!("[GEN BR]   Copy frome slice to offset {} - len {}", write_offset, data_left);
 
 			break;
 		} else {
-			println!("[GEN]      Generate to output offset {} - size {}", write_offset, expected_output);
+			//println!("[GEN]      Generate to output offset {} - size {}", write_offset, expected_output);
 
 			// if here we haven't filled up the buffer just yet, copy what we have and processed to decode another frame
 			let offset_end = write_offset + expected_output;
