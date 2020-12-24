@@ -45,13 +45,11 @@ impl DataCallback {
             input_output_channels,
             input_output_sample_rate,
             input_output_sample_rate,
-            /*
             ResampleAlgorithm::Linear {
             	lpf_order: 1,
             	lpf_nyquist_factor: 1.0,
             }
-            */
-            ResampleAlgorithm::Speex { quality: 3 },
+            //ResampleAlgorithm::Speex { quality: 3 },
         );
 
         Box::new(DataCallback {
