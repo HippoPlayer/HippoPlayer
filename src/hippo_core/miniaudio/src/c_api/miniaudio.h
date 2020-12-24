@@ -39594,8 +39594,6 @@ MA_API ma_uint64 ma_resampler_get_expected_output_frame_count(ma_resampler* pRes
         return 0;
     }
 
-    printf("algo %d\n", pResampler->config.algorithm);
-
     switch (pResampler->config.algorithm)
     {
         case ma_resample_algorithm_linear:
@@ -40729,8 +40727,6 @@ MA_API ma_result ma_data_converter_init(const ma_data_converter_config* pConfig,
         pConverter->isPassthrough = MA_TRUE;
     }
 
-    printf("has resampler %d %p\n", pConverter->hasResampler, &pConverter->hasResampler);
-
     return MA_SUCCESS;
 }
 
@@ -41462,8 +41458,6 @@ MA_API ma_uint64 ma_data_converter_get_expected_output_frame_count(ma_data_conve
     if (pConverter == NULL) {
         return 0;
     }
-
-    printf("has resampler %d %p\n", pConverter->hasResampler, &pConverter->hasResampler);
 
     if (pConverter->hasResampler) {
         return ma_resampler_get_expected_output_frame_count(&pConverter->resampler, inputFrameCount);
