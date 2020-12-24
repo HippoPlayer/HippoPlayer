@@ -1,10 +1,10 @@
-#include <HippoPlugin.h>
 #include <HippoMessages.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+#include <HippoPlugin.h>
 #include <ayfly.h>
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define FREQ 48000
 #define FRAME_SIZE 4096
@@ -15,40 +15,40 @@ HippoLogAPI* g_hp_log = NULL;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct ReplayerData {
-	void* song;
-	int read_index;
-	int frames_decoded;
+    void* song;
+    int read_index;
+    int frames_decoded;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static const char* ayfly_supported_extensions() {
-	return "ay,vtx,ym,psg,asc,pt1,pt2,pt3,stc,stp,psc,pqt";
+    return "ay,vtx,ym,psg,asc,pt1,pt2,pt3,stc,stp,psc,pqt";
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void* ayfly_create(const HippoServiceAPI* service_api) {
-	void* data = malloc(sizeof(struct ReplayerData));
-	memset(data, 0, sizeof(struct ReplayerData));
+    void* data = malloc(sizeof(struct ReplayerData));
+    memset(data, 0, sizeof(struct ReplayerData));
 
     g_io_api = HippoServiceAPI_get_io_api(service_api, 1);
 
-	return data;
+    return data;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int ayfly_destroy(void* user_data) {
-	struct ReplayerData* data = (struct ReplayerData*)user_data;
+    struct ReplayerData* data = (struct ReplayerData*)user_data;
 
-	if (data->song) {
+    if (data->song) {
         ay_closesong(&data->song);
-	}
+    }
 
-	free(data);
+    free(data);
 
-	return 0;
+    return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -56,7 +56,7 @@ static int ayfly_destroy(void* user_data) {
 static int ayfly_open(void* user_data, const char* filename, int subsong) {
     uint64_t size = 0;
     void* file_data;
-	struct ReplayerData* data = (struct ReplayerData*)user_data;
+    struct ReplayerData* data = (struct ReplayerData*)user_data;
 
     HippoIoErrorCode res = HippoIo_read_file_to_memory(g_io_api, filename, &file_data, &size);
 
@@ -75,23 +75,23 @@ static int ayfly_open(void* user_data, const char* filename, int subsong) {
         return -1;
     }
 
-	return 0;
+    return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int ayfly_close(void* user_data) {
-
-	return 0;
+    return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // TODO: These checks needs to be made much better (sanity check some more sizes in the pattern etc)
 
-enum HippoProbeResult ayfly_probe_can_play(const uint8_t* data, uint32_t data_size, const char* filename, uint64_t total_size) {
+enum HippoProbeResult ayfly_probe_can_play(const uint8_t* data, uint32_t data_size, const char* filename,
+                                           uint64_t total_size) {
     if (ay_can_play((void*)data, (int)data_size)) {
         hp_info("Supported: %s", filename);
-	    return HippoProbeResult_Supported;
+        return HippoProbeResult_Supported;
     }
 
     hp_debug("Unsupported: %s", filename);
@@ -100,31 +100,29 @@ enum HippoProbeResult ayfly_probe_can_play(const uint8_t* data, uint32_t data_si
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int ayfly_read_data(void* user_data, void* dest, uint32_t samples_to_read) {
-	int16_t temp_data[FRAME_SIZE * 2];
-	uint8_t* ptr = (uint8_t*)temp_data;
+static HippoReadInfo ayfly_read_data(void* user_data, void* dest, uint32_t max_output_bytes,
+                                     uint32_t native_sample_rate) {
+    uint16_t samples_to_read = hippo_min(max_output_bytes / 4, FRAME_SIZE);
 
-	float* newDest = (float*)dest;
-	samples_to_read = hippo_min(FRAME_SIZE, samples_to_read);
+    // TODO: Support more than one tune
+    struct ReplayerData* replayer_data = (struct ReplayerData*)user_data;
 
-	// TODO: Support more than one tune
-	struct ReplayerData* replayer_data = (struct ReplayerData*)user_data;
+    uint16_t written = (uint16_t)ay_rendersongbuffer(replayer_data->song, (unsigned char*)dest, samples_to_read) / 4;
 
-    int written = (int)ay_rendersongbuffer(replayer_data->song, ptr, samples_to_read);
+    HippoReadInfo t = {
+        FREQ,
+        written,
+        2,
+        HippoOutputType_s16
+    };
 
-	const float scale = 1.0f / 32767.0f;
-
-	for (int i = 0; i < written; ++i) {
-		newDest[i] = ((float)temp_data[i]) * scale;
-	}
-
-	return written / 2;
+    return t;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int ayfly_seek(void* user_data, int ms) {
-	return 0;
+    return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -152,7 +150,7 @@ static int ayfly_metadata(const char* filename, const HippoServiceAPI* service_a
         return -1;
     }
 
-	hp_info("Updating metadata for %s", filename);
+    hp_info("Updating metadata for %s", filename);
 
     HippoMetadataId index = HippoMetadata_create_url(metadata_api, filename);
 
@@ -179,35 +177,34 @@ static void ayfly_event(void* user_data, const unsigned char* data, int len) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void ayfly_set_log(struct HippoLogAPI* log) { g_hp_log = log; }
+static void ayfly_set_log(struct HippoLogAPI* log) {
+    g_hp_log = log;
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static HippoPlaybackPlugin g_ayfly_plugin = {
-	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
-	"ayfly",
-	"0.0.1",
-	"ayfly 0.0.25",
-	ayfly_probe_can_play,
-	ayfly_supported_extensions,
-	ayfly_create,
-	ayfly_destroy,
-	ayfly_event,
-	ayfly_open,
-	ayfly_close,
-	ayfly_read_data,
-	ayfly_seek,
-	ayfly_metadata,
+    HIPPO_PLAYBACK_PLUGIN_API_VERSION,
+    "ayfly",
+    "0.0.1",
+    "ayfly 0.0.25",
+    ayfly_probe_can_play,
+    ayfly_supported_extensions,
+    ayfly_create,
+    ayfly_destroy,
+    ayfly_event,
+    ayfly_open,
+    ayfly_close,
+    ayfly_read_data,
+    ayfly_seek,
+    ayfly_metadata,
     ayfly_set_log,
-	NULL,
-	NULL,
+    NULL,
+    NULL,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 extern "C" HIPPO_EXPORT HippoPlaybackPlugin* hippo_playback_plugin() {
-	return &g_ayfly_plugin;
+    return &g_ayfly_plugin;
 }
-
-
-
