@@ -473,7 +473,6 @@ impl DataConverter {
 
         // if we have the same input format we don't need to change anything
         if channels && format && sample_rate {
-        	println!("Nothing to update");
             return;
         }
 
@@ -490,6 +489,9 @@ impl DataConverter {
         cfg.channelsIn = input_channel_count as u32;
         cfg.sampleRateIn = input_sample_rate;
 		//cfg.resampling.allowDynamicSampleRate = sys::MA_TRUE;
+
+		println!("Updated converter input: channel {} - format {:#?} - sample rate {}",
+			input_channel_count, input_format, input_sample_rate);
 
         //println!("output rate {}", cfg.sampleRateOut);
 
@@ -512,6 +514,7 @@ impl Drop for DataConverter {
         }
     }
 }
+
 
 unsafe impl Send for DataConverter {}
 unsafe impl Sync for DataConverter {}
