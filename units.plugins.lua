@@ -513,6 +513,8 @@ StaticLibrary {
 StaticLibrary {
 	Name = "taglib",
 
+	Defines = { "TAGLIB_STATIC" },
+
 	Env = {
 		CXXOPTS = {
 			{ "-Wno-sign-compare" ; Config = "linux-*-*" },
