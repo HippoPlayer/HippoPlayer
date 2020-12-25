@@ -93,7 +93,7 @@ private:
 class CYm2149Ex
 {
 public:
-		CYm2149Ex(ymu32 masterClock=ATARI_CLOCK,ymint prediv=1,ymu32 playRate=48000);
+		CYm2149Ex(ymu32 masterClock=ATARI_CLOCK,ymint prediv=1,ymu32 playRate=44100);
 		~CYm2149Ex();
 
 		void	reset(void);

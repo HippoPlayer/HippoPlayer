@@ -1,8 +1,8 @@
 #include <HippoPlugin.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <gme/gme.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define FREQ 48000
 #define FRAME_SIZE 1024
@@ -13,53 +13,53 @@ HippoLogAPI* g_hp_log = NULL;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct ReplayerData {
-	Music_Emu* song;
+    Music_Emu* song;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static const char* gme_supported_extensions() {
-	return "gbs,spc";
+    return "gbs,spc";
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static const char* find_filename_start(const char* path, int* offset) {
     for (size_t i = strlen(path) - 1; i > 0; i--) {
-    	char c = path[i];
+        char c = path[i];
         if (c == '/' || c == '\\') {
-        	*offset = (int)(i + 1);
-        	return &path[i + 1];
+            *offset = (int)(i + 1);
+            return &path[i + 1];
         }
     }
 
-	*offset = 0;
+    *offset = 0;
     return path;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void* gme_create(const HippoServiceAPI* service_api) {
-	void* data = malloc(sizeof(struct ReplayerData));
-	memset(data, 0, sizeof(struct ReplayerData));
+    void* data = malloc(sizeof(struct ReplayerData));
+    memset(data, 0, sizeof(struct ReplayerData));
 
     g_io_api = HippoServiceAPI_get_io_api(service_api, 1);
 
-	return data;
+    return data;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int gme_destroy(void* user_data) {
-	struct ReplayerData* data = (struct ReplayerData*)user_data;
+    struct ReplayerData* data = (struct ReplayerData*)user_data;
 
-	if (data->song) {
-		gme_delete(data->song);
-	}
+    if (data->song) {
+        gme_delete(data->song);
+    }
 
-	free(data);
+    free(data);
 
-	return 0;
+    return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -84,38 +84,39 @@ static Music_Emu* open_gme(const char* filename, const struct HippoIoAPI* io) {
 
     HippoIo_free_file_to_memory(io, data);
 
-	return song;
+    return song;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int gme_open(void* user_data, const char* filename, int subsong) {
-	struct ReplayerData* data = (struct ReplayerData*)user_data;
+    struct ReplayerData* data = (struct ReplayerData*)user_data;
 
-	if ((data->song = open_gme(filename, g_io_api)) == nullptr) {
-		return -1;
-	}
+    if ((data->song = open_gme(filename, g_io_api)) == nullptr) {
+        return -1;
+    }
 
     gme_start_track(data->song, subsong);
 
-	return 0;
+    return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int gme_close_in(void* user_data) {
-	struct ReplayerData* data = (struct ReplayerData*)user_data;
-	gme_delete(data->song);
-	data->song = NULL;
-	return 0;
+    struct ReplayerData* data = (struct ReplayerData*)user_data;
+    gme_delete(data->song);
+    data->song = NULL;
+    return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // TODO: These checks needs to be made much better (sanity check some more sizes in the pattern etc)
 
-enum HippoProbeResult gme_probe_can_play(const uint8_t* data, uint32_t data_size, const char* filename, uint64_t total_size) {
+enum HippoProbeResult gme_probe_can_play(const uint8_t* data, uint32_t data_size, const char* filename,
+                                         uint64_t total_size) {
     const char* error = 0;
-	Music_Emu* song;
+    Music_Emu* song;
 
     if ((error = gme_open_data(data, (long)data_size, &song, FREQ)) != nullptr) {
         // failed we try again with loading the full file
@@ -127,7 +128,7 @@ enum HippoProbeResult gme_probe_can_play(const uint8_t* data, uint32_t data_size
         }
     }
 
-	gme_delete(song);
+    gme_delete(song);
     hp_info("Supported: %s", filename);
     return HippoProbeResult_Supported;
 }
@@ -135,37 +136,33 @@ enum HippoProbeResult gme_probe_can_play(const uint8_t* data, uint32_t data_size
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef struct CallbackData {
-	void* dest;
-	int max_count;
-	int ret_count;
+    void* dest;
+    int max_count;
+    int ret_count;
 } CallbackData;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int gme_read_data(void* user_data, void* dest, uint32_t samples_to_read) {
-	struct ReplayerData* data = (struct ReplayerData*)user_data;
+static HippoReadInfo gme_read_data(void* user_data, void* dest, uint32_t max_output_bytes,
+                                   uint32_t native_sample_rate) {
+    struct ReplayerData* data = (struct ReplayerData*)user_data;
 
-	int16_t buffer[FRAME_SIZE];
+    uint16_t samples_to_read = hippo_min(max_output_bytes / 4, FRAME_SIZE);
 
-	samples_to_read = hippo_min(samples_to_read, FRAME_SIZE);
+    gme_play(data->song, samples_to_read, (short*)dest);
 
-	gme_play(data->song, samples_to_read, (short*)buffer);
-
-	const float scale = 1.0f / 32767.0f;
-	float* output = (float*)dest;
-
-    for (uint32_t i = 0; i < samples_to_read; ++i) {
-        const float v = ((float)buffer[i]) * scale;
-        *output++ = v;
-    }
-
-	return samples_to_read;
+    return HippoReadInfo {
+        FREQ,
+        uint16_t(samples_to_read / 2),
+        2,
+        HippoOutputType_s16
+    };
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int gme_seek_in(void* user_data, int ms) {
-	return 0;
+    return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -188,7 +185,7 @@ static int gme_metadata(const char* filename, const HippoServiceAPI* service_api
         return -1;
     }
 
-	hp_info("Updating metadata for %s", filename);
+    hp_info("Updating metadata for %s", filename);
 
     HippoMetadataId index = HippoMetadata_create_url(metadata_api, filename);
 
@@ -196,23 +193,23 @@ static int gme_metadata(const char* filename, const HippoServiceAPI* service_api
     strcpy(title_name, info->song);
 
     if (title_name[0] == 0) {
-	    int filename_start = 0;
-		const char* filename_only = find_filename_start(filename, &filename_start);
-		strcpy(title_name, filename_only);
+        int filename_start = 0;
+        const char* filename_only = find_filename_start(filename, &filename_start);
+        strcpy(title_name, filename_only);
 
-		for (int i = (int)strlen(title_name) - 1; i > 0; --i) {
-			if (title_name[i] == '.') {
-				title_name[i] = 0;
-				break;
-			}
-		}
+        for (int i = (int)strlen(title_name) - 1; i > 0; --i) {
+            if (title_name[i] == '.') {
+                title_name[i] = 0;
+                break;
+            }
+        }
     }
 
     HippoMetadata_set_tag(metadata_api, index, HippoMetadata_TitleTag, title_name);
     HippoMetadata_set_tag(metadata_api, index, HippoMetadata_ArtistTag, info->author);
     HippoMetadata_set_tag(metadata_api, index, HippoMetadata_SongTypeTag, info->system);
     HippoMetadata_set_tag(metadata_api, index, HippoMetadata_MessageTag, info->comment);
-	HippoMetadata_set_tag_f64(metadata_api, index, HippoMetadata_LengthTag, hippo_max(info->length, 0) / 1000.0f);
+    HippoMetadata_set_tag_f64(metadata_api, index, HippoMetadata_LengthTag, hippo_max(info->length, 0) / 1000.0f);
 
     gme_free_info(info);
 
@@ -252,35 +249,33 @@ static void gme_event(void* user_data, const unsigned char* data, int len) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void gme_set_log(struct HippoLogAPI* log) {
-	g_hp_log = log;
+    g_hp_log = log;
 }
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static HippoPlaybackPlugin s_gme_plugin = {
-	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
-	"Game Music Emu",
-	"0.0.1",
-	"Game Music Emu 0.6.3",
-	gme_probe_can_play,
-	gme_supported_extensions,
-	gme_create,
-	gme_destroy,
-	gme_event,
-	gme_open,
-	gme_close_in,
-	gme_read_data,
-	gme_seek_in,
-	gme_metadata,
+    HIPPO_PLAYBACK_PLUGIN_API_VERSION,
+    "Game Music Emu",
+    "0.0.1",
+    "Game Music Emu 0.6.3",
+    gme_probe_can_play,
+    gme_supported_extensions,
+    gme_create,
+    gme_destroy,
+    gme_event,
+    gme_open,
+    gme_close_in,
+    gme_read_data,
+    gme_seek_in,
+    gme_metadata,
     gme_set_log,
-	NULL,
-	NULL,
+    NULL,
+    NULL,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 extern "C" HIPPO_EXPORT HippoPlaybackPlugin* hippo_playback_plugin() {
-	return &s_gme_plugin;
+    return &s_gme_plugin;
 }
-

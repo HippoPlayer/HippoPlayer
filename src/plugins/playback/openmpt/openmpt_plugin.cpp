@@ -246,12 +246,12 @@ static int openmpt_close(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int openmpt_read_data(void* user_data, void* dest, uint32_t samples_to_read) {
+static HippoReadInfo openmpt_read_data(void* user_data, void* dest, uint32_t max_output_bytes, uint32_t native_sample_rate) {
     struct OpenMptData* replayer_data = (struct OpenMptData*)user_data;
 
-    // count is number of frames per channel and div by 2 as we have 2 channels
-    //const int count = 480;
-    int gen_count = replayer_data->mod->read_interleaved_stereo(48000, samples_to_read, (float*)dest) * 2;
+    const int samples_to_generate = hippo_min(512, max_output_bytes / 8);
+
+    uint16_t gen_count = (uint16_t)replayer_data->mod->read_interleaved_stereo(native_sample_rate, samples_to_generate, (float*)dest);
 
     // Send current positions back to frontend if we have some more data
     if (gen_count > 0) {
@@ -265,9 +265,12 @@ static int openmpt_read_data(void* user_data, void* dest, uint32_t samples_to_re
         HippoMessageAPI_send(replayer_data->message_api, builder.GetBufferPointer(), builder.GetSize());
     }
 
-    // TODO: Only send pattern data when we need requsted
-    // send_pattern_data(replayer_data);
-    return gen_count;
+    return HippoReadInfo {
+        native_sample_rate,
+        gen_count,
+        2,
+        HippoOutputType_f32
+    };
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

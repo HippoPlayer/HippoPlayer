@@ -156,7 +156,7 @@ struct Pokey {
 	int reloadCycles1;
 	int reloadCycles3;
 	int polyIndex;
-	int deltaBuffer[966];
+	int deltaBuffer[888];
 	int iirAcc;
 };
 
@@ -2504,12 +2504,12 @@ int ASAP_GetBlocksPlayed(const ASAP *self)
 
 int ASAP_GetPosition(const ASAP *self)
 {
-	return self->blocksPlayed * 10 / 480;
+	return self->blocksPlayed * 10 / 441;
 }
 
 static int ASAP_MillisecondsToBlocks(int milliseconds)
 {
-	return milliseconds * 480 / 10;
+	return milliseconds * 441 / 10;
 }
 
 bool ASAP_SeekSample(ASAP *self, int block)
@@ -2565,7 +2565,7 @@ int ASAP_GetWavHeader(const ASAP *self, uint8_t *buffer, ASAPSampleFormat format
 {
 	int use16bit = format != ASAPSampleFormat_U8 ? 1 : 0;
 	int blockSize = ASAPInfo_GetChannels(&self->moduleInfo) << use16bit;
-	int bytesPerSecond = 48000 * blockSize;
+	int bytesPerSecond = 44100 * blockSize;
 	int totalBlocks = ASAP_MillisecondsToBlocks(self->currentDuration);
 	int nBytes = (totalBlocks - self->blocksPlayed) * blockSize;
 	ASAP_PutLittleEndian(buffer, 8, 1163280727);
@@ -2574,7 +2574,7 @@ int ASAP_GetWavHeader(const ASAP *self, uint8_t *buffer, ASAPSampleFormat format
 	buffer[21] = 0;
 	buffer[22] = (uint8_t) ASAPInfo_GetChannels(&self->moduleInfo);
 	buffer[23] = 0;
-	ASAP_PutLittleEndians(buffer, 24, 48000, bytesPerSecond);
+	ASAP_PutLittleEndians(buffer, 24, 44100, bytesPerSecond);
 	buffer[32] = (uint8_t) blockSize;
 	buffer[33] = 0;
 	buffer[34] = (uint8_t) (8 << use16bit);
@@ -7365,7 +7365,7 @@ static void PokeyPair_Initialize(PokeyPair *self, bool ntsc, bool stereo)
 	self->extraPokeyMask = stereo ? 16 : 0;
 	Pokey_Initialize(&self->basePokey);
 	Pokey_Initialize(&self->extraPokey);
-	self->sampleFactor = ntsc ? 28122 : 28381;
+	self->sampleFactor = ntsc ? 25837 : 26075;
 	self->sampleOffset = 0;
 	self->readySamplesStart = 0;
 	self->readySamplesEnd = 0;

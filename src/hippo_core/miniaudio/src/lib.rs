@@ -8,6 +8,16 @@ use std::os::raw::c_char;
 use std::os::raw::c_void;
 pub use sys::ma_device;
 
+macro_rules! impl_from_c {
+    ($RustType:ty, $CType:ty) => {
+        impl $RustType {
+            pub fn from_c(c_enum: $CType) -> $RustType {
+                unsafe { std::mem::transmute(c_enum) }
+            }
+        }
+    };
+}
+
 pub type DataCallback = unsafe extern "C" fn(
     device_ptr: *mut sys::ma_device,
     output_ptr: *mut c_void,
@@ -94,25 +104,15 @@ pub struct Devices {
     pub devices: Vec<OutputDevice>,
 }
 
+//
 impl Devices {
     pub fn new() -> Result<Devices, Error> {
-        // backends prio, alsa over pulse audio and wasapi over dsound
-        /*
-        let backends: &[u32] = &[
-            sys::ma_backend_alsa,
-            sys::ma_backend_pulseaudio,
-            sys::ma_backend_wasapi,
-            sys::ma_backend_dsound,
-        ];
-        */
-
         let mut config = unsafe { sys::ma_context_config_init() };
         config.logCallback = Some(log_callback);
         config.pUserData = std::ptr::null_mut();
 
         let mut context = MaybeUninit::<sys::ma_context>::uninit();
 
-        //let result = unsafe { sys::ma_context_init(backends.as_ptr(), 4, &config, context.as_mut_ptr()) };
         let result =
             unsafe { sys::ma_context_init(std::ptr::null_mut(), 0, &config, context.as_mut_ptr()) };
 
@@ -154,15 +154,6 @@ impl Devices {
             let name = name.to_owned().to_string();
 
             trace!("Found output device {}", name);
-            unsafe {
-                trace!(
-                    "  Sample rate range {} - {}",
-                    (*device).minSampleRate,
-                    (*device).maxSampleRate
-                );
-            }
-
-            //trace!("Found output device {}", name);
 
             unsafe {
                 devices.push(OutputDevice {
@@ -195,9 +186,9 @@ impl Device {
         let dev = device_id.unwrap_or_else(|| std::ptr::null_mut());
 
         device_config.playback.pDeviceID = dev;
-        device_config.playback.format = sys::ma_format_f32;
+        device_config.playback.format = 0;
         device_config.playback.channels = 2;
-        device_config.sampleRate = 48000;
+        device_config.sampleRate = 0;
         device_config.dataCallback = Some(callback);
         device_config.stopCallback = Some(stop_callback);
         device_config.pUserData = user_data;
@@ -218,4 +209,312 @@ impl Device {
     pub fn close(&self) {
         unsafe { sys::ma_device_uninit(self.0 as *const _ as *mut _) };
     }
+
+    pub fn sample_rate(&self) -> u32 {
+        unsafe { (*self.0).sampleRate as u32 }
+    }
+
+    pub fn channels(&self) -> u32 {
+        unsafe { (*self.0).playback.channels as u32 }
+    }
+
+    pub fn format(&self) -> Format {
+        unsafe { Format::from_c((*self.0).playback.format) }
+    }
 }
+
+#[derive(Clone, Copy, PartialEq)]
+pub enum ResampleAlgorithm {
+    Linear {
+        lpf_order: u32,
+        lpf_nyquist_factor: f64,
+    },
+
+    Speex {
+        quality: u32,
+    },
+}
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Format {
+    Unknown = sys::ma_format_unknown as _,
+    U8 = sys::ma_format_u8 as _,
+    S16 = sys::ma_format_s16 as _,
+    S24 = sys::ma_format_s24 as _,
+    S32 = sys::ma_format_s32 as _,
+    F32 = sys::ma_format_f32 as _,
+}
+
+impl_from_c!(Format, sys::ma_format);
+
+impl Format {
+    /// The size of one sample in this format in bytes.
+    pub fn size_in_bytes(self) -> usize {
+        match self {
+            Self::Unknown => 0,
+            Self::U8 => 1,
+            Self::S16 => 2,
+            Self::S24 => 3,
+            Self::S32 => 4,
+            Self::F32 => 4,
+        }
+    }
+}
+
+#[repr(transparent)]
+pub struct DataConverterConfig(sys::ma_data_converter_config);
+
+impl DataConverterConfig {
+    pub fn new(
+        format_in: Format,
+        format_out: Format,
+        channels_in: u32,
+        channels_out: u32,
+        sample_rate_in: u32,
+        sample_rate_out: u32,
+        resampler: ResampleAlgorithm,
+    ) -> DataConverterConfig {
+        let mut cfg = DataConverterConfig(unsafe {
+            sys::ma_data_converter_config_init(
+                format_in as _,
+                format_out as _,
+                channels_in,
+                channels_out,
+                sample_rate_in,
+                sample_rate_out,
+            )
+        });
+
+		cfg.0.resampling.allowDynamicSampleRate = sys::MA_TRUE;
+        cfg.set_resampling(resampler);
+        cfg
+    }
+
+    #[inline]
+    pub fn format_in(&self) -> Format {
+        Format::from_c(self.0.formatIn)
+    }
+
+    #[inline]
+    pub fn set_format_in(&mut self, format: Format) {
+        self.0.formatIn = format as _;
+    }
+    #[inline]
+    pub fn format_out(&self) -> Format {
+        Format::from_c(self.0.formatOut)
+    }
+
+    #[inline]
+    pub fn set_format_out(&mut self, format: Format) {
+        self.0.formatOut = format as _;
+    }
+
+    #[inline]
+    pub fn channels_in(&self) -> u32 {
+        self.0.channelsIn
+    }
+
+    #[inline]
+    pub fn set_channels_in(&mut self, channels: u32) {
+        self.0.channelsIn = channels;
+    }
+
+    #[inline]
+    pub fn channels_out(&self) -> u32 {
+        self.0.channelsOut
+    }
+
+    #[inline]
+    pub fn set_channels_out(&mut self, channels: u32) {
+        self.0.channelsOut = channels;
+    }
+
+    pub fn sample_rate_in(&self) -> u32 {
+        self.0.sampleRateIn
+    }
+
+    pub fn set_sample_rate_in(&mut self, rate: u32) {
+        self.0.sampleRateIn = rate;
+    }
+
+    pub fn sample_rate_out(&self) -> u32 {
+        self.0.sampleRateOut
+    }
+
+    pub fn set_resampling(&mut self, algo: ResampleAlgorithm) {
+        match algo {
+            ResampleAlgorithm::Linear {
+                lpf_order,
+                lpf_nyquist_factor,
+            } => {
+                self.0.resampling.algorithm = sys::ma_resample_algorithm_linear;
+                self.0.resampling.linear.lpfOrder = lpf_order;
+                self.0.resampling.linear.lpfNyquistFactor = lpf_nyquist_factor;
+            }
+
+            ResampleAlgorithm::Speex { quality } => {
+                self.0.resampling.algorithm = sys::ma_resample_algorithm_speex;
+                self.0.resampling.speex.quality = quality as _;
+            }
+        }
+    }
+
+    pub fn resampling(&self) -> ResampleAlgorithm {
+        match self.0.resampling.algorithm {
+            sys::ma_resample_algorithm_linear => ResampleAlgorithm::Linear {
+                lpf_order: self.0.resampling.linear.lpfOrder,
+                lpf_nyquist_factor: self.0.resampling.linear.lpfNyquistFactor,
+            },
+
+            sys::ma_resample_algorithm_speex => ResampleAlgorithm::Speex {
+                quality: self.0.resampling.speex.quality as _,
+            },
+
+            _ => unreachable!(),
+        }
+    }
+}
+
+
+#[repr(transparent)]
+pub struct DataConverter(sys::ma_data_converter);
+
+impl DataConverter {
+    pub fn new(config: &DataConverterConfig) -> Result<DataConverter, Error> {
+        let mut converter = std::mem::MaybeUninit::<DataConverter>::uninit();
+        unsafe {
+            Error::from_c_result(sys::ma_data_converter_init(
+                &config.0 as *const _,
+                converter.as_mut_ptr().cast(),
+            ))?;
+            Ok(converter.assume_init())
+        }
+    }
+
+    #[inline]
+    pub fn process_pcm_frames(
+        &mut self,
+        output: *mut c_void,
+        input: *const c_void,
+        output_frame_count: usize,
+        input_frame_count: usize,
+    ) -> Result<(u64, u64), Error> {
+        let mut input_frame_count = input_frame_count as u64;
+        let mut output_frame_count = output_frame_count as u64;
+
+        Error::from_c_result(unsafe {
+            sys::ma_data_converter_process_pcm_frames(
+                &mut self.0,
+                input as *const _,
+                &mut input_frame_count,
+                output as *mut _,
+                &mut output_frame_count,
+            )
+        })?;
+
+        Ok((output_frame_count, input_frame_count))
+    }
+
+    pub fn set_rate(&mut self, sample_rate_in: u32, sample_rate_out: u32) -> Result<(), Error> {
+        Error::from_c_result(unsafe {
+            sys::ma_data_converter_set_rate(&mut self.0, sample_rate_in, sample_rate_out)
+        })
+    }
+
+    pub fn set_rate_ratio(&mut self, ratio_in_out: f32) -> Result<(), Error> {
+        Error::from_c_result(unsafe {
+            sys::ma_data_converter_set_rate_ratio(&mut self.0, ratio_in_out)
+        })
+    }
+
+    pub fn required_input_frame_count(&self, output_frame_count: u64) -> u64 {
+        unsafe {
+            sys::ma_data_converter_get_required_input_frame_count(
+                &self as *const _ as *mut _,
+                output_frame_count,
+            )
+        }
+    }
+
+    pub fn expected_output_frame_count(&mut self, input_frame_count: u64) -> u64 {
+        unsafe {
+            sys::ma_data_converter_get_expected_output_frame_count(
+                &mut self.0,
+                input_frame_count,
+            )
+        }
+    }
+
+    pub fn input_latency(&self) -> u64 {
+        unsafe { sys::ma_data_converter_get_input_latency(&self as *const _ as *mut _) }
+    }
+
+
+    pub fn output_latency(&self) -> u64 {
+        unsafe { sys::ma_data_converter_get_output_latency(&self as *const _ as *mut _) }
+    }
+
+    pub fn config(&self) -> &sys::ma_data_converter_config {
+        &self.0.config
+    }
+
+
+    /// Re-constructs the resampler if any of the input parameters differs
+    pub fn update(
+        &mut self,
+        input_channel_count: u8,
+        input_format: Format,
+        input_sample_rate: u32,
+    ) {
+        let channels = self.0.config.channelsIn == input_channel_count as u32;
+        let format = Format::from_c(self.0.config.formatIn) == input_format;
+        let sample_rate = self.0.config.sampleRateIn == input_sample_rate;
+
+        // if we have the same input format we don't need to change anything
+        if channels && format && sample_rate {
+            return;
+        }
+
+        // if only sample rate is different we can update it without recrating the object
+        if !sample_rate && channels && format {
+            self.set_rate(input_sample_rate, self.0.config.sampleRateOut)
+                .unwrap();
+            self.0.config.sampleRateIn = input_sample_rate;
+            return;
+        }
+
+        let mut cfg = self.0.config;
+        cfg.formatIn = input_format as _;
+        cfg.channelsIn = input_channel_count as u32;
+        cfg.sampleRateIn = input_sample_rate;
+		//cfg.resampling.allowDynamicSampleRate = sys::MA_TRUE;
+
+		println!("Updated converter input: channel {} - format {:#?} - sample rate {}",
+			input_channel_count, input_format, input_sample_rate);
+
+        //println!("output rate {}", cfg.sampleRateOut);
+
+        unsafe {
+            sys::ma_data_converter_uninit(&mut self.0);
+            sys::ma_data_converter_init(&cfg as *const _, &mut self.0 as *mut _);
+        }
+    }
+}
+
+
+
+
+
+
+impl Drop for DataConverter {
+    fn drop(&mut self) {
+        unsafe {
+            sys::ma_data_converter_uninit(&mut self.0);
+        }
+    }
+}
+
+
+unsafe impl Send for DataConverter {}
+unsafe impl Sync for DataConverter {}
