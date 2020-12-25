@@ -510,6 +510,49 @@ StaticLibrary {
 
 -----------------------------------------------------------------------------------------------------------------------
 
+StaticLibrary {
+	Name = "taglib",
+
+	Env = {
+		CXXOPTS = {
+			{ "-Wno-sign-compare" ; Config = "linux-*-*" },
+		}
+	},
+
+	Includes = {
+	    "src/plugin_api",
+	    "src/external/taglib/taglib",
+	    "src/external/taglib/taglib/toolkit",
+	    "src/external/taglib/taglib/mpeg",
+	    "src/external/taglib/taglib/asf",
+	    "src/external/taglib/taglib/flac",
+	    "src/external/taglib/taglib/ogg",
+	    "src/external/taglib/taglib/ogg/opus",
+	    "src/external/taglib/taglib/ogg/flac",
+	    "src/external/taglib/taglib/ogg/vorbis",
+	    "src/external/taglib/taglib/ogg/speex",
+	    "src/external/taglib/taglib/ape",
+	    "src/external/taglib/taglib/mod",
+	    "src/external/taglib/taglib/mpc",
+	    "src/external/taglib/taglib/mp4",
+	    "src/external/taglib/taglib/s3m",
+	    "src/external/taglib/taglib/xm",
+	    "src/external/taglib/taglib/it",
+	    "src/external/taglib/taglib/trueaudio",
+	    "src/external/taglib/taglib/riff",
+	    "src/external/taglib/taglib/wavpack",
+	    "src/external/taglib/taglib/riff/aiff",
+	    "src/external/taglib/taglib/riff/wav",
+	    "src/external/taglib/taglib/mpeg/id3v1",
+	    "src/external/taglib/taglib/mpeg/id3v2",
+	    "src/external/taglib/taglib/mpeg/id3v2/frames",
+	},
+
+	Sources = { get_c_cpp_src("src/external/taglib") },
+}
+
+-----------------------------------------------------------------------------------------------------------------------
+
 SharedLibrary {
 	Name = "sc68",
 
@@ -716,6 +759,23 @@ SharedLibrary {
 -----------------------------------------------------------------------------------------------------------------------
 
 SharedLibrary {
+	Name = "mp3",
+
+	Includes = {
+	    "src/plugin_api",
+	    "src/external/taglib",
+	},
+
+	Sources = {
+		get_c_cpp_src("src/plugins/playback/mp3"),
+	},
+
+	Depends = { "taglib" },
+}
+
+-----------------------------------------------------------------------------------------------------------------------
+
+SharedLibrary {
 	Name = "mdx",
 
 	Env = {
@@ -875,6 +935,7 @@ Default "gme"
 -- Default "gbsplay"
 Default "hively"
 Default "mdx"
+Default "mp3"
 -- Default "nsf"
 Default "openmpt"
 Default "sc68"
