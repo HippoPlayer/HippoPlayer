@@ -43,6 +43,9 @@
 
 UINT8 CmdList[0x100]; // used by VGMPlay.c and VGMPlay_AddFmts.c
 bool ErrorHappened;   // used by VGMPlay.c and VGMPlay_AddFmts.c
+
+#if 0
+
 extern VGM_HEADER VGMHead;
 extern UINT32 SampleRate;
 extern bool EndPlay;
@@ -270,3 +273,5 @@ int main(int argc, char *argv[]) {
 
 	return 0;
 }
+
+#endif

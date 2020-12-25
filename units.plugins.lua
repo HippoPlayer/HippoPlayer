@@ -310,6 +310,7 @@ SharedLibrary {
 		"VGMPlay/VGMPlay.c",
 		"VGMPlay/VGMPlay_AddFmts.c",
 		"VGMPlay/Stream.c",
+		"VGMPlay/vgm2wav.c",
 		"VGMPlay/ChipMapper.c",
 		"vgm_plugin.cpp",
 	},
