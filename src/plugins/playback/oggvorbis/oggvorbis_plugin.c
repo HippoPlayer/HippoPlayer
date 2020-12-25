@@ -1,5 +1,6 @@
 #include <HippoPlugin.h>
 #include <taglib_metadata.h>
+#include <stdint.h>
 #include "minivorbis.h"
 #include <math.h>
 #include <stdio.h>
