@@ -778,6 +778,31 @@ SharedLibrary {
 -----------------------------------------------------------------------------------------------------------------------
 
 SharedLibrary {
+	Name = "oggvorbis",
+
+	Includes = {
+	    "src/plugin_api",
+	    "src/external/taglib",
+	},
+
+	Env = {
+		CCOPTS = {
+			"-Wno-unused-variable",
+			"-Wno-unused-variable" ; Config = { "macos*-*-*", "linux-*-*" },
+			{ "/wd4267"; Config = "win64-*-*" },
+		},
+	},
+
+	Sources = {
+		get_c_cpp_src("src/plugins/playback/oggvorbis"),
+	},
+
+	Depends = { "taglib" },
+}
+
+-----------------------------------------------------------------------------------------------------------------------
+
+SharedLibrary {
 	Name = "mdx",
 
 	Env = {
@@ -939,6 +964,7 @@ Default "hively"
 Default "mdx"
 Default "mp3"
 -- Default "nsf"
+Default "oggvorbis"
 Default "openmpt"
 Default "sc68"
 Default "sid"
