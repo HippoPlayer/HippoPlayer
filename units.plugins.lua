@@ -665,6 +665,43 @@ SharedLibrary {
 -----------------------------------------------------------------------------------------------------------------------
 
 SharedLibrary {
+	Name = "wavpack",
+
+	Defines = {
+        "LIBWAVPACK_MAJOR=5",
+        "LIBWAVPACK_MINOR=3",
+        "LIBWAVPACK_MICRO=0",
+        "STDC_HEADERS=1",
+        "HAVE_SYS_TYPES_H=1",
+        "HAVE_SYS_STAT_H=1",
+        "HAVE_STDLIB_H=1",
+        "HAVE_STRING_H=1",
+        "HAVE_MEMORY_H=1",
+        "HAVE_STRINGS_H=1",
+        "HAVE_INTTYPES_H=1",
+        "HAVE_STDINT_H=1",
+        "HAVE_UNISTD_H=1",
+        "HAVE_DLFCN_H=1",
+        "STDC_HEADERS=1",
+        "HAVE_FSEEKO=1",
+        "ENABLE_DSD",
+        -- "OPT_ASM_X64=1",
+        { "HAVE___BUILTIN_CLZ=1", "HAVE___BUILTIN_CTZ=1" ; Config = "linux-*-*" },
+	},
+
+	Includes = {
+	    "src/plugin_api",
+	    "src/plugins/playback/wavpack/wavpack/include",
+	},
+
+	Sources = {
+		get_c_cpp_src("src/plugins/playback/wavpack"),
+	},
+}
+
+-----------------------------------------------------------------------------------------------------------------------
+
+SharedLibrary {
 	Name = "mdx",
 
 	Env = {
@@ -683,6 +720,7 @@ SharedLibrary {
 		get_c_cpp_src("src/plugins/playback/mdx"),
 	},
 }
+
 
 -----------------------------------------------------------------------------------------------------------------------
 
@@ -714,29 +752,6 @@ SharedLibrary {
 	Libs = { "stdc++"; Config = "macosx-*-*" },
 }
 
---[[
------------------------------------------------------------------------------------------------------------------------
-
-SharedLibrary {
-	Name = "FutureComposerPlugin",
-	Env = {
-		CPPPATH = { "src/plugins/futurecomposer/src" },
-		CPPDEFS = {
-			{ "HAVE_CONFIG_H"; Config = "macosx-*-*" }
-		},
-	},
-
-	Sources = {
-		get_c_cpp_src("src/plugins/futurecomposer/src"),
-		"src/plugins/futurecomposer/FutureComposerPlugin.c",
-	},
-
-	Libs = {
-		{ "stdc++"; Config = "macosx-*-*" },
-	},
-}
-
---]]
 
 -----------------------------------------------------------------------------------------------------------------------
 --  View plugins
@@ -852,6 +867,7 @@ Default "sid"
 Default "stsound"
 Default "tfmx"
 Default "vgm"
+Default "wavpack"
 
 -- Views
 
