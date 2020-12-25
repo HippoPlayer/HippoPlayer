@@ -702,6 +702,20 @@ SharedLibrary {
 -----------------------------------------------------------------------------------------------------------------------
 
 SharedLibrary {
+	Name = "flac",
+
+	Includes = {
+	    "src/plugin_api",
+	},
+
+	Sources = {
+		get_c_cpp_src("src/plugins/playback/flac"),
+	},
+}
+
+-----------------------------------------------------------------------------------------------------------------------
+
+SharedLibrary {
 	Name = "mdx",
 
 	Env = {
@@ -856,6 +870,7 @@ SharedLibrary {
 Default "adplug"
 Default "asap"
 Default "ayfly"
+Default "flac"
 Default "gme"
 -- Default "gbsplay"
 Default "hively"
