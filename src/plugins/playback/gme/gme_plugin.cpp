@@ -153,7 +153,7 @@ static HippoReadInfo gme_read_data(void* user_data, void* dest, uint32_t max_out
 
     return HippoReadInfo {
         FREQ,
-        samples_to_read / 2,
+        uint16_t(samples_to_read / 2),
         2,
         HippoOutputType_s16
     };
