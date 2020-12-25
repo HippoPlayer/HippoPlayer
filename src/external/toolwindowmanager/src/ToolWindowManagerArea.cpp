@@ -107,7 +107,7 @@ void ToolWindowManagerArea::updateToolWindow(QWidget *toolWindow)
   int index = indexOf(toolWindow);
   if(index >= 0)
   {
-    ToolWindowManagerTabBar *tb = static_cast<ToolWindowManagerTabBar *>(tabBar());
+    //ToolWindowManagerTabBar *tb = static_cast<ToolWindowManagerTabBar *>(tabBar());
     if(m_manager->toolWindowProperties(toolWindow) & ToolWindowManager::HideCloseButton)
       showCloseButton(tabBar(), index, false);
     else

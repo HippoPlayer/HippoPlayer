@@ -294,7 +294,7 @@ impl HippoCore {
 
 
 /// init the data directory used for configs, logs, databases, etec
-pub extern "C" fn init_config_dir() -> Result<PathBuf> {
+fn init_config_dir() -> Result<PathBuf> {
     if let Some(config_dir) = dirs::config_dir() {
         let dir = config_dir.join("HippoPlayer");
         if std::fs::create_dir_all(&dir).is_ok() {
