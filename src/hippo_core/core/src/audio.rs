@@ -8,8 +8,6 @@ use std::ffi::CString;
 use std::os::raw::c_void;
 use std::sync::Mutex;
 
-use std::io::Write;
-
 use crate::service_ffi::PluginService;
 //use ringbuf::{Consumer, Producer, RingBuffer};
 use ringbuf::{Producer, RingBuffer};

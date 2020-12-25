@@ -224,13 +224,14 @@ SharedLibrary {
 
 
 	Env = {
-		CCOPTS = { {
+		CCOPTS = {
 			"-Wno-unused-value",
+            "-Wno-unused-but-set-variable",
 			"-Wno-unused-function",
 			"-Wno-absolute-value", -- np_nes_dmc.c:536:6: warning: taking the absolute value of unsigned type 'unsigned int' has no effect [-We]
 			"-Wno-parentheses-equality", -- es5503.c:149:12: warning: equality comparison with extraneous parentheses [-Wparentheses-equality]
 			"-Wno-shift-negative-value", -- k054539.c:155:6: warning: shifting a negative signed value is undefined [-Wshift-negative-value]
-			"-Wno-unused-variable" ; Config = "macosx-*-*" },
+			"-Wno-unused-variable" ; Config = { "macos*-*-*", "linux-*-*" },
 		},
 	},
 
@@ -310,7 +311,6 @@ SharedLibrary {
 		"VGMPlay/VGMPlay_AddFmts.c",
 		"VGMPlay/Stream.c",
 		"VGMPlay/ChipMapper.c",
-		"VGMPlay/vgm2wav.c",
 		"vgm_plugin.cpp",
 	},
 
@@ -352,6 +352,15 @@ SharedLibrary {
 	    "src/plugin_api",
         "src/plugins/playback/ayfly/src/libayfly",
         "src/plugins/playback/ayfly/src/libayfly/z80ex/include",
+	},
+
+	Env = {
+		CXXOPTS = {
+			{ "-Wno-sign-compare",
+              "-Wno-parentheses",
+			  "-Wno-unused-but-set-variable",
+			  "-Wno-unused-variable" ; Config = "linux-*-*" },
+		}
 	},
 
 	Defines = {
@@ -450,6 +459,12 @@ StaticLibrary {
 
 	SourceDir = "src/plugins/playback/sc68",
 
+	Env = {
+		CCOPTS = {
+			{ "-Wno-unused-function", "-Wno-unused-variable"; Config = "linux-*-*" },
+		}
+	},
+
 	Defines = {
         "HAVE_CONFIG_H",
 	},
@@ -490,6 +505,12 @@ SharedLibrary {
 	Name = "sc68",
 
 	SourceDir = "src/plugins/playback/sc68",
+
+	Env = {
+		CCOPTS = {
+			{ "-Wno-unused-function", "-Wno-unused-variable"; Config = "linux-*-*" },
+		}
+	},
 
 	Defines = {
         "HAVE_CONFIG_H",
@@ -581,8 +602,22 @@ SharedLibrary {
 
 -----------------------------------------------------------------------------------------------------------------------
 
+local adplug_opts = {
+    "-Wno-misleading-indentation",
+    "-Wno-sign-compare",
+    "-Wno-parentheses",
+    "-Wno-write-strings",
+    "-Wno-unused-but-set-variable",
+    "-Wno-unused-variable"; Config = "linux-*-*",
+}
+
 SharedLibrary {
 	Name = "adplug",
+
+	Env = {
+		CCOPTS = { adplug_opts },
+		CXXOPTS = { adplug_opts },
+	},
 
 	Includes = {
 	    "src/plugin_api",
@@ -621,6 +656,14 @@ SharedLibrary {
 
 SharedLibrary {
 	Name = "mdx",
+
+	Env = {
+		CCOPTS = {
+			{ "-Wno-unused-but-set-variable",
+			  "-Wno-unused-label",
+			  "-Wno-unused-function"; Config = "linux-*-*" },
+		}
+	},
 
 	Includes = {
 	    "src/plugin_api",
