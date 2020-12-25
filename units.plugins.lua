@@ -232,6 +232,7 @@ SharedLibrary {
 			"-Wno-parentheses-equality", -- es5503.c:149:12: warning: equality comparison with extraneous parentheses [-Wparentheses-equality]
 			"-Wno-shift-negative-value", -- k054539.c:155:6: warning: shifting a negative signed value is undefined [-Wshift-negative-value]
 			"-Wno-unused-variable" ; Config = { "macos*-*-*", "linux-*-*" },
+			{ "/wd4267"; Config = "win64-*-*" },
 		},
 	},
 
@@ -361,6 +362,7 @@ SharedLibrary {
               "-Wno-parentheses",
 			  "-Wno-unused-but-set-variable",
 			  "-Wno-unused-variable" ; Config = "linux-*-*" },
+            { "/wd4267", "/wd4018"; Config = "win64-*-*" },
 		}
 	},
 
@@ -423,6 +425,12 @@ SharedLibrary {
 
 SharedLibrary {
 	Name = "gme",
+
+    Env = {
+       CXXOPTS = {
+            { "/wd4267", "/wd4018"; Config = "win64-*-*" },
+        }
+    },
 
 	Defines = {
         "VGM_YM2612_MAME",
@@ -604,12 +612,13 @@ SharedLibrary {
 -----------------------------------------------------------------------------------------------------------------------
 
 local adplug_opts = {
-    "-Wno-misleading-indentation",
+    { "-Wno-misleading-indentation",
     "-Wno-sign-compare",
     "-Wno-parentheses",
     "-Wno-write-strings",
     "-Wno-unused-but-set-variable",
-    "-Wno-unused-variable"; Config = "linux-*-*",
+    "-Wno-unused-variable"; Config = "linux-*-*" },
+   { "/wd4267"; Config = "win64-*-*" },
 }
 
 SharedLibrary {
