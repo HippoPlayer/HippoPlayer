@@ -686,8 +686,7 @@ SharedLibrary {
         "HAVE_FSEEKO=1",
         "ENABLE_DSD",
         -- "OPT_ASM_X64=1",
-        "HAVE___BUILTIN_CLZ=1",
-        "HAVE___BUILTIN_CTZ=1",
+        { "HAVE___BUILTIN_CLZ=1", "HAVE___BUILTIN_CTZ=1" ; Config = "linux-*-*" },
 	},
 
 	Includes = {
