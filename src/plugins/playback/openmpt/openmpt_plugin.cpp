@@ -446,14 +446,15 @@ void openmpt_event(void* user_data, const unsigned char* data, int len) {
 
 static void openmpt_static_init(struct HippoLogAPI* log, const HippoServiceAPI* service_api) {
     g_hp_log = log;
+
     auto api = HippoServiceAPI_get_settings_api(service_api, HIPPO_SETTINGS_API_VERSION);
 
     if (HippoSettings_register_filetype_settings(api, PLUGIN_NAME, s_settings_template) != HippoSettingsError_Ok) {
-        hp_error("Unable to register settings, error: %s", HippoSettings_get_last_error(api));
+        //hp_error("Unable to register settings, error: %s", HippoSettings_get_last_error(api));
     }
 
     if (HippoSettings_register_global_settings(api, PLUGIN_NAME, s_global_settings) != HippoSettingsError_Ok) {
-        hp_error("Unable to register settings, error: %s", HippoSettings_get_last_error(api));
+        //hp_error("Unable to register settings, error: %s", HippoSettings_get_last_error(api));
     }
 }
 

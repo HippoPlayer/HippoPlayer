@@ -295,6 +295,7 @@ pub struct HippoSettingsAPI {
             priv_data: *mut ::std::os::raw::c_void,
             id: ::std::os::raw::c_int,
             value: *mut ::std::os::raw::c_char,
+            max_len: ::std::os::raw::c_int,
         ) -> HippoSettingsError,
     >,
     pub get_int: ::std::option::Option<
@@ -308,20 +309,8 @@ pub struct HippoSettingsAPI {
         unsafe extern "C" fn(
             priv_data: *mut ::std::os::raw::c_void,
             id: ::std::os::raw::c_int,
-            value: *mut ::std::os::raw::c_int,
+            value: *mut f32,
         ) -> HippoSettingsError,
-    >,
-    pub enable_ctl: ::std::option::Option<
-        unsafe extern "C" fn(
-            priv_data: *mut ::std::os::raw::c_void,
-            id: ::std::os::raw::c_int,
-            state: bool,
-        ) -> HippoSettingsError,
-    >,
-    pub get_last_error: ::std::option::Option<
-        unsafe extern "C" fn(
-            priv_data: *mut ::std::os::raw::c_void,
-        ) -> *const ::std::os::raw::c_char,
     >,
 }
 pub type HippoRegisterSettingsAPI = HippoSettingsAPI;

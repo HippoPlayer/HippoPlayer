@@ -1,30 +1,62 @@
-pub fn add(a: i32, b: i32) -> i32 {
-    a + b
+use crate::ffi::{HSSetting, HippoSettingsError};
+use std::os::raw::{c_char, c_int, c_void};
+use std::ffi::CStr;
+
+pub struct PlaybackSettings {
+    _dummy: u32,
 }
 
-// This is a really bad adding function, its purpose is to fail in this
-// example.
-#[allow(dead_code)]
-fn bad_add(a: i32, b: i32) -> i32 {
-    a - b
+impl PlaybackSettings {
+    pub fn new() -> PlaybackSettings {
+        PlaybackSettings { _dummy: 0 }
+    }
 }
 
-#[cfg(test)]
-mod tests {
-    // Note this useful idiom: importing names from outer (for mod tests) scope.
-    use super::*;
+pub unsafe extern "C" fn register_filetype_settings(
+    _priv_data: *mut c_void,
+    _name: *const c_char,
+    _settings: *const HSSetting,
+    _count: c_int,
+) -> HippoSettingsError {
+    let plugin_id = CStr::from_ptr(_name);
 
-    #[test]
-    fn test_add() {
-        assert_eq!(add(1, 2), 3);
-    }
+    println!("Register settings for {}", plugin_id.to_string_lossy());
 
-    #[test]
-    fn test_bad_add() {
-        // This assert would fire and test will fail.
-        // Please note, that private functions can be tested too!
-        assert_eq!(bad_add(1, 2), 3);
-    }
+    0
+}
+
+pub unsafe extern "C" fn register_global_settings(
+    _priv_data: *mut c_void,
+    _name: *const c_char,
+    _settings: *const HSSetting,
+    _count: c_int,
+) -> HippoSettingsError {
+    0
+}
+
+pub unsafe extern "C" fn get_string(
+    _priv_data: *mut c_void,
+    _id: c_int,
+    _value: *mut c_char,
+    _max_len: c_int,
+) -> HippoSettingsError {
+    0
+}
+
+pub unsafe extern "C" fn get_int(
+    _priv_data: *mut c_void,
+    _id: c_int,
+    _value: *mut c_int,
+) -> HippoSettingsError {
+    0
+}
+
+pub unsafe extern "C" fn get_float(
+    _priv_data: *mut c_void,
+    _id: c_int,
+    _value: *mut f32,
+) -> HippoSettingsError {
+    0
 }
 
 

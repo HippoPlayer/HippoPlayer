@@ -114,7 +114,7 @@ impl Plugins {
         }
     }
 
-    fn add_plugin_lib(&mut self, name: &str, plugin: &Arc<Lib>) {
+    fn add_plugin_lib(&mut self, name: &str, plugin: &Arc<Lib>, service_api: *const ffi::HippoServiceAPI) {
         let func: Result<
             Symbol<extern "C" fn() -> *const ffi::HippoPlaybackPlugin>,
             ::std::io::Error,
@@ -162,7 +162,7 @@ impl Plugins {
 
                 unsafe {
                     (*log_api).log_set_base_name.unwrap()((*log_api).priv_data, c_name.as_ptr());
-                    (static_init)(log_api, std::ptr::null());
+                    (static_init)(log_api, service_api);
                 }
             }
 
@@ -184,25 +184,25 @@ impl Plugins {
         }
     }
 
-    fn internal_add_plugins_from_path(&mut self, path: &str) {
+    fn internal_add_plugins_from_path(&mut self, path: &str, service_api: *const ffi::HippoServiceAPI) {
         for entry in WalkDir::new(path).max_depth(1) {
             if let Ok(t) = entry {
                 if Self::check_file_type(&t) {
-                    self.add_plugin(t.path().to_str().unwrap());
+                    self.add_plugin(t.path().to_str().unwrap(), service_api);
                     //println!("{}", t.path().display());
                 }
             }
         }
     }
 
-    pub fn add_plugins_from_path(&mut self) {
-        self.internal_add_plugins_from_path("plugins");
-        self.internal_add_plugins_from_path(".");
+    pub fn add_plugins_from_path(&mut self, service_api: *const ffi::HippoServiceAPI) {
+        self.internal_add_plugins_from_path("plugins", service_api);
+        self.internal_add_plugins_from_path(".", service_api);
     }
 
-    pub fn add_plugin(&mut self, name: &str) {
+    pub fn add_plugin(&mut self, name: &str, service_api: *const ffi::HippoServiceAPI) {
         match self.plugin_handler.add_library(name, PlatformName::No) {
-            Ok(lib) => self.add_plugin_lib(name, &lib),
+            Ok(lib) => self.add_plugin_lib(name, &lib, service_api),
             Err(e) => {
                 println!("Unable to load dynamic lib, err {:?}", e);
             }

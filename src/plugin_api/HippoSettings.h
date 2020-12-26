@@ -154,9 +154,9 @@ typedef struct HippoSettingsAPI {
     //HippoSettingsError (*layout_hints)(void* priv_data, void* data);
 
     // access settings
-    HippoSettingsError (*get_string)(void* priv_data, int id, char* value);
+    HippoSettingsError (*get_string)(void* priv_data, int id, char* value, int max_len);
     HippoSettingsError (*get_int)(void* priv_data, int id, int* value);
-    HippoSettingsError (*get_float)(void* priv_data, int id, int* value);
+    HippoSettingsError (*get_float)(void* priv_data, int id, float* value);
 
     // Update settings
     // HippoSettingError (*set_string)(void* priv_data, int id, char* value);
@@ -164,10 +164,10 @@ typedef struct HippoSettingsAPI {
     // HippoSettingError (*set_float)(void* priv_data, int id, int* value);
 
     // makes it possible to disable / enable a control
-    HippoSettingsError (*enable_ctl)(void* priv_data, int id, bool state);
+    //HippoSettingsError (*enable_ctl)(void* priv_data, int id, bool state);
 
     // get the last error (null if no error)
-    const char* (*get_last_error)(void* priv_data);
+    //const char* (*get_last_error)(void* priv_data);
 
 } HippoRegisterSettingsAPI;
 
@@ -179,4 +179,4 @@ typedef struct HippoSettingsAPI {
 #define HippoSettings_register_global_settings(api, name, settings) \
     api->register_global_settings(api->priv_data, name, (HSSetting*)&settings, hp_sizeof_array(settings))
 
-#define HippoSettings_get_last_error(api) api->get_last_error(api->priv_data)
+// #define HippoSettings_get_last_error(api) api->get_last_error(api->priv_data)
