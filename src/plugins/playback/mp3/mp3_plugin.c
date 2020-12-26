@@ -143,7 +143,7 @@ static void mp3_event(void* user_data, const unsigned char* data, int len) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void mp3_set_log(struct HippoLogAPI* log) {
+static void mp3_static_init(struct HippoLogAPI* log, const HippoServiceAPI* service_api) {
     g_hp_log = log;
 }
 
@@ -164,7 +164,7 @@ static HippoPlaybackPlugin s_mp3_plugin = {
     mp3_read_data,
     mp3_seek,
     mp3_metadata,
-    mp3_set_log,
+    mp3_static_init,
     NULL,
     NULL,
 };

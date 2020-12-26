@@ -154,13 +154,7 @@ static HippoReadInfo adplug_read_data(void* user_data, void* dest, uint32_t max_
         plugin->to_add -= (int)max_t(1, i);
     }
 
-    return HippoReadInfo {
-        freq,
-        samples_to_read,
-        2,
-        HippoOutputType_s16
-    };
-    return samples_to_read;
+    return HippoReadInfo { freq, samples_to_read, 2, HippoOutputType_s16 };
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

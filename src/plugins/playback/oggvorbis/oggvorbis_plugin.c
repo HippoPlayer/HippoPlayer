@@ -147,7 +147,8 @@ static void oggvorbis_event(void* user_data, const unsigned char* data, int len)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void oggvorbis_set_log(struct HippoLogAPI* log) {
+static void oggvorbis_static_init(struct HippoLogAPI* log, const HippoServiceAPI* service_api) {
+	(void)service_api;
     g_hp_log = log;
 }
 
@@ -168,7 +169,7 @@ static HippoPlaybackPlugin s_oggvorbis_plugin = {
     oggvorbis_read_data,
     oggvorbis_seek,
     oggvorbis_metadata,
-    oggvorbis_set_log,
+    oggvorbis_static_init,
     NULL,
     NULL,
 };

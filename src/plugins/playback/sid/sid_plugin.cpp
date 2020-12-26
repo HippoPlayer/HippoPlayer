@@ -242,14 +242,14 @@ static int sid_metadata(const char* url, const HippoServiceAPI* service_api) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void sid_set_log(struct HippoLogAPI* log) { g_hp_log = log; }
+static void sid_set_log(struct HippoLogAPI* log, const HippoServiceAPI* service_api) {
     (void)service_api;
     g_hp_log = log;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static HippoPlaybackPlugin g_sid_plugin = {
+static HippoPlaybackPlugin s_sid_plugin = {
     HIPPO_PLAYBACK_PLUGIN_API_VERSION,
     "SID",
 	"1.0.0",
@@ -272,5 +272,5 @@ static HippoPlaybackPlugin g_sid_plugin = {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 extern "C" HIPPO_EXPORT HippoPlaybackPlugin* hippo_playback_plugin() {
-    return &g_sid_plugin;
+    return &s_sid_plugin;
 }

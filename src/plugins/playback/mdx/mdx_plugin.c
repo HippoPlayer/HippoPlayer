@@ -176,7 +176,7 @@ void mdx_plugin_event(void* user_data, const unsigned char* data, int len) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void mdx_set_log(struct HippoLogAPI* log) { g_hp_log = log; }
+static void mdx_static_init(struct HippoLogAPI* log, const HippoServiceAPI* service_api) {
 	(void)service_api;
 	g_hp_log = log;
 }
@@ -198,7 +198,7 @@ static HippoPlaybackPlugin g_mdx_plugin = {
     mdx_plugin_read_data,
     mdx_plugin_plugin_seek,
     mdx_metadata,
-	mdx_set_static,
+	mdx_static_init,
     NULL,
     NULL,
 };

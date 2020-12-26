@@ -259,7 +259,8 @@ static void asap_event(void* user_data, const unsigned char* data, int len) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void asap_set_log(struct HippoLogAPI* log) {
+static void asap_static_init(struct HippoLogAPI* log, const HippoServiceAPI* service_api) {
+	(void)service_api;
     g_hp_log = log;
 }
 
@@ -280,7 +281,7 @@ static HippoPlaybackPlugin g_asap_plugin = {
     asap_read_data,
     asap_seek,
     asap_metadata,
-    asap_set_log,
+    asap_static_init,
     NULL,
     NULL,
 };

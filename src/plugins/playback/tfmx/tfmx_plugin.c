@@ -20,7 +20,7 @@ static const char* find_filename_start(const char* path, int* offset) {
     for (size_t i = strlen(path) - 1; i > 0; i--) {
         char c = path[i];
         if (c == '/' || c == '\\') {
-        	*offset = (int)(i + 1);
+            *offset = (int)(i + 1);
             return &path[i + 1];
         }
     }
@@ -34,7 +34,7 @@ static const char* find_filename_start(const char* path, int* offset) {
 static const char* find_extension(const char* path, int* offset) {
     for (size_t i = strlen(path) - 1; i > 0; i--) {
         if (path[i] == '.') {
-        	*offset = (int)(i + 1);
+            *offset = (int)(i + 1);
             return &path[i];
         }
     }
@@ -303,16 +303,8 @@ static HippoReadInfo tfmx_read_data(void* user_data, void* dest, uint32_t max_ou
         tfmx_get_block(&data->state, dest);
     }
 
-    HippoReadInfo t = {
-        48000,
-        block_size / 2,
-        2,
-        HippoOutputType_s16
-            newDest[i] = ((float)data_read[i]) * scale;
-        }
+    HippoReadInfo t = {48000, block_size / 2, 2, HippoOutputType_s16};
 
-        for (int i = 0; i < diff * 2; ++i) {
-            newDest[i] = ((float)data_read[i]) * scale;
     return t;
 }
 
@@ -377,6 +369,7 @@ static void tfmx_event(void* user_data, const unsigned char* data, int len) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void tfmx_static_init(struct HippoLogAPI* log, const HippoServiceAPI* service_api) {
+    (void)service_api;
     g_hp_log = log;
 }
 

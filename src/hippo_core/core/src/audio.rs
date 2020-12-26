@@ -128,10 +128,8 @@ unsafe extern "C" fn data_callback(
     device_ptr: *mut miniaudio::ma_device,
     output_ptr: *mut c_void,
     _input_ptr: *const c_void,
-    samples_to_read: u32,
+    frame_count: u32,
 ) {
-    let samples_to_read = (samples_to_read * 2) as usize;
-    let output = std::slice::from_raw_parts_mut(output_ptr as *mut f32, samples_to_read as usize);
     let data: &mut DataCallback = std::mem::transmute((*device_ptr).pUserData);
     let playback;
 
@@ -162,7 +160,7 @@ unsafe extern "C" fn data_callback(
 
     //println!("frames to read {} -------------------- ", frames_to_read);
 
-    // if we have decoded enough data we can just copy it  
+    // if we have decoded enough data we can just copy it
     if (data.read_index + frames_to_read) <= data.frames_decoded {
     	//println!("[COPY ALL]  Remaining from last offset {} size {} ", data.read_index, frames_to_read);
         output.copy_from_slice(&data.mix_buffer[data.read_index..data.read_index + frames_to_read]);
@@ -260,7 +258,7 @@ impl HippoAudio {
         // This is a bit hacky so it can be shared with the device and HippoAudio
         let data_callback = DataCallback::new();
 
-        
+
         HippoAudio {
             device_name: DEFAULT_DEVICE_NAME.to_owned(),
             data_callback: Box::into_raw(data_callback) as *mut c_void,

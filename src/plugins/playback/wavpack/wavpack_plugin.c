@@ -197,13 +197,14 @@ static void wavpack_event(void* user_data, const unsigned char* data, int len) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void wavpack_set_log(struct HippoLogAPI* log) {
+static void wavpack_static_init(struct HippoLogAPI* log, const HippoServiceAPI* service_api) {
+	(void)service_api;
     g_hp_log = log;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static HippoPlaybackPlugin g_wavpack_plugin = {
+static HippoPlaybackPlugin s_wavpack_plugin = {
     HIPPO_PLAYBACK_PLUGIN_API_VERSION,
     "wavpack",
     "0.0.1",
@@ -218,7 +219,7 @@ static HippoPlaybackPlugin g_wavpack_plugin = {
     wavpack_read_data,
     wavpack_seek,
     wavpack_metadata,
-    wavpack_set_log,
+    wavpack_static_init,
     NULL,
     NULL,
 };
@@ -226,6 +227,6 @@ static HippoPlaybackPlugin g_wavpack_plugin = {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 extern HIPPO_EXPORT HippoPlaybackPlugin* hippo_playback_plugin() {
-    return &g_wavpack_plugin;
+    return &s_wavpack_plugin;
 }
 

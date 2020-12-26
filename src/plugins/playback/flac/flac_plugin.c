@@ -224,7 +224,8 @@ static void flac_event(void* user_data, const unsigned char* data, int len) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void flac_set_log(struct HippoLogAPI* log) {
+static void flac_static_init(struct HippoLogAPI* log, const HippoServiceAPI* service_api) {
+	(void)service_api;
     g_hp_log = log;
 }
 
@@ -245,7 +246,7 @@ static HippoPlaybackPlugin s_flac_plugin = {
     flac_read_data,
     flac_seek,
     flac_metadata,
-    flac_set_log,
+    flac_static_init,
     NULL,
     NULL,
 };

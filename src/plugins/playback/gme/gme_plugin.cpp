@@ -248,7 +248,8 @@ static void gme_event(void* user_data, const unsigned char* data, int len) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void gme_set_log(struct HippoLogAPI* log) {
+static void gme_static_init(struct HippoLogAPI* log, const HippoServiceAPI* service_api) {
+	(void)service_api;
     g_hp_log = log;
 }
 
@@ -256,9 +257,9 @@ static void gme_set_log(struct HippoLogAPI* log) {
 
 static HippoPlaybackPlugin s_gme_plugin = {
     HIPPO_PLAYBACK_PLUGIN_API_VERSION,
-    "Game Music Emu",
+    "GME",
     "0.0.1",
-    "Game Music Emu 0.6.3",
+    "GME 0.6.3",
     gme_probe_can_play,
     gme_supported_extensions,
     gme_create,
@@ -269,7 +270,7 @@ static HippoPlaybackPlugin s_gme_plugin = {
     gme_read_data,
     gme_seek_in,
     gme_metadata,
-    gme_set_log,
+    gme_static_init,
     NULL,
     NULL,
 };

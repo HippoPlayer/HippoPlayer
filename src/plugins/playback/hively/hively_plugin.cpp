@@ -196,7 +196,7 @@ static void hively_event(void* user_data, const unsigned char* data, int len) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void hively_set_log(struct HippoLogAPI* log) {
+static void hively_static_init(struct HippoLogAPI* log, const HippoServiceAPI* service_api) {
     g_hp_log = log;
 }
 
@@ -217,7 +217,7 @@ static HippoPlaybackPlugin g_hively_plugin = {
     hively_read_data,
     hively_seek,
     hively_metadata,
-    hively_set_log,
+    hively_static_init,
     NULL,
     NULL,
 };
