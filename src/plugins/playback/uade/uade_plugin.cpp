@@ -163,26 +163,23 @@ static int uade_destroy(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int uade_read_data(void* user_data, void* dest, uint32_t samples_to_read) {
+static HippoReadInfo uade_read_data(void* user_data, void* dest, uint32_t max_output_bytes,
+                                       uint32_t native_sample_rate) {
     UadePlugin* plugin = (UadePlugin*)user_data;
 
-    int16_t data[FRAME_SIZE * 2];
-
-    samples_to_read = hippo_min(FRAME_SIZE / 2, samples_to_read);
+    uint16_t samples_to_read = hippo_min(max_output_bytes / 4, FRAME_SIZE);
 
     // * 4 as count is number of bytes (and each frame is two, 16-bit values)
-    int rc = uade_read(data, samples_to_read * 4, plugin->state);
+    int rc = uade_read(dest, samples_to_read * 4, plugin->state);
     (void)rc;
 
-    float* new_dest = (float*)dest;
+    return HippoReadInfo {
+        48000,
+        samples_to_read,
+        2,
+        HippoOutputType_s16
+    };
 
-    const float scale = 1.0f / 32767.0f;
-
-    for (uint32_t i = 0; i < samples_to_read * 2; ++i) {
-        new_dest[i] = ((float)data[i]) * scale;
-    }
-
-    return samples_to_read;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
