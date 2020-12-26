@@ -10,17 +10,25 @@ impl PlaybackSettings {
     pub fn new() -> PlaybackSettings {
         PlaybackSettings { _dummy: 0 }
     }
+
+    fn register_filetype_settings(&mut self, id: &str, count: usize) {
+
+
+    }
 }
 
-pub unsafe extern "C" fn register_filetype_settings(
-    _priv_data: *mut c_void,
-    _name: *const c_char,
-    _settings: *const HSSetting,
-    _count: c_int,
-) -> HippoSettingsError {
-    let plugin_id = CStr::from_ptr(_name);
 
-    println!("Register settings for {}", plugin_id.to_string_lossy());
+
+pub unsafe extern "C" fn register_filetype_settings(
+    priv_data: *mut c_void,
+    name: *const c_char,
+    settings: *const HSSetting,
+    count: c_int,
+) -> HippoSettingsError {
+    let settings: &mut PlaybackSettings = unsafe { &mut *(priv_data as *mut PlaybackSettings) };
+    let plugin_id = CStr::from_ptr(name);
+
+    settings.register_filetype_settings(plugin_id.to_string_lossy(), count as usize);
 
     0
 }

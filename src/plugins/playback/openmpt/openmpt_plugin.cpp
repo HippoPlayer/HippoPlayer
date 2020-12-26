@@ -79,57 +79,8 @@ static HSSetting s_global_settings[] = {
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// eww eww!
-
-class StringStream : public std::ostringstream {
-public:
-    // -----------------------------------------------------------------
-    // Overloaded insertion operators to replace those defined in
-    // ostream. We want << to return StringStream& instead of ostream&.
-    // -----------------------------------------------------------------
-
-    // insertion of standard and user defined data-types
-    template <class T>
-    StringStream& operator<<(T item);
-
-    // insertion of stream manipulators (cannot be instantiated
-    // with template above)
-    StringStream& operator<<(std::ostream& (*manipulator)(std::ostream&));
-
-    // -----------------------------------------------------------
-    // Overloaded casting operator for string.
-    // -----------------------------------------------------------
-    operator std::string();
-};
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-template <class T>
-StringStream& StringStream::operator<<(T item) {
-    printf("here 1\n");
-    *(std::ostringstream*)this << item;
-    return *this;
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-StringStream& StringStream::operator<<(std::ostream& (*manipulator)(std::ostream&)) {
-    printf("here 2\n");
-    *(std::ostringstream*)this << manipulator;
-    return *this;
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-StringStream::operator std::string() {
-    printf("here 3\n");
-    return str();
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct OpenMptData {
-    StringStream log;
     openmpt::module* mod = 0;
     const HippoMessageAPI* message_api;
     float length = 0.0f;
@@ -278,7 +229,7 @@ static int openmpt_open(void* user_data, const char* filename, int subsong) {
     }
 
     try {
-        replayer_data->mod = new openmpt::module(replayer_data->song_data, size, replayer_data->log);
+        replayer_data->mod = new openmpt::module(replayer_data->song_data, size);
     } catch (...) {
         hp_error("Failed to open %s even if is as supported format", filename);
         return -1;
@@ -460,9 +411,9 @@ static void openmpt_static_init(struct HippoLogAPI* log, const HippoServiceAPI* 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static HippoPlaybackPlugin g_openmptPlugin = {
+static HippoPlaybackPlugin s_openmpt_plugin = {
     HIPPO_PLAYBACK_PLUGIN_API_VERSION,
-    "openmpt",
+    PLUGIN_NAME,
     "0.0.2",
     "libopenmpt 0.5.4",
     openmpt_probe_can_play,
@@ -482,5 +433,5 @@ static HippoPlaybackPlugin g_openmptPlugin = {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 extern "C" HIPPO_EXPORT HippoPlaybackPlugin* hippo_playback_plugin() {
-    return &g_openmptPlugin;
+    return &s_openmpt_plugin;
 }
