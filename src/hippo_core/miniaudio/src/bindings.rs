@@ -3551,3 +3551,8 @@ extern "C" {
         pAllocationCallbacks: *const ma_allocation_callbacks,
     ) -> ma_result;
 }
+
+extern "C" {
+    pub fn ma_device_format(device: *const ma_device) -> i32;
+    pub fn ma_device_channels(device: *const ma_device) -> i32;
+}

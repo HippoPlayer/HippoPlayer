@@ -425,6 +425,9 @@ impl HippoAudio {
             device.channels()
         );
 
+        let data_callback: &mut DataCallback = unsafe { std::mem::transmute(self.data_callback) };
+        data_callback.converter.update_output(device.channels() as u8, device.format(), device.sample_rate());
+
         device.start()
     }
 

@@ -33091,6 +33091,16 @@ MA_API ma_device_config ma_device_config_init(ma_device_type deviceType)
     return config;
 }
 
+MA_API int ma_device_format(ma_device* pDevice)
+{
+    return (int)pDevice->playback.format;
+}
+
+MA_API int ma_device_channels(ma_device* pDevice)
+{
+    return (int)pDevice->playback.channels;
+}
+
 MA_API ma_result ma_device_init(ma_context* pContext, const ma_device_config* pConfig, ma_device* pDevice)
 {
     ma_result result;

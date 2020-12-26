@@ -215,11 +215,15 @@ impl Device {
     }
 
     pub fn channels(&self) -> u32 {
-        unsafe { (*self.0).playback.channels as u32 }
+        unsafe {
+            sys::ma_device_channels(self.0 as *const _) as u32
+        }
     }
 
     pub fn format(&self) -> Format {
-        unsafe { Format::from_c((*self.0).playback.format) }
+        unsafe {
+            Format::from_c(sys::ma_device_format(self.0 as *const _) as u32)
+        }
     }
 }
 
@@ -500,6 +504,39 @@ impl DataConverter {
             sys::ma_data_converter_init(&cfg as *const _, &mut self.0 as *mut _);
         }
     }
+
+    pub fn update_output(
+        &mut self,
+        output_channel_count: u8,
+        output_format: Format,
+        output_sample_rate: u32,
+    ) {
+        let channels = self.0.config.channelsOut == output_channel_count as u32;
+        let format = Format::from_c(self.0.config.formatOut) == output_format;
+        let sample_rate = self.0.config.sampleRateOut == output_sample_rate;
+
+        // if we have the same input format we don't need to change anything
+        if channels && format && sample_rate {
+            return;
+        }
+
+        let mut cfg = self.0.config;
+        cfg.formatOut = output_format as _;
+        cfg.channelsOut = output_channel_count as u32;
+        cfg.sampleRateOut = output_sample_rate;
+		//cfg.resampling.allowDynamicSampleRate = sys::MA_TRUE;
+
+		println!("Updated converter output: channel {} - format {:#?} - sample rate {}",
+			output_channel_count, output_format, output_sample_rate);
+
+        //println!("output rate {}", cfg.sampleRateOut);
+
+        unsafe {
+            sys::ma_data_converter_uninit(&mut self.0);
+            sys::ma_data_converter_init(&cfg as *const _, &mut self.0 as *mut _);
+        }
+    }
+
 }
 
 
