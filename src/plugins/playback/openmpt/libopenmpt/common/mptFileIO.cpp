@@ -171,12 +171,25 @@ FILE * SafeOutputFile::internal_fopen(const mpt::PathString &filename, std::ios_
 // cppcheck-suppress exceptThrowInDestructor
 SafeOutputFile::~SafeOutputFile() noexcept(false)
 {
+	const bool mayThrow = (std::uncaught_exceptions() == 0);
 	if(!stream())
 	{
+		#if MPT_COMPILER_MSVC
+			if(m_f)
+			{
+				fclose(m_f);
+			}
+		#endif // MPT_COMPILER_MSVC
 		return;
 	}
 	if(!stream().rdbuf())
 	{
+		#if MPT_COMPILER_MSVC
+			if(m_f)
+			{
+				fclose(m_f);
+			}
+		#endif // MPT_COMPILER_MSVC
 		return;
 	}
 #if MPT_COMPILER_MSVC
@@ -210,9 +223,12 @@ SafeOutputFile::~SafeOutputFile() noexcept(false)
 				errorOnFlush = true;
 			}
 #endif // MPT_COMPILER_MSVC
-			// ignore errorOnFlush here, and re-throw the earlier exception
-			// cppcheck-suppress exceptThrowInDestructor
-			throw;
+			if(mayThrow)
+			{
+				// ignore errorOnFlush here, and re-throw the earlier exception
+				// cppcheck-suppress exceptThrowInDestructor
+				throw;
+			}
 		}
 	}
 #if MPT_COMPILER_MSVC
@@ -228,7 +244,7 @@ SafeOutputFile::~SafeOutputFile() noexcept(false)
 		errorOnFlush = true;
 	}
 #endif // MPT_COMPILER_MSVC
-	if(errorOnFlush && (stream().exceptions() & (std::ios::badbit | std::ios::failbit)))
+	if(mayThrow && errorOnFlush && (stream().exceptions() & (std::ios::badbit | std::ios::failbit)))
 	{
 		// cppcheck-suppress exceptThrowInDestructor
 		throw std::ios_base::failure(std::string("Error flushing file buffers."));

@@ -1,14 +1,14 @@
 #include <HippoPlugin.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
-#include <sidplayfp/sidplayfp.h>
-#include <sidplayfp/SidTuneInfo.h>
-#include <sidplayfp/SidTune.h>
-#include <sidplayfp/SidInfo.h>
-#include <builders/residfp-builder/residfp.h>
 #include <assert.h>
+#include <builders/residfp-builder/residfp.h>
+#include <math.h>
+#include <sidplayfp/SidInfo.h>
+#include <sidplayfp/SidTune.h>
+#include <sidplayfp/SidTuneInfo.h>
+#include <sidplayfp/sidplayfp.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #ifndef _WIN32
 #include <libgen.h>
@@ -25,45 +25,46 @@ HippoLogAPI* g_hp_log = NULL;
 
 struct SidReplayerData {
     sidplayfp engine;
-	ReSIDfpBuilder* rs = nullptr;
-	SidTune* tune = nullptr;
+    ReSIDfpBuilder* rs = nullptr;
+    SidTune* tune = nullptr;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // TODO: Better probe
 
-enum HippoProbeResult sid_probe_can_play(const uint8_t* data, uint32_t data_size, const char* filename, uint64_t total_size) {
-	const char* point = 0;
+enum HippoProbeResult sid_probe_can_play(const uint8_t* data, uint32_t data_size, const char* filename,
+                                         uint64_t total_size) {
+    const char* point = 0;
 
-	if ((point = strrchr(filename,'.')) != NULL) {
-		if (strcasecmp(point,".sid") == 0 || (strcasecmp(point,".psid") == 0)) {
-		    hp_info("Supported: %s", filename);
-			return HippoProbeResult_Supported;
-		}
-	}
+    if ((point = strrchr(filename, '.')) != NULL) {
+        if (strcasecmp(point, ".sid") == 0 || (strcasecmp(point, ".psid") == 0)) {
+            hp_info("Supported: %s", filename);
+            return HippoProbeResult_Supported;
+        }
+    }
 
     hp_debug("Unsupported: %s", filename);
-	return HippoProbeResult_Unsupported;
+    return HippoProbeResult_Unsupported;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static const char* sid_supported_extensions() {
-	return "sid,psid,prg,c64,p00,str,mus";
+    return "sid,psid,prg,c64,p00,str,mus";
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void* sid_create(const struct HippoServiceAPI* service_api) {
-	SidReplayerData* data = new SidReplayerData();
+    SidReplayerData* data = new SidReplayerData();
 
     data->engine.setRoms(nullptr, nullptr, nullptr);
 
-	data->rs = new ReSIDfpBuilder("hippo_player");
+    data->rs = new ReSIDfpBuilder("hippo_player");
     // Get the number of SIDs supported by the engine
     unsigned int max_sids = data->engine.info().maxsids();
 
-	// Create SID emulators
+    // Create SID emulators
     data->rs->create(max_sids);
 
     // Check if builder is ok
@@ -74,24 +75,24 @@ static void* sid_create(const struct HippoServiceAPI* service_api) {
         return nullptr;
     }
 
-	return data;
+    return data;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int sid_destroy(void* user_data) {
-	struct SidReplayerData* t = (struct SidReplayerData*)user_data;
-	t->engine.stop();
-	//delete t;
-	return 0;
+    struct SidReplayerData* t = (struct SidReplayerData*)user_data;
+    t->engine.stop();
+    // delete t;
+    return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int sid_open(void* user_data, const char* buffer, int subsong) {
-	SidReplayerData* data = (SidReplayerData*)user_data;
+    SidReplayerData* data = (SidReplayerData*)user_data;
 
-	SidTune* tune = new SidTune(buffer);
+    SidTune* tune = new SidTune(buffer);
 
     // Check if the tune is valid
     if (!tune->getStatus()) {
@@ -126,47 +127,43 @@ static int sid_open(void* user_data, const char* buffer, int subsong) {
 
     hp_info("Starting to play %s (subsong %d)", buffer, subsong);
 
-	return 1;
+    return 1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int sid_close(void* user_data) {
-	struct SidReplayerData* plugin = (struct SidReplayerData*)user_data;
+    struct SidReplayerData* plugin = (struct SidReplayerData*)user_data;
 
-	if (plugin->tune) {
-	    plugin->engine.stop();
-	}
+    if (plugin->tune) {
+        plugin->engine.stop();
+    }
 
-	return 0;
+    return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int sid_read_data(void* user_data, void* dest, uint32_t samples_to_read) {
-	SidReplayerData* data = (SidReplayerData*)user_data;
-	float* output = (float*)dest;
+static HippoReadInfo sid_read_data(void* user_data, void* dest, uint32_t max_output_bytes,
+                                   uint32_t native_sample_rate) {
+    SidReplayerData* data = (SidReplayerData*)user_data;
 
-	int16_t temp_data[FRAME_SIZE * 2] = { 0 };
-    samples_to_read = hippo_min(samples_to_read, FRAME_SIZE);
+    uint16_t samples_to_read = hippo_min(max_output_bytes / 2, FRAME_SIZE);
 
-	data->engine.play(temp_data, samples_to_read);
+    data->engine.play((int16_t*)dest, samples_to_read);
 
-	const float scale = 1.0f / 32768.0f;
-
-	for (uint32_t i = 0; i < samples_to_read; ++i) {
-		const float v = ((float)temp_data[i]) * scale;
-		*output++ = v;
-		*output++ = v;
-	}
-
-	return samples_to_read * 2;
+    return HippoReadInfo {
+        FREQ,
+        samples_to_read,
+        1,
+        HippoOutputType_s16
+    };
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int sid_seek(void* user_data, int ms) {
-	return 0;
+    return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -193,7 +190,7 @@ static int sid_metadata(const char* url, const HippoServiceAPI* service_api) {
         return -1;
     }
 
-	SidTune* tune = new SidTune((uint8_t*)data, size);
+    SidTune* tune = new SidTune((uint8_t*)data, size);
 
     if (!tune->getStatus()) {
         hp_error("Unable to metadata get status %s", url);
@@ -205,7 +202,7 @@ static int sid_metadata(const char* url, const HippoServiceAPI* service_api) {
     int subsongs_count = tune->getInfo()->songs();
     HippoMetadataId index = HippoMetadata_create_url(metadata_api, url);
 
-    char title_name[1024] = { 0 };
+    char title_name[1024] = {0};
 
     if (subsongs_count > 0) {
         auto info = tune->getInfo(0);
@@ -230,7 +227,7 @@ static int sid_metadata(const char* url, const HippoServiceAPI* service_api) {
 
         if (subsongs_count > 1) {
             for (int i = 0; i < subsongs_count; ++i) {
-                char subsong_name[1024] = { 0 };
+                char subsong_name[1024] = {0};
                 sprintf(subsong_name, "%s (%d/%d)", title_name, i + 1, subsongs_count);
                 HippoMetadata_add_subsong(metadata_api, index, i, subsong_name, 0.0f);
             }
@@ -245,7 +242,7 @@ static int sid_metadata(const char* url, const HippoServiceAPI* service_api) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void sid_set_log(struct HippoLogAPI* log, const HippoServiceAPI* service_api) {
+static void sid_set_log(struct HippoLogAPI* log) { g_hp_log = log; }
     (void)service_api;
     g_hp_log = log;
 }
@@ -253,29 +250,27 @@ static void sid_set_log(struct HippoLogAPI* log, const HippoServiceAPI* service_
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static HippoPlaybackPlugin g_sid_plugin = {
-	HIPPO_PLAYBACK_PLUGIN_API_VERSION,
-	"SID",
+    HIPPO_PLAYBACK_PLUGIN_API_VERSION,
+    "SID",
 	"1.0.0",
-	"sidplayfp 2.0.0beta",
-	sid_probe_can_play,
-	sid_supported_extensions,
-	sid_create,
-	sid_destroy,
-	sid_event,
-	sid_open,
-	sid_close,
-	sid_read_data,
-	sid_seek,
-	sid_metadata,
+    "sidplayfp 2.0.0beta",
+    sid_probe_can_play,
+    sid_supported_extensions,
+    sid_create,
+    sid_destroy,
+    sid_event,
+    sid_open,
+    sid_close,
+    sid_read_data,
+    sid_seek,
+    sid_metadata,
     sid_set_log,
-	nullptr,
-	nullptr,
+    nullptr,
+    nullptr,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 extern "C" HIPPO_EXPORT HippoPlaybackPlugin* hippo_playback_plugin() {
-	return &g_sid_plugin;
+    return &g_sid_plugin;
 }
-
-

@@ -203,11 +203,6 @@ SharedLibrary {
 	},
 }
 
-local openmpt_cfg = CopyFile {
-	Source = "src/plugins/playback/openmpt/libopenmpt.cfg",
-	Target = "$(OBJECTDIR)/libopenmpt.cfg"
-}
-
 -----------------------------------------------------------------------------------------------------------------------
 
 SharedLibrary {
@@ -229,13 +224,15 @@ SharedLibrary {
 
 
 	Env = {
-		CCOPTS = { {
+		CCOPTS = {
 			"-Wno-unused-value",
+            "-Wno-unused-but-set-variable",
 			"-Wno-unused-function",
 			"-Wno-absolute-value", -- np_nes_dmc.c:536:6: warning: taking the absolute value of unsigned type 'unsigned int' has no effect [-We]
 			"-Wno-parentheses-equality", -- es5503.c:149:12: warning: equality comparison with extraneous parentheses [-Wparentheses-equality]
 			"-Wno-shift-negative-value", -- k054539.c:155:6: warning: shifting a negative signed value is undefined [-Wshift-negative-value]
-			"-Wno-unused-variable" ; Config = "macosx-*-*" },
+			"-Wno-unused-variable" ; Config = { "macos*-*-*", "linux-*-*" },
+			{ "/wd4267"; Config = "win64-*-*" },
 		},
 	},
 
@@ -314,8 +311,8 @@ SharedLibrary {
 		"VGMPlay/VGMPlay.c",
 		"VGMPlay/VGMPlay_AddFmts.c",
 		"VGMPlay/Stream.c",
-		"VGMPlay/ChipMapper.c",
 		"VGMPlay/vgm2wav.c",
+		"VGMPlay/ChipMapper.c",
 		"vgm_plugin.cpp",
 	},
 
@@ -359,6 +356,16 @@ SharedLibrary {
         "src/plugins/playback/ayfly/src/libayfly/z80ex/include",
 	},
 
+	Env = {
+		CXXOPTS = {
+			{ "-Wno-sign-compare",
+              "-Wno-parentheses",
+			  "-Wno-unused-but-set-variable",
+			  "-Wno-unused-variable" ; Config = "linux-*-*" },
+            { "/wd4267", "/wd4018"; Config = "win64-*-*" },
+		}
+	},
+
 	Defines = {
         "DISABLE_AUDIO",
     },
@@ -384,10 +391,88 @@ SharedLibrary {
 
 -----------------------------------------------------------------------------------------------------------------------
 
+SharedLibrary {
+	Name = "stsound",
+
+	Includes = {
+	    "src/plugin_api",
+        "src/plugins/playback/stsound/src/StSoundLibrary",
+	},
+
+	Sources = {
+		get_c_cpp_src("src/plugins/playback/stsound"),
+	},
+}
+
+-----------------------------------------------------------------------------------------------------------------------
+--[[
+
+SharedLibrary {
+	Name = "gbsplay",
+
+	Includes = {
+	    "src/plugin_api",
+        "src/plugins/playback/gbsplay/src",
+	},
+
+	Sources = {
+		get_c_cpp_src("src/plugins/playback/gbsplay"),
+	},
+}
+--]]
+
+-----------------------------------------------------------------------------------------------------------------------
+
+SharedLibrary {
+	Name = "gme",
+
+    Env = {
+       CXXOPTS = {
+            { "/wd4267", "/wd4018"; Config = "win64-*-*" },
+        }
+    },
+
+	Defines = {
+        "VGM_YM2612_MAME",
+	},
+
+	Includes = {
+	    "src/plugin_api",
+        "src/plugins/playback/gme/src",
+	},
+
+	Sources = {
+		get_c_cpp_src("src/plugins/playback/gme"),
+	},
+}
+
+-----------------------------------------------------------------------------------------------------------------------
+
+SharedLibrary {
+	Name = "asap",
+
+	Includes = {
+	    "src/plugin_api",
+        "src/plugins/playback/asap/src",
+	},
+
+	Sources = {
+		get_c_cpp_src("src/plugins/playback/asap"),
+	},
+}
+
+-----------------------------------------------------------------------------------------------------------------------
+
 StaticLibrary {
 	Name = "sc68_file",
 
 	SourceDir = "src/plugins/playback/sc68",
+
+	Env = {
+		CCOPTS = {
+			{ "-Wno-unused-function", "-Wno-unused-variable"; Config = "linux-*-*" },
+		}
+	},
 
 	Defines = {
         "HAVE_CONFIG_H",
@@ -425,10 +510,61 @@ StaticLibrary {
 
 -----------------------------------------------------------------------------------------------------------------------
 
+StaticLibrary {
+	Name = "taglib",
+
+	Defines = { "TAGLIB_STATIC" },
+
+	Env = {
+		CXXOPTS = {
+			{ "-Wno-sign-compare" ; Config = "linux-*-*" },
+		}
+	},
+
+	Includes = {
+	    "src/plugin_api",
+	    "src/external/taglib/taglib",
+	    "src/external/taglib/taglib/toolkit",
+	    "src/external/taglib/taglib/mpeg",
+	    "src/external/taglib/taglib/asf",
+	    "src/external/taglib/taglib/flac",
+	    "src/external/taglib/taglib/ogg",
+	    "src/external/taglib/taglib/ogg/opus",
+	    "src/external/taglib/taglib/ogg/flac",
+	    "src/external/taglib/taglib/ogg/vorbis",
+	    "src/external/taglib/taglib/ogg/speex",
+	    "src/external/taglib/taglib/ape",
+	    "src/external/taglib/taglib/mod",
+	    "src/external/taglib/taglib/mpc",
+	    "src/external/taglib/taglib/mp4",
+	    "src/external/taglib/taglib/s3m",
+	    "src/external/taglib/taglib/xm",
+	    "src/external/taglib/taglib/it",
+	    "src/external/taglib/taglib/trueaudio",
+	    "src/external/taglib/taglib/riff",
+	    "src/external/taglib/taglib/wavpack",
+	    "src/external/taglib/taglib/riff/aiff",
+	    "src/external/taglib/taglib/riff/wav",
+	    "src/external/taglib/taglib/mpeg/id3v1",
+	    "src/external/taglib/taglib/mpeg/id3v2",
+	    "src/external/taglib/taglib/mpeg/id3v2/frames",
+	},
+
+	Sources = { get_c_cpp_src("src/external/taglib") },
+}
+
+-----------------------------------------------------------------------------------------------------------------------
+
 SharedLibrary {
 	Name = "sc68",
 
 	SourceDir = "src/plugins/playback/sc68",
+
+	Env = {
+		CCOPTS = {
+			{ "-Wno-unused-function", "-Wno-unused-variable"; Config = "linux-*-*" },
+		}
+	},
 
 	Defines = {
         "HAVE_CONFIG_H",
@@ -520,8 +656,23 @@ SharedLibrary {
 
 -----------------------------------------------------------------------------------------------------------------------
 
+local adplug_opts = {
+    { "-Wno-misleading-indentation",
+    "-Wno-sign-compare",
+    "-Wno-parentheses",
+    "-Wno-write-strings",
+    "-Wno-unused-but-set-variable",
+    "-Wno-unused-variable"; Config = "linux-*-*" },
+   { "/wd4267"; Config = "win64-*-*" },
+}
+
 SharedLibrary {
 	Name = "adplug",
+
+	Env = {
+		CCOPTS = { adplug_opts },
+		CXXOPTS = { adplug_opts },
+	},
 
 	Includes = {
 	    "src/plugin_api",
@@ -559,7 +710,108 @@ SharedLibrary {
 -----------------------------------------------------------------------------------------------------------------------
 
 SharedLibrary {
+	Name = "wavpack",
+
+	Defines = {
+        "LIBWAVPACK_MAJOR=5",
+        "LIBWAVPACK_MINOR=3",
+        "LIBWAVPACK_MICRO=0",
+        "STDC_HEADERS=1",
+        "HAVE_SYS_TYPES_H=1",
+        "HAVE_SYS_STAT_H=1",
+        "HAVE_STDLIB_H=1",
+        "HAVE_STRING_H=1",
+        "HAVE_MEMORY_H=1",
+        "HAVE_STRINGS_H=1",
+        "HAVE_INTTYPES_H=1",
+        "HAVE_STDINT_H=1",
+        "HAVE_UNISTD_H=1",
+        "HAVE_DLFCN_H=1",
+        "STDC_HEADERS=1",
+        "HAVE_FSEEKO=1",
+        "ENABLE_DSD",
+        -- "OPT_ASM_X64=1",
+        { "HAVE___BUILTIN_CLZ=1", "HAVE___BUILTIN_CTZ=1" ; Config = "linux-*-*" },
+	},
+
+	Includes = {
+	    "src/plugin_api",
+	    "src/plugins/playback/wavpack/wavpack/include",
+	},
+
+	Sources = {
+		get_c_cpp_src("src/plugins/playback/wavpack"),
+	},
+}
+
+-----------------------------------------------------------------------------------------------------------------------
+
+SharedLibrary {
+	Name = "flac",
+
+	Includes = {
+	    "src/plugin_api",
+	},
+
+	Sources = {
+		get_c_cpp_src("src/plugins/playback/flac"),
+	},
+}
+
+-----------------------------------------------------------------------------------------------------------------------
+
+SharedLibrary {
+	Name = "mp3",
+
+	Includes = {
+	    "src/plugin_api",
+	    "src/external/taglib",
+	},
+
+	Sources = {
+		get_c_cpp_src("src/plugins/playback/mp3"),
+	},
+
+	Depends = { "taglib" },
+}
+
+-----------------------------------------------------------------------------------------------------------------------
+
+SharedLibrary {
+	Name = "oggvorbis",
+
+	Includes = {
+	    "src/plugin_api",
+	    "src/external/taglib",
+	},
+
+	Env = {
+		CCOPTS = {
+			"-Wno-unused-variable",
+			"-Wno-unused-variable" ; Config = { "macos*-*-*", "linux-*-*" },
+			{ "/wd4267"; Config = "win64-*-*" },
+		},
+	},
+
+	Sources = {
+		get_c_cpp_src("src/plugins/playback/oggvorbis"),
+	},
+
+	Depends = { "taglib" },
+}
+
+-----------------------------------------------------------------------------------------------------------------------
+
+SharedLibrary {
 	Name = "mdx",
+
+	Env = {
+		CCOPTS = {
+			{ "-Wno-unused-but-set-variable",
+			  "-Wno-unused-label",
+			  "-Wno-unused-function"; Config = "linux-*-*" },
+		}
+	},
 
 	Includes = {
 	    "src/plugin_api",
@@ -569,6 +821,7 @@ SharedLibrary {
 		get_c_cpp_src("src/plugins/playback/mdx"),
 	},
 }
+
 
 -----------------------------------------------------------------------------------------------------------------------
 
@@ -600,29 +853,6 @@ SharedLibrary {
 	Libs = { "stdc++"; Config = "macosx-*-*" },
 }
 
---[[
------------------------------------------------------------------------------------------------------------------------
-
-SharedLibrary {
-	Name = "FutureComposerPlugin",
-	Env = {
-		CPPPATH = { "src/plugins/futurecomposer/src" },
-		CPPDEFS = {
-			{ "HAVE_CONFIG_H"; Config = "macosx-*-*" }
-		},
-	},
-
-	Sources = {
-		get_c_cpp_src("src/plugins/futurecomposer/src"),
-		"src/plugins/futurecomposer/FutureComposerPlugin.c",
-	},
-
-	Libs = {
-		{ "stdc++"; Config = "macosx-*-*" },
-	},
-}
-
---]]
 
 -----------------------------------------------------------------------------------------------------------------------
 --  View plugins
@@ -725,15 +955,25 @@ SharedLibrary {
 -- Decoders
 
 Default "adplug"
+Default "asap"
 Default "ayfly"
+Default "flac"
+Default "gme"
+-- Default "gbsplay"
 Default "hively"
 Default "mdx"
-Default "nsf"
+Default "mp3"
+-- Default "nsf"
+Default "oggvorbis"
+Default "openmpt"
+Default "vgm"
 Default "openmpt"
 Default "sc68"
 Default "sid"
+Default "stsound"
 Default "tfmx"
 Default "vgm"
+Default "wavpack"
 
 -- Views
 

@@ -95,7 +95,10 @@ struct UpgradePatternData
 			{
 				if((m.param & 0x0F) != 0x00 && (m.param & 0x0F) != 0x0F && (m.param & 0xF0) != 0x00 && (m.param & 0xF0) != 0xF0)
 				{
-					m.param &= 0x0F;
+					if(m.command == CMD_GLOBALVOLSLIDE)
+						m.param &= 0xF0;
+					else
+						m.param &= 0x0F;
 				}
 			}
 
@@ -648,6 +651,18 @@ void CSoundFile::UpgradeModule()
 				&& Instruments[i]->VolEnv.nReleaseNode > Instruments[i]->VolEnv.nSustainEnd)
 			{
 				m_playBehaviour.set(kReleaseNodePastSustainBug);
+				break;
+			}
+		}
+	}
+
+	if(GetType() == MOD_TYPE_MPT && GetNumInstruments() && m_dwLastSavedWithVersion >= MPT_V("1.28.00.20") && m_dwLastSavedWithVersion <= MPT_V("1.29.55.00"))
+	{
+		for(SAMPLEINDEX i = 1; i <= GetNumSamples(); i++)
+		{
+			if(Samples[i].uFlags[CHN_ADLIB])
+			{
+				m_playBehaviour.set(kOPLNoResetAtEnvelopeEnd);
 				break;
 			}
 		}

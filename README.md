@@ -39,45 +39,59 @@ All plugins uses a C API which means that plugins may be written in C/C++ also (
 Rust 1.20+ Latest stable version of **Rust** (1.20+) needs to be present on the system. We recommend using [rustup](https://www.rustup.rs/) to install and manage your Rust toolchain(s). If you already have rustup installed but aren't on the latest stable Rust, you can simply run `rustup update`. When installing using rustup for the first time simply select the defaults (option 1).
 Qt needs to be installed on your system and then an environment variable needs to be assigned to `QT5` such as `QT5=/path/to/Qt/5.10.0/clang_64` You can download Qt from https://www.qt.io/ which has a free version for open source development.
 
-### Mac
-
-Run `scripts/mac_build_debug.sh` and if everything went ok run `t2-output/macosx-clang-debug-default/hippo_player`
-
-### Windows
-
-Run `scripts\win64_build_debug.cmd` and run the resulting executable in `t2-output\win64-msvc-debug-default\hippo_player`
-
 ### Linux
 
-Please note that these instructions are for apt-get based distributions, e.g. Debian, Ubuntu and derivatives. We'll add additional instructions for Arch, Solus and so forth as we go along.
-
-The following packages needs to be installed: qt57base mesa-common-dev libasound2-dev alsa-utils alsa-oss
-Using apt-get the do
+First install Tundra:
 
 ```
-sudo apt-get install qt57base mesa-common-dev libasound2-dev alsa-utils alsa-oss
+git clone --recursive https://github.com/deplinenoise/tundra.git && cd tundra && make -j2 && sudo make install && cd .. && rm -rfv tundra
 ```
 
-Then these steps to install Tundra:
+Then download Qt 5.15. There are several methods, but they all depend on which distro you are using. You can go to the Qt homepage and follow instructions there to download the opensource version, using something like `apt-get` on Debian/Ubuntu style distros.
+After installing Qt you need to set up 3 environment variables.
 
 ```
-git clone --recursive https://github.com/deplinenoise/tundra.git
-cd tundra
-make
-sudo make install
+export QT5_BIN=$Qt5_DIR/bin
+export QT5_INC=$Qt5_DIR/include
+export QT5_LIB=$Qt5_DIR/lib
 ```
 
-Now enter the HippoPlayer directory and do
+These in the case above `Qt5_DIR` would be something like `/path/to/Qt/5.15.0/gcc_64`
+
+Then run `scripts/linux_build_debug.sh` and run `t2-output/linux-gcc-debug-default/hippo_player`
+
+## macOS
+
+Download Qt 5.15 (using homebrew or from the Qt website)
+
+After installing Qt you need to set up 3 environment variables.
 
 ```
-tundra2 -v linux-gcc-debug
+export QT5_BIN=$Qt5_DIR/bin
+export QT5_INC=$Qt5_DIR/include
+export QT5_LIB=$Qt5_DIR/lib
 ```
 
-Then run HippoPlayer with
+These in the case above `Qt5_DIR` would be something like `/path/to/Qt/5.15.0/clang_64`
+
+Then run `scripts/mac_build_debug.sh` and run `t2-output/macosx-clang-debug-default/hippo_player`
+
+## Windows
+
+Download Qt 5.15 from the Qt website and Visual Studio 2019 (Community Edition works fine but Pro/Enterprise as well)
+
+After installing Qt you need to set up 3 environment variables (either in the shell or in Windows environment variables for the user)
 
 ```
-t2-ouput/linux-gcc-debug-default/hippo_player
+set QT5_BIN=c:\path\to\qt\5.15.0\msvc2017_64\bin
+set QT5_LIB=c:\path\to\qt\5.15.0\msvc2017_64\lib
+set QT5_INC=c:\path\to\qt\5.15.0\msvc2017_64\include
 ```
+
+Then run `scripts\win64_build_debug.cmd` and run `t2-output\win64-msvc-debug-default\hippo_player`
+if you get "missing symbol ..." then run `scripts\win64_copy_bins.cmd` and try to run again
+
+On Windows it's also possible to run `scripts\win64_gen_vs_solution.cmd` followed by `scripts\win64_launch_vs.cmd` to open a generated VS solution to work in.
 
 ## Acknowledgement
 

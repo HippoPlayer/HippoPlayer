@@ -5,6 +5,99 @@ Changelog {#changelog}
 For fully detailed change log, please see the source repository directly. This
 is just a high-level summary.
 
+### libopenmpt 0.5.4 (2020-11-29)
+
+ *  AMS: An upper bound for uncompressed sample size is now established to
+    avoid memory exhaustion from malformed files.
+ *  DMF: Support early format beta versions (in particular versions 1-4).
+ *  MED: Also use octave wrapping in 8-channel mode for MMD0/MMD1 modules.
+ *  MED: If 8-channel mode is activated, ignore BPM mode.
+ *  MED: Emulate tempo commands F01 and F02 quirk.
+ *  MED: Tempo commands below 32 BPM were interpreted as tempo slides.
+ *  IMF: Instrument sample mapping was off by one octave, notable in the guitar
+    part of Astaris by Karsten Koch.
+
+ *  pugixml: Update to v1.11 (2020-11-26).
+
+### libopenmpt 0.5.3 (2020-10-25)
+
+ *  [**Sec**] Possible hang if a MED file claimed to contain 256 songs. (r13704)
+
+ *  [**Bug**] libopenmpt: `openmpt::is_extension_supported2()` exported symbol
+    was missing (C++).
+ *  [**Bug**] `openmpt::module::set_position_seconds` sometimes behaved as if
+    the song end was reached when seeking into a pattern loop and in some other
+    corner cases.
+
+ *  Increase threshold for ignoring panning commands from 820 to 830.
+ *  Subsong names now fall back to the first pattern's name if empty.
+ *  MO3: Avoid certain ModPlug hacks from being fixed up twice, which could lead
+    to e.g. very narrow pan swing range for old OpenMPT IT files saved with a
+    recent MO3 encoder version. 
+ *  MO3: Some files with corrupted envelope data could be rejected completely
+    (normally libopenmpt should fix up the envelope data).
+ *  MO3: Song metadata didn't correctly identify MPTM as source format (it
+    appeared as IT instead).
+ *  STM: Change tempo computation to behave like Scream Tracker 2.3 instead of
+    Scream Tracker 2.2, as the playback frequencies we use for sample playback
+    are closer to those of Scream Tracker 2.3.
+ *  PLM: Percentage offset (Mxx) was slightly off.
+ *  WOW: Fix loading of several files and harden WOW detection.
+
+### libopenmpt 0.5.2 (2020-08-30)
+
+ *  [**Change**] `Makefile` `CONFIG=emscripten` now supports
+    `EMSCRIPTEN_TARGET=all` which provides WebAssembly as well as fallback to
+    JavaScript in a single build.
+
+ *  [**Regression**] `Makefile` `CONFIG=emscripten` does not support
+    `EMSCRIPTEN_TARGET=asmjs` or `EMSCRIPTEN_TARGET=asmjs128m` any more because
+    support has been removed from current Emscripten versions.
+ *  [**Regression**] Support for Emscripten versions older than 1.39.7 has been
+    removed.
+
+ *  PP20: The first few bytes of some files were not decompressed properly,
+    making some files unplayable (depending on the original format).
+
+### libopenmpt 0.5.1 (2020-07-26)
+
+ *  [**Bug**] `libopenmpt/libopenmpt.h` failed to compile with
+    `LIBOPENMPT_NO_DEPRECATE` defined.
+
+ *  MPTM: Qxy now retriggers OPL notes if new compatibility flag is set in file.
+ *  MPTM: Bring back old OPL note end-of-envelope behaviour for files made with
+    OpenMPT 1.28.
+ *  IT: Global volume slides with both nibbles set preferred the "slide up"
+    nibble over the "slide down" nibble in old OpenMPT versions, unlike other
+    slides. Such old files are now imported correctly again.
+ *  IT: Fixed an edge case where, if the filter hit full cutoff / no resonance
+    on the first tick of a row where a new delayed note would be triggered, the
+    filter would be disabled even though it should stay active. Fixes trace.it
+    by maddie.
+ *  OXM: Some sample loops were not imported correctly.
+ *  XM: Out-of-range arpeggio clamping behaviour broke in OpenMPT 1.23.05.00.
+    The arpeggios in Binary World by Dakota now play correctly again.
+ *  S3M: Support old-style sample pre-amp value in very early S3M files.
+ *  S3M: Only force-enable fast slides for files ST 3.00. Previously, any S3M
+    file made with an ST3 version older than 3.20 enabled them.
+ *  S3M: Only apply volume and middle-C speed on instrument change if the new
+    sample slot has sample data.
+ *  MOD: Fix an infinite loop in GamerMan by MrGamer by playing non-ProTracker
+    MODs more like FT2 would.
+ *  M15: Improve tracker detection heuristics to never assume SoundTracker 2.0
+    if there is a huge number of Dxx commands, as that is a definite hint that
+    they should be treated as volume slides. Fixes Monty On The Run by
+    Master Blaster.
+ *  MO3: Support OPL patches in MO3 files created from MPTM and S3M.
+ *  DBM: If a global pattern command would be lost because both effect commands
+    in a cell would have to go into the regular effect column (e.g. a speed and
+    a tempo command), the lost command is now attempted to be written into a
+    different cell on the same row. Fixes "Party-Question V" by grogon.
+
+ *  mpg123: Update to v1.26.3 (2020-07-16).
+ *  stb_vorbis: Update v1.20 commit b42009b3b9d4ca35bc703f5310eedc74f584be58
+    (2020-07-13).
+
 ### libopenmpt 0.5.0 (2020-05-24)
 
  *  [**New**] OggMod compressed FastTracker 2 XM (OXM) modules are now
@@ -78,8 +171,8 @@ is just a high-level summary.
 
  *  Greatly improved MED import. Synthesized instruments are still not supported
     but support was added for: Multisampled instruments, delta samples, more
-    pattern commands, Hold and Decay, VSTi and MIDI output, multiple songs and
-    many other small changes.
+    pattern commands, Hold and Decay, multiple songs and many other small
+    changes.
  *  Improved OPL channel allocation when more than 18 notes are active, so that
     channels that have completely faded out are prioritized over channels that
     have already been released but have not faded out yet.
@@ -116,7 +209,8 @@ is just a high-level summary.
  *  MOD: Fix early song ending due to ProTracker pattern jump quirk
     (EEx + Dxx on same row) if infinite looping is disabled.
     Fixes Haunted Tracks.mod by Triace.
- *  MOD: Previous note offset is no longer used for retriggered notes if there was no instrument number next to the E9x effect.
+ *  MOD: Previous note offset is no longer used for retriggered notes if there
+    was no instrument number next to the E9x effect.
  *  MOD: Vibrato type "ramp down" was upside down.
  *  XM: If a file contains patterns longer than 1024 rows, they are now clamped
     to 1024 rows instead of 64 rows.
@@ -128,7 +222,8 @@ is just a high-level summary.
  *  vorbis: v1.3.6.
  *  zlib: v1.2.11.
  *  minimp3: commit 55da78cbeea5fb6757f8df672567714e1e8ca3e9 (2020-03-04).
- *  stb_vorbis: v1.19 commit 37b9b20fdec06c75a0493e0bb59e2d0f288bfb51 (2020-02-05).
+ *  stb_vorbis: v1.19 commit 37b9b20fdec06c75a0493e0bb59e2d0f288bfb51
+    (2020-02-05).
  *  miniz: v2.1.0.
  *  FLAC: v1.3.3.
  *  PortAudio: commit 799a6834a58592eadc5712cba73b35956dc51579 (2020-03-26).

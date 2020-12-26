@@ -594,6 +594,20 @@ pub struct HippoSaveAPI {
 pub struct HippoLoadAPI {
     _unused: [u8; 0],
 }
+pub const HippoOutputType_u8: _bindgen_ty_2 = 1;
+pub const HippoOutputType_s16: _bindgen_ty_2 = 2;
+pub const HippoOutputType_s24: _bindgen_ty_2 = 3;
+pub const HippoOutputType_s32: _bindgen_ty_2 = 4;
+pub const HippoOutputType_f32: _bindgen_ty_2 = 5;
+pub type _bindgen_ty_2 = u32;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct HippoReadInfo {
+    pub sample_rate: u32,
+    pub sample_count: u16,
+    pub channel_count: u8,
+    pub output_format: u8,
+}
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct HippoPlaybackPlugin {
@@ -638,8 +652,9 @@ pub struct HippoPlaybackPlugin {
         unsafe extern "C" fn(
             user_data: *mut ::std::os::raw::c_void,
             dest: *mut ::std::os::raw::c_void,
-            max_sample_count: u32,
-        ) -> ::std::os::raw::c_int,
+            max_output_bytes: u32,
+            native_sample_rate: u32,
+        ) -> HippoReadInfo,
     >,
     pub seek: ::std::option::Option<
         unsafe extern "C" fn(

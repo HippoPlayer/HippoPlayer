@@ -125,7 +125,7 @@ private:
 			('0' <= x && x <= '9') ? static_cast<uint8>(x - '0' +  0) :
 			('a' <= x && x <= 'z') ? static_cast<uint8>(x - 'a' + 10) :
 			('A' <= x && x <= 'Z') ? static_cast<uint8>(x - 'A' + 10) :
-			throw std::domain_error("");
+			mpt::constexpr_throw<uint8>(std::domain_error(""));
 	}
 	static MPT_CONSTEXPR11_FUN uint8 ByteFromHex(char x, char y)
 	{
@@ -164,7 +164,7 @@ public:
 					| (static_cast<uint64>(ParseHex16(str + 24)) << 32)
 					| (static_cast<uint64>(ParseHex32(str + 28)) <<  0)
 			)
-			: throw std::domain_error("");
+			: mpt::constexpr_throw<mpt::UUID>(std::domain_error(""));
 	}
 public:
 	MPT_CONSTEXPR11_FUN UUID() noexcept : Data1(0), Data2(0), Data3(0), Data4(0) { }

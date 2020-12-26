@@ -114,11 +114,17 @@ struct MMDSong
 
 	uint16be numBlocks;   // Number of blocks in current song
 	uint16be songLength;  // MMD0: Number of sequence numbers in the play sequence list, MMD2: Number of sections
-	union
+	char song[256];
+	MMD0Song GetMMD0Song() const
 	{
-		MMD0Song mmd0song;
-		MMD2Song mmd2song;
-	};
+		static_assert(sizeof(MMD0Song) == sizeof(song));
+		return mpt::bit_cast<MMD0Song>(song);
+	}
+	MMD2Song GetMMD2Song() const
+	{
+		static_assert(sizeof(MMD2Song) == sizeof(song));
+		return mpt::bit_cast<MMD2Song>(song);
+	}
 	uint16be defaultTempo;
 	int8be   playTranspose;  // The global play transpose value for current song
 	uint8be  flags;
@@ -260,16 +266,20 @@ struct MMDInstrExt
 	// Below fields saved by >= V5
 	uint8be  defaultPitch;
 	uint8be  instrFlags;
-	uint16be longMidiPreset;
+	uint16be longMidiPreset;  // Legacy MIDI program mode that doesn't use banks but a combination of two program change commands
 	// Below fields saved by >= V5.02
 	uint8be  outputDevice;
 	uint8be  reserved;
 	// Below fields saved by >= V7
 	uint32be loopStart;
 	uint32be loopLength;
+	// Not sure which version starts saving those but they are saved by MED Soundstudio for Windows
+	uint8    volume;      // 0...127
+	uint8    outputPort;  // Index into user-configurable device list (NOT WinAPI port index)
+	uint16le midiBank;
 };
 
-MPT_BINARY_STRUCT(MMDInstrExt, 18)
+MPT_BINARY_STRUCT(MMDInstrExt, 22)
 
 
 struct MMDInstrInfo
@@ -344,9 +354,19 @@ struct MMDTag
 MPT_BINARY_STRUCT(MMDTag, 8)
 
 
+struct MMDDump
+{
+	uint32be length;
+	uint32be dataPointer;
+	uint16be extLength;  // If >= 20: name follows as char[20]
+};
+
+MPT_BINARY_STRUCT(MMDDump, 10)
+
+
 static TEMPO MMDTempoToBPM(uint32 tempo, bool is8Ch, bool bpmMode, uint8 rowsPerBeat)
 {
-	if(bpmMode)
+	if(bpmMode && !is8Ch)
 	{
 		// You would have thought that we could use modern tempo mode here.
 		// Alas, the number of ticks per row still influences the tempo. :(
@@ -406,7 +426,14 @@ static void ConvertMEDEffect(ModCommand &m, bool is8ch, bool bpmMode, uint8 rows
 		} else if(m.param <= 0xF0)
 		{
 			m.command = CMD_TEMPO;
-			m.param = mpt::saturate_round<ModCommand::PARAM>(MMDTempoToBPM(m.param, is8ch, bpmMode, rowsPerBeat).ToDouble());
+			if(m.param < 0x03)  // This appears to be a bug in OctaMED which is not emulated in MED Soundstudio on Windows.
+				m.param = 0x70;
+			else
+				m.param = mpt::saturate_round<ModCommand::PARAM>(MMDTempoToBPM(m.param, is8ch, bpmMode, rowsPerBeat).ToDouble());
+#ifdef MODPLUG_TRACKER
+			if(m.param < 0x20)
+				m.param = 0x20;
+#endif  // MODPLUG_TRACKER
 		} else switch(m.command)
 		{
 			case 0xF1:  // Play note twice
@@ -440,6 +467,10 @@ static void ConvertMEDEffect(ModCommand &m, bool is8ch, bool bpmMode, uint8 rows
 				m.command = CMD_NONE;
 				break;
 		}
+		break;
+	case 0x10:  // MIDI message
+		m.command = CMD_MIDI;
+		m.param |= 0x80;
 		break;
 	case 0x11:  // Slide pitch up
 		m.command = CMD_MODCMDEX;
@@ -475,6 +506,16 @@ static void ConvertMEDEffect(ModCommand &m, bool is8ch, bool bpmMode, uint8 rows
 	case 0x1B:  // Slide volume down once
 		m.command = CMD_MODCMDEX;
 		m.param = 0xB0 | std::min<uint8>(m.param, 0x0F);
+		break;
+	case 0x1C:  // MIDI program
+		if(m.param > 0 && m.param <= 128)
+		{
+			m.command = CMD_MIDI;
+			m.param--;
+		} else
+		{
+			m.command = CMD_NONE;
+		}
 		break;
 	case 0x1D:  // Pattern break (in hex)
 		m.command = CMD_PATTERNBREAK;
@@ -565,24 +606,24 @@ static void MEDReadNextSong(FileReader &file, MMD0FileHeader &fileHeader, MMD0Ex
 }
 
 
-static CHANNELINDEX MEDScanNumChannels(FileReader &file, const uint8 version)
+static std::pair<CHANNELINDEX, SEQUENCEINDEX> MEDScanNumChannels(FileReader &file, const uint8 version)
 {
 	MMD0FileHeader fileHeader;
 	MMD0Exp expData;
 	MMDSong songHeader;
 
 	file.Rewind();
+	uint32 songOffset = 0;
 	MEDReadNextSong(file, fileHeader, expData, songHeader);
 
-	auto numSongs = fileHeader.expDataOffset ? fileHeader.extraSongs + 1 : 1;
-
+	SEQUENCEINDEX numSongs = std::min(MAX_SEQUENCES, mpt::saturate_cast<SEQUENCEINDEX>(fileHeader.expDataOffset ? fileHeader.extraSongs + 1 : 1));
 	CHANNELINDEX numChannels = 4;
 	// Scan patterns for max number of channels
 	for(SEQUENCEINDEX song = 0; song < numSongs; song++)
 	{
 		const PATTERNINDEX numPatterns = songHeader.numBlocks;
 		if(songHeader.numSamples > 63 || numPatterns > 0x7FFF)
-			return 0;
+			return {};
 
 		for(PATTERNINDEX pat = 0; pat < numPatterns; pat++)
 		{
@@ -594,11 +635,16 @@ static CHANNELINDEX MEDScanNumChannels(FileReader &file, const uint8 version)
 			numChannels = std::max(numChannels, static_cast<CHANNELINDEX>(version < 1 ? file.ReadUint8() : file.ReadUint16BE()));
 		}
 
-		if(!expData.nextModOffset || !file.Seek(expData.nextModOffset))
+		// If song offsets are going backwards, reject the file
+		if(expData.nextModOffset <= songOffset || !file.Seek(expData.nextModOffset))
+		{
+			numSongs = song + 1;
 			break;
+		}
+		songOffset = expData.nextModOffset;
 		MEDReadNextSong(file, fileHeader, expData, songHeader);
 	}
-	return numChannels;
+	return {numChannels, numSongs};
 }
 
 
@@ -609,7 +655,7 @@ static bool ValidateHeader(const MMD0FileHeader &fileHeader)
 	   || fileHeader.songOffset < sizeof(MMD0FileHeader)
 	   || fileHeader.songOffset > uint32_max - 63 * sizeof(MMD0Sample) - sizeof(MMDSong)
 	   || fileHeader.blockArrOffset < sizeof(MMD0FileHeader)
-	   || fileHeader.sampleArrOffset < sizeof(MMD0FileHeader)
+	   || (fileHeader.sampleArrOffset > 0 && fileHeader.sampleArrOffset < sizeof(MMD0FileHeader))
 	   || fileHeader.expDataOffset > uint32_max - sizeof(MMD0Exp))
 	{
 		return false;
@@ -622,7 +668,7 @@ static uint64 GetHeaderMinimumAdditionalSize(const MMD0FileHeader &fileHeader)
 {
 	return std::max<uint64>({ fileHeader.songOffset + 63 * sizeof(MMD0Sample) + sizeof(MMDSong),
 		fileHeader.blockArrOffset,
-		fileHeader.sampleArrOffset,
+		fileHeader.sampleArrOffset ? fileHeader.sampleArrOffset : sizeof(MMD0FileHeader),
 		fileHeader.expDataOffset + sizeof(MMD0Exp) }) - sizeof(MMD0FileHeader);
 }
 
@@ -670,22 +716,29 @@ bool CSoundFile::ReadMED(FileReader &file, ModLoadingFlags loadFlags)
 		file.ReadStruct(expData);
 	}
 
-	m_nChannels = MEDScanNumChannels(file, version);
-	if(m_nChannels < 1 || m_nChannels > MAX_BASECHANNELS)
+	const auto [numChannels, numSongs] = MEDScanNumChannels(file, version);
+	if(numChannels < 1 || numChannels > MAX_BASECHANNELS)
 		return false;
+	m_nChannels = numChannels;
 
 	// Start with the instruments, as those are shared between songs
 
 	std::vector<uint32be> instrOffsets;
-	file.Seek(fileHeader.sampleArrOffset);
-	file.ReadVector(instrOffsets, songHeader.numSamples);
+	if(fileHeader.sampleArrOffset)
+	{
+		file.Seek(fileHeader.sampleArrOffset);
+		file.ReadVector(instrOffsets, songHeader.numSamples);
+	} else if(songHeader.numSamples > 0)
+	{
+		return false;
+	}
 	m_nInstruments = m_nSamples = songHeader.numSamples;
 
-	// In MMD0 / MMD1, octave wrapping is only done in 4-channel modules (hardware mixing!), and not for synth instruments
-	// - It's required e.g. for automatic terminated to.mmd0
-	// - dissociate.mmd0 (8 channels) and starkelsesirap.mmd0 (synth) on the other hand don't need it
+	// In MMD0 / MMD1, octave wrapping is not done for synth instruments
+	// - It's required e.g. for automatic terminated to.mmd0 and you got to let the music.mmd1
+	// - starkelsesirap.mmd0 (synth instruments) on the other hand don't need it
 	// In MMD2 / MMD3, the mix flag is used instead.
-	const bool hardwareMixSamples = (version < 2 && m_nChannels == 4) || (version >= 2 && !(songHeader.flags2 & MMDSong::FLAG2_MIX));
+	const bool hardwareMixSamples = (version < 2) || (version >= 2 && !(songHeader.flags2 & MMDSong::FLAG2_MIX));
 
 	bool needInstruments = false;
 	bool anySynthInstrs = false;
@@ -913,10 +966,10 @@ bool CSoundFile::ReadMED(FileReader &file, ModLoadingFlags loadFlags)
 				ins.VolEnv.dwFlags.set(ENV_ENABLED);
 				needInstruments = true;
 			}
-			if(size > offsetof(MMDInstrExt, longMidiPreset))
-			{
-				ins.wMidiBank = instrExt.longMidiPreset;
-			}
+			if(size > offsetof(MMDInstrExt, volume))
+				ins.nGlobalVol = (instrExt.volume + 1u) / 2u;
+			if(size > offsetof(MMDInstrExt, midiBank))
+				ins.wMidiBank = instrExt.midiBank;
 #ifndef NO_VST
 			if(ins.nMixPlug > 0)
 			{
@@ -983,7 +1036,9 @@ bool CSoundFile::ReadMED(FileReader &file, ModLoadingFlags loadFlags)
 		}
 	}
 
-	const auto numSongs = std::min<SEQUENCEINDEX>(MAX_SEQUENCES, fileHeader.expDataOffset ? fileHeader.extraSongs + 1 : 1);
+	// Setup a program change macro for command 1C (even if MIDI plugin is disabled, as otherwise these commands may act as filter commands)
+	m_MidiCfg.ClearZxxMacros();
+	strcpy(m_MidiCfg.szMidiSFXExt[0], "Cc z");
 
 	file.Rewind();
 	PATTERNINDEX basePattern = 0;
@@ -1006,7 +1061,7 @@ bool CSoundFile::ReadMED(FileReader &file, ModLoadingFlags loadFlags)
 		{
 			if(songHeader.songLength > 256 || m_nChannels > 16)
 				return false;
-			ReadOrderFromArray(order, songHeader.mmd0song.sequence, songHeader.songLength);
+			ReadOrderFromArray(order, songHeader.GetMMD0Song().sequence, songHeader.songLength);
 			for(auto &ord : order)
 			{
 				ord += basePattern;
@@ -1019,7 +1074,7 @@ bool CSoundFile::ReadMED(FileReader &file, ModLoadingFlags loadFlags)
 			}
 		} else
 		{
-			const MMD2Song &header = songHeader.mmd2song;
+			const MMD2Song header = songHeader.GetMMD2Song();
 			if(header.numTracks < 1 || header.numTracks > 64 || m_nChannels > 64)
 				return false;
 
@@ -1052,56 +1107,57 @@ bool CSoundFile::ReadMED(FileReader &file, ModLoadingFlags loadFlags)
 			   || !file.CanRead(songHeader.songLength * 2)
 			   || !file.ReadVector(sections, songHeader.songLength))
 				continue;
+
 			for(uint16 section : sections)
 			{
 				if(section > header.numPlaySeqs)
 					continue;
 
 				file.Seek(header.playSeqTableOffset + section * 4);
-				if(file.Seek(file.ReadUint32BE()) || !file.CanRead(sizeof(MMD2PlaySeq)))
+				if(!file.Seek(file.ReadUint32BE()) || !file.CanRead(sizeof(MMD2PlaySeq)))
+					continue;
+
+				MMD2PlaySeq playSeq;
+				file.ReadStruct(playSeq);
+
+				if(!order.empty())
+					order.push_back(order.GetIgnoreIndex());
+
+				size_t readOrders = playSeq.length;
+				if(!file.CanRead(readOrders))
+					LimitMax(readOrders, file.BytesLeft());
+				LimitMax(readOrders, ORDERINDEX_MAX);
+
+				size_t orderStart = order.size();
+				order.reserve(orderStart + readOrders);
+				for(size_t ord = 0; ord < readOrders; ord++)
 				{
-					MMD2PlaySeq playSeq;
-					file.ReadStruct(playSeq);
-
-					if(!order.empty())
-						order.push_back(order.GetIgnoreIndex());
-
-					size_t readOrders = playSeq.length;
-					if(!file.CanRead(readOrders))
-						LimitMax(readOrders, file.BytesLeft());
-					LimitMax(readOrders, ORDERINDEX_MAX);
-
-					size_t orderStart = order.size();
-					order.reserve(orderStart + readOrders);
-					for(size_t ord = 0; ord < readOrders; ord++)
+					PATTERNINDEX pat = file.ReadUint16BE();
+					if(pat < 0x8000)
 					{
-						PATTERNINDEX pat = file.ReadUint16BE();
-						if(pat < 0x8000)
-						{
-							order.push_back(basePattern + pat);
-						}
+						order.push_back(basePattern + pat);
 					}
-					if(playSeq.name[0])
-						order.SetName(mpt::ToUnicode(mpt::Charset::ISO8859_1, playSeq.name));
+				}
+				if(playSeq.name[0])
+					order.SetName(mpt::ToUnicode(mpt::Charset::ISO8859_1, playSeq.name));
 
-					// Play commands (jump / stop)
-					if(playSeq.commandTableOffset > 0 && file.Seek(playSeq.commandTableOffset))
+				// Play commands (jump / stop)
+				if(playSeq.commandTableOffset > 0 && file.Seek(playSeq.commandTableOffset))
+				{
+					MMDPlaySeqCommand command;
+					while(file.ReadStruct(command))
 					{
-						MMDPlaySeqCommand command;
-						while(file.ReadStruct(command))
+						FileReader chunk = file.ReadChunk(command.extraSize);
+						ORDERINDEX ord = mpt::saturate_cast<ORDERINDEX>(orderStart + command.offset);
+						if(command.offset == 0xFFFF || ord >= order.size())
+							break;
+						if(command.command == MMDPlaySeqCommand::kStop)
 						{
-							FileReader chunk = file.ReadChunk(command.extraSize);
-							ORDERINDEX ord = mpt::saturate_cast<ORDERINDEX>(orderStart + command.offset);
-							if(command.offset == 0xFFFF || ord >= order.size())
-								break;
-							if(command.command == MMDPlaySeqCommand::kStop)
-							{
-								order[ord] = order.GetInvalidPatIndex();
-							} else if(command.command == MMDPlaySeqCommand::kJump)
-							{
-								jumpTargets[ord] = chunk.ReadUint16BE();
-								order[ord] = order.GetIgnoreIndex();
-							}
+							order[ord] = order.GetInvalidPatIndex();
+						} else if(command.command == MMDPlaySeqCommand::kJump)
+						{
+							jumpTargets[ord] = chunk.ReadUint16BE();
+							order[ord] = order.GetIgnoreIndex();
 						}
 					}
 				}
@@ -1138,7 +1194,38 @@ bool CSoundFile::ReadMED(FileReader &file, ModLoadingFlags loadFlags)
 			m_songMessage.Read(file, expData.annoLength - 1, SongMessage::leAutodetect);
 		}
 
-		if(expData.mmdInfoOffset && file.Seek(expData.mmdInfoOffset))
+#ifndef NO_VST
+		// Read MIDI messages
+		if(expData.midiDumpOffset && file.Seek(expData.midiDumpOffset) && file.CanRead(8))
+		{
+			uint16 numDumps = std::min(file.ReadUint16BE(), static_cast<uint16>(std::size(m_MidiCfg.szMidiZXXExt)));
+			file.Skip(6);
+			if(file.CanRead(numDumps * 4))
+			{
+				std::vector<uint32be> dumpPointers;
+				file.ReadVector(dumpPointers, numDumps);
+				for(uint16 dump = 0; dump < numDumps; dump++)
+				{
+					if(!file.Seek(dumpPointers[dump]) || !file.CanRead(sizeof(MMDDump)))
+						continue;
+					MMDDump dumpHeader;
+					file.ReadStruct(dumpHeader);
+					if(!file.Seek(dumpHeader.dataPointer) || !file.CanRead(dumpHeader.length))
+						continue;
+					auto &macro = m_MidiCfg.szMidiZXXExt[dump];
+					auto length = std::min(static_cast<size_t>(dumpHeader.length), std::size(macro) / 2u);
+					for(size_t i = 0; i < length; i++)
+					{
+						const uint8 byte = file.ReadUint8(), high = byte >> 4, low = byte & 0x0F;
+						macro[i * 2] = high + (high < 0x0A ? '0' : 'A' - 0x0A);
+						macro[i * 2 + 1] = low + (low < 0x0A ? '0' : 'A' - 0x0A);
+					}
+				}
+			}
+		}
+#endif
+
+		if(expData.mmdInfoOffset && file.Seek(expData.mmdInfoOffset) && file.CanRead(12))
 		{
 			file.Skip(6);  // Next info file (unused) + reserved
 			if(file.ReadUint16BE() == 1)  // ASCII text
@@ -1286,7 +1373,7 @@ bool CSoundFile::ReadMED(FileReader &file, ModLoadingFlags loadFlags)
 		}
 
 		// Fix jump order commands
-		for(const auto [from, to] : jumpTargets)
+		for(const auto & [from, to] : jumpTargets)
 		{
 			PATTERNINDEX pat;
 			if(from > 0 && order.IsValidPat(from - 1))

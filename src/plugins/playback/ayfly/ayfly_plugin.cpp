@@ -1,7 +1,7 @@
-#include <HippoPlugin.h>
 #include <HippoMessages.h>
-#include <stdlib.h>
+#include <HippoPlugin.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ayfly.h>
 #include <math.h>
@@ -15,9 +15,9 @@ HippoLogAPI* g_hp_log = NULL;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct ReplayerData {
-	void* song;
-	int read_index;
-	int frames_decoded;
+    void* song;
+    int read_index;
+    int frames_decoded;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -88,7 +88,8 @@ static int ayfly_close(void* user_data) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // TODO: These checks needs to be made much better (sanity check some more sizes in the pattern etc)
 
-enum HippoProbeResult ayfly_probe_can_play(const uint8_t* data, uint32_t data_size, const char* filename, uint64_t total_size) {
+enum HippoProbeResult ayfly_probe_can_play(const uint8_t* data, uint32_t data_size, const char* filename,
+                                           uint64_t total_size) {
     if (ay_can_play((void*)data, (int)data_size)) {
         hp_info("Supported: %s", filename);
 	    return HippoProbeResult_Supported;
@@ -100,25 +101,22 @@ enum HippoProbeResult ayfly_probe_can_play(const uint8_t* data, uint32_t data_si
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int ayfly_read_data(void* user_data, void* dest, uint32_t samples_to_read) {
-	int16_t temp_data[FRAME_SIZE * 2];
-	uint8_t* ptr = (uint8_t*)temp_data;
+static HippoReadInfo ayfly_read_data(void* user_data, void* dest, uint32_t max_output_bytes,
+                                     uint32_t native_sample_rate) {
+    uint16_t samples_to_read = hippo_min(max_output_bytes / 4, FRAME_SIZE);
 
-	float* newDest = (float*)dest;
-	samples_to_read = hippo_min(FRAME_SIZE, samples_to_read);
+    struct ReplayerData* replayer_data = (struct ReplayerData*)user_data;
 
-	// TODO: Support more than one tune
-	struct ReplayerData* replayer_data = (struct ReplayerData*)user_data;
+    uint16_t written = (uint16_t)ay_rendersongbuffer(replayer_data->song, (unsigned char*)dest, samples_to_read) / 4;
 
-    int written = (int)ay_rendersongbuffer(replayer_data->song, ptr, samples_to_read);
+    HippoReadInfo t = {
+        FREQ,
+        written,
+        2,
+        HippoOutputType_s16
+    };
 
-	const float scale = 1.0f / 32767.0f;
-
-	for (int i = 0; i < written; ++i) {
-		newDest[i] = ((float)temp_data[i]) * scale;
-	}
-
-	return written / 2;
+    return t;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

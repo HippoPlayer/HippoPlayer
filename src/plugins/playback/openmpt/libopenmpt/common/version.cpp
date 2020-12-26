@@ -12,10 +12,10 @@
 
 #include "mptString.h"
 #include "mptStringFormat.h"
-#include "mptStringParse.h" 
+#include "mptStringParse.h"
 
 #include "versionNumber.h"
-#include "svn_version.h"
+//#include "svn_version.h"
 
 
 

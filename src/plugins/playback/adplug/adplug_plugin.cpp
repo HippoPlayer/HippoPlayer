@@ -1,15 +1,15 @@
 #include <HippoPlugin.h>
 #include <adplug.h>
+#include <assert.h>
 #include <emuopl.h>
 #include <silentopl.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <wemuopl.h>
-#include <assert.h>
 
 extern "C" {
-    HippoLogAPI* g_hp_log = NULL;
+HippoLogAPI* g_hp_log = NULL;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -125,23 +125,21 @@ static inline int max_t(int a, int b) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int adplug_read_data(void* user_data, void* dest, uint32_t samples_to_read) {
+static HippoReadInfo adplug_read_data(void* user_data, void* dest, uint32_t max_output_bytes,
+                                      uint32_t native_sample_rate) {
     AdplugPlugin* plugin = (AdplugPlugin*)user_data;
 
-    uint32_t i = 0;
+    int i = 0;
     int towrite = 0;
-    char* sndbufpos = nullptr;
+    char* sndbufpos = (char*)dest;
     const int buffer_size = 2048;
     const int sampsize = 4;  // 16-bit & stereo
-    const int freq = 48000;
-    char sndbuf[buffer_size * sampsize * 2] = {0};
+    const int freq = 49716;
 
-    samples_to_read = hippo_min(buffer_size, samples_to_read);
-    float* new_dest = (float*)dest;
+    uint16_t samples_to_read = hippo_min(max_output_bytes / 4, buffer_size);
 
     // fill sound buffer
-    towrite = samples_to_read;
-    sndbufpos = sndbuf;
+    towrite = buffer_size;
 
     while (towrite > 0) {
         while (plugin->to_add < 0) {
@@ -156,15 +154,13 @@ static int adplug_read_data(void* user_data, void* dest, uint32_t samples_to_rea
         plugin->to_add -= (int)max_t(1, i);
     }
 
-    const float scale = 1.0f / 32767.0f;
-
-    int16_t* t = (int16_t*)&sndbuf[0];
-
-    for (i = 0; i < samples_to_read * 2; ++i) {
-        new_dest[i] = ((float)t[i]) * scale;
-    }
-
-    return samples_to_read * 2;
+    return HippoReadInfo {
+        freq,
+        samples_to_read,
+        2,
+        HippoOutputType_s16
+    };
+    return samples_to_read;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

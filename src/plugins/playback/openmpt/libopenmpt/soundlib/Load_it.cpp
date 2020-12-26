@@ -59,12 +59,12 @@ MPTM version history for cwtv-field in "IT" header (only for MPTM files!):
 
 #ifndef MODPLUG_NO_FILESAVE
 
-static bool AreNonDefaultTuningsUsed(CSoundFile& sf)
+static bool AreNonDefaultTuningsUsed(const CSoundFile& sf)
 {
-	const INSTRUMENTINDEX iCount = sf.GetNumInstruments();
-	for(INSTRUMENTINDEX i = 1; i <= iCount; i++)
+	const INSTRUMENTINDEX numIns = sf.GetNumInstruments();
+	for(INSTRUMENTINDEX i = 1; i <= numIns; i++)
 	{
-		if(sf.Instruments[i] != nullptr && sf.Instruments[i]->pTuning != 0)
+		if(sf.Instruments[i] != nullptr && sf.Instruments[i]->pTuning != nullptr)
 			return true;
 	}
 	return false;
@@ -593,7 +593,7 @@ bool CSoundFile::ReadIT(FileReader &file, ModLoadingFlags loadFlags)
 	// This is used for finding out whether the edit history is actually stored in the file or not,
 	// as some early versions of Schism Tracker set the history flag, but didn't save anything.
 	// We will consider the history invalid if it ends after the first parapointer.
-	uint32 minPtr = Util::MaxValueOfType(minPtr);
+	uint32 minPtr = std::numeric_limits<decltype(minPtr)>::max();
 	for(uint32 pos : insPos)
 	{
 		if(pos > 0 && pos < minPtr)
@@ -1831,7 +1831,7 @@ bool CSoundFile::SaveIT(std::ostream &f, const mpt::PathString &filename, bool c
 		mpt::IO::SeekAbsolute(f, dwPos);
 		if(!isExternal)
 		{
-			if(sample.nLength > smpLength)
+			if(sample.nLength > smpLength && smpLength != 0)
 			{
 				// Sample length does not fit into IT header!
 				AddToLog(mpt::format("Truncating sample %1: Length exceeds exceeds 4 gigasamples.")(smp));

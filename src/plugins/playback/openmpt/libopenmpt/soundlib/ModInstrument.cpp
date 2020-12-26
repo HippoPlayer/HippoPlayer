@@ -43,7 +43,7 @@ void InstrumentEnvelope::Convert(MODTYPE fromType, MODTYPE toType)
 		}
 
 		// XM -> IT / MPTM: Shorten loop by one tick by inserting bogus point
-		if(nLoopEnd > nLoopStart && dwFlags[ENV_LOOP])
+		if(nLoopEnd > nLoopStart && dwFlags[ENV_LOOP] && nLoopEnd < size())
 		{
 			if(at(nLoopEnd).tick - 1 > at(nLoopEnd - 1).tick)
 			{
@@ -308,6 +308,23 @@ void ModInstrument::Transpose(int8 amount)
 	{
 		note = static_cast<uint8>(Clamp(note + amount, NOTE_MIN, NOTE_MAX));
 	}
+}
+
+
+uint8 ModInstrument::GetMIDIChannel(const CSoundFile &sndFile, CHANNELINDEX chn) const
+{
+	if(chn >= std::size(sndFile.m_PlayState.Chn))
+		return 0;
+
+	// For mapped channels, return their pattern channel, modulo 16 (because there are only 16 MIDI channels)
+	const ModChannel &channel = sndFile.m_PlayState.Chn[chn];
+	if(nMidiChannel == MidiMappedChannel)
+		return static_cast<uint8>((channel.nMasterChn ? (channel.nMasterChn - 1u) : chn) % 16u);
+	else if(HasValidMIDIChannel())
+		return (nMidiChannel - MidiFirstChannel) % 16u;
+	else
+		return 0;
+
 }
 
 

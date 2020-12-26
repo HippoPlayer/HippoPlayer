@@ -197,6 +197,8 @@ enum enmGetLengthResetMode
 	eAdjustOnSuccess = 0x02 | eAdjust,
 	// Same as previous option, but will also try to emulate sample playback so that voices from previous patterns will sound when continuing playback at the target position.
 	eAdjustSamplePositions = 0x04 | eAdjustOnSuccess,
+	// Only adjust the visited rows state
+	eAdjustOnlyVisitedRows = 0x08,
 };
 
 
@@ -439,7 +441,7 @@ public:
 
 	uint32 m_nSamplePreAmp, m_nVSTiVolume;
 	uint32 m_OPLVolumeFactor;  // 16.16
-	enum : uint32 { m_OPLVolumeFactorScale = (1 << 16) };
+	static constexpr uint32 m_OPLVolumeFactorScale = 1 << 16;
 
 	bool IsGlobalVolumeUnset() const { return IsFirstTick(); }
 #ifndef MODPLUG_TRACKER
@@ -706,6 +708,9 @@ public:
 	PATTERNINDEX GetCurrentPattern() const { return m_PlayState.m_nPattern; }
 	ORDERINDEX GetCurrentOrder() const { return m_PlayState.m_nCurrentOrder; }
 	CHANNELINDEX GetNumChannels() const { return m_nChannels; }
+
+	constexpr bool CanAddMoreSamples(SAMPLEINDEX amount = 1) const noexcept { return (amount < MAX_SAMPLES) && m_nSamples < (MAX_SAMPLES - amount); }
+	constexpr bool CanAddMoreInstruments(INSTRUMENTINDEX amount = 1) const noexcept { return (amount < MAX_INSTRUMENTS) && m_nInstruments < (MAX_INSTRUMENTS - amount); }
 
 #ifndef NO_PLUGINS
 	IMixPlugin* GetInstrumentPlugin(INSTRUMENTINDEX instr) const;
@@ -1099,7 +1104,8 @@ protected:
 	bool ReadXISample(SAMPLEINDEX nSample, FileReader &file);
 	bool ReadITSSample(SAMPLEINDEX nSample, FileReader &file, bool rewind = true);
 	bool ReadITISample(SAMPLEINDEX nSample, FileReader &file);
-	bool ReadIFFSample(SAMPLEINDEX nInstr, FileReader &file);
+	bool ReadIFFSample(SAMPLEINDEX sample, FileReader &file);
+	bool ReadBRRSample(SAMPLEINDEX sample, FileReader& file);
 	bool ReadFLACSample(SAMPLEINDEX sample, FileReader &file);
 	bool ReadOpusSample(SAMPLEINDEX sample, FileReader &file);
 	bool ReadVorbisSample(SAMPLEINDEX sample, FileReader &file);
@@ -1164,7 +1170,6 @@ private:
 
 public:
 	PLUGINDEX GetBestPlugin(CHANNELINDEX nChn, PluginPriority priority, PluginMutePriority respectMutes) const;
-	uint8 GetBestMidiChannel(CHANNELINDEX nChn) const;
 
 };
 

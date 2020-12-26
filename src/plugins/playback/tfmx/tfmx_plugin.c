@@ -5,7 +5,6 @@
 #include <string.h>
 #include "src/tfmx.h"
 #include "src/tfmx_iface.h"
-#include "src/tfmx.h"
 
 #ifdef _WIN32
 #define strncasecmp _strnicmp
@@ -19,14 +18,14 @@ const HippoIoAPI* g_io_api = NULL;
 
 static const char* find_filename_start(const char* path, int* offset) {
     for (size_t i = strlen(path) - 1; i > 0; i--) {
-    	char c = path[i];
+        char c = path[i];
         if (c == '/' || c == '\\') {
         	*offset = (int)(i + 1);
-        	return &path[i + 1];
+            return &path[i + 1];
         }
     }
 
-	*offset = 0;
+    *offset = 0;
     return path;
 }
 
@@ -36,11 +35,11 @@ static const char* find_extension(const char* path, int* offset) {
     for (size_t i = strlen(path) - 1; i > 0; i--) {
         if (path[i] == '.') {
         	*offset = (int)(i + 1);
-        	return &path[i];
+            return &path[i];
         }
     }
 
-	*offset = 0;
+    *offset = 0;
     return path;
 }
 
@@ -64,11 +63,11 @@ static const char* get_file_name_from_path(const char* path) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef struct TfmxReplayerData {
-	TfmxState state;
-	uint16_t temp_data[BUFSIZE];
+    TfmxState state;
+    uint16_t temp_data[BUFSIZE];
     void* tune;
-	int read_index;
-	int frames_decoded;
+    int read_index;
+    int frames_decoded;
 } TfmxReplayerData;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -82,11 +81,9 @@ static const char* tfmx_supported_extensions(void* user_data) {
 
 enum HippoProbeResult tfmx_probe_can_play(const uint8_t* data, uint32_t data_size, const char* filename,
                                           uint64_t total_size) {
-    if (strncmp("TFMX-SONG", (char*)data, 9)
-      && strncmp("TFMX_SONG", (char*)data, 9)
-      && strncmp("TFMX-MOD", (char*)data, 8)
-      && strncasecmp("TFMXSONG", (char*)data, 8)
-      && strncasecmp("TFMX ", (char*)data, 5)) {
+    if (strncmp("TFMX-SONG", (char*)data, 9) && strncmp("TFMX_SONG", (char*)data, 9) &&
+        strncmp("TFMX-MOD", (char*)data, 8) && strncasecmp("TFMXSONG", (char*)data, 8) &&
+        strncasecmp("TFMX ", (char*)data, 5)) {
         hp_debug("Unsupported: %s", filename);
         return HippoProbeResult_Unsupported;
     }
@@ -115,106 +112,103 @@ static int tfmx_destroy(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int load_two_files(
-	const HippoIoAPI* io_api,
-	TfmxData* mdat,
-	TfmxData* smpl,
-	const char* mdat_name,
-	const char* smpl_name) {
+static int load_two_files(const HippoIoAPI* io_api, TfmxData* mdat, TfmxData* smpl, const char* mdat_name,
+                          const char* smpl_name) {
+    // first load mdat to memory
+    HippoIoErrorCode res = HippoIo_read_file_to_memory(io_api, mdat_name, (void**)&mdat->data, &mdat->size);
 
-	// first load mdat to memory
-	HippoIoErrorCode res = HippoIo_read_file_to_memory(io_api, mdat_name, (void**)&mdat->data, &mdat->size);
+    if (res < 0) {
+        hp_warn("Unable to read %s to memory", mdat_name);
+        return res;
+    }
 
-	if (res < 0) {
-		hp_warn("Unable to read %s to memory", mdat_name);
-		return res;
-	}
+    // Load sample file to memory
+    res = HippoIo_read_file_to_memory(io_api, smpl_name, (void**)&smpl->data, &smpl->size);
 
-	// Load sample file to memory
-	res = HippoIo_read_file_to_memory(io_api, smpl_name, (void**)&smpl->data, &smpl->size);
+    if (res < 0) {
+        hp_warn("Unable to read %s to memory", smpl_name);
+        HippoIo_free_file_to_memory(io_api, mdat->data);
+        return res;
+    }
 
-	if (res < 0) {
-		hp_warn("Unable to read %s to memory", smpl_name);
-		HippoIo_free_file_to_memory(io_api, mdat->data);
-		return res;
-	}
-
-	return 1;
+    return 1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int tfmx_load_tfm(const HippoIoAPI* io_api, TfmxState* state, const char* filename) {
-	uint8_t* data = NULL;
-	uint8_t* smpl_data_ptr = NULL;
-	uint64_t size = 0;
-	TfmxData mdat = { 0 };
-	TfmxData smpl = { 0 };
+    uint8_t* data = NULL;
+    uint8_t* smpl_data_ptr = NULL;
+    uint64_t size = 0;
+    TfmxData mdat = {0};
+    TfmxData smpl = {0};
 
-	// first load mdat to memory
-	HippoIoErrorCode res = HippoIo_read_file_to_memory(io_api, filename, (void**)&data, &size);
+    // first load mdat to memory
+    HippoIoErrorCode res = HippoIo_read_file_to_memory(io_api, filename, (void**)&data, &size);
 
-	if (res < 0) {
-		hp_warn("Unable to read %s to memory", filename);
-		return res;
-	}
+    if (res < 0) {
+        hp_warn("Unable to read %s to memory", filename);
+        return res;
+    }
 
-	// validate that the size is valid
-	if (size < sizeof(struct TFMXHeader) + 8 + (3 * 4)) {
-		hp_warn("The file is too small %s (can't contain a full tfx file)", filename);
-		HippoIo_free_file_to_memory(io_api, data);
-		return -1;
-	}
+    // validate that the size is valid
+    if (size < sizeof(struct TFMXHeader) + 8 + (3 * 4)) {
+        hp_warn("The file is too small %s (can't contain a full tfx file)", filename);
+        HippoIo_free_file_to_memory(io_api, data);
+        return -1;
+    }
 
-	uint8_t* saved_data = data;
+    uint8_t* saved_data = data;
 
-	if (strncmp("TFMX-MOD", (char*)data, 8) != 0) {
-		hp_warn("The file %s doesn't have correct header data", filename);
-		HippoIo_free_file_to_memory(io_api, data);
-		return -1;
-	}
+    if (strncmp("TFMX-MOD", (char*)data, 8) != 0) {
+        hp_warn("The file %s doesn't have correct header data", filename);
+        HippoIo_free_file_to_memory(io_api, data);
+        return -1;
+    }
 
-	data += 8;
-	uint32_t smpl_offs = *((uint32_t*)data); data += 4;
-	uint32_t tag_offs = *((uint32_t*)data); data += 8; // skipping res
+    data += 8;
+    uint32_t smpl_offs = *((uint32_t*)data);
+    data += 4;
+    uint32_t tag_offs = *((uint32_t*)data);
+    data += 8;  // skipping res
 
-	uint32_t mdat_size = smpl_offs - 20 - sizeof(struct TFMXHeader);
+    uint32_t mdat_size = smpl_offs - 20 - sizeof(struct TFMXHeader);
 
-	if (mdat_size > 0x10000) {
-		smpl_data_ptr = saved_data + smpl_offs;
-		mdat_size = 0x10000;
-	} else {
-		smpl_data_ptr = saved_data + smpl_offs;
-		//smpl_data_ptr = saved_data + mdat_size;
-	}
+    if (mdat_size > 0x10000) {
+        smpl_data_ptr = saved_data + smpl_offs;
+        mdat_size = 0x10000;
+    } else {
+        smpl_data_ptr = saved_data + smpl_offs;
+        // smpl_data_ptr = saved_data + mdat_size;
+    }
 
-	mdat.data = data;
-	mdat.size = mdat_size;
-	smpl.data = smpl_data_ptr;
-	smpl.size = tag_offs - smpl_offs;
+    mdat.data = data;
+    mdat.size = mdat_size;
+    smpl.data = smpl_data_ptr;
+    smpl.size = tag_offs - smpl_offs;
 
-	int ret_value = LoadTFMXFile(state, &mdat, &smpl);
+    int ret_value = LoadTFMXFile(state, &mdat, &smpl);
 
-	HippoIo_free_file_to_memory(io_api, saved_data);
+    HippoIo_free_file_to_memory(io_api, saved_data);
 
-	return ret_value;
+    return ret_value;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int tfmx_load(const HippoIoAPI* io_api, const char* url, TfmxState* state) {
-	int ret_value = -1;
-	int start_offset = 0;
-	int ext_offset = 0;
-	TfmxData mdat = { 0 };
-	TfmxData smpl = { 0 };
+    int ret_value = -1;
+    int start_offset = 0;
+    int ext_offset = 0;
+    TfmxData mdat = {0};
+    TfmxData smpl = {0};
 
-	const char* filename = find_filename_start(url, &start_offset);
-	const char* extension = find_extension(url, &ext_offset);
+    const char* filename = find_filename_start(url, &start_offset);
+    const char* extension = find_extension(url, &ext_offset);
 
-	// first check if we have mdat.<filename>,smpl.<filename> which is the orignal Amiga naming
+    // first check if we have mdat.<filename>,smpl.<filename> which is the orignal Amiga naming
     if (strncasecmp(filename, "mdat.", 5) == 0) {
-    	char* smpl_name = strdup(url);
+        char* smpl_name = strdup(url);
 
         // Case-preserving conversion of "mdat" to "smpl"
         smpl_name[start_offset + 0] ^= 'm' ^ 's';
@@ -222,16 +216,16 @@ static int tfmx_load(const HippoIoAPI* io_api, const char* url, TfmxState* state
         smpl_name[start_offset + 2] ^= 'a' ^ 'p';
         smpl_name[start_offset + 3] ^= 't' ^ 'l';
 
-		if ((ret_value = load_two_files(io_api, &mdat, &smpl, url, smpl_name) >= 0)) {
-			ret_value = LoadTFMXFile(state, &mdat, &smpl);
-			HippoIo_free_file_to_memory(io_api, mdat.data);
-			HippoIo_free_file_to_memory(io_api, smpl.data);
-		}
+        if ((ret_value = load_two_files(io_api, &mdat, &smpl, url, smpl_name) >= 0)) {
+            ret_value = LoadTFMXFile(state, &mdat, &smpl);
+            HippoIo_free_file_to_memory(io_api, mdat.data);
+            HippoIo_free_file_to_memory(io_api, smpl.data);
+        }
 
-		free(smpl_name);
-	// check if we have <filename>.mdat., <filename>.smpl
+        free(smpl_name);
+        // check if we have <filename>.mdat., <filename>.smpl
     } else if (strncasecmp(extension, ".mdat", 5) == 0) {
-    	char* smpl_name = strdup(url);
+        char* smpl_name = strdup(url);
 
         // Case-preserving conversion of "mdat" to "smpl"
         smpl_name[ext_offset + 0] ^= 'm' ^ 's';
@@ -239,32 +233,32 @@ static int tfmx_load(const HippoIoAPI* io_api, const char* url, TfmxState* state
         smpl_name[ext_offset + 2] ^= 'a' ^ 'p';
         smpl_name[ext_offset + 3] ^= 't' ^ 'l';
 
-		if ((ret_value = load_two_files(io_api, &mdat, &smpl, url, smpl_name) >= 0)) {
-			ret_value = LoadTFMXFile(state, &mdat, &smpl);
-			HippoIo_free_file_to_memory(io_api, mdat.data);
-			HippoIo_free_file_to_memory(io_api, smpl.data);
-		}
+        if ((ret_value = load_two_files(io_api, &mdat, &smpl, url, smpl_name) >= 0)) {
+            ret_value = LoadTFMXFile(state, &mdat, &smpl);
+            HippoIo_free_file_to_memory(io_api, mdat.data);
+            HippoIo_free_file_to_memory(io_api, smpl.data);
+        }
 
-		free(smpl_name);
-	// Check for <filename>.tfx, <filename>.sam
+        free(smpl_name);
+        // Check for <filename>.tfx, <filename>.sam
     } else if (strncasecmp(extension, ".tfx", 4) == 0) {
-    	char* smpl_name = strdup(url);
+        char* smpl_name = strdup(url);
 
         // Case-preserving conversion of "tfx" to "samp"
         smpl_name[ext_offset + 0] ^= 't' ^ 's';
         smpl_name[ext_offset + 1] ^= 'f' ^ 'a';
         smpl_name[ext_offset + 2] ^= 'x' ^ 'm';
 
-		if ((ret_value = load_two_files(io_api, &mdat, &smpl, url, smpl_name) >= 0)) {
-			ret_value = LoadTFMXFile(state, &mdat, &smpl);
-			HippoIo_free_file_to_memory(io_api, mdat.data);
-			HippoIo_free_file_to_memory(io_api, smpl.data);
-		}
+        if ((ret_value = load_two_files(io_api, &mdat, &smpl, url, smpl_name) >= 0)) {
+            ret_value = LoadTFMXFile(state, &mdat, &smpl);
+            HippoIo_free_file_to_memory(io_api, mdat.data);
+            HippoIo_free_file_to_memory(io_api, smpl.data);
+        }
 
-		free(smpl_name);
-	// Check for .tfm which is a single format
+        free(smpl_name);
+        // Check for .tfm which is a single format
     } else if (strncasecmp(extension, ".tfm", 3) == 0) {
-		ret_value = tfmx_load_tfm(io_api, state, url);
+        ret_value = tfmx_load_tfm(io_api, state, url);
     }
 
     return ret_value;
@@ -278,10 +272,10 @@ static int tfmx_open(void* user_data, const char* buffer, int subsong) {
 
     TfmxState_init(&plugin->state);
 
-	if (tfmx_load(g_io_api, buffer, &plugin->state) < 0) {
+    if (tfmx_load(g_io_api, buffer, &plugin->state) < 0) {
         hp_error("Unable to open %s", buffer);
         return -1;
-	}
+    }
 
     TFMXSetSubSong(&plugin->state, subsong);
     TFMXRewind(&plugin->state);
@@ -299,27 +293,27 @@ static int tfmx_close(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int tfmx_read_data(void* user_data, void* dest, uint32_t max_samples) {
-    int16_t temp_data[BUFSIZE] = {0};
-	struct TfmxReplayerData* data = (TfmxReplayerData*)user_data;
-	int samples_to_read = (int)max_samples;
-	float* newDest = (float*)dest;
+static HippoReadInfo tfmx_read_data(void* user_data, void* dest, uint32_t max_output_bytes,
+                                    uint32_t native_sample_rate) {
+    struct TfmxReplayerData* data = (TfmxReplayerData*)user_data;
 
     int block_size = (int)tfmx_get_block_size(&data->state) / 2;
 
     if (tfmx_try_to_make_block(&data->state) >= 0) {
-        tfmx_get_block(&data->state, temp_data);
+        tfmx_get_block(&data->state, dest);
     }
 
-    const float scale = 1.0f / 32767.0f;
+    HippoReadInfo t = {
+        48000,
+        block_size / 2,
+        2,
+        HippoOutputType_s16
+            newDest[i] = ((float)data_read[i]) * scale;
+        }
 
-    float* new_dest = (float*)dest;
-
-    for (int i = 0; i < block_size; ++i) {
-        new_dest[i] = ((float)temp_data[i]) * scale;
-    }
-
-    return block_size;
+        for (int i = 0; i < diff * 2; ++i) {
+            newDest[i] = ((float)data_read[i]) * scale;
+    return t;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -331,8 +325,8 @@ static int tfmx_seek(void* user_data, int ms) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int tfmx_metadata(const char* url, const HippoServiceAPI* service_api) {
-	TfmxState* state = malloc(sizeof(TfmxState));
-	TfmxState_init(state);
+    TfmxState* state = malloc(sizeof(TfmxState));
+    TfmxState_init(state);
 
     const HippoIoAPI* io_api = HippoServiceAPI_get_io_api(service_api, HIPPO_FILE_API_VERSION);
     const HippoMetadataAPI* metadata_api = HippoServiceAPI_get_metadata_api(service_api, HIPPO_METADATA_API_VERSION);

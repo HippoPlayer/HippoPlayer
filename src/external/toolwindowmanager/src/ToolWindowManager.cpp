@@ -1280,7 +1280,7 @@ void ToolWindowManager::drawHotspotPixmaps()
 
     rect = rect.marginsAdded(QMarginsF(-4, -4, -4, -4));
 
-    QRectF fullRect = rect;
+    //QRectF fullRect = rect;
 
     if(ref == LeftOf)
       rect = rect.marginsAdded(QMarginsF(0, 0, -12, 0));

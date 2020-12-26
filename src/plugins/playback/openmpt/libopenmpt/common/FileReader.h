@@ -96,6 +96,8 @@ namespace FileReader
 	template <typename T, typename TFileCursor>
 	bool Read(TFileCursor &f, T &target)
 	{
+		// cppcheck false-positive
+		// cppcheck-suppress uninitvar
 		mpt::byte_span dst = mpt::as_raw_memory(target);
 		if(dst.size() != f.GetRaw(dst))
 		{
@@ -561,10 +563,7 @@ namespace FileReader
 		static_assert(mpt::is_binary_safe<T>::value);
 		if(f.CanRead(sizeof(destArray)))
 		{
-			for(auto &element : destArray)
-			{
-				Read(f, element);
-			}
+			f.ReadRaw(mpt::as_raw_memory(destArray));
 			return true;
 		} else
 		{
@@ -582,10 +581,7 @@ namespace FileReader
 		static_assert(mpt::is_binary_safe<T>::value);
 		if(f.CanRead(sizeof(destArray)))
 		{
-			for(auto &element : destArray)
-			{
-				Read(f, element);
-			}
+			f.ReadRaw(mpt::as_raw_memory(destArray));
 			return true;
 		} else
 		{
@@ -604,10 +600,7 @@ namespace FileReader
 		destVector.resize(destSize);
 		if(f.CanRead(sizeof(T) * destSize))
 		{
-			for(auto &element : destVector)
-			{
-				Read(f, element);
-			}
+			f.ReadRaw(mpt::as_raw_memory(destVector));
 			return true;
 		} else
 		{
@@ -677,18 +670,9 @@ namespace FileReader
 		typename TFileCursor::off_t avail = f.GetRaw(bytes, sizeof(bytes));
 		typename TFileCursor::off_t readPos = 1;
 		
-		size_t writtenBits = 0;
 		uint8 b = mpt::byte_cast<uint8>(bytes[0]);
 		target = (b & 0x7F);
-
-		// Count actual bits used in most significant byte (i.e. this one)
-		for(size_t bit = 0; bit < 7; bit++)
-		{
-			if((b & (1u << bit)) != 0)
-			{
-				writtenBits = bit + 1;
-			}
-		}
+		size_t writtenBits = static_cast<size_t>(mpt::bit_width(target));  // Bits used in the most significant byte
 
 		while(readPos < avail && (b & 0x80) != 0)
 		{
@@ -1019,10 +1003,10 @@ public:
 		void invalidate() { size_ = 0; pinnedData = nullptr; cache = std::vector<std::byte>(); }
 		const std::byte *data() const { return span().data(); }
 		std::size_t size() const { return size_; }
-		mpt::const_byte_span::iterator begin() const { return span().begin(); }
-		mpt::const_byte_span::iterator end() const { return span().end(); }
-		mpt::const_byte_span::const_iterator cbegin() const { return span().cbegin(); }
-		mpt::const_byte_span::const_iterator cend() const { return span().cend(); }
+		mpt::const_byte_span::pointer begin() const { return span().data(); }
+		mpt::const_byte_span::pointer end() const { return span().data() + span().size(); }
+		mpt::const_byte_span::const_pointer cbegin() const { return span().data(); }
+		mpt::const_byte_span::const_pointer cend() const { return span().data() + span().size(); }
 	};
 
 	// Returns a pinned view into the remaining raw data from cursor position.
@@ -1101,43 +1085,47 @@ public:
 	std::vector<std::byte> GetRawDataAsByteVector() const
 	{
 		PinnedRawDataView view = GetPinnedRawDataView();
-		return std::vector<std::byte>(view.span().begin(), view.span().end());
+		return mpt::make_vector(view.span());
 	}
 	std::vector<std::byte> ReadRawDataAsByteVector()
 	{
 		PinnedRawDataView view = ReadPinnedRawDataView();
-		return std::vector<std::byte>(view.span().begin(), view.span().end());
+		return mpt::make_vector(view.span());
 	}
 	std::vector<std::byte> GetRawDataAsByteVector(std::size_t size) const
 	{
 		PinnedRawDataView view = GetPinnedRawDataView(size);
-		return std::vector<std::byte>(view.span().begin(), view.span().end());
+		return mpt::make_vector(view.span());
 	}
 	std::vector<std::byte> ReadRawDataAsByteVector(std::size_t size)
 	{
 		PinnedRawDataView view = ReadPinnedRawDataView(size);
-		return std::vector<std::byte>(view.span().begin(), view.span().end());
+		return mpt::make_vector(view.span());
 	}
 
 	std::string GetRawDataAsString() const
 	{
 		PinnedRawDataView view = GetPinnedRawDataView();
-		return std::string(mpt::byte_cast<const char*>(view.span().begin()), mpt::byte_cast<const char*>(view.span().end()));
+		mpt::span<const char> data = mpt::byte_cast<mpt::span<const char>>(view.span());
+		return std::string(data.begin(), data.end());
 	}
 	std::string ReadRawDataAsString()
 	{
 		PinnedRawDataView view = ReadPinnedRawDataView();
-		return std::string(mpt::byte_cast<const char*>(view.span().begin()), mpt::byte_cast<const char*>(view.span().end()));
+		mpt::span<const char> data = mpt::byte_cast<mpt::span<const char>>(view.span());
+		return std::string(data.begin(), data.end());
 	}
 	std::string GetRawDataAsString(std::size_t size) const
 	{
 		PinnedRawDataView view = GetPinnedRawDataView(size);
-		return std::string(mpt::byte_cast<const char*>(view.span().begin()), mpt::byte_cast<const char*>(view.span().end()));
+		mpt::span<const char> data = mpt::byte_cast<mpt::span<const char>>(view.span());
+		return std::string(data.begin(), data.end());
 	}
 	std::string ReadRawDataAsString(std::size_t size)
 	{
 		PinnedRawDataView view = ReadPinnedRawDataView(size);
-		return std::string(mpt::byte_cast<const char*>(view.span().begin()), mpt::byte_cast<const char*>(view.span().end()));
+		mpt::span<const char> data = mpt::byte_cast<mpt::span<const char>>(view.span());
+		return std::string(data.begin(), data.end());
 	}
 
 	template <typename T>
@@ -1360,7 +1348,7 @@ using MemoryFileReader = detail::FileReader<FileReaderTraitsMemory>;
 
 
 // Initialize file reader object with pointer to data and data length.
-template <typename Tbyte> static inline FileReader make_FileReader(mpt::span<Tbyte> bytedata, const mpt::PathString *filename = nullptr)
+template <typename Tbyte> inline FileReader make_FileReader(mpt::span<Tbyte> bytedata, const mpt::PathString *filename = nullptr)
 {
 	return FileReader(mpt::byte_cast<mpt::const_byte_span>(bytedata), filename);
 }
@@ -1368,7 +1356,7 @@ template <typename Tbyte> static inline FileReader make_FileReader(mpt::span<Tby
 #if defined(MPT_FILEREADER_CALLBACK_STREAM)
 
 // Initialize file reader object with a CallbackStream.
-static inline FileReader make_FileReader(CallbackStream s, const mpt::PathString *filename = nullptr)
+inline FileReader make_FileReader(CallbackStream s, const mpt::PathString *filename = nullptr)
 {
 	return FileReader(
 				FileDataContainerCallbackStreamSeekable::IsSeekable(s) ?
@@ -1381,7 +1369,7 @@ static inline FileReader make_FileReader(CallbackStream s, const mpt::PathString
 #endif // MPT_FILEREADER_CALLBACK_STREAM
 	
 // Initialize file reader object with a std::istream.
-static inline FileReader make_FileReader(std::istream *s, const mpt::PathString *filename = nullptr)
+inline FileReader make_FileReader(std::istream *s, const mpt::PathString *filename = nullptr)
 {
 	return FileReader(
 				FileDataContainerStdStreamSeekable::IsSeekable(s) ?

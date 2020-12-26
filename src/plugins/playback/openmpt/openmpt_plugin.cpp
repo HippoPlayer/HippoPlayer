@@ -309,26 +309,31 @@ static int openmpt_close(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int openmpt_read_data(void* user_data, void* dest, uint32_t samples_to_read) {
+static HippoReadInfo openmpt_read_data(void* user_data, void* dest, uint32_t max_output_bytes, uint32_t native_sample_rate) {
     struct OpenMptData* replayer_data = (struct OpenMptData*)user_data;
 
-    int gen_count = (int)replayer_data->mod->read_interleaved_stereo(48000, samples_to_read, (float*)dest) * 2;
+    const int samples_to_generate = hippo_min(512, max_output_bytes / 8);
+
+    uint16_t gen_count = (uint16_t)replayer_data->mod->read_interleaved_stereo(native_sample_rate, samples_to_generate, (float*)dest);
 
     // Send current positions back to frontend if we have some more data
     if (gen_count > 0) {
         flatbuffers::FlatBufferBuilder builder(1024);
         builder.Finish(CreateHippoMessageDirect(
             builder, MessageType_current_position,
-            CreateHippoCurrentPosition(builder, replayer_data->length, replayer_data->mod->get_current_pattern(),
-                                       replayer_data->mod->get_current_row(), replayer_data->mod->get_current_speed(),
-                                       replayer_data->length)
+            CreateHippoCurrentPosition(builder, replayer_data->mod->get_position_seconds(),
+                                       replayer_data->mod->get_current_pattern(), replayer_data->mod->get_current_row(),
+                                       replayer_data->mod->get_current_speed(), replayer_data->length)
                 .Union()));
         HippoMessageAPI_send(replayer_data->message_api, builder.GetBufferPointer(), builder.GetSize());
     }
 
-    // TODO: Only send pattern data when we need requsted
-    // send_pattern_data(replayer_data);
-    return gen_count;
+    return HippoReadInfo {
+        native_sample_rate,
+        gen_count,
+        2,
+        HippoOutputType_f32
+    };
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -456,9 +461,9 @@ static void openmpt_static_init(struct HippoLogAPI* log, const HippoServiceAPI* 
 
 static HippoPlaybackPlugin g_openmptPlugin = {
     HIPPO_PLAYBACK_PLUGIN_API_VERSION,
-    PLUGIN_NAME,
-    "0.0.1",
-    "libopenmpt 0.5.0",
+    "openmpt",
+    "0.0.2",
+    "libopenmpt 0.5.4",
     openmpt_probe_can_play,
     openmpt_supported_extensions,
     openmpt_create,

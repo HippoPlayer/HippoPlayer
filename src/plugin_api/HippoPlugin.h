@@ -352,6 +352,24 @@ struct HippoLoadAPI;
 struct HippoMetadataAPI;
 struct HippoSettingsAPI;
 
+enum {
+    HippoOutputType_u8  = 1,
+    HippoOutputType_s16 = 2,
+    HippoOutputType_s24 = 3, // Tightly packed. 3 bytes per sample.
+    HippoOutputType_s32 = 4,
+    HippoOutputType_f32 = 5,
+};
+
+#define HIPPO_READ_DESC(sample_rate, sample_count, channel_count, output_type) \
+    (((uint64_t)sample_rate) << 32) | (((uint32_t)sample_count) << 16) | (((uint16_t)channel_count) << 8) | ((uint8_t)output_type)
+
+typedef struct HippoReadInfo {
+    uint32_t sample_rate;
+    uint16_t sample_count;
+    uint8_t channel_count;
+    uint8_t output_format;
+} HippoReadInfo;
+
 typedef struct HippoPlaybackPlugin {
 	uint64_t api_version;
 	const char* name;
@@ -364,14 +382,13 @@ typedef struct HippoPlaybackPlugin {
 	void (*event)(void* user_data, const unsigned char* data, int len);
 	int (*open)(void* user_data, const char* buffer, int subsong);
 	int (*close)(void* user_data);
-	int (*read_data)(void* user_data, void* dest, uint32_t max_sample_count);
+	HippoReadInfo (*read_data)(void* user_data, void* dest, uint32_t max_output_bytes, uint32_t native_sample_rate);
 	int (*seek)(void* user_data, int ms);
 	int (*metadata)(const char* url, const HippoServiceAPI* services);
 	void (*static_init)(struct HippoLogAPI* log, const HippoServiceAPI* services);
 	int (*register_settings)(const struct HippoSettingsAPI* settings);
 	int (*update_settings)(void* user_data, const struct HippoSettingsAPI* settings);
 } HippoPlaybackPlugin;
-
 
 #define HIPPO_PLAYBACK_PLUGIN_API_VERSION 1
 #define HIPPO_MESSAGE_API_VERSION 1
@@ -380,6 +397,7 @@ typedef struct HippoPlaybackPlugin {
 //#define HIPPO_VERSION(text) (u64)text
 
 #define hippo_min(x, y) (((x) < (y)) ? (x) : (y))
+#define hippo_max(x, y) (((x) > (y)) ? (x) : (y))
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

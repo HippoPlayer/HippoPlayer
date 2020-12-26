@@ -34,7 +34,8 @@ pub struct HippoPlaybackPluginFFI {
         user_data: *mut c_void,
         dest: *mut c_void,
         max_sample_count: u32,
-    ) -> i32,
+        native_sample_rate: u32,
+    ) -> ffi::HippoReadInfo,
     pub seek: unsafe extern "C" fn(user_data: *mut c_void, ms: i32) -> i32,
     pub metadata: Option<
         unsafe extern "C" fn(buffer: *const i8, services: *const ffi::HippoServiceAPI) -> i32,

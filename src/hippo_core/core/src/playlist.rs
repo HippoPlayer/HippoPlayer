@@ -51,7 +51,6 @@ impl Playlist {
 			self.new_song = true;
     	} else if self.randomize_playlist {
     		let rand_index = random::<usize>() % self.entries.len();
-    		println!("new song index 1 {}", self.current_song);
     		self.current_song = rand_index as isize;
     		self.new_song = true;
     	} else {
@@ -68,13 +67,16 @@ impl Playlist {
         let count = self.entries.len() as isize;
 
         if count > 0 {
-            let new_song = (self.current_song + direction) % count;
+            let mut new_song = (self.current_song + direction) % count;
+
+            if new_song < 0 {
+                new_song = count - 1;
+            }
 
             if new_song != self.current_song {
                 self.new_song = true;
             }
 
-    		println!("new song index 2 {}", self.current_song);
             self.current_song = new_song;
         }
 

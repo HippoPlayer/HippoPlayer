@@ -66,6 +66,10 @@ MPT_WARNING("Warning: libopenmpt built in non thread-safe mode because mutexes a
 MPT_WARNING("Warning: Building libopenmpt with MinGW-w64 without std::thread support is not recommended and is deprecated. Please use MinGW-w64 with posix threading model (as opposed to win32 threading model), or build with mingw-std-threads.")
 #endif // MINGW
 
+#if MPT_CLANG_AT_LEAST(5,0,0) && defined(__powerpc__) && !defined(__powerpc64__)
+MPT_WARNING("Warning: libopenmpt is known to trigger bad code generation with Clang 5 or later on powerpc (32bit) when using -O3. See <https://bugs.llvm.org/show_bug.cgi?id=46683>.")
+#endif
+
 #endif // !MPT_BUILD_SILENCE_LIBOPENMPT_CONFIGURATION_WARNINGS
 
 #if defined(MPT_ASSERT_HANDLER_NEEDED) && !defined(ENABLE_TESTS)
@@ -1102,11 +1106,11 @@ double module_impl::set_position_seconds( double seconds ) {
 	} else {
 		subsong = &subsongs[m_current_subsong];
 	}
-	GetLengthType t = m_sndFile->GetLength( eNoAdjust, GetLengthTarget( seconds ).StartPos( static_cast<SEQUENCEINDEX>( subsong->sequence ), static_cast<ORDERINDEX>( subsong->start_order ), static_cast<ROWINDEX>( subsong->start_row ) ) ).back();
+	GetLengthType t = m_sndFile->GetLength( m_ctl_seek_sync_samples ? eAdjustSamplePositions : eAdjust, GetLengthTarget( seconds ).StartPos( static_cast<SEQUENCEINDEX>( subsong->sequence ), static_cast<ORDERINDEX>( subsong->start_order ), static_cast<ROWINDEX>( subsong->start_row ) ) ).back();
 	m_sndFile->m_PlayState.m_nCurrentOrder = t.lastOrder;
 	m_sndFile->SetCurrentOrder( t.lastOrder );
 	m_sndFile->m_PlayState.m_nNextRow = t.lastRow;
-	m_currentPositionSeconds = base_seconds + m_sndFile->GetLength( m_ctl_seek_sync_samples ? eAdjustSamplePositions : eAdjust, GetLengthTarget( t.lastOrder, t.lastRow ).StartPos( static_cast<SEQUENCEINDEX>( subsong->sequence ), static_cast<ORDERINDEX>( subsong->start_order ), static_cast<ROWINDEX>( subsong->start_row ) ) ).back().duration;
+	m_currentPositionSeconds = base_seconds + t.duration;
 	return m_currentPositionSeconds;
 }
 double module_impl::set_position_order_row( std::int32_t order, std::int32_t row ) {
@@ -1363,8 +1367,15 @@ std::vector<std::string> module_impl::get_subsong_names() const {
 	std::vector<std::string> retval;
 	std::unique_ptr<subsongs_type> subsongs_temp = has_subsongs_inited() ?  std::unique_ptr<subsongs_type>() : std::make_unique<subsongs_type>( get_subsongs() );
 	const subsongs_type & subsongs = has_subsongs_inited() ? m_subsongs : *subsongs_temp;
+	retval.reserve( subsongs.size() );
 	for ( const auto & subsong : subsongs ) {
-		retval.push_back( mpt::ToCharset( mpt::Charset::UTF8, m_sndFile->Order( static_cast<SEQUENCEINDEX>( subsong.sequence ) ).GetName() ) );
+		const auto & order = m_sndFile->Order( static_cast<SEQUENCEINDEX>( subsong.sequence ) );
+		retval.push_back( mpt::ToCharset( mpt::Charset::UTF8, order.GetName() ) );
+		if ( retval.back().empty() ) {
+			// use first pattern name instead
+			if ( order.IsValidPat( static_cast<SEQUENCEINDEX>( subsong.start_order ) ) )
+				retval.back() = mpt::ToCharset( mpt::Charset::UTF8, m_sndFile->GetCharsetInternal(), m_sndFile->Patterns[ order[ subsong.start_order ] ].GetName() );
+		}
 	}
 	return retval;
 }
