@@ -196,6 +196,11 @@ unsafe extern "C" fn data_callback(
 		let read_format = Format::from_c(info.output_format as u32);
 		let frames_read = info.sample_count;// * info.channel_count as u16;
 
+		// TODO: proper handling of this
+		if frames_read == 0 {
+			break;
+		}
+
 		//println!("updating converter with channel count {}, format {:#?} sample rate {}",
 		//	info.channel_count, read_format, info.sample_rate);
 
