@@ -15,7 +15,10 @@ HippoPlayFile hippo_play_file;
 HippoServiceApiNew hippo_service_api_new;
 HippoMessageApiNew hippo_message_api_new;
 HippoUpdateMessages hippo_update_messages;
-HippoPlaylistRemoveEntry hippo_playlist_remove_entry;
+HippoPlaylistRemoveEntries hippo_playlist_remove_entries;
+HippoPlaylistGet hippo_playlist_get;
+HippoPlaylistCount hippo_playlist_count;
+
 HippoInitAudioDevice hippo_init_audio_device;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -213,7 +216,11 @@ done:
 	hippo_service_api_new = (HippoServiceApiNew)dlsym(core_handle, "hippo_service_api_new");
 	hippo_message_api_new = (HippoMessageApiNew)dlsym(core_handle, "hippo_message_api_new");
 	hippo_update_messages = (HippoUpdateMessages)dlsym(core_handle, "hippo_update_messages");
-	hippo_playlist_remove_entry = (HippoPlaylistRemoveEntry)dlsym(core_handle, "hippo_playlist_remove_entry");
+
+	hippo_playlist_remove_entries = (HippoPlaylistRemoveEntries)dlsym(core_handle, "hippo_playlist_remove_entries");
+	hippo_playlist_count = (HippoPlaylistCount)dlsym(core_handle, "hippo_playlist_count");
+	hippo_playlist_get = (HippoPlaylistGet)dlsym(core_handle, "hippo_playlist_get");
+
 	hippo_init_audio_device = (HippoInitAudioDevice)dlsym(core_handle, "hippo_init_audio_device");
 
 	return 1;

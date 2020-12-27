@@ -209,12 +209,15 @@ impl SongDb {
     pub fn get_tag_f64(&self, tag: &str, url: &str) -> Option<f64> {
         let mut statement = self.get_statement(tag, url);
 
-        if sqlite::State::Row == statement.next().unwrap() {
-            let entry = statement.read::<f64>(0).unwrap();
-            Some(entry)
-        } else {
-        	None
+        if let Ok(state) = statement.next() {
+        	if state == sqlite::State::Row {
+				if let Ok(entry) = statement.read::<f64>(0) {
+					return Some(entry);
+				}
+        	}
         }
+
+        None
     }
 
 	/// get the has for the url but ignore any subsongs if present
