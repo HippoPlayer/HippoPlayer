@@ -1,6 +1,5 @@
 use sqlite::{Error, State};
 
-
 const CREATE_URLS_TABLE: &str = "
         CREATE TABLE IF NOT EXISTS urls(
             pk INTEGER PRIMARY KEY DESC,
@@ -66,7 +65,12 @@ impl SongDb {
         connection.execute(CREATE_SAMPLES_TABLE)?;
         connection.execute(CREATE_INSTRUMENTS_TABLE)?;
         connection.execute("PRAGMA journal_mode=WAL")?; // for less trafic to disk
-        Ok(SongDb { connection, query_data, cached_samples, cached_instruments })
+        Ok(SongDb {
+            connection,
+            query_data,
+            cached_samples,
+            cached_instruments,
+        })
     }
 
     pub fn begin_transaction(&self) {
@@ -95,18 +99,18 @@ impl SongDb {
     }
 
     pub fn set_tag_string(&self, url_id: u64, key: &str, data: &str) -> Result<(), Error> {
-    	let t;
-    	if data.contains('"') {
-			t = format!(
-            	"UPDATE urls SET {} = '{}' where pk == {}",
-				key, data, url_id,
-			);
-    	} else {
-			t = format!(
-            	"UPDATE urls SET {} = \"{}\" where pk == {}",
-				key, data, url_id,
-			);
-    	}
+        let t;
+        if data.contains('"') {
+            t = format!(
+                "UPDATE urls SET {} = '{}' where pk == {}",
+                key, data, url_id,
+            );
+        } else {
+            t = format!(
+                "UPDATE urls SET {} = \"{}\" where pk == {}",
+                key, data, url_id,
+            );
+        }
 
         self.connection.execute(t)?;
         Ok(())
@@ -121,7 +125,13 @@ impl SongDb {
         Ok(())
     }
 
-    pub fn add_sub_song(&self, url_id: u64, index: i32, name: &str, length: f64) -> Result<(), Error> {
+    pub fn add_sub_song(
+        &self,
+        url_id: u64,
+        index: i32,
+        name: &str,
+        length: f64,
+    ) -> Result<(), Error> {
         let t = format!(
             "INSERT or IGNORE into sub_songs (url_id, sub_index, title, length) VALUES({}, {}, \"{}\", {})",
             url_id, index, name, length
@@ -131,59 +141,62 @@ impl SongDb {
     }
 
     pub fn add_sample(&self, url_id: u64, sample_text: &str) -> Result<(), Error> {
-    	let t;
-    	if sample_text.contains('"') {
-			t = format!(
-				"INSERT into samples (url_id, text) VALUES({}, '{}')",
-				url_id, sample_text
-			);
-		} else {
-			t = format!(
-				"INSERT into samples (url_id, text) VALUES({}, \"{}\")",
-				url_id, sample_text
-			);
-		}
+        let t;
+        if sample_text.contains('"') {
+            t = format!(
+                "INSERT into samples (url_id, text) VALUES({}, '{}')",
+                url_id, sample_text
+            );
+        } else {
+            t = format!(
+                "INSERT into samples (url_id, text) VALUES({}, \"{}\")",
+                url_id, sample_text
+            );
+        }
         self.connection.execute(t)?;
         Ok(())
     }
 
     pub fn add_instrument(&self, url_id: u64, instrument_text: &str) -> Result<(), Error> {
-    	let t;
-    	if instrument_text.contains('"') {
-			t = format!(
-				"INSERT into instruments (url_id, text) VALUES({}, '{}')",
-				url_id, instrument_text
-			);
-    	} else {
-			t = format!(
-				"INSERT into instruments (url_id, text) VALUES({}, \"{}\")",
-				url_id, instrument_text
-			);
-    	}
+        let t;
+        if instrument_text.contains('"') {
+            t = format!(
+                "INSERT into instruments (url_id, text) VALUES({}, '{}')",
+                url_id, instrument_text
+            );
+        } else {
+            t = format!(
+                "INSERT into instruments (url_id, text) VALUES({}, \"{}\")",
+                url_id, instrument_text
+            );
+        }
 
         self.connection.execute(t)?;
         Ok(())
     }
 
     fn get_statement(&self, tag: &str, url: &str) -> sqlite::Statement {
-    	// bad hack!
-    	if let Some(subsong) = url.find('|') {
-			let query;
-        	let url_id = xxh3::hash(&url[..subsong].as_bytes());
+        // bad hack!
+        if let Some(subsong) = url.find('|') {
+            let query;
+            let url_id = xxh3::hash(&url[..subsong].as_bytes());
             let index = *&url[subsong + 1..].parse::<i32>().unwrap();
 
-			// hack
-			if tag != "length" && tag != "title" {
-				query = format!("SELECT {} FROM urls WHERE pk=={}", tag, url_id);
-			} else {
-        		query = format!("SELECT {} FROM sub_songs WHERE url_id=={} AND sub_index=={}", tag, url_id, index);
-			}
-        	self.connection.prepare(query).unwrap()
-    	} else {
-        	let url_id = xxh3::hash(url.as_bytes());
-			let query = format!("SELECT {} FROM urls WHERE pk=={}", tag, url_id);
-			self.connection.prepare(query).unwrap()
-    	}
+            // hack
+            if tag != "length" && tag != "title" {
+                query = format!("SELECT {} FROM urls WHERE pk=={}", tag, url_id);
+            } else {
+                query = format!(
+                    "SELECT {} FROM sub_songs WHERE url_id=={} AND sub_index=={}",
+                    tag, url_id, index
+                );
+            }
+            self.connection.prepare(query).unwrap()
+        } else {
+            let url_id = xxh3::hash(url.as_bytes());
+            let query = format!("SELECT {} FROM urls WHERE pk=={}", tag, url_id);
+            self.connection.prepare(query).unwrap()
+        }
     }
 
     ///
@@ -193,11 +206,11 @@ impl SongDb {
         let mut statement = self.get_statement(tag, url);
 
         if let Ok(state) = statement.next() {
-        	if state == sqlite::State::Row {
-				if let Ok(entry) = statement.read::<String>(0) {
-					return Some(entry);
-				}
-        	}
+            if state == sqlite::State::Row {
+                if let Ok(entry) = statement.read::<String>(0) {
+                    return Some(entry);
+                }
+            }
         }
 
         None
@@ -209,25 +222,28 @@ impl SongDb {
     pub fn get_tag_f64(&self, tag: &str, url: &str) -> Option<f64> {
         let mut statement = self.get_statement(tag, url);
 
-        if sqlite::State::Row == statement.next().unwrap() {
-            let entry = statement.read::<f64>(0).unwrap();
-            Some(entry)
+        if let Ok(state) = statement.next() {
+            if state == sqlite::State::Row {
+                if let Ok(entry) = statement.read::<f64>(0) {
+                    return Some(entry);
+                }
+            }
+        }
+
+        None
+    }
+
+    /// get the has for the url but ignore any subsongs if present
+    fn get_base_url_hash(url: &str) -> u64 {
+        if let Some(sep) = url.find('|') {
+            xxh3::hash(url[..sep].as_bytes())
         } else {
-        	None
+            xxh3::hash(url.as_bytes())
         }
     }
 
-	/// get the has for the url but ignore any subsongs if present
-    fn get_base_url_hash(url: &str) -> u64 {
-		if let Some(sep) = url.find('|') {
-        	xxh3::hash(url[..sep].as_bytes())
-		} else {
-        	xxh3::hash(url.as_bytes())
-		}
-    }
-
     pub fn is_present(&self, url: &str) -> bool {
-    	let url_id = Self::get_base_url_hash(url);
+        let url_id = Self::get_base_url_hash(url);
         let query = format!("SELECT pk FROM urls WHERE pk=={}", url_id);
 
         let mut count = 0;
@@ -242,30 +258,37 @@ impl SongDb {
 
     pub fn get_subsongs(&self, url: &str) -> Option<Vec<(i64, String)>> {
         let url_id = xxh3::hash(url.as_bytes());
-        let query = format!("SELECT sub_index, title FROM sub_songs WHERE url_id=={}", url_id);
+        let query = format!(
+            "SELECT sub_index, title FROM sub_songs WHERE url_id=={}",
+            url_id
+        );
         let mut statement = self.connection.prepare(query).unwrap();
 
         let mut subsongs = Vec::new();
 
-		while let State::Row = statement.next().unwrap() {
-			let index = statement.read::<i64>(0).unwrap();
-			let name = statement.read::<String>(1).unwrap();
-			subsongs.push((index, name));
-		}
+        while let State::Row = statement.next().unwrap() {
+            let index = statement.read::<i64>(0).unwrap();
+            let name = statement.read::<String>(1).unwrap();
+            subsongs.push((index, name));
+        }
 
-		if subsongs.is_empty() { None } else { Some(subsongs) }
+        if subsongs.is_empty() {
+            None
+        } else {
+            Some(subsongs)
+        }
     }
 
     pub fn begin_get_all(&mut self, url: &str) -> u32 {
         let url_id;
 
         if let Some(subsong_sep) = url.find('|') {
-        	url_id = xxh3::hash(&url[..subsong_sep].as_bytes());
+            url_id = xxh3::hash(&url[..subsong_sep].as_bytes());
         } else {
-        	url_id = xxh3::hash(url.as_bytes());
+            url_id = xxh3::hash(url.as_bytes());
         }
 
-		let query = format!("SELECT * FROM urls WHERE pk=={}", url_id);
+        let query = format!("SELECT * FROM urls WHERE pk=={}", url_id);
         let mut statement = self.connection.prepare(query).unwrap();
         let count = statement.names().len();
         let mut total_count = 0;
@@ -280,7 +303,7 @@ impl SongDb {
                         self.query_data[(total_count * 2) + 0].push_str(statement.name(i));
                         self.query_data[(total_count * 2) + 1].push_str(&v);
                         total_count += 1;
-                    },
+                    }
                     _ => (),
                 }
             }
@@ -294,7 +317,8 @@ impl SongDb {
             self.cached_samples.clear();
 
             while let State::Row = statement.next().unwrap() {
-                self.cached_samples.push(statement.read::<String>(0).unwrap());
+                self.cached_samples
+                    .push(statement.read::<String>(0).unwrap());
             }
         }
 
@@ -306,7 +330,8 @@ impl SongDb {
             self.cached_instruments.clear();
 
             while let State::Row = statement.next().unwrap() {
-                self.cached_instruments.push(statement.read::<String>(0).unwrap());
+                self.cached_instruments
+                    .push(statement.read::<String>(0).unwrap());
             }
         }
 
@@ -315,13 +340,13 @@ impl SongDb {
 
     pub fn get_all_entry_name(&self, index: u32, len: *mut i32) -> *const u8 {
         let bytes = self.query_data[((index as usize) * 2) + 0].as_bytes();
-        unsafe { *len = bytes.len() as i32; }
+        unsafe {
+            *len = bytes.len() as i32;
+        }
         bytes.as_ptr()
     }
 
-    pub fn end_get_all() {
-
-    }
+    pub fn end_get_all() {}
 }
 
 #[cfg(test)]

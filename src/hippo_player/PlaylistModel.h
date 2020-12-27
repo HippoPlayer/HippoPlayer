@@ -3,6 +3,9 @@
 #include <QtCore/QAbstractItemModel>
 #include <QtCore/QAbstractListModel>
 #include <QtCore/QModelIndex>
+#include <QtCore/QString>
+#include <map>
+#include <string>
 
 struct HippoCore;
 struct HippoSelectSong;
@@ -48,34 +51,41 @@ public:
     int columnCount(const QModelIndex &parent = QModelIndex()) const;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
     bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex());
-    void update_index(const HippoSelectSong* select_song);
-
-    void begin_insert(int index, int count);
-    void insert_entry(const HippoUrlEntry* msg);
-    void end_insert();
-
-    /*
-    inline void add_entry(QString title, QString duration, QString description) {
-        PlaylistEntry entry = { title, duration, description };
-        m_entries.push_back(entry);
-    }
-    */
 
 private:
 
-    struct PlaylistEntry {
-        QString title;
-        QString duration;
-        QString description;
+    struct StringLen {
+        char* text;
+        int len;
     };
 
-    // TODO: Not using hardcoded value
-    float m_default_length = 5 * 60.0f;
+    QString get_entry(int row, int col) const;
 
-    int m_insert_index = 0;
-    std::vector<PlaylistEntry> m_temp_insert;
+    /*
+    struct CmpString {
+        bool operator()(const StringLen& a, const StringLen& b) const {
+            char temp[1000] = { 0 };
+            memcpy(temp, a.text, a.len);
+            char temp2[1000] = { 0 };
+            memcpy(temp2, b.text, b.len);
 
+            if (a.len != b.len) {
+                return false;
+            }
+
+            if (strncmp(a.text, b.text, a.len) == 0) {
+                printf("%s and %s matches\n", temp, temp2);
+                return true;
+            }
+
+            return false;
+        }
+    };
+    */
+
+    // Have a cache for strings to redure recreation of QStrings
+    //mutable std::map<StringLen, QString, CmpString> m_qstring_cache;
+    mutable std::map<std::string, QString> m_qstring_cache;
     // I really don't like to have this here but will do for now
     HippoCore* m_core = nullptr;
-    std::vector<PlaylistEntry> m_entries;
 };

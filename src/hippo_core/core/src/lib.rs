@@ -1,12 +1,12 @@
+use anyhow::*;
+use logger::*;
+use song_db::SongDb;
 use std::ffi::CString;
-use std::fs::File;
 use std::fs;
+use std::fs::File;
 use std::os::raw::{c_char, c_void};
 use std::path::{Path, PathBuf};
 use std::time::Instant;
-use song_db::SongDb;
-use logger::*;
-use anyhow::*;
 
 mod audio;
 mod core_config;
@@ -73,7 +73,7 @@ impl HippoCore {
 
         for plugin in &self.plugins.decoder_plugins {
             if plugin.probe_can_play(&buffer, buffer_read_size, &url_no_sub, metadata.len()) {
-            	// we need stop before before doing metadata check because of UADE threads :(
+                // we need stop before before doing metadata check because of UADE threads :(
                 self.audio.stop();
 
                 if !song_db.is_present(url) {
@@ -89,13 +89,18 @@ impl HippoCore {
                 if let Some(subsongs) = song_db.get_subsongs(url) {
                     // if we have sub-songs we will add them here and also change
                     // the current file to be a "subsong (the first one)"
-                    self.playlist.insert_subsongs(playlist_index, &subsongs, url);
+                    self.playlist
+                        .insert_subsongs(playlist_index, &subsongs, url);
                     // add |0 at the end of url to mark it as a subsong
                     let sub_url = format!("{}|{}", url, subsongs[0].0);
-                    self.audio.start_with_file(&plugin, &self.plugin_service, &sub_url);
+                    self.audio
+                        .start_with_file(&plugin, &self.plugin_service, &sub_url);
                     return Ok(sub_url);
                 } else {
-                    if self.audio.start_with_file(&plugin, &self.plugin_service, url) {
+                    if self
+                        .audio
+                        .start_with_file(&plugin, &self.plugin_service, url)
+                    {
                         return Ok(url.to_owned());
                     }
                 }
@@ -156,7 +161,6 @@ impl HippoCore {
             ));
             let msg_count = msgs.read_stream.len();
 
-
             for _ in 0..msg_count {
                 let message_data = msgs.read_stream.pop().unwrap();
                 let message = get_root_as_hippo_message(&message_data);
@@ -182,7 +186,7 @@ impl HippoCore {
                     MessageType::stop_song => {
                         self.is_playing = false;
                         self.audio.stop();
-					},
+                    }
                     _ => (),
                 }
 
@@ -211,7 +215,8 @@ impl HippoCore {
                     let song_db = self.plugin_service.get_song_db();
 
                     if self.plugin_service.get_song_db().is_present(&song.0) {
-                        self.current_song_time = song_db.get_tag_f64("length", &songname).unwrap() as f32;
+                        self.current_song_time =
+                            song_db.get_tag_f64("length", &songname).unwrap() as f32;
                         self.playlist.update_current_entry(song_db, &songname);
                         self.start_time = Instant::now();
 
@@ -222,7 +227,13 @@ impl HippoCore {
 
                         // Send playlist reply to frontend
                         self.playlist.current_song_message().map(|reply| {
-                            Self::send_msgs(user_data, send_messages, &reply, count, std::usize::MAX);
+                            Self::send_msgs(
+                                user_data,
+                                send_messages,
+                                &reply,
+                                count,
+                                std::usize::MAX,
+                            );
                         });
                     }
                 }
@@ -263,13 +274,16 @@ impl HippoCore {
     /// Finds the data directory relative to the executable.
     /// This is because it's possible to have data next to the exe, but also running
     /// the applications as t2-output/path/exe and the location is in the root then
-    fn find_data_directory() -> Result<()>{
-        let current_path = std::env::current_dir().map_err(|_| anyhow!("Unable to get current dir!"))?;
+    fn find_data_directory() -> Result<()> {
+        let current_path =
+            std::env::current_dir().map_err(|_| anyhow!("Unable to get current dir!"))?;
         if current_path.join("data").exists() {
             return Ok(());
         }
 
-        let mut path = current_path.parent().ok_or_else(|| anyhow!("Unable to get parent dir"))?;
+        let mut path = current_path
+            .parent()
+            .ok_or_else(|| anyhow!("Unable to get parent dir"))?;
 
         loop {
             trace!("seaching for data in {:?}", path);
@@ -279,7 +293,9 @@ impl HippoCore {
                 return Ok(());
             }
 
-            path = path.parent().ok_or_else(|| anyhow!("Unable to get parent dir"))?;
+            path = path
+                .parent()
+                .ok_or_else(|| anyhow!("Unable to get parent dir"))?;
         }
     }
 
@@ -291,7 +307,6 @@ impl HippoCore {
         self.audio.init_device(&device)
     }
 }
-
 
 /// init the data directory used for configs, logs, databases, etec
 fn init_config_dir() -> Result<PathBuf> {
@@ -345,8 +360,8 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
     // and the first entries are th high priority ones and the others the low prio
 
     let len = config.playback_priority.len();
-    let high_prio = &config.playback_priority[0..len/2];
-    let low_prio = &config.playback_priority[len/2..];
+    let high_prio = &config.playback_priority[0..len / 2];
+    let low_prio = &config.playback_priority[len / 2..];
 
     // sort high-prority plugins
     for (index, name) in high_prio.iter().enumerate() {
@@ -445,7 +460,10 @@ pub unsafe extern "C" fn hippo_init_audio_device(_core: *mut HippoCore) -> *cons
         error!("Error setting up audio device {}", text);
         if let Ok(c_string) = CString::new(text) {
             core.error_string = Some(c_string);
-            return core.error_string.as_ref().map_or_else(|| std::ptr::null(), |v| v.as_ptr())
+            return core
+                .error_string
+                .as_ref()
+                .map_or_else(|| std::ptr::null(), |v| v.as_ptr());
         }
     }
 
@@ -453,7 +471,9 @@ pub unsafe extern "C" fn hippo_init_audio_device(_core: *mut HippoCore) -> *cons
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn hippo_service_api_new(_core: *mut HippoCore) -> *const ffi::HippoServiceAPI {
+pub unsafe extern "C" fn hippo_service_api_new(
+    _core: *mut HippoCore,
+) -> *const ffi::HippoServiceAPI {
     let core = &mut *_core;
     PluginService::new_c_api(core.song_db)
 }
@@ -475,9 +495,54 @@ pub unsafe extern "C" fn hippo_update_messages(
     core.update_messages(user_data, count, get_messages, send_messages);
 }
 
-
 #[no_mangle]
-pub unsafe extern "C" fn hippo_playlist_remove_entry(core: *mut HippoCore, entry: i32) {
+pub unsafe extern "C" fn hippo_playlist_remove_entries(
+    core: *mut HippoCore,
+    entry: i32,
+    _count: i32,
+) {
     let core = &mut *core;
     core.playlist.remove_entry(entry);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn hippo_playlist_count(core: *mut HippoCore) -> u32 {
+    let core = &mut *core;
+    core.playlist.entries.len() as u32
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn hippo_playlist_get(
+    core: *mut HippoCore,
+    row: i32,
+    col: i32,
+    len: *mut i32,
+) -> *const u8 {
+    let core = &mut *core;
+
+    if row >= core.playlist.entries.len() as i32 || row < 0 {
+        std::ptr::null()
+    } else {
+        match col {
+            0 => {
+                let entry = &core.playlist.entries[row as usize].title;
+                *len = entry.len() as i32;
+                entry.as_ptr()
+            },
+
+            1 => {
+                let entry = &core.playlist.entries[row as usize].duration_string;
+                *len = entry.len() as i32;
+                entry.as_ptr()
+            },
+
+            2 => {
+                let entry = &core.playlist.entries[row as usize].song_type;
+                *len = entry.len() as i32;
+                entry.as_ptr()
+            },
+
+            _ => std::ptr::null(),
+        }
+    }
 }
