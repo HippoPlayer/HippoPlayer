@@ -105,7 +105,7 @@ static HippoReadInfo oggvorbis_read_data(void* user_data, void* dest, uint32_t m
 
     HippoReadInfo t = {
     	data->sample_rate,
-        ret / 4,
+        ret / (data->channel_count * 2),
         data->channel_count,
         HippoOutputType_s16,
     };
