@@ -28,7 +28,7 @@ pub unsafe extern "C" fn register_filetype_settings(
     let settings: &mut PlaybackSettings = unsafe { &mut *(priv_data as *mut PlaybackSettings) };
     let plugin_id = CStr::from_ptr(name);
 
-    settings.register_filetype_settings(plugin_id.to_string_lossy(), count as usize);
+    //settings.register_filetype_settings(plugin_id.to_string_lossy(), count as usize);
 
     0
 }

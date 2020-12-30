@@ -6,7 +6,7 @@
 #include "console.h"
 
 class QStringListModel;
-class ToolWindowManager;
+class FastDock;
 class HippoQtView;
 class PlaylistModel;
 struct HippoServiceAPI;
@@ -55,7 +55,7 @@ private:
     PlaylistModel* m_playlist_model = nullptr;
     HippoCore* m_core = nullptr;
     const HippoMessageAPI* m_general_messages = nullptr;
-    ToolWindowManager* m_docking_manager = nullptr;
+    FastDock* m_docking_manager = nullptr;
     QVector<PluginInfo> m_plugin_types;
     QVector<PluginInstance> m_plugin_instances;
     ConsoleView* m_console = nullptr;

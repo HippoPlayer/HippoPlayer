@@ -18,7 +18,7 @@
 #include "PlaylistModel.h"
 #include "PrefsDialog.h"
 
-#include "src/external/toolwindowmanager/src/ToolWindowManager.h"
+#include "src/external/fastdock/FastDock.h"
 extern "C" {
 #include "src/hippo_core/native/hippo_core.h"
 }
@@ -26,7 +26,7 @@ extern "C" {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 MainWindow::MainWindow(HippoCore* core) : QMainWindow(0), m_core(core) {
-    m_docking_manager = new ToolWindowManager;
+    m_docking_manager = new FastDock;
 
     QString window_title = QStringLiteral("HippoPlayer ");
     window_title += QString::fromUtf8(HIPPO_VERSION);
@@ -52,8 +52,8 @@ MainWindow::MainWindow(HippoCore* core) : QMainWindow(0), m_core(core) {
     m_console = new ConsoleView(m_general_messages, nullptr);
     m_prefs_dialog = new PrefsDialog(m_general_messages);
 
-    m_docking_manager->addToolWindow(m_console, ToolWindowManager::NewFloatingArea,
-                                     ToolWindowManager::ToolWindowProperty::HideOnClose);
+    m_docking_manager->addToolWindow(m_console, FastDock::NewFloatingArea,
+                                     FastDock::ToolWindowProperty::HideOnClose);
 
     m_docking_manager->hideToolWindow(m_console);
 
@@ -290,7 +290,7 @@ void MainWindow::add_files() {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void MainWindow::show_hide_console() {
-    m_docking_manager->moveToolWindow(m_console, ToolWindowManager::NewFloatingArea);
+    m_docking_manager->moveToolWindow(m_console, FastDock::NewFloatingArea);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -322,7 +322,7 @@ void MainWindow::create_plugin_instance(int index) {
     QWidget* plugin_widget = create_plugin_by_index(index);
 
     if (plugin_widget) {
-        m_docking_manager->addToolWindow(plugin_widget, ToolWindowManager::LastUsedArea);
+        m_docking_manager->addToolWindow(plugin_widget, FastDock::LastUsedArea);
     }
 }
 
@@ -459,11 +459,11 @@ void MainWindow::setup_default_plugins() {
     QWidget* playlist = create_plugin_by_name(QStringLiteral("Playlist"));
     QWidget* music_info = create_plugin_by_name(QStringLiteral("Music Info"));
 
-    m_docking_manager->addToolWindow(player, ToolWindowManager::EmptySpace);
+    m_docking_manager->addToolWindow(player, FastDock::EmptySpace);
 
     m_docking_manager->addToolWindow(
-        music_info, ToolWindowManager::AreaReference(ToolWindowManager::RightOf, m_docking_manager->areaOf(player)));
+        music_info, FastDock::AreaReference(FastDock::RightOf, m_docking_manager->areaOf(player)));
 
     m_docking_manager->addToolWindow(
-        playlist, ToolWindowManager::AreaReference(ToolWindowManager::BottomOf, m_docking_manager->areaOf(player)));
+        playlist, FastDock::AreaReference(FastDock::BottomOf, m_docking_manager->areaOf(player)));
 }
