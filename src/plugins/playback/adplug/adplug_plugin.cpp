@@ -154,7 +154,12 @@ static HippoReadInfo adplug_read_data(void* user_data, void* dest, uint32_t max_
         plugin->to_add -= (int)max_t(1, i);
     }
 
-    return HippoReadInfo { freq, samples_to_read, 2, HippoOutputType_s16 };
+    return HippoReadInfo {
+        freq,
+        samples_to_read,
+        2,
+        HippoOutputType_s16
+    };
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -232,8 +237,7 @@ static void adplug_event(void* user_data, const unsigned char* data, int len) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void adplug_static_init(struct HippoLogAPI* log, const HippoServiceAPI* service_api) {
-    (void)service_api;
+static void adplug_set_log(struct HippoLogAPI* log) {
     g_hp_log = log;
 }
 
@@ -275,7 +279,7 @@ static HippoPlaybackPlugin g_adplug_plugin = {
     adplug_read_data,
     adplug_plugin_seek,
     adplug_metadata,
-    adplug_static_init,
+    adplug_set_log,
     NULL,
     NULL,
 };

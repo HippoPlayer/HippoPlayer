@@ -101,11 +101,11 @@ static HippoReadInfo oggvorbis_read_data(void* user_data, void* dest, uint32_t m
     uint16_t samples_to_read = hippo_min(max_output_bytes / 4, FRAME_SIZE);
 
     int section = 0;
-	ov_read(&data->song, dest, samples_to_read, 0, 2, 1, &section);
+	int ret = ov_read(&data->song, dest, samples_to_read, 0, 2, 1, &section);
 
     HippoReadInfo t = {
     	data->sample_rate,
-        samples_to_read / 4,
+        ret / (data->channel_count * 2),
         data->channel_count,
         HippoOutputType_s16,
     };
@@ -147,8 +147,7 @@ static void oggvorbis_event(void* user_data, const unsigned char* data, int len)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void oggvorbis_static_init(struct HippoLogAPI* log, const HippoServiceAPI* service_api) {
-	(void)service_api;
+static void oggvorbis_set_log(struct HippoLogAPI* log) {
     g_hp_log = log;
 }
 
@@ -169,7 +168,7 @@ static HippoPlaybackPlugin s_oggvorbis_plugin = {
     oggvorbis_read_data,
     oggvorbis_seek,
     oggvorbis_metadata,
-    oggvorbis_static_init,
+    oggvorbis_set_log,
     NULL,
     NULL,
 };

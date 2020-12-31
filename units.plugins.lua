@@ -176,7 +176,7 @@ SharedLibrary {
        CXXOPTS = {
 			{ "-std=c++17"; Config = "linux-*-*" },
 			{ "-std=c++17"; Config = "mac*-*-*" },
-			{ "/std:c++latest"; Config = "win64-*-*" },
+			{ "/std:c++17"; Config = "win64-*-*" },
 		},
     },
 
@@ -324,7 +324,7 @@ SharedLibrary {
 }
 
 -----------------------------------------------------------------------------------------------------------------------
-
+--[[
 SharedLibrary {
 	Name = "nsf",
 
@@ -344,6 +344,7 @@ SharedLibrary {
 
     Depends = { "zlib" },
 }
+--]]
 
 -----------------------------------------------------------------------------------------------------------------------
 
@@ -965,8 +966,6 @@ Default "mdx"
 Default "mp3"
 -- Default "nsf"
 Default "oggvorbis"
-Default "openmpt"
-Default "vgm"
 Default "openmpt"
 Default "sc68"
 Default "sid"

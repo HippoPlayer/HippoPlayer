@@ -204,7 +204,6 @@ static void wavpack_static_init(struct HippoLogAPI* log, const HippoServiceAPI* 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static HippoPlaybackPlugin s_wavpack_plugin = {
     HIPPO_PLAYBACK_PLUGIN_API_VERSION,
     "wavpack",
     "0.0.1",
@@ -227,6 +226,5 @@ static HippoPlaybackPlugin s_wavpack_plugin = {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 extern HIPPO_EXPORT HippoPlaybackPlugin* hippo_playback_plugin() {
-    return &s_wavpack_plugin;
 }
 

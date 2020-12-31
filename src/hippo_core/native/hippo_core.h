@@ -24,14 +24,18 @@ typedef void (*HippoUpdateMessages)(struct HippoCore* core,
                                     int count,
                                     HippoGetMessages get_messages,
                                     HippoSendMessage send_messages);
-typedef void (*HippoPlaylistRemoveEntry)(struct HippoCore* core, int playlist_entry);
+typedef void (*HippoPlaylistRemoveEntries)(struct HippoCore* core, int playlist_entry, int count);
+typedef int (*HippoPlaylistCount)(struct HippoCore* core);
+typedef const char* (*HippoPlaylistGet)(struct HippoCore* core, int row, int col, int* len);
 
 extern HippoCoreNew hippo_core_new;
 extern HippoCoreDrop hippo_core_drop;
 extern HippoPlayFile hippo_play_file;
 extern HippoServiceApiNew hippo_service_api_new;
 extern HippoUpdateMessages hippo_update_messages;
-extern HippoPlaylistRemoveEntry hippo_playlist_remove_entry;
+extern HippoPlaylistRemoveEntries hippo_playlist_remove_entries;
+extern HippoPlaylistGet hippo_playlist_get;
+extern HippoPlaylistCount hippo_playlist_count;
 extern HippoInitAudioDevice hippo_init_audio_device;
 
 #ifdef __cplusplus

@@ -13,15 +13,16 @@ use rand::prelude::*;
 ///
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct PlaylistEntry {
-    path: String,
-    title: String,
-    duration: f32,
-    song_type: String,
+    pub path: String,
+    pub title: String,
+    pub duration_string: String,
+    pub duration: f32,
+    pub song_type: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct Playlist {
-    entries: Vec<PlaylistEntry>,
+    pub entries: Vec<Box<PlaylistEntry>>,
     current_song: isize,
     new_song: bool,
     loop_current: bool,
@@ -99,12 +100,13 @@ impl Playlist {
         let mut playlist_entries = Vec::with_capacity(subsongs.len() - 1);
 
         for (index, subsong) in subsongs.iter().skip(1) {
-            playlist_entries.push(PlaylistEntry {
+            playlist_entries.push(Box::new(PlaylistEntry {
                 path: format!("{}|{}", url, index),
                 title: subsong.to_owned(),
                 duration: 0.0,
-                song_type: String::new()
-            });
+                duration_string: Self::format_time(0.0),
+                song_type: "".to_owned()
+            }));
         }
 
         let start_index = playlist_index + 1;
@@ -132,7 +134,14 @@ impl Playlist {
             }
         });
 
-        entry.duration = song_db.get_tag_f64("length", url).unwrap() as f32;
+        if let Some(dur) = song_db.get_tag_f64("length", url) {
+            entry.duration = dur as f32;
+            entry.duration_string = Self::format_time(dur as f32);
+        } else {
+            entry.duration = 0.0;
+            entry.duration_string = Self::format_time(0.0);
+        }
+
         song_db
             .get_tag("song_type", url)
             .map(|song_type| entry.song_type = song_type);
@@ -286,12 +295,13 @@ impl Playlist {
                             title = base.to_string_lossy().to_string();
                         }
 
-                        self.entries.push(PlaylistEntry {
+                        self.entries.push(Box::new(PlaylistEntry {
                             path: file.to_owned(),
-                            song_type: String::new(),
+                            song_type: "".to_owned(),
                             duration: 0.0,
+                            duration_string: Self::format_time(0.0),
                             title,
-                        });
+                        }));
                     }
                 }
 
@@ -392,6 +402,18 @@ impl Playlist {
             Some((self.entries[index].path.to_owned(), index))
         } else {
             None
+        }
+    }
+
+    fn format_time(time: f32) -> String {
+        let t = time as u64;
+        let hours = t / (60*60);
+        let min = (t / 60) % 60;
+        let sec = t % 60;
+        if hours > 0 {
+            format!("{:02}:{:02}:{02}", hours, min, sec)
+        } else {
+            format!("{:02}:{:02}", min, sec)
         }
     }
 }

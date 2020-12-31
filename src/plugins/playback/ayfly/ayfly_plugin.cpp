@@ -1,5 +1,7 @@
 #include <HippoMessages.h>
 #include <HippoPlugin.h>
+#include <ayfly.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -105,6 +107,7 @@ static HippoReadInfo ayfly_read_data(void* user_data, void* dest, uint32_t max_o
                                      uint32_t native_sample_rate) {
     uint16_t samples_to_read = hippo_min(max_output_bytes / 4, FRAME_SIZE);
 
+    // TODO: Support more than one tune
     struct ReplayerData* replayer_data = (struct ReplayerData*)user_data;
 
     uint16_t written = (uint16_t)ay_rendersongbuffer(replayer_data->song, (unsigned char*)dest, samples_to_read) / 4;

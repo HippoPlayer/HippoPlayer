@@ -18,7 +18,7 @@
 #endif
 
 const int FREQ = 48000;
-const int FRAME_SIZE = 8192;
+const int FRAME_SIZE = 1024;
 HippoLogAPI* g_hp_log = NULL;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -242,17 +242,16 @@ static int sid_metadata(const char* url, const HippoServiceAPI* service_api) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void sid_set_log(struct HippoLogAPI* log, const HippoServiceAPI* service_api) {
-    (void)service_api;
+static void sid_set_log(struct HippoLogAPI* log) {
     g_hp_log = log;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static HippoPlaybackPlugin s_sid_plugin = {
+static HippoPlaybackPlugin g_sid_plugin = {
     HIPPO_PLAYBACK_PLUGIN_API_VERSION,
     "SID",
-	"1.0.0",
+    "1.0.0",
     "sidplayfp 2.0.0beta",
     sid_probe_can_play,
     sid_supported_extensions,
@@ -272,5 +271,5 @@ static HippoPlaybackPlugin s_sid_plugin = {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 extern "C" HIPPO_EXPORT HippoPlaybackPlugin* hippo_playback_plugin() {
-    return &s_sid_plugin;
+    return &g_sid_plugin;
 }

@@ -196,6 +196,11 @@ unsafe extern "C" fn data_callback(
 		let read_format = Format::from_c(info.output_format as u32);
 		let frames_read = info.sample_count;// * info.channel_count as u16;
 
+		// TODO: proper handling of this
+		if frames_read == 0 {
+			break;
+		}
+
 		//println!("updating converter with channel count {}, format {:#?} sample rate {}",
 		//	info.channel_count, read_format, info.sample_rate);
 
@@ -239,8 +244,8 @@ unsafe extern "C" fn data_callback(
 				frames_read as _).unwrap();
 
 			write_offset += expected_output;
-        }
-    }
+		}
+	}
 
 	/*
     let mut file = std::fs::OpenOptions::new()
@@ -257,7 +262,6 @@ impl HippoAudio {
     pub fn new() -> HippoAudio {
         // This is a bit hacky so it can be shared with the device and HippoAudio
         let data_callback = DataCallback::new();
-
 
         HippoAudio {
             device_name: DEFAULT_DEVICE_NAME.to_owned(),
@@ -425,6 +429,9 @@ impl HippoAudio {
             device.format(),
             device.channels()
         );
+
+        let data_callback: &mut DataCallback = unsafe { std::mem::transmute(self.data_callback) };
+        data_callback.converter.update_output(device.channels() as u8, device.format(), device.sample_rate());
 
         device.start()
     }

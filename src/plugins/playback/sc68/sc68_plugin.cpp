@@ -13,7 +13,6 @@ extern "C" {
 
 HippoLogAPI* g_hp_log = NULL;
 static const struct HippoIoAPI* g_io_api = 0;
-static sc68_init_t s_init;
 
 typedef struct Sc68Plugin {
     sc68_t* instance;
@@ -48,6 +47,12 @@ static const char* sc68_plugin_supported_extensions() {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// TODO: Should use mutex here
+
+static bool s_init_done = false;
+static sc68_init_t s_init;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef DEBUG
 static void msg(const int cat, void* cookie, const char* fmt, va_list list) {
@@ -59,6 +64,10 @@ static void msg(const int cat, void* cookie, const char* fmt, va_list list) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void init() {
+    if (s_init_done) {
+        return;
+    }
+
     static char appname[] = "hippo_player";
     static char* argv[] = {appname};
 
@@ -67,13 +76,17 @@ static void init() {
 #ifdef DEBUG
     s_init.msg_handler = (sc68_msg_t)msg;
 #endif
+
     sc68_init(&s_init);
+    s_init_done = true;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 enum HippoProbeResult sc68_plugin_probe_can_play(const uint8_t* data, uint32_t data_size, const char* filename,
                                                  uint64_t total_size) {
+    init();
+
     if (file68_verify_header((void*)data, (int)data_size) == -1) {
         hp_debug("Unsupported: %s", filename);
         return HippoProbeResult_Unsupported;
@@ -89,6 +102,8 @@ static int sc68_plugin_metadata(const char* filename, const HippoServiceAPI* ser
     sc68_music_info_t info = {0};
     void* data = 0;
     uint64_t size = 0;
+
+    init();
 
     const HippoIoAPI* io_api = HippoServiceAPI_get_io_api(service_api, HIPPO_FILE_API_VERSION);
     const HippoMetadataAPI* metadata_api = HippoServiceAPI_get_metadata_api(service_api, HIPPO_METADATA_API_VERSION);
@@ -166,6 +181,7 @@ static int sc68_plugin_metadata(const char* filename, const HippoServiceAPI* ser
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void* sc68_plugin_create(const struct HippoServiceAPI* service_api) {
+    init();
 
     sc68_create_t create = {0};
     create.log2mem = 23;
@@ -274,11 +290,8 @@ static void sc68_plugin_event(void* user_data, const unsigned char* data, int le
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void sc68_plugin_static_init(struct HippoLogAPI* log, const HippoServiceAPI* service) {
-    (void)service;
+static void sc68_plugin_set_log(struct HippoLogAPI* log) {
     g_hp_log = log;
-
-    init();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -298,7 +311,7 @@ static HippoPlaybackPlugin g_sc68_plugin_plugin = {
     sc68_plugin_read_data,
     sc68_plugin_plugin_seek,
     sc68_plugin_metadata,
-    sc68_plugin_static_init,
+    sc68_plugin_set_log,
     NULL,
     NULL,
 };
