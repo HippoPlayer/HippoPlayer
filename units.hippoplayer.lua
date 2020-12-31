@@ -134,6 +134,8 @@ Program {
         -- Dialogs
         gen_uic("src/hippo_player/prefs_dialog.ui"),
         gen_moc("src/hippo_player/prefs_dialog.h"),
+        gen_uic("src/hippo_player/playback_plugin_panel.ui"),
+        gen_moc("src/hippo_player/playback_plugin_panel.h"),
         gen_uic("src/hippo_player/playback_plugin_priority.ui"),
         gen_moc("src/hippo_player/playback_plugin_priority.h"),
         gen_uic("src/hippo_player/device_panel.ui"),

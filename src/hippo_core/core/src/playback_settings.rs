@@ -10,7 +10,7 @@ use std::ptr;
 pub struct Settings {
     native_settings: *const HSSetting,
     native_count: usize,
-    fields: Vec<HSSetting>,
+    _fields: Vec<HSSetting>,
 }
 
 impl Settings {
@@ -19,7 +19,7 @@ impl Settings {
         Settings {
             native_settings: ptr::null_mut(),
             native_count: 0,
-            fields: Vec::new(),
+            _fields: Vec::new(),
         }
     }
 
@@ -27,7 +27,7 @@ impl Settings {
         Settings {
             native_settings: settings,
             native_count: count,
-            fields: unsafe { Vec::from_raw_parts(settings as *mut _, count, count) },
+            _fields: unsafe { Vec::from_raw_parts(settings as *mut _, count, count) },
         }
     }
 }

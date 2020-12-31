@@ -550,3 +550,45 @@ pub unsafe extern "C" fn hippo_playlist_get(
         }
     }
 }
+
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct PluginInfo {
+    name: *const u8,
+    name_len: i32,
+    version: *const u8,
+    version_len: i32,
+    library: *const u8,
+    library_len: i32,
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn hippo_get_playback_plugin_info(core: *mut HippoCore, index: i32) -> PluginInfo {
+    let core = &mut *core;
+    let mut info = PluginInfo {
+        name: std::ptr::null(),
+        name_len: 0,
+        version: std::ptr::null(),
+        version_len: 0,
+        library: std::ptr::null(),
+        library_len: 0,
+    };
+
+    if index >= 0 && core.plugins.decoder_plugins.len() > index as usize {
+        let plugin = &core.plugins.decoder_plugins[index as usize];
+        info.name = plugin.plugin_funcs.name.as_ptr();
+        info.name_len = plugin.plugin_funcs.name.len() as i32;
+        info.version = plugin.plugin_funcs.version.as_ptr();
+        info.version_len = plugin.plugin_funcs.version.len() as i32;
+        info.library = plugin.plugin_funcs.library_version.as_ptr();
+        info.library_len = plugin.plugin_funcs.library_version.len() as i32;
+    }
+
+    info
+}
+
+
+
+
+
+

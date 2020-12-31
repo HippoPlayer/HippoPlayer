@@ -18,6 +18,7 @@ HippoUpdateMessages hippo_update_messages;
 HippoPlaylistRemoveEntries hippo_playlist_remove_entries;
 HippoPlaylistGet hippo_playlist_get;
 HippoPlaylistCount hippo_playlist_count;
+HippoGetPlaybackPluginInfo hippo_get_playback_plugin_info;
 
 HippoInitAudioDevice hippo_init_audio_device;
 
@@ -222,6 +223,8 @@ done:
 	hippo_playlist_get = (HippoPlaylistGet)dlsym(core_handle, "hippo_playlist_get");
 
 	hippo_init_audio_device = (HippoInitAudioDevice)dlsym(core_handle, "hippo_init_audio_device");
+
+	hippo_get_playback_plugin_info = (HippoGetPlaybackPluginInfo)dlsym(core_handle, "hippo_get_playback_plugin_info");
 
 	return 1;
 }
