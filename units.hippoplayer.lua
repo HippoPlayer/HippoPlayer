@@ -128,18 +128,16 @@ Program {
         gen_moc("src/hippo_player/console.h"),
         gen_uic("src/hippo_player/console.ui"),
 
-        gen_moc("src/hippo_player/MainWindow.h"),
-        gen_moc("src/hippo_player/PlaylistModel.h"),
+        gen_moc("src/hippo_player/main_window.h"),
+        gen_moc("src/hippo_player/playlist_model.h"),
 
         -- Dialogs
-        gen_uic("src/hippo_player/PrefsDialog.ui"),
-        gen_moc("src/hippo_player/PrefsDialog.h"),
-        gen_uic("src/hippo_player/PlaybackPluginPriority.ui"),
-        gen_moc("src/hippo_player/PlaybackPluginPriority.h"),
-        gen_uic("src/hippo_player/DevicePanel.ui"),
-        gen_moc("src/hippo_player/DevicePanel.h"),
-
-        --gen_uic("src/hippo_player/test_main/MainWindow.ui"),
+        gen_uic("src/hippo_player/prefs_dialog.ui"),
+        gen_moc("src/hippo_player/prefs_dialog.h"),
+        gen_uic("src/hippo_player/playback_plugin_priority.ui"),
+        gen_moc("src/hippo_player/playback_plugin_priority.h"),
+        gen_uic("src/hippo_player/device_panel.ui"),
+        gen_moc("src/hippo_player/device_panel.h"),
     },
 
     Env = {
@@ -152,13 +150,12 @@ Program {
         },
 
         CPPDEFS = {
-            -- "QT_NO_KEYWORDS",
+            "QT_NO_KEYWORDS",
             "QT_NO_CAST_FROM_ASCII",
             "QT_NO_CAST_TO_ASCII",
         },
 
         CPPPATH = {
-            "src/external/qt_advanced_docking_system/src",
             "$(QT5_INC)",
             "$(QT5_INC)/QtCore",
             "$(QT5_INC)/QtWidgets",

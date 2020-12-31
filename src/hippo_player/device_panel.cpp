@@ -1,5 +1,5 @@
-#include "DevicePanel.h"
-#include "ui_DevicePanel.h"
+#include "device_panel.h"
+#include "ui_device_panel.h"
 #include "../../../plugin_api/HippoMessages.h"
 #include "../../../plugin_api/HippoPlugin.h"
 

@@ -1,4 +1,4 @@
-#include "MainWindow.h"
+#include "main_window.h"
 #include <flatbuffers/flatbuffers.h>
 #include <QtCore/QDebug>
 #include <QtCore/QDir>
@@ -15,8 +15,8 @@
 #include "../../src/plugin_api/HippoMessages.h"
 #include "../../src/plugin_api/HippoPlugin.h"
 #include "../../src/plugin_api/HippoQtView.h"
-#include "PlaylistModel.h"
-#include "PrefsDialog.h"
+#include "playlist_model.h"
+#include "prefs_dialog.h"
 
 #include "src/external/fastdock/FastDock.h"
 extern "C" {

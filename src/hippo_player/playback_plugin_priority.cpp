@@ -1,10 +1,10 @@
-#include "PlaybackPluginPriority.h"
+#include "playback_plugin_priority.h"
 #include <QtCore/QDebug>
 #include <QtCore/QMimeData>
 #include <QtGui/QDrag>
 #include <QtGui/QDragMoveEvent>
 #include <QtWidgets/QListWidget>
-#include "ui_PlaybackPluginPriority.h"
+#include "ui_playback_plugin_priority.h"
 //#include <QtWidgets/QDragMoveEvent>
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

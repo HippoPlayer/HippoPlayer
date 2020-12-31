@@ -1,7 +1,7 @@
-#include "PrefsDialog.h"
-#include "PlaybackPluginPriority.h"
-#include "DevicePanel.h"
-#include "ui_PrefsDialog.h"
+#include "prefs_dialog.h"
+#include "playback_plugin_priority.h"
+#include "device_panel.h"
+#include "ui_prefs_dialog.h"
 #include <QtWidgets/QTreeWidgetItem>
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

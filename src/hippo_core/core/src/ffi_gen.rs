@@ -263,10 +263,10 @@ pub union HSSetting {
     pub bool_value: HSBool,
     _bindgen_union_align: [u64; 6usize],
 }
-pub const HippoSettingsError_HippoSettingsError_Ok: HippoSettingsError = 0;
-pub const HippoSettingsError_HippoSettingsError_NotFound: HippoSettingsError = 1;
-pub const HippoSettingsError_HippoSettingsError_DuplicatedId: HippoSettingsError = 2;
-pub const HippoSettingsError_HippoSettingsError_WrongType: HippoSettingsError = 3;
+pub const HippoSettingsError_Ok: HippoSettingsError = 0;
+pub const HippoSettingsError_NotFound: HippoSettingsError = 1;
+pub const HippoSettingsError_DuplicatedId: HippoSettingsError = 2;
+pub const HippoSettingsError_WrongType: HippoSettingsError = 3;
 #[doc = ""]
 pub type HippoSettingsError = u32;
 #[doc = ""]

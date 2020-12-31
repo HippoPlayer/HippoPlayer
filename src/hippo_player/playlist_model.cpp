@@ -1,4 +1,4 @@
-#include "PlaylistModel.h"
+#include "playlist_model.h"
 #include <QtCore/QDateTime>
 #include <QtCore/QFile>
 #include <QtCore/QDebug>

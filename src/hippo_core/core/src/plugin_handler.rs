@@ -9,6 +9,7 @@ use walkdir::{DirEntry, WalkDir};
 //use hippo_api::ffi::{CHippoPlaybackPlugin};
 use crate::service_ffi::PluginService;
 use crate::service_ffi::ServiceApi;
+use crate::PlaybackSettings;
 use logger::*;
 
 #[derive(Debug, Clone)]
@@ -155,6 +156,22 @@ impl Plugins {
             trace!("Loaded playback plugin {} {}", plugin_funcs.name, plugin_funcs.version);
 
             if let Some(static_init) = native_plugin.static_init {
+                // To prepare for settings setup we get the supported extensions and register
+                // them with the settings api
+
+                let extensions = unsafe { (plugin_funcs.supported_extensions)() };
+
+                if extensions == std::ptr::null() {
+                    warn!("Plugin {}: No extensions returned. This will cause settings to not work correct", plugin_funcs.name);
+                } else {
+                    unsafe {
+                        let settings_api = ((*service_api).get_settings_api.unwrap())((*service_api).private_data, 0);
+                        let ps: &mut PlaybackSettings = &mut *((*settings_api).priv_data as *mut PlaybackSettings);
+                        let ext = CStr::from_ptr(extensions).to_string_lossy();
+                        ps.register_file_extensions(&plugin_funcs.name, &ext);
+                    }
+                }
+
                 // TODO: Memory leak
                 let name = format!("{} {}", plugin_funcs.name, plugin_funcs.version);
                 let c_name = CString::new(name).unwrap();

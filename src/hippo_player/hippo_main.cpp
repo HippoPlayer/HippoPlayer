@@ -7,7 +7,7 @@
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QStyleFactory>
 #include <QtWidgets/QMessageBox>
-#include "MainWindow.h"
+#include "main_window.h"
 #include "src/hippo_core_loader/hippo_core_loader.h"
 
 extern "C" {
