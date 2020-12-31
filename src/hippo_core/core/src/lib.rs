@@ -7,12 +7,13 @@ use std::fs::File;
 use std::os::raw::{c_char, c_void};
 use std::path::{Path, PathBuf};
 use std::time::Instant;
+use std::ffi::CStr;
 
 mod audio;
 mod core_config;
+mod playback_settings;
 mod playlist;
 mod plugin_handler;
-mod playback_settings;
 
 pub mod ffi;
 mod service;
@@ -20,11 +21,12 @@ pub mod service_ffi;
 
 use audio::HippoAudio;
 use core_config::CoreConfig;
+use ffi::HSSetting;
 use messages::*;
+use playback_settings::PlaybackSettings;
 use playlist::Playlist;
 use plugin_handler::Plugins;
 use service_ffi::{PluginService, ServiceApi};
-use playback_settings::PlaybackSettings;
 
 use std::io::Read;
 
@@ -395,7 +397,6 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
         std::env::set_current_dir(current_path).unwrap();
     }
 
-
     let mut core = Box::new(HippoCore {
         error_string: None,
         config: config,
@@ -477,7 +478,9 @@ pub unsafe extern "C" fn hippo_init_audio_device(_core: *mut HippoCore) -> *cons
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn hippo_service_api_new(core: *mut HippoCore) -> *const ffi::HippoServiceAPI {
+pub unsafe extern "C" fn hippo_service_api_new(
+    core: *mut HippoCore,
+) -> *const ffi::HippoServiceAPI {
     let core = &mut *core;
     PluginService::new_c_api(core.song_db, core.playback_settings)
 }
@@ -532,19 +535,19 @@ pub unsafe extern "C" fn hippo_playlist_get(
                 let entry = &core.playlist.entries[row as usize].title;
                 *len = entry.len() as i32;
                 entry.as_ptr()
-            },
+            }
 
             1 => {
                 let entry = &core.playlist.entries[row as usize].duration_string;
                 *len = entry.len() as i32;
                 entry.as_ptr()
-            },
+            }
 
             2 => {
                 let entry = &core.playlist.entries[row as usize].song_type;
                 *len = entry.len() as i32;
                 entry.as_ptr()
-            },
+            }
 
             _ => std::ptr::null(),
         }
@@ -562,8 +565,20 @@ pub struct PluginInfo {
     library_len: i32,
 }
 
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct PluginSettings {
+    name: *const u8,
+    name_len: i32,
+    settings: *const HSSetting,
+    settings_count: i32,
+}
+
 #[no_mangle]
-pub unsafe extern "C" fn hippo_get_playback_plugin_info(core: *mut HippoCore, index: i32) -> PluginInfo {
+pub unsafe extern "C" fn hippo_get_playback_plugin_info(
+    core: *mut HippoCore,
+    index: i32,
+) -> PluginInfo {
     let core = &mut *core;
     let mut info = PluginInfo {
         name: std::ptr::null(),
@@ -587,8 +602,41 @@ pub unsafe extern "C" fn hippo_get_playback_plugin_info(core: *mut HippoCore, in
     info
 }
 
+#[no_mangle]
+pub unsafe extern "C" fn hippo_get_playback_plugin_settings(
+    core: *mut HippoCore,
+    plugin_name: *const c_char,
+    settings_index: i32,
+) -> PluginSettings {
+    let core = &mut *core;
 
+    let plugin_id = CStr::from_ptr(plugin_name);
+    let id = plugin_id.to_string_lossy().to_string();
 
+    let mut info = PluginSettings {
+        name: std::ptr::null(),
+        name_len: 0,
+        settings: std::ptr::null(),
+        settings_count: 0,
+    };
 
+	let plugins_settings = crate::service_ffi::get_playback_settings(core.plugin_service.c_service_api);
 
+	if let Some(ps) = plugins_settings.settings.get(&id) {
+		// settings index 0 is for global settings
+		if settings_index == 0 {
+			info.settings = ps.global_settings.fields.as_ptr();
+			info.settings_count = ps.global_settings.fields.len() as i32;
+		} else {
+			let i = (settings_index - 1) as usize;
+			if i < ps.file_type_names.len() {
+				info.name = ps.file_type_names[i].as_ptr();
+				info.name_len = ps.file_type_names[i].len() as _;
+				info.settings = ps.file_type_settings[i].fields.as_ptr();
+				info.settings_count = ps.file_type_settings[i].fields.len() as _;
+			}
+		}
+	}
 
+    info
+}

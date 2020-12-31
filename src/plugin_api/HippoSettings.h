@@ -6,7 +6,7 @@
 #define HS_INTEGER_TYPE 0x1001
 #define HS_BOOL_TYPE 0x1002
 #define HS_INTEGER_RANGE_TYPE 0x1003
-#define HS_STRING_RANGE_TYPE 0x1003
+#define HS_STRING_RANGE_TYPE 0x1004
 
 #define HIPPO_SETTINGS_API_VERSION 1
 
@@ -91,11 +91,11 @@ typedef union HSSetting {
 #define hp_sizeof_array(x) sizeof(x) / sizeof(x[0])
 #define HSIntValue(id, name, desc, value)                               \
     {                                                                   \
-        .int_value = { HS_INTEGER_TYPE, id, name, desc, value, -1, ~0 } \
+        .int_value = { HS_INTEGER_TYPE, id, name, desc, value, 0, 0 } \
     }
 #define HSFloatValue(id, name, desc, value)                                  \
     {                                                                        \
-        .float_value = { HS_FLOAT_TYPE, id, name, desc, value, 0.0f, 10.0f } \
+        .float_value = { HS_FLOAT_TYPE, id, name, desc, value, 0.0f, 0.0f } \
     }
 #define HSBoolValue(id, name, desc, value)                    \
     {                                                         \

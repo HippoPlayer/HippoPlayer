@@ -171,8 +171,7 @@ impl Plugins {
                     warn!("Plugin {}: No extensions returned. This will cause settings to not work correct", plugin_funcs.name);
                 } else {
                     unsafe {
-                        let settings_api = ((*service_api).get_settings_api.unwrap())((*service_api).private_data, 0);
-                        let ps: &mut PlaybackSettings = &mut *((*settings_api).priv_data as *mut PlaybackSettings);
+                        let ps = crate::service_ffi::get_playback_settings(service_api);
                         let ext = CStr::from_ptr(extensions).to_string_lossy();
                         ps.register_file_extensions(&plugin_funcs.name, &ext);
                     }

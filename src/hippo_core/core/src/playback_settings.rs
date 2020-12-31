@@ -8,9 +8,9 @@ use std::os::raw::{c_char, c_int, c_void};
 use std::ptr;
 
 pub struct Settings {
-    native_settings: *const HSSetting,
-    native_count: usize,
-    _fields: Vec<HSSetting>,
+    pub native_settings: *const HSSetting,
+    pub native_count: usize,
+    pub fields: Vec<HSSetting>,
 }
 
 impl Settings {
@@ -19,7 +19,7 @@ impl Settings {
         Settings {
             native_settings: ptr::null_mut(),
             native_count: 0,
-            _fields: Vec::new(),
+            fields: Vec::new(),
         }
     }
 
@@ -27,33 +27,36 @@ impl Settings {
         Settings {
             native_settings: settings,
             native_count: count,
-            _fields: unsafe { Vec::from_raw_parts(settings as *mut _, count, count) },
+            fields: unsafe { Vec::from_raw_parts(settings as *mut _, count, count) },
         }
     }
 }
 
 /// Settings for a specific plugin type
-struct PluginTypeSettings {
+pub struct PluginTypeSettings {
     /// Template for the global settings (return from the plugin)
-    global_settings_template: Settings,
+    pub global_settings_template: Settings,
     /// Template for the file type settings (return from the plugin)
-    file_type_settings_template: Settings,
+    pub file_type_settings_template: Settings,
     /// List of file extensions and settings for each
-    file_type_settings: HashMap<String, Settings>,
+    pub file_type_names: Vec<String>,
+    /// List of file extensions and settings for each
+    pub file_type_settings: Vec<Settings>,
     /// Global settings for the plugin type
-    global_settings: Settings,
+    pub global_settings: Settings,
 }
 
 pub struct PlaybackSettings {
-    settings: HashMap<String, PluginTypeSettings>,
+    pub settings: HashMap<String, Box<PluginTypeSettings>>,
 }
 
 impl PluginTypeSettings {
     fn new() -> PluginTypeSettings {
         PluginTypeSettings {
             global_settings_template: Settings::new(),
+            file_type_names: Vec::new(),
+            file_type_settings: Vec::new(),
             file_type_settings_template: Settings::new(),
-            file_type_settings: HashMap::new(),
             global_settings: Settings::new(),
         }
     }
@@ -96,7 +99,7 @@ impl PlaybackSettings {
             ps.file_type_settings_template.native_count = count;
 
             // Iterater over all the filetype settings and clone the settings for each of them
-            for (_key, val) in &mut ps.file_type_settings {
+            for val in &mut ps.file_type_settings {
                 *val = Settings::new_alloc_fields(native_settings, count);
             }
             HippoSettingsError_Ok
@@ -118,12 +121,11 @@ impl PlaybackSettings {
         let mut plugin_settings = PluginTypeSettings::new();
 
         for e in extensions {
-            plugin_settings
-                .file_type_settings
-                .insert(e.to_owned(), Settings::new());
+            plugin_settings.file_type_names.push(e.to_owned());
+            plugin_settings.file_type_settings.push(Settings::new());
         }
 
-        self.settings.insert(id.to_owned(), plugin_settings);
+        self.settings.insert(id.to_owned(), Box::new(plugin_settings));
     }
 }
 

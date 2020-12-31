@@ -569,3 +569,13 @@ impl PluginService {
         service_api.get_message_api_mut()
     }
 }
+
+pub fn get_playback_settings<'a>(service_api: *const ffi::HippoServiceAPI) -> &'a mut PlaybackSettings {
+    unsafe {
+        let settings_api = ((*service_api).get_settings_api.unwrap())((*service_api).private_data, 0);
+        let ps: &mut PlaybackSettings = &mut *((*settings_api).priv_data as *mut PlaybackSettings);
+        ps
+    }
+}
+
+
