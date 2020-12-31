@@ -9,6 +9,7 @@ use walkdir::{DirEntry, WalkDir};
 //use hippo_api::ffi::{CHippoPlaybackPlugin};
 use crate::service_ffi::PluginService;
 use crate::service_ffi::ServiceApi;
+use crate::PlaybackSettings;
 use logger::*;
 
 #[derive(Debug, Clone)]
@@ -17,6 +18,7 @@ pub struct HippoPlaybackPluginFFI {
     pub user_data: u64, // this is really a pointer but Rust gets sad when we use this on another thread so we hack it here a bit.
     pub name: String,
     pub version: String,
+    pub library_version: String,
     pub probe_can_play: unsafe extern "C" fn(
         data: *const u8,
         data_size: u32,
@@ -40,11 +42,8 @@ pub struct HippoPlaybackPluginFFI {
     pub metadata: Option<
         unsafe extern "C" fn(buffer: *const i8, services: *const ffi::HippoServiceAPI) -> i32,
     >,
-    pub save: Option<
-        unsafe extern "C" fn(user_data: *mut c_void, save_api: *const ffi::HippoSaveAPI) -> i32,
-    >,
-    pub load: Option<
-        unsafe extern "C" fn(user_data: *mut c_void, load_api: *const ffi::HippoLoadAPI) -> i32,
+    pub update_settings: Option<
+        unsafe extern "C" fn(user_data: *mut c_void, settings_api: *const ffi::HippoSettingsAPI) -> i32,
     >,
 }
 
@@ -117,7 +116,7 @@ impl Plugins {
         }
     }
 
-    fn add_plugin_lib(&mut self, name: &str, plugin: &Arc<Lib>) {
+    fn add_plugin_lib(&mut self, name: &str, plugin: &Arc<Lib>, service_api: *const ffi::HippoServiceAPI) {
         let func: Result<
             Symbol<extern "C" fn() -> *const ffi::HippoPlaybackPlugin>,
             ::std::io::Error,
@@ -142,6 +141,11 @@ impl Plugins {
                         .to_string_lossy()
                         .into_owned()
                 },
+                library_version: unsafe {
+                    CStr::from_ptr(native_plugin.library_version)
+                        .to_string_lossy()
+                        .into_owned()
+                },
                 probe_can_play: native_plugin.probe_can_play.unwrap(),
                 supported_extensions: native_plugin.supported_extensions.unwrap(),
                 create: native_plugin.create.unwrap(),
@@ -152,13 +156,28 @@ impl Plugins {
                 read_data: native_plugin.read_data.unwrap(),
                 seek: native_plugin.seek.unwrap(),
                 metadata: native_plugin.metadata,
-                save: native_plugin.save,
-                load: native_plugin.load,
+                update_settings: native_plugin.update_settings,
             };
 
             trace!("Loaded playback plugin {} {}", plugin_funcs.name, plugin_funcs.version);
 
-            if let Some(set_log) = native_plugin.set_log {
+            if let Some(static_init) = native_plugin.static_init {
+                // To prepare for settings setup we get the supported extensions and register
+                // them with the settings api
+
+                let extensions = unsafe { (plugin_funcs.supported_extensions)() };
+
+                if extensions == std::ptr::null() {
+                    warn!("Plugin {}: No extensions returned. This will cause settings to not work correct", plugin_funcs.name);
+                } else {
+                    unsafe {
+                        let settings_api = ((*service_api).get_settings_api.unwrap())((*service_api).private_data, 0);
+                        let ps: &mut PlaybackSettings = &mut *((*settings_api).priv_data as *mut PlaybackSettings);
+                        let ext = CStr::from_ptr(extensions).to_string_lossy();
+                        ps.register_file_extensions(&plugin_funcs.name, &ext);
+                    }
+                }
+
                 // TODO: Memory leak
                 let name = format!("{} {}", plugin_funcs.name, plugin_funcs.version);
                 let c_name = CString::new(name).unwrap();
@@ -166,7 +185,7 @@ impl Plugins {
 
                 unsafe {
                     (*log_api).log_set_base_name.unwrap()((*log_api).priv_data, c_name.as_ptr());
-                    (set_log)(log_api);
+                    (static_init)(log_api, service_api);
                 }
             }
 
@@ -188,25 +207,25 @@ impl Plugins {
         }
     }
 
-    fn internal_add_plugins_from_path(&mut self, path: &str) {
+    fn internal_add_plugins_from_path(&mut self, path: &str, service_api: *const ffi::HippoServiceAPI) {
         for entry in WalkDir::new(path).max_depth(1) {
             if let Ok(t) = entry {
                 if Self::check_file_type(&t) {
-                    self.add_plugin(t.path().to_str().unwrap());
+                    self.add_plugin(t.path().to_str().unwrap(), service_api);
                     //println!("{}", t.path().display());
                 }
             }
         }
     }
 
-    pub fn add_plugins_from_path(&mut self) {
-        self.internal_add_plugins_from_path("plugins");
-        self.internal_add_plugins_from_path(".");
+    pub fn add_plugins_from_path(&mut self, service_api: *const ffi::HippoServiceAPI) {
+        self.internal_add_plugins_from_path("plugins", service_api);
+        self.internal_add_plugins_from_path(".", service_api);
     }
 
-    pub fn add_plugin(&mut self, name: &str) {
+    pub fn add_plugin(&mut self, name: &str, service_api: *const ffi::HippoServiceAPI) {
         match self.plugin_handler.add_library(name, PlatformName::No) {
-            Ok(lib) => self.add_plugin_lib(name, &lib),
+            Ok(lib) => self.add_plugin_lib(name, &lib, service_api),
             Err(e) => {
                 println!("Unable to load dynamic lib, err {:?}", e);
             }

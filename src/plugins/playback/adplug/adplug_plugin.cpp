@@ -237,7 +237,8 @@ static void adplug_event(void* user_data, const unsigned char* data, int len) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void adplug_set_log(struct HippoLogAPI* log) {
+static void adplug_static_init(struct HippoLogAPI* log, const struct HippoServiceAPI* service) {
+    (void)service;
     g_hp_log = log;
 }
 
@@ -279,7 +280,7 @@ static HippoPlaybackPlugin g_adplug_plugin = {
     adplug_read_data,
     adplug_plugin_seek,
     adplug_metadata,
-    adplug_set_log,
+    adplug_static_init,
     NULL,
     NULL,
 };

@@ -266,7 +266,12 @@ static HippoReadInfo sc68_plugin_read_data(void* user_data, void* dest, uint32_t
     int code = (uint16_t)sc68_process(plugin->instance, dest, &n);
     (void)code;
 
-    return HippoReadInfo{SAMPLE_RATE, (uint16_t)n, 2, HippoOutputType_s16};
+    return HippoReadInfo {
+        SAMPLE_RATE,
+        (uint16_t)n,
+        2,
+        HippoOutputType_s16
+    };
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -285,7 +290,8 @@ static void sc68_plugin_event(void* user_data, const unsigned char* data, int le
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void sc68_plugin_set_log(struct HippoLogAPI* log) {
+static void sc68_plugin_static_init(struct HippoLogAPI* log, const struct HippoServiceAPI* service) {
+    (void)service;
     g_hp_log = log;
 }
 
@@ -306,7 +312,7 @@ static HippoPlaybackPlugin g_sc68_plugin_plugin = {
     sc68_plugin_read_data,
     sc68_plugin_plugin_seek,
     sc68_plugin_metadata,
-    sc68_plugin_set_log,
+    sc68_plugin_static_init,
     NULL,
     NULL,
 };

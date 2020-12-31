@@ -59,48 +59,17 @@ end
 StaticLibrary {
     Name = "qt_addons",
     Sources = {
-        "src/external/toolwindowmanager/src/ToolWindowManager.cpp",
-        "src/external/toolwindowmanager/src/ToolWindowManagerArea.cpp",
-        "src/external/toolwindowmanager/src/ToolWindowManagerSplitter.cpp",
-        "src/external/toolwindowmanager/src/ToolWindowManagerTabBar.cpp",
-        "src/external/toolwindowmanager/src/ToolWindowManagerWrapper.cpp",
+        "src/external/fastdock/FastDock.cpp",
+        "src/external/fastdock/FastDockArea.cpp",
+        "src/external/fastdock/FastDockSplitter.cpp",
+        "src/external/fastdock/FastDockTabBar.cpp",
+        "src/external/fastdock/FastDockWrapper.cpp",
 
-        gen_moc("src/external/toolwindowmanager/src/ToolWindowManager.h"),
-        gen_moc("src/external/toolwindowmanager/src/ToolWindowManagerArea.h"),
-        gen_moc("src/external/toolwindowmanager/src/ToolWindowManagerSplitter.h"),
-        gen_moc("src/external/toolwindowmanager/src/ToolWindowManagerTabBar.h"),
-        gen_moc("src/external/toolwindowmanager/src/ToolWindowManagerWrapper.h"),
-
-    --[[
-        "src/external/qt_advanced_docking_system/src/ads_globals.cpp",
-        "src/external/qt_advanced_docking_system/src/DockAreaWidget.cpp",
-        "src/external/qt_advanced_docking_system/src/DockAreaTabBar.cpp",
-        "src/external/qt_advanced_docking_system/src/DockContainerWidget.cpp",
-        "src/external/qt_advanced_docking_system/src/DockManager.cpp",
-        "src/external/qt_advanced_docking_system/src/DockWidget.cpp",
-        "src/external/qt_advanced_docking_system/src/DockWidgetTab.cpp",
-        "src/external/qt_advanced_docking_system/src/FloatingDockContainer.cpp",
-        "src/external/qt_advanced_docking_system/src/DockOverlay.cpp",
-        "src/external/qt_advanced_docking_system/src/DockSplitter.cpp",
-        "src/external/qt_advanced_docking_system/src/DockAreaTitleBar.cpp",
-        "src/external/qt_advanced_docking_system/src/ElidingLabel.cpp",
-        "src/external/qt_advanced_docking_system/src/linux/FloatingWidgetTitleBar.cpp",
-
-        gen_moc("src/external/qt_advanced_docking_system/src/linux/FloatingWidgetTitleBar.h"),
-
-        gen_moc("src/external/qt_advanced_docking_system/src/DockAreaTabBar.h"),
-        gen_moc("src/external/qt_advanced_docking_system/src/DockAreaTitleBar.h"),
-        gen_moc("src/external/qt_advanced_docking_system/src/DockAreaWidget.h"),
-        gen_moc("src/external/qt_advanced_docking_system/src/DockContainerWidget.h"),
-        gen_moc("src/external/qt_advanced_docking_system/src/DockManager.h"),
-        gen_moc("src/external/qt_advanced_docking_system/src/DockOverlay.h"),
-        gen_moc("src/external/qt_advanced_docking_system/src/DockSplitter.h"),
-        gen_moc("src/external/qt_advanced_docking_system/src/DockWidget.h"),
-        gen_moc("src/external/qt_advanced_docking_system/src/DockWidgetTab.h"),
-        gen_moc("src/external/qt_advanced_docking_system/src/ElidingLabel.h"),
-        gen_moc("src/external/qt_advanced_docking_system/src/FloatingDockContainer.h"),
-        gen_rcc("src/external/qt_advanced_docking_system/src/ads.qrc"),
-    --]]
+        gen_moc("src/external/fastdock/FastDock.h"),
+        gen_moc("src/external/fastdock/FastDockArea.h"),
+        gen_moc("src/external/fastdock/FastDockSplitter.h"),
+        gen_moc("src/external/fastdock/FastDockTabBar.h"),
+        gen_moc("src/external/fastdock/FastDockWrapper.h"),
     },
 
     Env = {
@@ -159,18 +128,16 @@ Program {
         gen_moc("src/hippo_player/console.h"),
         gen_uic("src/hippo_player/console.ui"),
 
-        gen_moc("src/hippo_player/MainWindow.h"),
-        gen_moc("src/hippo_player/PlaylistModel.h"),
+        gen_moc("src/hippo_player/main_window.h"),
+        gen_moc("src/hippo_player/playlist_model.h"),
 
         -- Dialogs
-        gen_uic("src/hippo_player/PrefsDialog.ui"),
-        gen_moc("src/hippo_player/PrefsDialog.h"),
-        gen_uic("src/hippo_player/PlaybackPluginPriority.ui"),
-        gen_moc("src/hippo_player/PlaybackPluginPriority.h"),
-        gen_uic("src/hippo_player/DevicePanel.ui"),
-        gen_moc("src/hippo_player/DevicePanel.h"),
-
-        --gen_uic("src/hippo_player/test_main/MainWindow.ui"),
+        gen_uic("src/hippo_player/prefs_dialog.ui"),
+        gen_moc("src/hippo_player/prefs_dialog.h"),
+        gen_uic("src/hippo_player/playback_plugin_priority.ui"),
+        gen_moc("src/hippo_player/playback_plugin_priority.h"),
+        gen_uic("src/hippo_player/device_panel.ui"),
+        gen_moc("src/hippo_player/device_panel.h"),
     },
 
     Env = {
@@ -183,13 +150,12 @@ Program {
         },
 
         CPPDEFS = {
-            -- "QT_NO_KEYWORDS",
+            "QT_NO_KEYWORDS",
             "QT_NO_CAST_FROM_ASCII",
             "QT_NO_CAST_TO_ASCII",
         },
 
         CPPPATH = {
-            "src/external/qt_advanced_docking_system/src",
             "$(QT5_INC)",
             "$(QT5_INC)/QtCore",
             "$(QT5_INC)/QtWidgets",
@@ -221,6 +187,45 @@ Program {
 
 -----------------------------------------------------------------------------------------------------------------------
 
+Program {
+    Name = "hippo_vis",
+
+	Includes = {
+		"src/external/bx/include",
+		"src/external/bgfx/include",
+		"src/external/glfw/include",
+	},
+
+	Defines = {
+		"BX_CONFIG_DEBUG=1",
+		{ "GLFW_EXPOSE_NATIVE_WIN32" ; Config = "win64-*-*" },
+		{ "GLFW_EXPOSE_NATIVE_COCOA" ; Config = "macos*-*-*" },
+		{ "GLFW_EXPOSE_NATIVE_X11" ; Config = "linux-*-*" },
+	},
+
+    Sources = {
+        Glob {
+            Dir = "src/hippo_vis",
+            Extensions = { ".cpp" },
+            Recursive = true,
+        },
+    },
+
+    Env = {
+		PROGCOM = {
+            { "data/windows/hippo.res", "opengl32.lib", "shell32.lib", "qtmain.lib", "gdi32.lib", "user32.lib"; Config = "win64-*-*" },
+			{  "-lGL", "-lX11", "-lpthread", "-ldl"; Config = "linux-*-*" },
+			{  "-lc++"; Config = "macosx-*-*" },
+		},
+	},
+
+    Frameworks = { "Cocoa", "IOKit", "Metal", "QuartzCore", "MetalKit" },
+
+    Depends = { "bgfx", "glfw", "hippo_core_loader", "flatbuffers_lib" },
+}
+
+-----------------------------------------------------------------------------------------------------------------------
+
 local hippoBundle = OsxBundle
 {
     Depends = { "hippo_player" },
@@ -243,6 +248,8 @@ if native.host_platform == "macosx" then
 else
     Default "hippo_player"
 end
+
+Default "hippo_vis"
 
 -- vim: ts=4:sw=4:sts=4
 

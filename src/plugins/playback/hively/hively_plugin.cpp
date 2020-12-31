@@ -114,7 +114,12 @@ static HippoReadInfo hively_read_data(void* user_data, void* dest, uint32_t max_
 
     uint16_t frames_decoded = (uint16_t)hvl_DecodeFrame(replayerData->tune, ptr, ptr + 2, 4) / 4;
 
-    return HippoReadInfo{FREQ, frames_decoded, 2, HippoOutputType_s16};
+    return HippoReadInfo {
+        FREQ,
+        frames_decoded,
+        2,
+        HippoOutputType_s16
+    };
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -191,7 +196,8 @@ static void hively_event(void* user_data, const unsigned char* data, int len) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void hively_set_log(struct HippoLogAPI* log) {
+static void hively_static_init(struct HippoLogAPI* log, const struct HippoServiceAPI* service) {
+    (void)service;
     g_hp_log = log;
 }
 
@@ -212,7 +218,7 @@ static HippoPlaybackPlugin g_hively_plugin = {
     hively_read_data,
     hively_seek,
     hively_metadata,
-    hively_set_log,
+    hively_static_init,
     NULL,
     NULL,
 };

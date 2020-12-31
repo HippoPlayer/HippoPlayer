@@ -12,6 +12,7 @@ mod audio;
 mod core_config;
 mod playlist;
 mod plugin_handler;
+mod playback_settings;
 
 pub mod ffi;
 mod service;
@@ -23,6 +24,7 @@ use messages::*;
 use playlist::Playlist;
 use plugin_handler::Plugins;
 use service_ffi::{PluginService, ServiceApi};
+use playback_settings::PlaybackSettings;
 
 use std::io::Read;
 
@@ -40,6 +42,7 @@ pub struct HippoCore {
     plugin_service: service_ffi::PluginService,
     playlist: Playlist,
     song_db: *const SongDb,
+    playback_settings: *const PlaybackSettings,
     current_song_time: f32,
     start_time: Instant,
     is_playing: bool,
@@ -326,6 +329,10 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
     let config_dir = init_config_dir();
     let mut config = CoreConfig::default();
 
+    let song_db = Box::into_raw(Box::new(SongDb::new("songdb.db").unwrap()));
+    let playback_settings = Box::into_raw(Box::new(PlaybackSettings::new()));
+    let service = service_ffi::PluginService::new(song_db, playback_settings);
+
     if let Ok(output_dir) = config_dir {
         logger::init_file_log(&output_dir);
         if let Ok(cfg) = CoreConfig::load(&output_dir, "global.cfg") {
@@ -349,7 +356,7 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
 
     let mut plugins = Plugins::new();
 
-    plugins.add_plugins_from_path();
+    plugins.add_plugins_from_path(service.c_service_api);
 
     // sort plugins according to priority order
 
@@ -388,8 +395,6 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
         std::env::set_current_dir(current_path).unwrap();
     }
 
-    let song_db = Box::into_raw(Box::new(SongDb::new("songdb.db").unwrap()));
-    let service = service_ffi::PluginService::new(song_db);
 
     let mut core = Box::new(HippoCore {
         error_string: None,
@@ -402,6 +407,7 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
         start_time: Instant::now(),
         is_playing: false,
         song_db,
+        playback_settings,
     });
 
     core.audio.device_name = core.config.audio_device.to_owned();
@@ -471,11 +477,9 @@ pub unsafe extern "C" fn hippo_init_audio_device(_core: *mut HippoCore) -> *cons
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn hippo_service_api_new(
-    _core: *mut HippoCore,
-) -> *const ffi::HippoServiceAPI {
-    let core = &mut *_core;
-    PluginService::new_c_api(core.song_db)
+pub unsafe extern "C" fn hippo_service_api_new(core: *mut HippoCore) -> *const ffi::HippoServiceAPI {
+    let core = &mut *core;
+    PluginService::new_c_api(core.song_db, core.playback_settings)
 }
 
 #[no_mangle]

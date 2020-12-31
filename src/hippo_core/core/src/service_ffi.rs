@@ -1,5 +1,6 @@
 use crate::ffi;
 use crate::service::{FileWrapper, IoApi, MessageApi};
+use crate::PlaybackSettings;
 use std::collections::HashMap;
 use std::ffi::CStr;
 use std::io::Read;
@@ -9,6 +10,7 @@ use std::ptr;
 use std::slice;
 use song_db::*;
 use logger;
+use crate::playback_settings;
 
 extern "C" fn file_exists_wrapper(priv_data: *mut ffi::HippoApiPrivData, target: *const i8) -> i32 {
     let file_api: &mut IoApi = unsafe { &mut *(priv_data as *mut IoApi) };
@@ -131,7 +133,7 @@ extern "C" fn file_seek_wrapper(
 }
 
 extern "C" fn get_log_api(
-    priv_data: *mut ffi::HippoServicePrivData,
+    priv_data: *mut c_void,
     _version: i32,
 ) -> *const ffi::HippoLogAPI {
     let service_api: &mut ServiceApi = unsafe { &mut *(priv_data as *mut ServiceApi) };
@@ -139,7 +141,7 @@ extern "C" fn get_log_api(
 }
 
 extern "C" fn get_io_api_wrapper(
-    priv_data: *mut ffi::HippoServicePrivData,
+    priv_data: *mut c_void,
     _version: i32,
 ) -> *const ffi::HippoIoAPI {
     let service_api: &mut ServiceApi = unsafe { &mut *(priv_data as *mut ServiceApi) };
@@ -147,7 +149,7 @@ extern "C" fn get_io_api_wrapper(
 }
 
 extern "C" fn get_metadata_api(
-    priv_data: *mut ffi::HippoServicePrivData,
+    priv_data: *mut c_void,
     _version: i32,
 ) -> *const ffi::HippoMetadataAPI {
     let service_api: &mut ServiceApi = unsafe { &mut *(priv_data as *mut ServiceApi) };
@@ -155,11 +157,19 @@ extern "C" fn get_metadata_api(
 }
 
 extern "C" fn get_message_api(
-    priv_data: *mut ffi::HippoServicePrivData,
+    priv_data: *mut c_void,
     _version: i32,
 ) -> *const ffi::HippoMessageAPI {
     let service_api: &mut ServiceApi = unsafe { &mut *(priv_data as *mut ServiceApi) };
     service_api.get_c_message_api()
+}
+
+extern "C" fn get_settings_api(
+    priv_data: *mut c_void,
+    _version: i32,
+) -> *const ffi::HippoSettingsAPI {
+    let service_api: &mut ServiceApi = unsafe { &mut *(priv_data as *mut ServiceApi) };
+    service_api.get_c_settings_api()
 }
 
 extern "C" fn message_api_send(priv_data: *mut ffi::HippoMessageAPI, data: *const u8, len: i32) {
@@ -364,6 +374,7 @@ pub struct ServiceApi {
     pub c_io_api: *const ffi::HippoIoAPI,
     pub c_metadata_api: *const ffi::HippoMetadataAPI,
     pub c_message_api: *const ffi::HippoMessageAPI,
+    pub c_settings_api: *const ffi::HippoSettingsAPI,
 }
 
 pub fn new_c_message_api() -> *const ffi::HippoMessageAPI {
@@ -392,6 +403,10 @@ impl ServiceApi {
 
     fn get_c_message_api(&self) -> *const ffi::HippoMessageAPI {
         self.c_message_api
+    }
+
+    fn get_c_settings_api(&self) -> *const ffi::HippoSettingsAPI {
+        self.c_settings_api
     }
 
     fn get_song_db(&self) -> &SongDb {
@@ -430,9 +445,8 @@ impl ServiceApi {
         })
     }
 
-    fn new(song_db: *const SongDb) -> ServiceApi {
+    fn new(song_db: *const SongDb, settings: *const PlaybackSettings) -> ServiceApi {
         // setup IO services
-
         let io_api: *mut ffi::HippoApiPrivData = unsafe {
             transmute(Box::new(IoApi {
                 saved_allocs: HashMap::new(),
@@ -484,10 +498,24 @@ impl ServiceApi {
 
         let c_metadata_api: *const ffi::HippoMetadataAPI = unsafe { transmute(c_metadata_api) };
 
+        // Playback settings
+
+        let c_settings_api = Box::new(ffi::HippoSettingsAPI {
+            priv_data: settings as *mut _,
+            register_filetype_settings: Some(playback_settings::register_filetype_settings),
+            register_global_settings: Some(playback_settings::register_global_settings),
+            get_string: Some(playback_settings::get_string),
+            get_int: Some(playback_settings::get_int),
+            get_float: Some(playback_settings::get_float),
+        });
+
+        let c_settings_api = unsafe { transmute(c_settings_api) };
+
         ServiceApi {
             c_log_api,
             c_io_api,
             c_metadata_api,
+            c_settings_api,
             c_message_api: new_c_message_api(),
         }
     }
@@ -498,21 +526,22 @@ pub struct PluginService {
 }
 
 impl PluginService {
-    pub fn new(song_db: *const SongDb) -> PluginService {
+    pub fn new(song_db: *const SongDb, settings: *const PlaybackSettings) -> PluginService {
         PluginService {
-            c_service_api: Self::new_c_api(song_db),
+            c_service_api: Self::new_c_api(song_db, settings),
         }
     }
 
-    pub fn new_c_api(song_db: *const SongDb) -> *const ffi::HippoServiceAPI {
-        let service_api = Box::into_raw(Box::new(ServiceApi::new(song_db)));
+    pub fn new_c_api(song_db: *const SongDb, settings: *const PlaybackSettings) -> *const ffi::HippoServiceAPI {
+        let service_api = Box::into_raw(Box::new(ServiceApi::new(song_db, settings)));
 
         let c_service_api = Box::new(ffi::HippoServiceAPI {
+            private_data: service_api as *mut c_void,
             get_log_api: Some(get_log_api),
             get_io_api: Some(get_io_api_wrapper),
             get_metadata_api: Some(get_metadata_api),
             get_message_api: Some(get_message_api),
-            private_data: service_api as *mut ffi::HippoServicePrivData,
+            get_settings_api: Some(get_settings_api),
         });
 
         Box::into_raw(c_service_api) as *const ffi::HippoServiceAPI

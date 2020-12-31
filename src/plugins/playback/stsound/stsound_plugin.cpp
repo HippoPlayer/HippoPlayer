@@ -114,7 +114,12 @@ static HippoReadInfo stsound_read_data(void* user_data, void* dest, uint32_t max
 
     ymMusicCompute(data->song, (short*)dest, samples_to_read);
 
-    return HippoReadInfo{FREQ, samples_to_read, 1, HippoOutputType_s16};
+    return HippoReadInfo {
+        FREQ,
+        samples_to_read,
+        1,
+        HippoOutputType_s16
+    };
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -177,7 +182,8 @@ static void stsound_event(void* user_data, const unsigned char* data, int len) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void stsound_set_log(struct HippoLogAPI* log) {
+static void stsound_static_init(struct HippoLogAPI* log, const HippoServiceAPI* service_api) {
+	(void)service_api;
     g_hp_log = log;
 }
 
@@ -198,7 +204,7 @@ static HippoPlaybackPlugin g_stsound_plugin = {
     stsound_read_data,
     stsound_seek,
     stsound_metadata,
-    stsound_set_log,
+    stsound_static_init,
     NULL,
     NULL,
 };

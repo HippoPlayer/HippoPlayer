@@ -143,6 +143,7 @@ enum HippoProbeResult asap_probe_can_play(const uint8_t* data, uint32_t data_siz
     return HippoProbeResult_Unsupported;
 }
 
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static HippoReadInfo asap_read_data(void* user_data, void* dest, uint32_t max_output_bytes,
@@ -153,8 +154,12 @@ static HippoReadInfo asap_read_data(void* user_data, void* dest, uint32_t max_ou
 
     int gen_samples = ASAP_Generate(data->song, (uint8_t*)dest, samples_to_read, ASAPSampleFormat_S16_L_E) / 2;
 
-    HippoReadInfo t = {ASAP_SAMPLE_RATE, gen_samples, ASAPInfo_GetChannels(ASAP_GetInfo(data->song)),
-                       HippoOutputType_s16};
+    HippoReadInfo t = {
+        ASAP_SAMPLE_RATE,
+        gen_samples,
+        ASAPInfo_GetChannels(ASAP_GetInfo(data->song)),
+        HippoOutputType_s16
+    };
 
     return t;
 }
@@ -254,7 +259,8 @@ static void asap_event(void* user_data, const unsigned char* data, int len) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void asap_set_log(struct HippoLogAPI* log) {
+static void asap_static_init(struct HippoLogAPI* log, const struct HippoServiceAPI* service) {
+	(void)service;
     g_hp_log = log;
 }
 
@@ -275,7 +281,7 @@ static HippoPlaybackPlugin g_asap_plugin = {
     asap_read_data,
     asap_seek,
     asap_metadata,
-    asap_set_log,
+    asap_static_init,
     NULL,
     NULL,
 };
