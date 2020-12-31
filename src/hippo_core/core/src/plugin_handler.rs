@@ -18,6 +18,7 @@ pub struct HippoPlaybackPluginFFI {
     pub user_data: u64, // this is really a pointer but Rust gets sad when we use this on another thread so we hack it here a bit.
     pub name: String,
     pub version: String,
+    pub library_version: String,
     pub probe_can_play: unsafe extern "C" fn(
         data: *const u8,
         data_size: u32,
@@ -137,6 +138,11 @@ impl Plugins {
                 },
                 version: unsafe {
                     CStr::from_ptr(native_plugin.version)
+                        .to_string_lossy()
+                        .into_owned()
+                },
+                library_version: unsafe {
+                    CStr::from_ptr(native_plugin.library_version)
                         .to_string_lossy()
                         .into_owned()
                 },

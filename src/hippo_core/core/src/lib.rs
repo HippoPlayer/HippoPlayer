@@ -481,9 +481,9 @@ pub unsafe extern "C" fn hippo_update_messages(
     core.update_messages(user_data, count, get_messages, send_messages);
 }
 
-
 #[no_mangle]
 pub unsafe extern "C" fn hippo_playlist_remove_entry(core: *mut HippoCore, entry: i32) {
     let core = &mut *core;
     core.playlist.remove_entry(entry);
 }
+

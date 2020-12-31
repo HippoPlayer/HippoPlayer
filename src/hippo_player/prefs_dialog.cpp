@@ -32,7 +32,7 @@ PrefsDialog::PrefsDialog(const struct HippoMessageAPI* messages_api, QWidget* pa
 
     QTreeWidgetItem* plugin_priority = new QTreeWidgetItem();
     plugin_priority->setData(0, Qt::UserRole, 0);
-    plugin_priority->setText(0, QStringLiteral("Plugins"));
+    plugin_priority->setText(0, QStringLiteral("Priority"));
     plugin_priority->setExpanded(true);
     playback->addChild(plugin_priority);
 
