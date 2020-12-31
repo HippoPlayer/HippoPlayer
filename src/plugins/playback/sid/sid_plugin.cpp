@@ -242,7 +242,8 @@ static int sid_metadata(const char* url, const HippoServiceAPI* service_api) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void sid_set_log(struct HippoLogAPI* log) {
+static void sid_static_init(struct HippoLogAPI* log, const struct HippoServiceAPI* service) {
+    (void)service;
     g_hp_log = log;
 }
 
@@ -263,7 +264,7 @@ static HippoPlaybackPlugin g_sid_plugin = {
     sid_read_data,
     sid_seek,
     sid_metadata,
-    sid_set_log,
+    sid_static_init,
     nullptr,
     nullptr,
 };

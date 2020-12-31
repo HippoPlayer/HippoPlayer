@@ -360,27 +360,6 @@ enum {
     HippoOutputType_f32 = 5,
 };
 
-#define HIPPO_READ_DESC(sample_rate, sample_count, channel_count, output_type) \
-    (((uint64_t)sample_rate) << 32) | (((uint32_t)sample_count) << 16) | (((uint16_t)channel_count) << 8) | ((uint8_t)output_type)
-
-typedef struct HippoReadInfo {
-    uint32_t sample_rate;
-    uint16_t sample_count;
-    uint8_t channel_count;
-    uint8_t output_format;
-} HippoReadInfo;
-
-enum {
-    HippoOutputType_u8  = 1,
-    HippoOutputType_s16 = 2,
-    HippoOutputType_s24 = 3, // Tightly packed. 3 bytes per sample.
-    HippoOutputType_s32 = 4,
-    HippoOutputType_f32 = 5,
-};
-
-#define HIPPO_READ_DESC(sample_rate, sample_count, channel_count, output_type) \
-    (((uint64_t)sample_rate) << 32) | (((uint32_t)sample_count) << 16) | (((uint16_t)channel_count) << 8) | ((uint8_t)output_type)
-
 typedef struct HippoReadInfo {
     uint32_t sample_rate;
     uint16_t sample_count;
@@ -407,6 +386,8 @@ typedef struct HippoPlaybackPlugin {
 	int (*register_settings)(const struct HippoSettingsAPI* settings);
 	int (*update_settings)(void* user_data, const struct HippoSettingsAPI* settings);
 } HippoPlaybackPlugin;
+
+#define FOOBAR 2
 
 #define HIPPO_PLAYBACK_PLUGIN_API_VERSION 1
 #define HIPPO_MESSAGE_API_VERSION 1

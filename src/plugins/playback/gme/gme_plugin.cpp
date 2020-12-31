@@ -248,7 +248,8 @@ static void gme_event(void* user_data, const unsigned char* data, int len) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void gme_set_log(struct HippoLogAPI* log) {
+static void gme_static_init(struct HippoLogAPI* log, const struct HippoServiceAPI* service) {
+    (void)service;
     g_hp_log = log;
 }
 
@@ -269,7 +270,7 @@ static HippoPlaybackPlugin s_gme_plugin = {
     gme_read_data,
     gme_seek_in,
     gme_metadata,
-    gme_set_log,
+    gme_static_init,
     NULL,
     NULL,
 };

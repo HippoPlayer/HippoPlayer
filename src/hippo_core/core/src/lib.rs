@@ -477,9 +477,7 @@ pub unsafe extern "C" fn hippo_init_audio_device(_core: *mut HippoCore) -> *cons
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn hippo_service_api_new(_core: *mut HippoCore) -> *const ffi::HippoServiceAPI {
-    _core: *mut HippoCore,
-) -> *const ffi::HippoServiceAPI {
+pub unsafe extern "C" fn hippo_service_api_new(core: *mut HippoCore) -> *const ffi::HippoServiceAPI {
     let core = &mut *core;
     PluginService::new_c_api(core.song_db, core.playback_settings)
 }
