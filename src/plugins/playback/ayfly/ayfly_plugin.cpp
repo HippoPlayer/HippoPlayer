@@ -109,12 +109,7 @@ static HippoReadInfo ayfly_read_data(void* user_data, void* dest, uint32_t max_o
 
     uint16_t written = (uint16_t)ay_rendersongbuffer(replayer_data->song, (unsigned char*)dest, samples_to_read) / 4;
 
-    HippoReadInfo t = {
-        FREQ,
-        written,
-        2,
-        HippoOutputType_s16
-    };
+    HippoReadInfo t = {FREQ, written, 2, HippoOutputType_s16};
 
     return t;
 }

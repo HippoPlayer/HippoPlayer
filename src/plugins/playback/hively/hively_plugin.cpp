@@ -114,12 +114,7 @@ static HippoReadInfo hively_read_data(void* user_data, void* dest, uint32_t max_
 
     uint16_t frames_decoded = (uint16_t)hvl_DecodeFrame(replayerData->tune, ptr, ptr + 2, 4) / 4;
 
-    return HippoReadInfo {
-        FREQ,
-        frames_decoded,
-        2,
-        HippoOutputType_s16
-    };
+    return HippoReadInfo{FREQ, frames_decoded, 2, HippoOutputType_s16};
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

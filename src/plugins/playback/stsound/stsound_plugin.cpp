@@ -114,12 +114,7 @@ static HippoReadInfo stsound_read_data(void* user_data, void* dest, uint32_t max
 
     ymMusicCompute(data->song, (short*)dest, samples_to_read);
 
-    return HippoReadInfo {
-        FREQ,
-        samples_to_read,
-        1,
-        HippoOutputType_s16
-    };
+    return HippoReadInfo{FREQ, samples_to_read, 1, HippoOutputType_s16};
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

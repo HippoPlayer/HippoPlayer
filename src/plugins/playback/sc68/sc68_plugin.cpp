@@ -266,12 +266,7 @@ static HippoReadInfo sc68_plugin_read_data(void* user_data, void* dest, uint32_t
     int code = (uint16_t)sc68_process(plugin->instance, dest, &n);
     (void)code;
 
-    return HippoReadInfo {
-        SAMPLE_RATE,
-        (uint16_t)n,
-        2,
-        HippoOutputType_s16
-    };
+    return HippoReadInfo{SAMPLE_RATE, (uint16_t)n, 2, HippoOutputType_s16};
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
