@@ -303,12 +303,7 @@ static HippoReadInfo tfmx_read_data(void* user_data, void* dest, uint32_t max_ou
         tfmx_get_block(&data->state, dest);
     }
 
-    HippoReadInfo t = {
-        48000,
-        block_size / 2,
-        2,
-        HippoOutputType_s16
-    };
+    HippoReadInfo t = {48000, block_size / 2, 2, HippoOutputType_s16};
 
     return t;
 }
