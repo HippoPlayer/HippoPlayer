@@ -199,6 +199,9 @@ void PlaybackPluginPanel::build_ui(const HSSetting* setting, int count) {
                     slider->setMinimum(setting->int_value.start_range);
                     slider->setMaximum(setting->int_value.end_range);
                     layout->addWidget(slider, i, 2);
+
+                    QObject::connect(spin_box, QOverload<int>::of(&QSpinBox::valueChanged), [slider](int i) { slider->setValue(i); });
+                    QObject::connect(slider, QOverload<int>::of(&QSlider::valueChanged), [spin_box](int v) -> void { spin_box->setValue(v); });
                 } else {
                     spin_box->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed);
                 }
@@ -206,8 +209,6 @@ void PlaybackPluginPanel::build_ui(const HSSetting* setting, int count) {
                 spin_box->setValue(setting->int_value.start_value);
                 printf("start value %d\n", setting->int_value.start_value);
 
-                //QObject::connect(ui->lightOff_R_LE, &QLineEdit::textChanged, [this](const QString& val)->void{ui->lightOff_R_S->setValue(val.toInt());});
-	            //QQbject::connect(ui->lightOff_R_S, &QSlider::valueChanged,[this](const int& val)->void{ui->lightOff_R_LE->setText(locale().toString(val));});
 
 
                 break;
