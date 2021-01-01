@@ -91,7 +91,7 @@ pub const HS_FLOAT_TYPE: u32 = 4096;
 pub const HS_INTEGER_TYPE: u32 = 4097;
 pub const HS_BOOL_TYPE: u32 = 4098;
 pub const HS_INTEGER_RANGE_TYPE: u32 = 4099;
-pub const HS_STRING_RANGE_TYPE: u32 = 4099;
+pub const HS_STRING_RANGE_TYPE: u32 = 4100;
 pub const HIPPO_SETTINGS_API_VERSION: u32 = 1;
 pub const HIPPO_FILE_API_VERSION: u32 = 1;
 pub const HippoMetadata_TitleTag: &'static [u8; 6usize] = b"title\0";
@@ -107,6 +107,7 @@ pub const HippoMetadata_SamplesTag: &'static [u8; 8usize] = b"sample_\0";
 pub const HippoMetadata_InstrumentsTag: &'static [u8; 12usize] = b"instrument_\0";
 pub const HIPPO_METADATA_API_VERSION: u32 = 1;
 pub const HIPPO_LOG_API_VERSION: u32 = 1;
+pub const FOOBAR: u32 = 2;
 pub const HIPPO_PLAYBACK_PLUGIN_API_VERSION: u32 = 1;
 pub const HIPPO_MESSAGE_API_VERSION: u32 = 1;
 pub type __u_char = ::std::os::raw::c_uchar;
@@ -189,10 +190,10 @@ pub type uintmax_t = __uintmax_t;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct HSBase {
-    pub widget_type: ::std::os::raw::c_int,
-    pub widget_id: ::std::os::raw::c_int,
+    pub widget_id: *const ::std::os::raw::c_char,
     pub name: *const ::std::os::raw::c_char,
     pub desc: *const ::std::os::raw::c_char,
+    pub widget_type: ::std::os::raw::c_int,
 }
 #[doc = ""]
 #[repr(C)]
@@ -261,7 +262,7 @@ pub union HSSetting {
     pub int_fixed_value: HSIntegerFixedRange,
     pub string_fixed_value: HSStringFixedRange,
     pub bool_value: HSBool,
-    _bindgen_union_align: [u64; 6usize],
+    _bindgen_union_align: [u64; 7usize],
 }
 pub const HippoSettingsError_Ok: HippoSettingsError = 0;
 pub const HippoSettingsError_NotFound: HippoSettingsError = 1;

@@ -13,10 +13,10 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef struct HSBase {
-    int widget_type;
-    int widget_id;
+    const char* widget_id;
     const char* name;
     const char* desc;
+    int widget_type;
 } HSBase;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -91,27 +91,27 @@ typedef union HSSetting {
 #define hp_sizeof_array(x) sizeof(x) / sizeof(x[0])
 #define HSIntValue(id, name, desc, value)                               \
     {                                                                   \
-        .int_value = { HS_INTEGER_TYPE, id, name, desc, value, 0, 0 } \
+        .int_value = { id, name, desc, HS_INTEGER_TYPE, value, 0, 0 } \
     }
 #define HSFloatValue(id, name, desc, value)                                  \
     {                                                                        \
-        .float_value = { HS_FLOAT_TYPE, id, name, desc, value, 0.0f, 0.0f } \
+        .float_value = { id, name, desc, HS_FLOAT_TYPE, value, 0.0f, 0.0f } \
     }
 #define HSBoolValue(id, name, desc, value)                    \
     {                                                         \
-        .bool_value = { HS_BOOL_TYPE, id, name, desc, value } \
+        .bool_value = { id, name, desc, HS_BOOL_TYPE, value } \
     }
 #define HSIntValue_Range(id, name, desc, value, min, max)                 \
     {                                                                     \
-        .int_value = { HS_INTEGER_TYPE, id, name, desc, value, min, max } \
+        .int_value = { id, name, desc, HS_INTEGER_TYPE, value, min, max } \
     }
 #define HSIntValue_DescRange(id, name, desc, value, ranges) \
     {                                                       \
         .int_fixed_value = {                                \
-            HS_INTEGER_RANGE_TYPE,                          \
             id,                                             \
             name,                                           \
             desc,                                           \
+            HS_INTEGER_RANGE_TYPE,                          \
             value,                                          \
             (HSIntegerRangeValue*)&ranges,                  \
             hp_sizeof_array(ranges)                         \
@@ -120,10 +120,10 @@ typedef union HSSetting {
 #define HSStringValue_DescRange(id, name, desc, value, ranges) \
     {                                                          \
         .string_fixed_value = {                                \
-            HS_STRING_RANGE_TYPE,                              \
             id,                                                \
             name,                                              \
             desc,                                              \
+            HS_STRING_RANGE_TYPE,                              \
             value,                                             \
             (HSStringRangeValue*)&ranges,                      \
             hp_sizeof_array(ranges)                            \

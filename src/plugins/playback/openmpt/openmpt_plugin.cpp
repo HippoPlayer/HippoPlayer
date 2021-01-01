@@ -19,16 +19,14 @@ HippoLogAPI* g_hp_log = nullptr;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-enum {
-    ID_MASTER_GAIN,
-    ID_STEREO_SEPARATION,
-    ID_VOLUME_RAMPING,
-    ID_INTERPOLATION_RANGE,
-    ID_TEMPO_FACTOR,
-    ID_PITCH_FACTOR,
-    ID_USE_AMIGA_RESAMPLER_AMIGA_MODS,
-    ID_AMIGA_RESAMPLER_FILTER,
-};
+#define ID_MASTER_GAIN "MasterGain"
+#define ID_STEREO_SEPARATION "StereoSeparation"
+#define ID_VOLUME_RAMPING "VolumeRamping"
+#define ID_INTERPOLATION_RANGE "InterploationRange"
+#define ID_TEMPO_FACTOR "TempoFactor"
+#define ID_PITCH_FACTOR "PitchFactor"
+#define ID_USE_AMIGA_RESAMPLER_AMIGA_MODS "AmigaModResampling"
+#define ID_AMIGA_RESAMPLER_FILTER "AmigaModResamplerFilter"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // clang-format off
