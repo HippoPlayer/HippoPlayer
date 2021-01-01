@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>493</width>
-    <height>484</height>
+    <height>526</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,7 +15,7 @@
   </property>
   <layout class="QVBoxLayout" name="layout_0">
    <item>
-    <layout class="QVBoxLayout" name="layout_2">
+    <layout class="QVBoxLayout" name="layout">
      <item>
       <widget class="QTreeWidget" name="plugin_list">
        <property name="minimumSize">
@@ -29,25 +29,6 @@
          <string notr="true">1</string>
         </property>
        </column>
-      </widget>
-     </item>
-     <item>
-      <widget class="QGroupBox" name="settings_group">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>0</width>
-         <height>300</height>
-        </size>
-       </property>
-       <property name="title">
-        <string>Settings</string>
-       </property>
       </widget>
      </item>
     </layout>

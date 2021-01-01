@@ -12,6 +12,7 @@ struct HippoCore;
 class QTreeWidgetItem;
 class QVBoxLayout;
 class QWidget;
+class QGroupBox;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -27,7 +28,7 @@ public:
     virtual ~PlaybackPluginPanel();
 
 private:
-    void build_ui(const HSSetting* settings, int count);
+    void build_ui(QGroupBox* group_box, const HSSetting* settings, int count);
 
     Q_SLOT void change_plugin(QTreeWidgetItem* curr, QTreeWidgetItem* prev);
     const struct HippoCore* m_core;
