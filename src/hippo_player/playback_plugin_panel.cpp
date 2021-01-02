@@ -20,8 +20,6 @@ PlaybackPluginPanel::PlaybackPluginPanel(const struct HippoCore* core, QWidget* 
     : QDialog(parent), m_core(core), m_ui(new Ui_PlaybackPluginPanel) {
     m_ui->setupUi(this);
 
-    //m_settings_layout = new QVBoxLayout;
-
     QStringList headerLabels;
     headerLabels.push_back(QStringLiteral("Name"));
     headerLabels.push_back(QStringLiteral("Version"));
@@ -57,6 +55,29 @@ PlaybackPluginPanel::PlaybackPluginPanel(const struct HippoCore* core, QWidget* 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static int calculate_pixel_width(const HSSetting* setting, int count) {
+    // first calculate the longest text so we can align the ui
+
+    const char* long_name = nullptr;
+    size_t max_len = 0;
+
+    for (int i = 0; i < count; ++i) {
+        HSBase* base = (HSBase*)&setting[i];
+        size_t len = strlen(base->name);
+
+        if (len > max_len) {
+            long_name = base->name;
+            max_len = len;
+        }
+    }
+
+    QLabel dummy;
+
+    return (int)dummy.fontMetrics().boundingRect(QString::fromUtf8(long_name)).width();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void PlaybackPluginPanel::change_plugin(QTreeWidgetItem* curr, QTreeWidgetItem* prev) {
     QLayoutItem* child = nullptr;
 
@@ -65,20 +86,29 @@ void PlaybackPluginPanel::change_plugin(QTreeWidgetItem* curr, QTreeWidgetItem* 
 
     // remove the old widgets first
 
-    /*
-    while ((child = m_settings_layout->takeAt(0)) != 0) {
-        delete child;
+    if (m_global_layout) {
+        while ((child = m_global_layout->takeAt(0)) != 0) {
+            delete child;
+        }
+    }
+
+    if (m_file_ext_layout) {
+        while ((child = m_file_ext_layout->takeAt(0)) != 0) {
+            delete child;
+        }
     }
 
     for (auto& t : m_widgets) {
         delete t;
     }
-    */
 
     m_widgets.clear();
 
     // clear the old settings
     m_file_type_settings.clear();
+
+    m_global_layout = new QVBoxLayout;
+    m_file_ext_layout = new QVBoxLayout;
 
     int index = curr->data(0, Qt::UserRole).toInt();
     const char* name = m_plugin_names[index].c_str();
@@ -102,54 +132,54 @@ void PlaybackPluginPanel::change_plugin(QTreeWidgetItem* curr, QTreeWidgetItem* 
 
     if (m_global_settings.settings_count > 0) {
         QGroupBox* group_box = new QGroupBox(QStringLiteral("Global"));
-        build_ui(group_box, m_global_settings.settings, m_global_settings.settings_count);
+        int pixel_width = calculate_pixel_width(m_global_settings.settings, m_global_settings.settings_count);
+        build_ui(m_global_layout, m_global_settings.settings, m_global_settings.settings_count, pixel_width);
         m_ui->layout->addWidget(group_box);
+        group_box->setLayout(m_global_layout);
+        m_widgets.push_back(group_box);
     }
 
     if (m_file_type_settings.size() > 0) {
-        QGroupBox* group_box = new QGroupBox(QStringLiteral("File extension settings"));
-        build_ui(group_box, m_file_type_settings[0].settings, m_file_type_settings[0].settings_count);
+        QGroupBox* group_box = new QGroupBox(QStringLiteral("File extension"));
+        int pixel_width = calculate_pixel_width(m_file_type_settings[0].settings, m_file_type_settings[0].settings_count);
+        add_file_type_selection(pixel_width);
+        build_ui(m_file_ext_layout, m_file_type_settings[0].settings, m_file_type_settings[0].settings_count, pixel_width);
         m_ui->layout->addWidget(group_box);
+        group_box->setLayout(m_file_ext_layout);
+        m_widgets.push_back(group_box);
     }
-
-    /*
-    if (index == 0) {
-        QLabel* label = new QLabel(QStringLiteral("Test"));
-
-        m_settings_layout->addWidget(label);
-        m_widgets.push_back(label);
-    }
-    */
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void PlaybackPluginPanel::add_file_type_selection(int pixel_width) {
+    QLabel* label_text = new QLabel(QStringLiteral("File extension"));
+    QGridLayout* layout = new QGridLayout;
+    layout->addWidget(label_text, 0, 0);
+    layout->setColumnMinimumWidth(0, pixel_width);
+    layout->setColumnStretch(1, 0);
+    QComboBox* combo_box = new QComboBox;
+    combo_box->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed);
+    combo_box->addItem(QStringLiteral("Global"));
+    combo_box->setToolTip(QStringLiteral("Change settings on global/file extension basis. Changes on file type will override the global values"));
 
-void PlaybackPluginPanel::build_ui(QGroupBox* group_box, const HSSetting* setting, int count) {
-    // first calculate the longest text so we can align the ui
-
-    const char* long_name = nullptr;
-    size_t max_len = 0;
-
-    for (int i = 0; i < count; ++i) {
-        HSBase* base = (HSBase*)&setting[i];
-        size_t len = strlen(base->name);
-
-        if (len > max_len) {
-            long_name = base->name;
-            max_len = len;
-        }
+    for (int i = 0, size = m_file_type_settings.size(); i < size; ++i) {
+        combo_box->addItem(QString::fromUtf8(m_file_type_settings[i].name, m_file_type_settings[i].name_len));
     }
 
-    QLabel dummy;
+    layout->addWidget(combo_box, 0, 1);
+    m_file_ext_layout->addLayout(layout);
 
-    QVBoxLayout* group_layout = new QVBoxLayout;
+    m_widgets.push_back(label_text);
+    m_widgets.push_back(combo_box);
+}
 
-    int pixel_width = dummy.fontMetrics().boundingRect(QString::fromUtf8(long_name)).width();
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void PlaybackPluginPanel::build_ui(QVBoxLayout* group_layout, const HSSetting* setting, int count, int pixel_width) {
     // combo box with all types
 
+    /*
     if (count > 4) {
         QLabel* label_text = new QLabel(QStringLiteral("File extension"));
         QGridLayout* layout = new QGridLayout;
@@ -158,6 +188,8 @@ void PlaybackPluginPanel::build_ui(QGroupBox* group_box, const HSSetting* settin
         layout->setColumnStretch(1, 0);
         QComboBox* combo_box = new QComboBox;
         combo_box->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed);
+        combo_box->addItem(QStringLiteral("Global"));
+        combo_box->setToolTip(QStringLiteral("Change settings on global/file extension basis. Changes on file type will override the global values"));
 
         for (int i = 0, size = m_file_type_settings.size(); i < size; ++i) {
             combo_box->addItem(QString::fromUtf8(m_file_type_settings[i].name, m_file_type_settings[i].name_len));
@@ -166,6 +198,7 @@ void PlaybackPluginPanel::build_ui(QGroupBox* group_box, const HSSetting* settin
         layout->addWidget(combo_box, 0, 1);
         group_layout->addLayout(layout);
     }
+    */
 
     // From QLabel we figure out how much distance we need
 
@@ -285,8 +318,6 @@ void PlaybackPluginPanel::build_ui(QGroupBox* group_box, const HSSetting* settin
         //m_settings_layout->addLayout(layout);
         group_layout->addLayout(layout);
     }
-
-    group_box->setLayout(group_layout);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
