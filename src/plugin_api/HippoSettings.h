@@ -97,6 +97,10 @@ typedef union HSSetting {
     {                                                                        \
         .float_value = { id, name, desc, HS_FLOAT_TYPE, value, 0.0f, 0.0f } \
     }
+#define HSFloatValue_Range(id, name, desc, value, start, end)                \
+    {                                                                        \
+        .float_value = { id, name, desc, HS_FLOAT_TYPE, value, start, end } \
+    }
 #define HSBoolValue(id, name, desc, value)                    \
     {                                                         \
         .bool_value = { id, name, desc, HS_BOOL_TYPE, value } \
