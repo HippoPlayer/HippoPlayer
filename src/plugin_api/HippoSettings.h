@@ -159,9 +159,9 @@ typedef struct HippoSettingsAPI {
     //HippoSettingsError (*layout_hints)(void* priv_data, void* data);
 
     // access settings
-    HippoSettingsError (*get_string)(void* priv_data, int id, char* value, int max_len);
-    HippoSettingsError (*get_int)(void* priv_data, int id, int* value);
-    HippoSettingsError (*get_float)(void* priv_data, int id, float* value);
+    HippoSettingsError (*get_string)(void* priv_data, const char* ext, const char* id, char* value, int max_len);
+    HippoSettingsError (*get_int)(void* priv_data, const char* ext, const char*, int* value);
+    HippoSettingsError (*get_float)(void* priv_data, const char* ext, const char*, float* value);
 
     // Update settings
     // HippoSettingError (*set_string)(void* priv_data, int id, char* value);

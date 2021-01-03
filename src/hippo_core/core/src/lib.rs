@@ -428,12 +428,15 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
 pub extern "C" fn hippo_core_drop(core: *mut HippoCore) {
     let mut core = unsafe { Box::from_raw(core) };
     let _ = unsafe { Box::from_raw(core.song_db as *mut SongDb) };
+    let playback_settings = unsafe { Box::from_raw(core.playback_settings as *mut PlaybackSettings) };
 
     let config_dir = init_config_dir();
+
     core.config.audio_device = core.audio.device_name.to_owned();
 
     if let Ok(output_dir) = config_dir {
         // TODO: Fix me
+    	playback_settings.write(&output_dir, "plugins.cfg").unwrap();
         core.config.write(&output_dir, "global.cfg").unwrap();
     }
 

@@ -9,7 +9,6 @@ use walkdir::{DirEntry, WalkDir};
 //use hippo_api::ffi::{CHippoPlaybackPlugin};
 use crate::service_ffi::PluginService;
 use crate::service_ffi::ServiceApi;
-use crate::PlaybackSettings;
 use logger::*;
 
 #[derive(Debug, Clone)]

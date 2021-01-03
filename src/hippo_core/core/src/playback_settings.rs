@@ -1,20 +1,28 @@
 use crate::ffi::{
     HSSetting, HippoSettingsError, HippoSettingsError_DuplicatedId, HippoSettingsError_Ok,
+    HS_FLOAT_TYPE, HS_INTEGER_TYPE, HS_BOOL_TYPE, HS_INTEGER_RANGE_TYPE, //HS_STRING_RANGE_TYPE,
 };
+
+use std::io::{Error, ErrorKind, Write};
+use std::path::PathBuf;
 use serde_derive::{Deserialize, Serialize};
 use logger::*;
 use std::collections::HashMap;
 use std::ffi::CStr;
 use std::os::raw::{c_char, c_int, c_void};
 use std::ptr;
+use std::slice;
+use std::mem;
+use std::fs::File;
+use serde_json;
 
 #[derive(Serialize, Deserialize)]
 pub enum SerSetting {
     NoSetting,
     FloatValue(String, f32),
     IntValue(String, i32),
-    IntRangeValue(String, String, i32),
-    FloatRangeValue(String, String, i32),
+    IntRangeValue(String, i32),
+    FloatRangeValue(String, i32),
     BoolValue(String, bool),
 }
 
@@ -35,20 +43,50 @@ impl Settings {
     }
 
     fn new_alloc_fields(settings: *const HSSetting, count: usize) -> Settings {
-        let slice = unsafe { std::slice::from_raw_parts(settings as *mut _, count) };
+        let slice = unsafe { slice::from_raw_parts(settings as *mut _, count) };
         Settings {
             native_settings: settings,
             native_count: count,
             fields: slice.to_vec(),
         }
     }
+
+    /// returns true if data has changed
+    fn has_changed(&self) -> bool {
+        if self.native_count == 0 {
+            return false;
+        }
+
+        let bytes_size = mem::size_of::<HSSetting>() * self.native_count;
+        let data = unsafe { slice::from_raw_parts(self.native_settings as *const u8, bytes_size) };
+        let template = unsafe { slice::from_raw_parts(self.fields.as_ptr() as *const u8, bytes_size) };
+
+        data != template
+    }
+}
+
+
+#[derive(Serialize, Deserialize)]
+struct SerExtPluginTypeSettings {
+    ext_name: String,
+    settings: Vec<SerSetting>,
 }
 
 #[derive(Serialize, Deserialize)]
 struct SerPluginTypeSettings {
     plugin_name: String,
-    ext_settings: Vec<SerSetting>,
-    global_settings: SerSetting,
+    ext_settings: Vec<SerExtPluginTypeSettings>,
+    global_settings: Vec<SerSetting>,
+}
+
+impl SerPluginTypeSettings {
+    fn new() -> SerPluginTypeSettings {
+        SerPluginTypeSettings {
+            plugin_name: String::new(),
+            ext_settings: Vec::new(),
+            global_settings: Vec::new(),
+        }
+    }
 }
 
 /// Settings for a specific plugin type
@@ -67,7 +105,6 @@ pub struct PluginTypeSettings {
 
 pub struct PlaybackSettings {
     pub settings: HashMap<String, Box<PluginTypeSettings>>,
-    ser_settings: Vec<SerPluginTypeSettings>,
 }
 
 impl PluginTypeSettings {
@@ -86,7 +123,6 @@ impl PlaybackSettings {
     pub fn new() -> PlaybackSettings {
         PlaybackSettings {
             settings: HashMap::new(),
-            ser_settings: Vec::new(),
         }
     }
 
@@ -103,7 +139,7 @@ impl PlaybackSettings {
             ps.global_settings = Settings::new_alloc_fields(native_settings, count);
             HippoSettingsError_Ok
         } else {
-            warn!("No instance of {} for settings?", id);
+            warn!("No instance of {} for settings.", id);
             HippoSettingsError_DuplicatedId
         }
     }
@@ -155,6 +191,95 @@ impl PlaybackSettings {
 
         self.settings.insert(id.to_owned(), Box::new(plugin_settings));
     }
+
+    fn build_ser_settings(settings: &Settings) -> Vec<SerSetting> {
+        let mut ser_settings = Vec::new();
+        let native_settings = unsafe { slice::from_raw_parts(settings.native_settings as *const _, settings.native_count) };
+
+        let bytes_size = std::mem::size_of::<HSSetting>();
+
+        for (s, t) in settings.fields.iter().zip(native_settings.iter()) {
+            let t0 = unsafe { slice::from_raw_parts(mem::transmute::<_, *const u8>(t), bytes_size) };
+            let t1 = unsafe { slice::from_raw_parts(mem::transmute::<_, *const u8>(s), bytes_size) };
+
+            if t0 != t1 {
+                let widget_id = unsafe { CStr::from_ptr(s.int_value.base.name) };
+                let widget_type = widget_id.to_string_lossy();
+                println!("field that differs is {}", &widget_id.to_string_lossy());
+
+                let t = unsafe { match s.int_value.base.widget_type as u32 {
+                    HS_FLOAT_TYPE => SerSetting::FloatValue(widget_type.into_owned(), s.float_value.value),
+                    HS_INTEGER_TYPE => SerSetting::IntValue(widget_type.into_owned(), s.int_value.value),
+                    HS_INTEGER_RANGE_TYPE => SerSetting::IntValue(widget_type.into_owned(), s.int_value.value),
+                    HS_BOOL_TYPE => SerSetting::BoolValue(widget_type.into_owned(), s.bool_value.value),
+                    t => {
+                        warn!("Setting id {} unknown {}", t, widget_type);
+                        SerSetting::NoSetting
+                    }
+                }};
+
+                ser_settings.push(t);
+            }
+        }
+
+        ser_settings
+    }
+
+    /// Builds data structure to serialize the plugin settings
+    /// The way this code works is that it does mem compares of the template with
+    /// the instance data, if it differs it needs to be serialized, otherwise we skip it
+    fn build_serialize_data(&self) -> Vec<SerPluginTypeSettings> {
+        let mut ser_plugin_settings = Vec::new();
+
+        for (plugin_name, settings) in &self.settings {
+            let mut ser_settings = SerPluginTypeSettings::new();
+
+            if settings.global_settings.has_changed() {
+                println!("Global settings for {} has changed", plugin_name);
+                ser_settings.global_settings = Self::build_ser_settings(&settings.global_settings);
+            }
+
+            for (n, s) in settings.file_type_names.iter().zip(settings.file_ext_settings.iter()) {
+                if s.has_changed() {
+                    println!("For plugin {} the file ext {} has changed", plugin_name, n);
+
+                    ser_settings.ext_settings.push(SerExtPluginTypeSettings {
+                        ext_name: n.to_owned(),
+                        settings: Self::build_ser_settings(s),
+                    });
+                }
+            }
+
+            if !ser_settings.ext_settings.is_empty() || !ser_settings.global_settings.is_empty() {
+                ser_settings.plugin_name = plugin_name.to_owned();
+                ser_plugin_settings.push(ser_settings);
+            }
+        }
+
+        ser_plugin_settings
+    }
+
+    fn write_internal(&self, path: &str) -> std::io::Result<usize> {
+        let ser_data = self.build_serialize_data();
+        let mut file = File::create(&path)?;
+
+        let toml = match serde_json::to_string_pretty(&ser_data) {
+            Err(e) => {
+                return Err(Error::new(
+                    ErrorKind::Other,
+                    format!("Unable to write plugins file {}: {}", path, e),
+                ))
+            }
+            Ok(v) => v,
+        };
+
+        file.write(toml.as_bytes())
+    }
+
+    pub fn write(&self, path: &PathBuf, filename: &str) -> std::io::Result<usize> {
+        let dir = path.join(filename);
+        self.write_internal(&dir.to_string_lossy())
+    }
 }
 
 pub unsafe extern "C" fn register_filetype_settings(
@@ -181,7 +306,8 @@ pub unsafe extern "C" fn register_global_settings(
 
 pub unsafe extern "C" fn get_string(
     _priv_data: *mut c_void,
-    _id: c_int,
+    _ext: *const c_char,
+    _id: *const c_char,
     _value: *mut c_char,
     _max_len: c_int,
 ) -> HippoSettingsError {
@@ -190,7 +316,8 @@ pub unsafe extern "C" fn get_string(
 
 pub unsafe extern "C" fn get_int(
     _priv_data: *mut c_void,
-    _id: c_int,
+    _ext: *const c_char,
+    _id: *const c_char,
     _value: *mut c_int,
 ) -> HippoSettingsError {
     0
@@ -198,7 +325,8 @@ pub unsafe extern "C" fn get_int(
 
 pub unsafe extern "C" fn get_float(
     _priv_data: *mut c_void,
-    _id: c_int,
+    _ext: *const c_char,
+    _id: *const c_char,
     _value: *mut f32,
 ) -> HippoSettingsError {
     0
