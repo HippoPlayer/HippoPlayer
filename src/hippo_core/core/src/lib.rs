@@ -323,7 +323,7 @@ fn init_config_dir() -> Result<PathBuf> {
     }
 
     error!("Unable to create data directory for user");
-    Err(anyhow!("Unable to init output dir for genertaed files!"))
+    Err(anyhow!("Unable to init output dir for generated files!"))
 }
 
 #[no_mangle]
@@ -632,8 +632,8 @@ pub unsafe extern "C" fn hippo_get_playback_plugin_settings(
 			if i < ps.file_type_names.len() {
 				info.name = ps.file_type_names[i].as_ptr();
 				info.name_len = ps.file_type_names[i].len() as _;
-				info.settings = ps.file_type_settings[i].fields.as_ptr();
-				info.settings_count = ps.file_type_settings[i].fields.len() as _;
+				info.settings = ps.file_ext_settings[i].fields.as_ptr();
+				info.settings_count = ps.file_ext_settings[i].fields.len() as _;
 			}
 		}
 	}

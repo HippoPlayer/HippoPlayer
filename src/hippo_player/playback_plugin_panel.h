@@ -13,6 +13,7 @@ class QTreeWidgetItem;
 class QVBoxLayout;
 class QWidget;
 class QGroupBox;
+union HSSetting;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -28,10 +29,17 @@ public:
     virtual ~PlaybackPluginPanel();
 
 private:
-    void build_ui(QVBoxLayout* group_layout, const HSSetting* settings, int count, int pixel_width);
+    void build_ui(QVBoxLayout* group_layout, const HSSetting* settings, int count, int pixel_width, int id_offset);
     void add_file_type_selection(int pixel_width);
 
     Q_SLOT void change_plugin(QTreeWidgetItem* curr, QTreeWidgetItem* prev);
+    Q_SLOT void change_int(int v);
+    Q_SLOT void change_bool(int v);
+    Q_SLOT void change_double(double v);
+    Q_SLOT void change_file_ext(int index);
+
+    union HSSetting* get_setting_from_id(QObject* sender);
+
     const struct HippoCore* m_core;
     Ui_PlaybackPluginPanel* m_ui = nullptr;
     QListWidget* m_plugin_list = nullptr;
@@ -43,5 +51,8 @@ private:
 
     PluginSettings m_global_settings;
     std::vector<PluginSettings> m_file_type_settings;
+    std::vector<int> m_widget_indices;
+
+    int m_active_file_ext_index = 0;
 };
 

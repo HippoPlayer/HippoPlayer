@@ -1,11 +1,22 @@
 use crate::ffi::{
     HSSetting, HippoSettingsError, HippoSettingsError_DuplicatedId, HippoSettingsError_Ok,
 };
+use serde_derive::{Deserialize, Serialize};
 use logger::*;
 use std::collections::HashMap;
 use std::ffi::CStr;
 use std::os::raw::{c_char, c_int, c_void};
 use std::ptr;
+
+#[derive(Serialize, Deserialize)]
+pub enum SerSetting {
+    NoSetting,
+    FloatValue(String, f32),
+    IntValue(String, i32),
+    IntRangeValue(String, String, i32),
+    FloatRangeValue(String, String, i32),
+    BoolValue(String, bool),
+}
 
 pub struct Settings {
     pub native_settings: *const HSSetting,
@@ -24,12 +35,20 @@ impl Settings {
     }
 
     fn new_alloc_fields(settings: *const HSSetting, count: usize) -> Settings {
+        let slice = unsafe { std::slice::from_raw_parts(settings as *mut _, count) };
         Settings {
             native_settings: settings,
             native_count: count,
-            fields: unsafe { Vec::from_raw_parts(settings as *mut _, count, count) },
+            fields: slice.to_vec(),
         }
     }
+}
+
+#[derive(Serialize, Deserialize)]
+struct SerPluginTypeSettings {
+    plugin_name: String,
+    ext_settings: Vec<SerSetting>,
+    global_settings: SerSetting,
 }
 
 /// Settings for a specific plugin type
@@ -37,17 +56,18 @@ pub struct PluginTypeSettings {
     /// Template for the global settings (return from the plugin)
     pub global_settings_template: Settings,
     /// Template for the file type settings (return from the plugin)
-    pub file_type_settings_template: Settings,
+    pub file_ext_settings_template: Settings,
     /// List of file extensions and settings for each
     pub file_type_names: Vec<String>,
     /// List of file extensions and settings for each
-    pub file_type_settings: Vec<Settings>,
+    pub file_ext_settings: Vec<Settings>,
     /// Global settings for the plugin type
     pub global_settings: Settings,
 }
 
 pub struct PlaybackSettings {
     pub settings: HashMap<String, Box<PluginTypeSettings>>,
+    ser_settings: Vec<SerPluginTypeSettings>,
 }
 
 impl PluginTypeSettings {
@@ -55,8 +75,8 @@ impl PluginTypeSettings {
         PluginTypeSettings {
             global_settings_template: Settings::new(),
             file_type_names: Vec::new(),
-            file_type_settings: Vec::new(),
-            file_type_settings_template: Settings::new(),
+            file_ext_settings: Vec::new(),
+            file_ext_settings_template: Settings::new(),
             global_settings: Settings::new(),
         }
     }
@@ -66,6 +86,7 @@ impl PlaybackSettings {
     pub fn new() -> PlaybackSettings {
         PlaybackSettings {
             settings: HashMap::new(),
+            ser_settings: Vec::new(),
         }
     }
 
@@ -95,13 +116,14 @@ impl PlaybackSettings {
         count: usize,
     ) -> HippoSettingsError {
         if let Some(ps) = self.settings.get_mut(id) {
-            ps.file_type_settings_template.native_settings = native_settings;
-            ps.file_type_settings_template.native_count = count;
+            ps.file_ext_settings_template.native_settings = native_settings;
+            ps.file_ext_settings_template.native_count = count;
 
             // Iterater over all the filetype settings and clone the settings for each of them
-            for val in &mut ps.file_type_settings {
+            for val in &mut ps.file_ext_settings {
                 *val = Settings::new_alloc_fields(native_settings, count);
             }
+
             HippoSettingsError_Ok
         } else {
             warn!("No instance of {} for settings.", id);
@@ -117,12 +139,18 @@ impl PlaybackSettings {
             return;
         }
 
-        let extensions: Vec<&str> = extensions.split(',').collect();
+        let mut extensions: Vec<&str> = extensions.split(',').collect();
         let mut plugin_settings = PluginTypeSettings::new();
+
+        extensions.sort();
+
+        // First one is always global settings
+        plugin_settings.file_type_names.push("Global".to_owned());
+        plugin_settings.file_ext_settings.push(Settings::new());
 
         for e in extensions {
             plugin_settings.file_type_names.push(e.to_owned());
-            plugin_settings.file_type_settings.push(Settings::new());
+            plugin_settings.file_ext_settings.push(Settings::new());
         }
 
         self.settings.insert(id.to_owned(), Box::new(plugin_settings));

@@ -23,7 +23,7 @@ typedef struct HSBase {
 
 typedef struct HSFloat {
     HSBase base;
-    float start_value;
+    float value;
     float start_range;
     float end_range;
 } HSFloat;
@@ -32,7 +32,7 @@ typedef struct HSFloat {
 
 typedef struct HSInteger {
     HSBase base;
-    int start_value;
+    int value;
     int start_range;
     int end_range;
 } HSInteger;
@@ -59,6 +59,7 @@ typedef struct HSStringRangeValue {
 } HSStringRangeValue;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// start of this layout has to match HSInteger
 
 typedef struct HSIntegerFixedRange {
     HSBase base;
