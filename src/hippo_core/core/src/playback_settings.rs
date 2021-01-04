@@ -3,7 +3,7 @@ use crate::ffi::{
     HS_FLOAT_TYPE, HS_INTEGER_TYPE, HS_BOOL_TYPE, HS_INTEGER_RANGE_TYPE, //HS_STRING_RANGE_TYPE,
 };
 
-use std::io::{Error, ErrorKind, Write};
+use std::io::{Error, ErrorKind, Write, Read};
 use std::path::PathBuf;
 use serde_derive::{Deserialize, Serialize};
 use logger::*;
@@ -275,6 +275,39 @@ impl PlaybackSettings {
 
         file.write(toml.as_bytes())
     }
+
+    /*
+    fn read_to_file(path: &str) -> std::io::Result<String> {
+        let mut data = String::new();
+        let mut file = File::open(&path)?;
+        file.read_to_string(&mut data)?;
+        Ok(data)
+    }
+    */
+
+    /*
+    fn load_internal(&mut self, path: &str) {
+        if !std::fs::metadata(path).is_ok() {
+            return;
+        }
+
+        let data = Self::read_to_file(path).unwrap();
+
+        let t: Vec<SerPluginTypeSettings> = match serde_json::from_str(&data) {
+            Err(e) => {
+                error!("Unable to parse {} : {}", path, e);
+                Vec::new()
+            }
+            Ok(v) => v,
+        };
+
+    }
+
+    pub fn load(&mut self, path: &PathBuf, filename: &str) {
+        let dir = path.join(filename);
+        self.load_internal(&dir.to_string_lossy())
+    }
+    */
 
     pub fn write(&self, path: &PathBuf, filename: &str) -> std::io::Result<usize> {
         let dir = path.join(filename);
