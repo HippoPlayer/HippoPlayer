@@ -112,7 +112,7 @@ static HSSetting s_settings[] = {
     HSIntValue_DescRange(ID_VOLUME_RAMPING, "Volume Ramping Strength",
                          "Off completely disables volume ramping. This might cause clicks in sound output. Higher "
                          "values imply slower/softer volume ramps.",
-                         -1, s_volume_ramping_range),
+                         0, s_volume_ramping_range),
     HSIntValue_DescRange(ID_INTERPOLATION_RANGE, "Interpolation Filter",
                          "The related value represents the interpolation filter length used by the libopenmpt mixer.",
                          0, s_interpolation_filter_ranges),

@@ -335,12 +335,6 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
     let playback_settings = Box::into_raw(Box::new(PlaybackSettings::new()));
     let service = service_ffi::PluginService::new(song_db, playback_settings);
 
-    if let Ok(output_dir) = config_dir {
-        logger::init_file_log(&output_dir);
-        if let Ok(cfg) = CoreConfig::load(&output_dir, "global.cfg") {
-            config = cfg;
-        }
-    }
 
     // TODO: We should do better error handling here
     // This to enforce we load relative to the current exe
@@ -359,6 +353,16 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
     let mut plugins = Plugins::new();
 
     plugins.add_plugins_from_path(service.c_service_api);
+
+    if let Ok(output_dir) = config_dir {
+        let ps: &mut PlaybackSettings = unsafe { &mut *playback_settings };
+        logger::init_file_log(&output_dir);
+		// load plugins config after plugins has been loaded
+    	ps.load(&output_dir, "plugins.cfg");
+        if let Ok(cfg) = CoreConfig::load(&output_dir, "global.cfg") {
+            config = cfg;
+        }
+    }
 
     // sort plugins according to priority order
 

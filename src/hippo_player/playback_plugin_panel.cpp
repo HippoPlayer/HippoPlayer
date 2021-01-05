@@ -287,6 +287,7 @@ void PlaybackPluginPanel::build_ui(QVBoxLayout* group_layout, const HSSetting* s
                 }
 
                 combo_box->setToolTip(tool_tip);
+                combo_box->setCurrentIndex(range->value);
                 layout->addWidget(combo_box, i, 1);
                 break;
             }

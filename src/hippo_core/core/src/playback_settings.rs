@@ -3,7 +3,7 @@ use crate::ffi::{
     HS_FLOAT_TYPE, HS_INTEGER_TYPE, HS_BOOL_TYPE, HS_INTEGER_RANGE_TYPE, //HS_STRING_RANGE_TYPE,
 };
 
-use std::io::{Error, ErrorKind, Write/*Read*/};
+use std::io::{Error, ErrorKind, Write, Read};
 use std::path::PathBuf;
 use serde_derive::{Deserialize, Serialize};
 use logger::*;
@@ -15,14 +15,27 @@ use std::mem;
 use std::fs::File;
 use serde_json;
 
-#[derive(Serialize, Deserialize)]
-pub enum SerSetting {
+#[derive(Clone, Copy, Serialize, Deserialize)]
+enum SerValue {
     NoSetting,
-    FloatValue(String, f32),
-    IntValue(String, i32),
-    IntRangeValue(String, i32),
-    FloatRangeValue(String, i32),
-    BoolValue(String, bool),
+    FloatValue(f32),
+    IntValue(i32),
+    BoolValue(bool),
+}
+
+#[derive(Serialize, Deserialize)]
+struct SerSetting {
+    id: String,
+    value: SerValue,
+}
+
+impl SerSetting {
+    fn new(id: &str, value: SerValue) -> SerSetting {
+        SerSetting {
+            id: id.to_owned(),
+            value,
+        }
+    }
 }
 
 pub struct Settings {
@@ -113,13 +126,13 @@ impl PlaybackSettings {
                 println!("field that differs is {}", &widget_id.to_string_lossy());
 
                 let t = unsafe { match s.int_value.base.widget_type as u32 {
-                    HS_FLOAT_TYPE => SerSetting::FloatValue(widget_type.into_owned(), s.float_value.value),
-                    HS_INTEGER_TYPE => SerSetting::IntValue(widget_type.into_owned(), s.int_value.value),
-                    HS_INTEGER_RANGE_TYPE => SerSetting::IntValue(widget_type.into_owned(), s.int_value.value),
-                    HS_BOOL_TYPE => SerSetting::BoolValue(widget_type.into_owned(), s.bool_value.value),
+                    HS_FLOAT_TYPE => SerSetting::new(&widget_type, SerValue::FloatValue(s.float_value.value)),
+                    HS_INTEGER_TYPE => SerSetting::new(&widget_type, SerValue::IntValue(s.int_value.value)),
+                    HS_INTEGER_RANGE_TYPE => SerSetting::new(&widget_type, SerValue::IntValue(s.int_value.value)),
+                    HS_BOOL_TYPE => SerSetting::new(&widget_type, SerValue::BoolValue(s.bool_value.value)),
                     t => {
                         warn!("Setting id {} unknown {}", t, widget_type);
-                        SerSetting::NoSetting
+                        SerSetting::new("", SerValue::NoSetting)
                     }
                 }};
 
@@ -170,16 +183,41 @@ impl PlaybackSettings {
         file.write(toml.as_bytes())
     }
 
-    /*
     fn read_to_file(path: &str) -> std::io::Result<String> {
         let mut data = String::new();
         let mut file = File::open(&path)?;
         file.read_to_string(&mut data)?;
         Ok(data)
     }
-    */
 
-    /*
+    fn find_id<'a>(data: &'a mut Settings, id: &str) -> Option<&'a mut HSSetting> {
+        for s in &mut data.fields {
+            let widget_id = unsafe { CStr::from_ptr(s.int_value.base.name) };
+            let widget_type = widget_id.to_string_lossy();
+
+            if id == widget_type {
+                return Some(s);
+            }
+        }
+
+        None
+    }
+
+    fn patch_data(data: &mut Settings, input_data: &Vec<SerSetting>) {
+        for input in input_data {
+            if let Some(wd) = Self::find_id(data, &input.id) {
+                match input.value {
+                    SerValue::FloatValue(v) => wd.float_value.value = v,
+                    SerValue::IntValue(v) => wd.int_value.value = v,
+                    SerValue::BoolValue(v) => wd.bool_value.value =v,
+                    SerValue::NoSetting => (),
+                }
+            } else {
+                warn!("Id: {} wasn't found in settings", input.id);
+            }
+        }
+    }
+
     fn load_internal(&mut self, path: &str) {
         if !std::fs::metadata(path).is_ok() {
             return;
@@ -187,7 +225,7 @@ impl PlaybackSettings {
 
         let data = Self::read_to_file(path).unwrap();
 
-        let t: Vec<SerPluginTypeSettings> = match serde_json::from_str(&data) {
+        let ser_settings: Vec<SerPluginTypeSettings> = match serde_json::from_str(&data) {
             Err(e) => {
                 error!("Unable to parse {} : {}", path, e);
                 Vec::new()
@@ -195,13 +233,19 @@ impl PlaybackSettings {
             Ok(v) => v,
         };
 
+        for s in ser_settings {
+            if let Some(ps) = self.settings.get_mut(&s.plugin_name) {
+                Self::patch_data(ps, &s.settings);
+            } else {
+                warn!("Plugin {} not loaded, setting will be dropped", s.plugin_name);
+            }
+        }
     }
 
     pub fn load(&mut self, path: &PathBuf, filename: &str) {
         let dir = path.join(filename);
         self.load_internal(&dir.to_string_lossy())
     }
-    */
 
     pub fn write(&self, path: &PathBuf, filename: &str) -> std::io::Result<usize> {
         let dir = path.join(filename);
