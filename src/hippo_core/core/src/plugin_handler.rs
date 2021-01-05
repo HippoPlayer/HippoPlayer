@@ -161,21 +161,6 @@ impl Plugins {
             trace!("Loaded playback plugin {} {}", plugin_funcs.name, plugin_funcs.version);
 
             if let Some(static_init) = native_plugin.static_init {
-                // To prepare for settings setup we get the supported extensions and register
-                // them with the settings api
-
-                let extensions = unsafe { (plugin_funcs.supported_extensions)() };
-
-                if extensions == std::ptr::null() {
-                    warn!("Plugin {}: No extensions returned. This will cause settings to not work correct", plugin_funcs.name);
-                } else {
-                    unsafe {
-                        let ps = crate::service_ffi::get_playback_settings(service_api);
-                        let ext = CStr::from_ptr(extensions).to_string_lossy();
-                        ps.register_file_extensions(&plugin_funcs.name, &ext);
-                    }
-                }
-
                 // TODO: Memory leak
                 let name = format!("{} {}", plugin_funcs.name, plugin_funcs.version);
                 let c_name = CString::new(name).unwrap();

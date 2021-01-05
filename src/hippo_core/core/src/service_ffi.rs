@@ -502,8 +502,7 @@ impl ServiceApi {
 
         let c_settings_api = Box::new(ffi::HippoSettingsAPI {
             priv_data: settings as *mut _,
-            register_filetype_settings: Some(playback_settings::register_filetype_settings),
-            register_global_settings: Some(playback_settings::register_global_settings),
+            register_settings: Some(playback_settings::register_settings),
             get_string: Some(playback_settings::get_string),
             get_int: Some(playback_settings::get_int),
             get_float: Some(playback_settings::get_float),

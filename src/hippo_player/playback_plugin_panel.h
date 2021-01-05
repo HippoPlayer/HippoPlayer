@@ -30,27 +30,23 @@ public:
 
 private:
     void build_ui(QVBoxLayout* group_layout, const HSSetting* settings, int count, int pixel_width, int id_offset);
-    void add_file_type_selection(int pixel_width);
 
     Q_SLOT void change_plugin(QTreeWidgetItem* curr, QTreeWidgetItem* prev);
     Q_SLOT void change_int(int v);
     Q_SLOT void change_bool(int v);
     Q_SLOT void change_double(double v);
-    Q_SLOT void change_file_ext(int index);
 
     union HSSetting* get_setting_from_id(QObject* sender);
 
     const struct HippoCore* m_core;
     Ui_PlaybackPluginPanel* m_ui = nullptr;
     QListWidget* m_plugin_list = nullptr;
-    QVBoxLayout* m_global_layout = nullptr;
-    QVBoxLayout* m_file_ext_layout = nullptr;
+    QVBoxLayout* m_layout = nullptr;
 
     std::vector<QWidget*> m_widgets;
     std::vector<std::string> m_plugin_names;
 
-    PluginSettings m_global_settings;
-    std::vector<PluginSettings> m_file_type_settings;
+    PluginSettings m_settings;
     std::vector<int> m_widget_indices;
 
     int m_active_file_ext_index = 0;

@@ -275,15 +275,7 @@ pub type HippoSettingsError = u32;
 #[derive(Debug, Copy, Clone)]
 pub struct HippoSettingsAPI {
     pub priv_data: *mut ::std::os::raw::c_void,
-    pub register_filetype_settings: ::std::option::Option<
-        unsafe extern "C" fn(
-            priv_data: *mut ::std::os::raw::c_void,
-            name: *const ::std::os::raw::c_char,
-            settings: *const HSSetting,
-            count: ::std::os::raw::c_int,
-        ) -> HippoSettingsError,
-    >,
-    pub register_global_settings: ::std::option::Option<
+    pub register_settings: ::std::option::Option<
         unsafe extern "C" fn(
             priv_data: *mut ::std::os::raw::c_void,
             name: *const ::std::os::raw::c_char,

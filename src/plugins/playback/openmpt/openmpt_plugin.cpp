@@ -77,10 +77,26 @@ static const HSIntegerRangeValue s_channels[] = {
     {"Quad", 3},
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static const HSStringRangeValue s_amiga_filter_values[] = {
+    {"Default filter", "auto"},
+    {"Amiga A500 filter", "a500"},
+    {"Amiga A1200 filter", "a1200"},
+    {"Unfilterned", "unfiltered"},
+};
+
 // clang-format on
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static HSSetting s_settings_template[] = {
+static HSSetting s_settings[] = {
+    HSBoolValue(ID_USE_AMIGA_RESAMPLER_AMIGA_MODS, "Use Amiga Resampler for Amiga modules",
+                "Set to enable the Amiga resampler for Amiga modules. This emulates the sound characteristics of "
+                "the Paula chip and overrides the selected interpolation filter. Non-Amiga module formats are not "
+                "affected by this setting.",
+                false),
+    HSStringValue_DescRange(ID_AMIGA_RESAMPLER_FILTER, "Filter type for Amiga Resampler",
+                            "Filter type for Amiga filter if enabled", "auto", s_amiga_filter_values),
     HSIntValue_DescRange(ID_SAMPLE_RATE, "Sample rate",
                          "Default (recommended) uses the sample rate by the output device",
                          0, s_sample_rate),
@@ -102,25 +118,6 @@ static HSSetting s_settings_template[] = {
                          0, s_interpolation_filter_ranges),
     HSFloatValue_Range(ID_TEMPO_FACTOR, "Tempo Factor", "Set the tempo factor. Default value is 1.0", 1.0, 0.0, 2.0f),
     HSFloatValue_Range(ID_PITCH_FACTOR, "Pitch Factor", "Set the pitch factor. Default value is 1.0", 1.0, 0.0, 2.0f),
-};
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static const HSStringRangeValue s_amiga_filter_values[] = {
-    {"Default filter", "auto"},
-    {"Amiga A500 filter", "a500"},
-    {"Amiga A1200 filter", "a1200"},
-    {"Unfilterned", "unfiltered"},
-};
-
-static HSSetting s_global_settings[] = {
-    HSBoolValue(ID_USE_AMIGA_RESAMPLER_AMIGA_MODS, "Use Amiga Resampler for Amiga modules",
-                "Set to enable the Amiga resampler for Amiga modules. This emulates the sound characteristics of "
-                "the Paula chip and overrides the selected interpolation filter. Non-Amiga module formats are not "
-                "affected by this setting.",
-                false),
-    HSStringValue_DescRange(ID_AMIGA_RESAMPLER_FILTER, "Filter type for Amiga Resampler",
-                            "Filter type for Amiga filter if enabled", "auto", s_amiga_filter_values),
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -442,11 +439,7 @@ static void openmpt_static_init(struct HippoLogAPI* log, const HippoServiceAPI* 
 
     auto api = HippoServiceAPI_get_settings_api(service_api, HIPPO_SETTINGS_API_VERSION);
 
-    if (HippoSettings_register_filetype_settings(api, PLUGIN_NAME, s_settings_template) != HippoSettingsError_Ok) {
-        // hp_error("Unable to register settings, error: %s", HippoSettings_get_last_error(api));
-    }
-
-    if (HippoSettings_register_global_settings(api, PLUGIN_NAME, s_global_settings) != HippoSettingsError_Ok) {
+    if (HippoSettings_register_settings(api, PLUGIN_NAME, s_settings) != HippoSettingsError_Ok) {
         // hp_error("Unable to register settings, error: %s", HippoSettings_get_last_error(api));
     }
 }

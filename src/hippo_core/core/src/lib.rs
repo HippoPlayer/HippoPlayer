@@ -571,8 +571,6 @@ pub struct PluginInfo {
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct PluginSettings {
-    name: *const u8,
-    name_len: i32,
     settings: *const HSSetting,
     settings_count: i32,
 }
@@ -609,7 +607,6 @@ pub unsafe extern "C" fn hippo_get_playback_plugin_info(
 pub unsafe extern "C" fn hippo_get_playback_plugin_settings(
     core: *mut HippoCore,
     plugin_name: *const c_char,
-    settings_index: i32,
 ) -> PluginSettings {
     let core = &mut *core;
 
@@ -617,8 +614,6 @@ pub unsafe extern "C" fn hippo_get_playback_plugin_settings(
     let id = plugin_id.to_string_lossy().to_string();
 
     let mut info = PluginSettings {
-        name: std::ptr::null(),
-        name_len: 0,
         settings: std::ptr::null(),
         settings_count: 0,
     };
@@ -626,19 +621,8 @@ pub unsafe extern "C" fn hippo_get_playback_plugin_settings(
 	let plugins_settings = crate::service_ffi::get_playback_settings(core.plugin_service.c_service_api);
 
 	if let Some(ps) = plugins_settings.settings.get(&id) {
-		// settings index 0 is for global settings
-		if settings_index == 0 {
-			info.settings = ps.global_settings.fields.as_ptr();
-			info.settings_count = ps.global_settings.fields.len() as i32;
-		} else {
-			let i = (settings_index - 1) as usize;
-			if i < ps.file_type_names.len() {
-				info.name = ps.file_type_names[i].as_ptr();
-				info.name_len = ps.file_type_names[i].len() as _;
-				info.settings = ps.file_ext_settings[i].fields.as_ptr();
-				info.settings_count = ps.file_ext_settings[i].fields.len() as _;
-			}
-		}
+		info.settings = ps.fields.as_ptr();
+		info.settings_count = ps.fields.len() as i32;
 	}
 
     info

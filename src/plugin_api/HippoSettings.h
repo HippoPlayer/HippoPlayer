@@ -150,10 +150,8 @@ typedef struct HippoSettingsAPI {
     void* priv_data;
 
     // Register the settings to be used for the playback plugin
-    HippoSettingsError (*register_filetype_settings)(void* priv_data, const char* name, const HSSetting* settings,
+    HippoSettingsError (*register_settings)(void* priv_data, const char* name, const HSSetting* settings,
                                                      int count);
-    HippoSettingsError (*register_global_settings)(void* priv_data, const char* name, const HSSetting* settings,
-                                                   int count);
 
     // This will be used to allow structring the layout a bit better
     //HippoSettingsError (*layout_hints)(void* priv_data, void* data);
@@ -178,10 +176,7 @@ typedef struct HippoSettingsAPI {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define HippoSettings_register_filetype_settings(api, name, settings) \
-    api->register_filetype_settings(api->priv_data, name, (HSSetting*)&settings, hp_sizeof_array(settings))
-
-#define HippoSettings_register_global_settings(api, name, settings) \
-    api->register_global_settings(api->priv_data, name, (HSSetting*)&settings, hp_sizeof_array(settings))
+#define HippoSettings_register_settings(api, name, settings) \
+    api->register_settings(api->priv_data, name, (HSSetting*)&settings, hp_sizeof_array(settings))
 
 // #define HippoSettings_get_last_error(api) api->get_last_error(api->priv_data)

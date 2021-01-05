@@ -14,8 +14,6 @@
 
 //#include <QtWidgets/QDragMoveEvent>
 
-const int ID_OFFSET = 1000;
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 PlaybackPluginPanel::PlaybackPluginPanel(const struct HippoCore* core, QWidget* parent)
@@ -88,14 +86,8 @@ void PlaybackPluginPanel::change_plugin(QTreeWidgetItem* curr, QTreeWidgetItem* 
 
     // remove the old widgets first
 
-    if (m_global_layout) {
-        while ((child = m_global_layout->takeAt(0)) != 0) {
-            delete child;
-        }
-    }
-
-    if (m_file_ext_layout) {
-        while ((child = m_file_ext_layout->takeAt(0)) != 0) {
+    if (m_layout) {
+        while ((child = m_layout->takeAt(0)) != 0) {
             delete child;
         }
     }
@@ -107,80 +99,26 @@ void PlaybackPluginPanel::change_plugin(QTreeWidgetItem* curr, QTreeWidgetItem* 
     m_widgets.clear();
 
     // clear the old settings
-    m_file_type_settings.clear();
     m_widget_indices.clear();
 
-    m_global_layout = new QVBoxLayout;
-    m_file_ext_layout = new QVBoxLayout;
+    m_layout = new QVBoxLayout;
 
     int index = curr->data(0, Qt::UserRole).toInt();
     const char* name = m_plugin_names[index].c_str();
 
     // fetch the settings.
-    m_global_settings = hippo_get_playback_plugin_settings((HippoCore*)m_core, name, 0);
+    m_settings = hippo_get_playback_plugin_settings((HippoCore*)m_core, name);
 
-    for (int i = 0;; ++i) {
-        PluginSettings info = hippo_get_playback_plugin_settings((HippoCore*)m_core, name, i + 1);
+    printf("settings count %d\n", m_settings.settings_count);
 
-        if (!info.settings_count) {
-            break;
-        }
-
-        std::string name = std::string(info.name, info.name_len);
-
-        printf("settings ptr %p\n", info.settings);
-
-        if (info.settings_count > 0) {
-            m_file_type_settings.push_back(info);
-        }
-    }
-
-    if (m_global_settings.settings_count > 0) {
-        QGroupBox* group_box = new QGroupBox(QStringLiteral("Global"));
-        int pixel_width = calculate_pixel_width(m_global_settings.settings, m_global_settings.settings_count);
-        build_ui(m_global_layout, m_global_settings.settings, m_global_settings.settings_count, pixel_width, 0);
+    if (m_settings.settings_count > 0) {
+        QGroupBox* group_box = new QGroupBox(QStringLiteral("Settings"));
+        int pixel_width = calculate_pixel_width(m_settings.settings, m_settings.settings_count);
+        build_ui(m_layout, m_settings.settings, m_settings.settings_count, pixel_width, 0);
         m_ui->layout->addWidget(group_box);
-        group_box->setLayout(m_global_layout);
+        group_box->setLayout(m_layout);
         m_widgets.push_back(group_box);
     }
-
-    if (m_file_type_settings.size() > 0) {
-        QGroupBox* group_box = new QGroupBox(QStringLiteral("File extension"));
-        int pixel_width =
-            calculate_pixel_width(m_file_type_settings[0].settings, m_file_type_settings[0].settings_count);
-        add_file_type_selection(pixel_width);
-        build_ui(m_file_ext_layout, m_file_type_settings[0].settings, m_file_type_settings[0].settings_count,
-                 pixel_width, ID_OFFSET);
-        m_ui->layout->addWidget(group_box);
-        group_box->setLayout(m_file_ext_layout);
-        m_widgets.push_back(group_box);
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void PlaybackPluginPanel::add_file_type_selection(int pixel_width) {
-    QLabel* label_text = new QLabel(QStringLiteral("File extension"));
-    QGridLayout* layout = new QGridLayout;
-    layout->addWidget(label_text, 0, 0);
-    layout->setColumnMinimumWidth(0, pixel_width);
-    layout->setColumnStretch(1, 0);
-    QComboBox* combo_box = new QComboBox;
-    combo_box->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed);
-    combo_box->setToolTip(QStringLiteral(
-        "Change settings on global/file extension basis. Changes on file type will override the global values"));
-
-    for (int i = 0, size = m_file_type_settings.size(); i < size; ++i) {
-        combo_box->addItem(QString::fromUtf8(m_file_type_settings[i].name, m_file_type_settings[i].name_len));
-    }
-
-    QObject::connect(combo_box, QOverload<int>::of(&QComboBox::activated), this, &PlaybackPluginPanel::change_file_ext);
-
-    layout->addWidget(combo_box, 0, 1);
-    m_file_ext_layout->addLayout(layout);
-
-    m_widgets.push_back(label_text);
-    m_widgets.push_back(combo_box);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -188,14 +126,7 @@ void PlaybackPluginPanel::add_file_type_selection(int pixel_width) {
 HSSetting* PlaybackPluginPanel::get_setting_from_id(QObject* sender) {
     QVariant data = sender->property("hippo_data");
     const int id = data.toInt();
-
-    // check if we are changing file ext settings or global
-    if (id >= ID_OFFSET) {
-        printf("settings index file ext %d - index %d\n", m_active_file_ext_index, id - ID_OFFSET);
-        return &m_file_type_settings[m_active_file_ext_index].settings[id - ID_OFFSET];
-    } else {
-        return &m_global_settings.settings[id];
-    }
+    return &m_settings.settings[id];
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -229,53 +160,6 @@ void PlaybackPluginPanel::change_double(double v) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// When we change file ext we need to update all the existing widgets and the active index
-
-Q_SLOT void PlaybackPluginPanel::change_file_ext(int index) {
-    m_active_file_ext_index = index;
-
-    printf("new index %d index\n", index);
-
-    HSSetting* settings = m_file_type_settings[index].settings;
-    int count = m_file_type_settings[index].settings_count;
-
-    for (int i = 0; i < count; ++i) {
-        HSBase* base = (HSBase*)&settings[i];
-        int widget_index = m_widget_indices[i];
-
-        switch (base->widget_type) {
-            case HS_FLOAT_TYPE: {
-                printf("updating id %d with value %f %p\n", i,
-                    settings[i].float_value.value,
-                    &settings[i]);
-
-                QDoubleSpinBox* v = (QDoubleSpinBox*)m_widgets[widget_index];
-                v->setValue(settings[i].float_value.value);
-                break;
-            }
-
-            case HS_INTEGER_TYPE: {
-                QSpinBox* v = (QSpinBox*)m_widgets[widget_index];
-                v->setValue(settings[i].int_value.value);
-                break;
-            }
-
-            case HS_INTEGER_RANGE_TYPE: {
-                printf("fetching combo box at %d\n", widget_index);
-                QComboBox* v = (QComboBox*)m_widgets[widget_index];
-                v->setCurrentIndex(settings[i].int_value.value);
-                break;
-            }
-
-            case HS_BOOL_TYPE: {
-                QCheckBox* v = (QCheckBox*)m_widgets[widget_index];
-                v->setCheckState(settings[i].bool_value.value ? Qt::Checked : Qt::Unchecked);
-            }
-        }
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void PlaybackPluginPanel::build_ui(QVBoxLayout* group_layout, const HSSetting* setting, int count, int pixel_width,
                                    int id_offset) {
@@ -305,10 +189,7 @@ void PlaybackPluginPanel::build_ui(QVBoxLayout* group_layout, const HSSetting* s
                 QObject::connect(spin_box, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
                                  &PlaybackPluginPanel::change_double);
 
-                if (id_offset == ID_OFFSET) {
-                    m_widget_indices.push_back(int(m_widgets.size()));
-                }
-
+                m_widget_indices.push_back(int(m_widgets.size()));
                 m_widgets.push_back(spin_box);
 
                 if (setting->float_value.start_range != setting->float_value.end_range) {
@@ -355,10 +236,7 @@ void PlaybackPluginPanel::build_ui(QVBoxLayout* group_layout, const HSSetting* s
                 QObject::connect(spin_box, QOverload<int>::of(&QSpinBox::valueChanged), this,
                                  &PlaybackPluginPanel::change_int);
 
-                if (id_offset == ID_OFFSET) {
-                    m_widget_indices.push_back(int(m_widgets.size()));
-                }
-
+                m_widget_indices.push_back(int(m_widgets.size()));
                 m_widgets.push_back(spin_box);
 
                 layout->addWidget(spin_box, i, 1);
@@ -397,11 +275,7 @@ void PlaybackPluginPanel::build_ui(QVBoxLayout* group_layout, const HSSetting* s
                 combo_box->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed);
                 const HSIntegerFixedRange* range = &setting->int_fixed_value;
 
-                if (id_offset == ID_OFFSET) {
-                    printf("adding combo box at %d\n", int(m_widgets.size()));
-                    m_widget_indices.push_back(int(m_widgets.size()));
-                }
-
+                m_widget_indices.push_back(int(m_widgets.size()));
                 m_widgets.push_back(combo_box);
 
                 combo_box->setProperty("hippo_data", QVariant(widget_id));
@@ -431,13 +305,7 @@ void PlaybackPluginPanel::build_ui(QVBoxLayout* group_layout, const HSSetting* s
                                        QVariant(QString::fromUtf8(range->values[p].value)));
                 }
 
-                printf("adding combo box at %d\n", int(m_widgets.size()));
-
-                if (id_offset == ID_OFFSET) {
-                    printf("adding combo box at %d\n", int(m_widgets.size()));
-                    m_widget_indices.push_back(int(m_widgets.size()));
-                }
-
+                m_widget_indices.push_back(int(m_widgets.size()));
                 m_widgets.push_back(combo_box);
 
                 combo_box->setToolTip(tool_tip);
@@ -453,10 +321,7 @@ void PlaybackPluginPanel::build_ui(QVBoxLayout* group_layout, const HSSetting* s
                 QObject::connect(check_box, QOverload<int>::of(&QCheckBox::stateChanged), this,
                                  &PlaybackPluginPanel::change_bool);
 
-                if (id_offset == ID_OFFSET) {
-                    m_widget_indices.push_back(int(m_widgets.size()));
-                }
-
+                m_widget_indices.push_back(int(m_widgets.size()));
                 m_widgets.push_back(check_box);
 
                 check_box->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed);

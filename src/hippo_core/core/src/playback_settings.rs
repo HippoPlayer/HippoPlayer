@@ -3,14 +3,13 @@ use crate::ffi::{
     HS_FLOAT_TYPE, HS_INTEGER_TYPE, HS_BOOL_TYPE, HS_INTEGER_RANGE_TYPE, //HS_STRING_RANGE_TYPE,
 };
 
-use std::io::{Error, ErrorKind, Write, Read};
+use std::io::{Error, ErrorKind, Write/*Read*/};
 use std::path::PathBuf;
 use serde_derive::{Deserialize, Serialize};
 use logger::*;
 use std::collections::HashMap;
 use std::ffi::CStr;
 use std::os::raw::{c_char, c_int, c_void};
-use std::ptr;
 use std::slice;
 use std::mem;
 use std::fs::File;
@@ -33,16 +32,7 @@ pub struct Settings {
 }
 
 impl Settings {
-    /// Will construct a settings object not initialize the fields
-    fn new() -> Settings {
-        Settings {
-            native_settings: ptr::null_mut(),
-            native_count: 0,
-            fields: Vec::new(),
-        }
-    }
-
-    fn new_alloc_fields(settings: *const HSSetting, count: usize) -> Settings {
+    fn new(settings: *const HSSetting, count: usize) -> Settings {
         let slice = unsafe { slice::from_raw_parts(settings as *mut _, count) };
         Settings {
             native_settings: settings,
@@ -65,58 +55,23 @@ impl Settings {
     }
 }
 
-
-#[derive(Serialize, Deserialize)]
-struct SerExtPluginTypeSettings {
-    ext_name: String,
-    settings: Vec<SerSetting>,
-}
-
 #[derive(Serialize, Deserialize)]
 struct SerPluginTypeSettings {
     plugin_name: String,
-    ext_settings: Vec<SerExtPluginTypeSettings>,
-    global_settings: Vec<SerSetting>,
+    settings: Vec<SerSetting>,
 }
 
 impl SerPluginTypeSettings {
     fn new() -> SerPluginTypeSettings {
         SerPluginTypeSettings {
             plugin_name: String::new(),
-            ext_settings: Vec::new(),
-            global_settings: Vec::new(),
+            settings: Vec::new(),
         }
     }
-}
-
-/// Settings for a specific plugin type
-pub struct PluginTypeSettings {
-    /// Template for the global settings (return from the plugin)
-    pub global_settings_template: Settings,
-    /// Template for the file type settings (return from the plugin)
-    pub file_ext_settings_template: Settings,
-    /// List of file extensions and settings for each
-    pub file_type_names: Vec<String>,
-    /// List of file extensions and settings for each
-    pub file_ext_settings: Vec<Settings>,
-    /// Global settings for the plugin type
-    pub global_settings: Settings,
 }
 
 pub struct PlaybackSettings {
-    pub settings: HashMap<String, Box<PluginTypeSettings>>,
-}
-
-impl PluginTypeSettings {
-    fn new() -> PluginTypeSettings {
-        PluginTypeSettings {
-            global_settings_template: Settings::new(),
-            file_type_names: Vec::new(),
-            file_ext_settings: Vec::new(),
-            file_ext_settings_template: Settings::new(),
-            global_settings: Settings::new(),
-        }
-    }
+    pub settings: HashMap<String, Settings>,
 }
 
 impl PlaybackSettings {
@@ -126,70 +81,20 @@ impl PlaybackSettings {
         }
     }
 
-    /// Register global settings for the plugin type
-    fn register_global_settings(
+    /// Register settings for the plugin type
+    fn register_settings(
         &mut self,
         id: &str,
         native_settings: *const HSSetting,
         count: usize,
     ) -> HippoSettingsError {
-        if let Some(ps) = self.settings.get_mut(id) {
-            ps.global_settings_template.native_settings = native_settings;
-            ps.global_settings_template.native_count = count;
-            ps.global_settings = Settings::new_alloc_fields(native_settings, count);
-            HippoSettingsError_Ok
-        } else {
-            warn!("No instance of {} for settings.", id);
+        if let Some(_ps) = self.settings.get(id) {
+            println!("Trying to register settings for {} twice, skipping", id);
             HippoSettingsError_DuplicatedId
-        }
-    }
-
-    /// Register file type settings for the plugin
-    fn register_filetype_settings(
-        &mut self,
-        id: &str,
-        native_settings: *const HSSetting,
-        count: usize,
-    ) -> HippoSettingsError {
-        if let Some(ps) = self.settings.get_mut(id) {
-            ps.file_ext_settings_template.native_settings = native_settings;
-            ps.file_ext_settings_template.native_count = count;
-
-            // Iterater over all the filetype settings and clone the settings for each of them
-            for val in &mut ps.file_ext_settings {
-                *val = Settings::new_alloc_fields(native_settings, count);
-            }
-
-            HippoSettingsError_Ok
         } else {
-            warn!("No instance of {} for settings.", id);
-            HippoSettingsError_DuplicatedId
+            self.settings.insert(id.to_owned(), Settings::new(native_settings, count));
+            HippoSettingsError_Ok
         }
-    }
-
-    /// Registers extensions for a plugin type. These string with comma separated entries
-    pub fn register_file_extensions(&mut self, id: &str, extensions: &str) {
-        // we expect that this plugin hasn't been registered at this point, if it has been we bail
-        if self.settings.contains_key(id) {
-            warn!("Plugin {} has already been registered. Bailing", id);
-            return;
-        }
-
-        let mut extensions: Vec<&str> = extensions.split(',').collect();
-        let mut plugin_settings = PluginTypeSettings::new();
-
-        extensions.sort();
-
-        // First one is always global settings
-        plugin_settings.file_type_names.push("Global".to_owned());
-        plugin_settings.file_ext_settings.push(Settings::new());
-
-        for e in extensions {
-            plugin_settings.file_type_names.push(e.to_owned());
-            plugin_settings.file_ext_settings.push(Settings::new());
-        }
-
-        self.settings.insert(id.to_owned(), Box::new(plugin_settings));
     }
 
     fn build_ser_settings(settings: &Settings) -> Vec<SerSetting> {
@@ -234,25 +139,14 @@ impl PlaybackSettings {
         for (plugin_name, settings) in &self.settings {
             let mut ser_settings = SerPluginTypeSettings::new();
 
-            if settings.global_settings.has_changed() {
-                println!("Global settings for {} has changed", plugin_name);
-                ser_settings.global_settings = Self::build_ser_settings(&settings.global_settings);
+            if settings.has_changed() {
+                println!("Settings for {} has changed", plugin_name);
+                ser_settings.settings = Self::build_ser_settings(&settings);
             }
 
-            for (n, s) in settings.file_type_names.iter().zip(settings.file_ext_settings.iter()) {
-                if s.has_changed() {
-                    println!("For plugin {} the file ext {} has changed", plugin_name, n);
-
-                    ser_settings.ext_settings.push(SerExtPluginTypeSettings {
-                        ext_name: n.to_owned(),
-                        settings: Self::build_ser_settings(s),
-                    });
-                }
-            }
-
-            if !ser_settings.ext_settings.is_empty() || !ser_settings.global_settings.is_empty() {
-                ser_settings.plugin_name = plugin_name.to_owned();
-                ser_plugin_settings.push(ser_settings);
+            if !ser_settings.settings.is_empty() {
+               ser_settings.plugin_name = plugin_name.to_owned();
+               ser_plugin_settings.push(ser_settings);
             }
         }
 
@@ -315,7 +209,7 @@ impl PlaybackSettings {
     }
 }
 
-pub unsafe extern "C" fn register_filetype_settings(
+pub unsafe extern "C" fn register_settings(
     priv_data: *mut c_void,
     name: *const c_char,
     settings: *const HSSetting,
@@ -323,18 +217,7 @@ pub unsafe extern "C" fn register_filetype_settings(
 ) -> HippoSettingsError {
     let ps: &mut PlaybackSettings = &mut *(priv_data as *mut PlaybackSettings);
     let plugin_id = CStr::from_ptr(name);
-    ps.register_filetype_settings(&plugin_id.to_string_lossy(), settings, count as usize)
-}
-
-pub unsafe extern "C" fn register_global_settings(
-    priv_data: *mut c_void,
-    name: *const c_char,
-    settings: *const HSSetting,
-    count: c_int,
-) -> HippoSettingsError {
-    let ps: &mut PlaybackSettings = &mut *(priv_data as *mut PlaybackSettings);
-    let plugin_id = CStr::from_ptr(name);
-    ps.register_global_settings(&plugin_id.to_string_lossy(), settings, count as usize)
+    ps.register_settings(&plugin_id.to_string_lossy(), settings, count as usize)
 }
 
 pub unsafe extern "C" fn get_string(

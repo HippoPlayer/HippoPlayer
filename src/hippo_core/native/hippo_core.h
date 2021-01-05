@@ -20,8 +20,6 @@ typedef struct PluginInfo {
 
 
 typedef struct PluginSettings {
-    const char* name;
-    int name_len;
     union HSSetting* settings;
     int settings_count;
 } PluginSettings;
@@ -46,7 +44,7 @@ typedef void (*HippoPlaylistRemoveEntries)(struct HippoCore* core, int playlist_
 typedef int (*HippoPlaylistCount)(struct HippoCore* core);
 typedef const char* (*HippoPlaylistGet)(struct HippoCore* core, int row, int col, int* len);
 typedef PluginInfo (*HippoGetPlaybackPluginInfo)(struct HippoCore* core, int index);
-typedef PluginSettings (*HippoGetPlaybackPluginSettings)(struct HippoCore* core, const char* plugin_name, int setting_index);
+typedef PluginSettings (*HippoGetPlaybackPluginSettings)(struct HippoCore* core, const char* plugin_name);
 
 extern HippoCoreNew hippo_core_new;
 extern HippoCoreDrop hippo_core_drop;
