@@ -55,7 +55,7 @@ static int ayfly_destroy(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int ayfly_open(void* user_data, const char* filename, int subsong) {
+static int ayfly_open(void* user_data, const char* filename, int subsong, const struct HippoSettingsAPI* api) {
     uint64_t size = 0;
     void* file_data;
 	struct ReplayerData* data = (struct ReplayerData*)user_data;
@@ -203,8 +203,7 @@ static HippoPlaybackPlugin g_ayfly_plugin = {
 	ayfly_seek,
 	ayfly_metadata,
     ayfly_static_init,
-	NULL,
-	NULL,
+	nullptr,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

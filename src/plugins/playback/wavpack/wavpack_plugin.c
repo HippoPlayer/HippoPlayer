@@ -52,7 +52,7 @@ static int wavpack_destroy(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int wavpack_open(void* user_data, const char* filename, int subsong) {
+static int wavpack_open(void* user_data, const char* filename, int subsong, const struct HippoSettingsAPI* api) {
     char error_buff[256];
     struct ReplayerData* data = (struct ReplayerData*)user_data;
 

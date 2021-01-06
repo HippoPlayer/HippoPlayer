@@ -60,7 +60,7 @@ static int hively_destroy(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int hively_open(void* user_data, const char* filename, int subsong) {
+static int hively_open(void* user_data, const char* filename, int subsong, const HippoSettingsAPI*) {
     uint64_t size = 0;
     struct HivelyReplayerData* data = (struct HivelyReplayerData*)user_data;
 
@@ -219,8 +219,7 @@ static HippoPlaybackPlugin g_hively_plugin = {
     hively_seek,
     hively_metadata,
     hively_static_init,
-    NULL,
-    NULL,
+    nullptr,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

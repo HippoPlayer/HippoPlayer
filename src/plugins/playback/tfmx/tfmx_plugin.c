@@ -266,9 +266,9 @@ static int tfmx_load(const HippoIoAPI* io_api, const char* url, TfmxState* state
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int tfmx_open(void* user_data, const char* buffer, int subsong) {
+static int tfmx_open(void* user_data, const char* buffer, int subsong, const struct HippoSettingsAPI* api) {
     TfmxReplayerData* plugin = (TfmxReplayerData*)user_data;
-    (void)plugin;
+    (void)api;
 
     TfmxState_init(&plugin->state);
 

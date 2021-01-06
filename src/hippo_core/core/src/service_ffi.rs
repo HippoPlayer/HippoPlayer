@@ -506,6 +506,7 @@ impl ServiceApi {
             get_string: Some(playback_settings::get_string),
             get_int: Some(playback_settings::get_int),
             get_float: Some(playback_settings::get_float),
+            get_bool: Some(playback_settings::get_bool),
         });
 
         let c_settings_api = unsafe { transmute(c_settings_api) };

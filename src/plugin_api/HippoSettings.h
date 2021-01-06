@@ -90,16 +90,16 @@ typedef union HSSetting {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define hp_sizeof_array(x) sizeof(x) / sizeof(x[0])
-#define HSIntValue(id, name, desc, value)                               \
-    {                                                                   \
+#define HSIntValue(id, name, desc, value)                             \
+    {                                                                 \
         .int_value = { id, name, desc, HS_INTEGER_TYPE, value, 0, 0 } \
     }
-#define HSFloatValue(id, name, desc, value)                                  \
-    {                                                                        \
+#define HSFloatValue(id, name, desc, value)                                 \
+    {                                                                       \
         .float_value = { id, name, desc, HS_FLOAT_TYPE, value, 0.0f, 0.0f } \
     }
-#define HSFloatValue_Range(id, name, desc, value, start, end)                \
-    {                                                                        \
+#define HSFloatValue_Range(id, name, desc, value, start, end)               \
+    {                                                                       \
         .float_value = { id, name, desc, HS_FLOAT_TYPE, value, start, end } \
     }
 #define HSBoolValue(id, name, desc, value)                    \
@@ -150,16 +150,16 @@ typedef struct HippoSettingsAPI {
     void* priv_data;
 
     // Register the settings to be used for the playback plugin
-    HippoSettingsError (*register_settings)(void* priv_data, const char* name, const HSSetting* settings,
-                                                     int count);
+    HippoSettingsError (*register_settings)(void* priv_data, const char* name, const HSSetting* settings, int count);
 
     // This will be used to allow structring the layout a bit better
-    //HippoSettingsError (*layout_hints)(void* priv_data, void* data);
+    // HippoSettingsError (*layout_hints)(void* priv_data, void* data);
 
     // access settings
     HippoSettingsError (*get_string)(void* priv_data, const char* ext, const char* id, char* value, int max_len);
-    HippoSettingsError (*get_int)(void* priv_data, const char* ext, const char*, int* value);
-    HippoSettingsError (*get_float)(void* priv_data, const char* ext, const char*, float* value);
+    HippoSettingsError (*get_int)(void* priv_data, const char* ext, const char* id, int* value);
+    HippoSettingsError (*get_float)(void* priv_data, const char* ext, const char* id, float* value);
+    HippoSettingsError (*get_bool)(void* priv_data, const char* ext, const char* id, bool* value);
 
     // Update settings
     // HippoSettingError (*set_string)(void* priv_data, int id, char* value);
@@ -167,10 +167,10 @@ typedef struct HippoSettingsAPI {
     // HippoSettingError (*set_float)(void* priv_data, int id, int* value);
 
     // makes it possible to disable / enable a control
-    //HippoSettingsError (*enable_ctl)(void* priv_data, int id, bool state);
+    // HippoSettingsError (*enable_ctl)(void* priv_data, int id, bool state);
 
     // get the last error (null if no error)
-    //const char* (*get_last_error)(void* priv_data);
+    // const char* (*get_last_error)(void* priv_data);
 
 } HippoRegisterSettingsAPI;
 
@@ -178,5 +178,19 @@ typedef struct HippoSettingsAPI {
 
 #define HippoSettings_register_settings(api, name, settings) \
     api->register_settings(api->priv_data, name, (HSSetting*)&settings, hp_sizeof_array(settings))
+
+#define HippoSettings_get_string(api, id, value, max_len) \
+    api->get_string(api->priv_data, id, value, max_len)
+
+#define HippoSettings_get_int(api, id, value) \
+    api->get_int(api->priv_data, id, value)
+
+#define HippoSettings_get_float(api, id, value) \
+    api->get_float(api->priv_data, id, value)
+
+#define HippoSettings_get_bool(api, id, value) \
+    api->get_bool(api->priv_data, id, value)
+
+
 
 // #define HippoSettings_get_last_error(api) api->get_last_error(api->priv_data)

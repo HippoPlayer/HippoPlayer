@@ -91,7 +91,7 @@ impl HippoPlayback {
         let ptr_user_data = user_data as *mut c_void;
         //let frame_size = (((plugin.plugin_funcs).frame_size)(ptr_user_data)) as usize;
         let open_state = unsafe {
-            ((plugin.plugin_funcs).open)(ptr_user_data, c_filename.as_ptr(), subsong_index)
+            ((plugin.plugin_funcs).open)(ptr_user_data, c_filename.as_ptr(), subsong_index, std::ptr::null())
         };
 
         if open_state < 0 {

@@ -29,7 +29,7 @@ pub struct HippoPlaybackPluginFFI {
     pub destroy: unsafe extern "C" fn(user_data: *mut c_void) -> i32,
     pub event: Option<unsafe extern "C" fn(user_data: *mut c_void, data: *const u8, len: i32)>,
 
-    pub open: unsafe extern "C" fn(user_data: *mut c_void, buffer: *const c_char, subsong: i32) -> i32,
+    pub open: unsafe extern "C" fn(user_data: *mut c_void, buffer: *const c_char, subsong: i32, *const ffi::HippoSettingsAPI) -> i32,
     pub close: unsafe extern "C" fn(user_data: *mut c_void) -> i32,
     pub read_data: unsafe extern "C" fn(
         user_data: *mut c_void,
@@ -41,8 +41,8 @@ pub struct HippoPlaybackPluginFFI {
     pub metadata: Option<
         unsafe extern "C" fn(buffer: *const i8, services: *const ffi::HippoServiceAPI) -> i32,
     >,
-    pub update_settings: Option<
-        unsafe extern "C" fn(user_data: *mut c_void, settings_api: *const ffi::HippoSettingsAPI) -> i32,
+    pub settings_updated: Option<
+        unsafe extern "C" fn(user_data: *mut c_void, settings_api: *const ffi::HippoSettingsAPI),
     >,
 }
 
@@ -155,7 +155,7 @@ impl Plugins {
                 read_data: native_plugin.read_data.unwrap(),
                 seek: native_plugin.seek.unwrap(),
                 metadata: native_plugin.metadata,
-                update_settings: native_plugin.update_settings,
+                settings_updated: native_plugin.settings_updated,
             };
 
             trace!("Loaded playback plugin {} {}", plugin_funcs.name, plugin_funcs.version);

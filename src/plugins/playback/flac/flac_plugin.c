@@ -49,8 +49,10 @@ static int flac_destroy(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int flac_open(void* user_data, const char* filename, int subsong) {
+static int flac_open(void* user_data, const char* filename, int subsong, const struct HippoSettingsAPI* api) {
     struct ReplayerData* data = (struct ReplayerData*)user_data;
+
+    (void)api;
 
 	// TODO: Use IO APIs
 	data->song = drflac_open_file(filename, NULL);
@@ -247,7 +249,6 @@ static HippoPlaybackPlugin s_flac_plugin = {
     flac_seek,
     flac_metadata,
     flac_static_init,
-    NULL,
     NULL,
 };
 

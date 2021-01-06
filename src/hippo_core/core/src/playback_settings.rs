@@ -291,3 +291,13 @@ pub unsafe extern "C" fn get_float(
 ) -> HippoSettingsError {
     0
 }
+
+pub unsafe extern "C" fn get_bool(
+    _priv_data: *mut c_void,
+    _ext: *const c_char,
+    _id: *const c_char,
+    _value: *mut bool,
+) -> HippoSettingsError {
+    0
+}
+

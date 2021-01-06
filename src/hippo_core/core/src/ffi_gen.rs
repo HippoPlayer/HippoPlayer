@@ -296,7 +296,7 @@ pub struct HippoSettingsAPI {
         unsafe extern "C" fn(
             priv_data: *mut ::std::os::raw::c_void,
             ext: *const ::std::os::raw::c_char,
-            arg1: *const ::std::os::raw::c_char,
+            id: *const ::std::os::raw::c_char,
             value: *mut ::std::os::raw::c_int,
         ) -> HippoSettingsError,
     >,
@@ -304,8 +304,16 @@ pub struct HippoSettingsAPI {
         unsafe extern "C" fn(
             priv_data: *mut ::std::os::raw::c_void,
             ext: *const ::std::os::raw::c_char,
-            arg1: *const ::std::os::raw::c_char,
+            id: *const ::std::os::raw::c_char,
             value: *mut f32,
+        ) -> HippoSettingsError,
+    >,
+    pub get_bool: ::std::option::Option<
+        unsafe extern "C" fn(
+            priv_data: *mut ::std::os::raw::c_void,
+            ext: *const ::std::os::raw::c_char,
+            id: *const ::std::os::raw::c_char,
+            value: *mut bool,
         ) -> HippoSettingsError,
     >,
 }
@@ -626,8 +634,9 @@ pub struct HippoPlaybackPlugin {
     pub open: ::std::option::Option<
         unsafe extern "C" fn(
             user_data: *mut ::std::os::raw::c_void,
-            buffer: *const ::std::os::raw::c_char,
+            url: *const ::std::os::raw::c_char,
             subsong: ::std::os::raw::c_int,
+            settings: *const HippoSettingsAPI,
         ) -> ::std::os::raw::c_int,
     >,
     pub close: ::std::option::Option<
@@ -656,13 +665,10 @@ pub struct HippoPlaybackPlugin {
     pub static_init: ::std::option::Option<
         unsafe extern "C" fn(log: *mut HippoLogAPI, services: *const HippoServiceAPI),
     >,
-    pub register_settings: ::std::option::Option<
-        unsafe extern "C" fn(settings: *const HippoSettingsAPI) -> ::std::os::raw::c_int,
-    >,
-    pub update_settings: ::std::option::Option<
+    pub settings_updated: ::std::option::Option<
         unsafe extern "C" fn(
             user_data: *mut ::std::os::raw::c_void,
             settings: *const HippoSettingsAPI,
-        ) -> ::std::os::raw::c_int,
+        ),
     >,
 }

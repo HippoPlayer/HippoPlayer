@@ -89,8 +89,10 @@ static Music_Emu* open_gme(const char* filename, const struct HippoIoAPI* io) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int gme_open(void* user_data, const char* filename, int subsong) {
+static int gme_open(void* user_data, const char* filename, int subsong, const struct HippoSettingsAPI* api) {
     struct ReplayerData* data = (struct ReplayerData*)user_data;
+
+    (void)api;
 
     if ((data->song = open_gme(filename, g_io_api)) == nullptr) {
         return -1;
@@ -271,8 +273,7 @@ static HippoPlaybackPlugin s_gme_plugin = {
     gme_seek_in,
     gme_metadata,
     gme_static_init,
-    NULL,
-    NULL,
+    nullptr,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

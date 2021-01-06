@@ -79,8 +79,10 @@ static void* adplug_create(const struct HippoServiceAPI* services) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int adplug_open(void* user_data, const char* url, int subsong) {
+static int adplug_open(void* user_data, const char* url, int subsong, const struct HippoSettingsAPI* settings) {
     AdplugPlugin* plugin = (AdplugPlugin*)user_data;
+
+    (void)settings;
 
     // TODO: File io api
     plugin->player = CAdPlug::factory(url, &plugin->emu_opl);
@@ -281,8 +283,7 @@ static HippoPlaybackPlugin g_adplug_plugin = {
     adplug_plugin_seek,
     adplug_metadata,
     adplug_static_init,
-    NULL,
-    NULL,
+    nullptr,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
