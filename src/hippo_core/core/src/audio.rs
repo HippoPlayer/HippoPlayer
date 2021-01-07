@@ -89,9 +89,15 @@ impl HippoPlayback {
         let user_data =
             unsafe { ((plugin.plugin_funcs).create)(plugin_service.get_c_service_api()) } as u64;
         let ptr_user_data = user_data as *mut c_void;
+
+        let ps = crate::service_ffi::get_playback_settings(plugin_service.c_service_api);
+        ps.selected_id = (plugin.plugin_funcs).name.to_owned();
+
+        let settings_api = crate::service_ffi::get_playback_settings_c(plugin_service.c_service_api);
+
         //let frame_size = (((plugin.plugin_funcs).frame_size)(ptr_user_data)) as usize;
         let open_state = unsafe {
-            ((plugin.plugin_funcs).open)(ptr_user_data, c_filename.as_ptr(), subsong_index, std::ptr::null())
+            ((plugin.plugin_funcs).open)(ptr_user_data, c_filename.as_ptr(), subsong_index, settings_api)
         };
 
         if open_state < 0 {

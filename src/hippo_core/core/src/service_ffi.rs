@@ -578,4 +578,10 @@ pub fn get_playback_settings<'a>(service_api: *const ffi::HippoServiceAPI) -> &'
     }
 }
 
+pub fn get_playback_settings_c(service_api: *const ffi::HippoServiceAPI) -> *const ffi::HippoSettingsAPI {
+    unsafe {
+        ((*service_api).get_settings_api.unwrap())((*service_api).private_data, 0)
+    }
+}
+
 

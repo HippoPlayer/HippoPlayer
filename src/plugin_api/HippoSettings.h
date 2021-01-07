@@ -156,7 +156,7 @@ typedef struct HippoSettingsAPI {
     // HippoSettingsError (*layout_hints)(void* priv_data, void* data);
 
     // access settings
-    HippoSettingsError (*get_string)(void* priv_data, const char* ext, const char* id, char* value, int max_len);
+    HippoSettingsError (*get_string)(void* priv_data, const char* ext, const char* id, char** value);
     HippoSettingsError (*get_int)(void* priv_data, const char* ext, const char* id, int* value);
     HippoSettingsError (*get_float)(void* priv_data, const char* ext, const char* id, float* value);
     HippoSettingsError (*get_bool)(void* priv_data, const char* ext, const char* id, bool* value);
@@ -179,8 +179,8 @@ typedef struct HippoSettingsAPI {
 #define HippoSettings_register_settings(api, name, settings) \
     api->register_settings(api->priv_data, name, (HSSetting*)&settings, hp_sizeof_array(settings))
 
-#define HippoSettings_get_string(api, ext, id, value, max_len) \
-    api->get_string(api->priv_data, ext, id, value, max_len)
+#define HippoSettings_get_string(api, ext, id, value) \
+    api->get_string(api->priv_data, ext, id, value)
 
 #define HippoSettings_get_int(api, ext, id, value) \
     api->get_int(api->priv_data, ext, id, value)

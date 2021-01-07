@@ -274,8 +274,8 @@ static void send_pattern_data(struct OpenMptData* replayer_data) {
 static void settings_apply(OpenMptData* data, const HippoSettingsAPI* api) {
     int int_value = 0;
     float float_value = 0;
-    char str[512];
-    bool bool_value;
+    char* str = nullptr;
+    bool bool_value = false;
     const char* ext = data->ext.c_str();
 
     if (HippoSettings_get_int(api, ext, ID_SAMPLE_RATE, &int_value) == HippoSettingsError_Ok) {
@@ -286,8 +286,8 @@ static void settings_apply(OpenMptData* data, const HippoSettingsAPI* api) {
         data->channels = (Channels)int_value;
     }
 
-    if (HippoSettings_get_int(api, ext, ID_MASTER_GAIN, &int_value) == HippoSettingsError_Ok) {
-        data->mod->set_render_param(openmpt::module::RENDER_MASTERGAIN_MILLIBEL, int_value);
+    if (HippoSettings_get_float(api, ext, ID_MASTER_GAIN, &float_value) == HippoSettingsError_Ok) {
+        data->mod->set_render_param(openmpt::module::RENDER_MASTERGAIN_MILLIBEL, int(float_value * 1000));
     }
 
     if (HippoSettings_get_int(api, ext, ID_STEREO_SEPARATION, &int_value) == HippoSettingsError_Ok) {
@@ -302,7 +302,7 @@ static void settings_apply(OpenMptData* data, const HippoSettingsAPI* api) {
         data->mod->set_render_param(openmpt::module::RENDER_INTERPOLATIONFILTER_LENGTH, int_value);
     }
 
-    if (HippoSettings_get_string(api, ext, ID_AMIGA_RESAMPLER_FILTER, str, sizeof(str)) == HippoSettingsError_Ok) {
+    if (HippoSettings_get_string(api, ext, ID_AMIGA_RESAMPLER_FILTER, &str) == HippoSettingsError_Ok) {
         data->mod->ctl_set_text("render.resampler.emulate_amiga_type", str);
     }
 

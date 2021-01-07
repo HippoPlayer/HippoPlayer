@@ -1,6 +1,6 @@
 use crate::ffi::{
-    HSSetting, HippoSettingsError, HippoSettingsError_DuplicatedId, HippoSettingsError_Ok,
-    HS_FLOAT_TYPE, HS_INTEGER_TYPE, HS_BOOL_TYPE, HS_INTEGER_RANGE_TYPE, //HS_STRING_RANGE_TYPE,
+    HSSetting, HippoSettingsError, HippoSettingsError_NotFound, HippoSettingsError_DuplicatedId, HippoSettingsError_Ok,
+    HS_FLOAT_TYPE, HS_INTEGER_TYPE, HS_BOOL_TYPE, HS_INTEGER_RANGE_TYPE, HS_STRING_RANGE_TYPE,
 };
 
 use std::io::{Error, ErrorKind, Write, Read};
@@ -85,12 +85,14 @@ impl SerPluginTypeSettings {
 
 pub struct PlaybackSettings {
     pub settings: HashMap<String, Settings>,
+    pub selected_id: String,
 }
 
 impl PlaybackSettings {
     pub fn new() -> PlaybackSettings {
         PlaybackSettings {
             settings: HashMap::new(),
+            selected_id: String::new(),
         }
     }
 
@@ -264,40 +266,80 @@ pub unsafe extern "C" fn register_settings(
     ps.register_settings(&plugin_id.to_string_lossy(), settings, count as usize)
 }
 
+unsafe fn find_setting<'a>(priv_data: *mut c_void, id: *const c_char) -> Option<&'a HSSetting> {
+    let find_id = CStr::from_ptr(id);
+    let search_id = find_id.to_string_lossy();
+
+    let ps: &PlaybackSettings = &*(priv_data as *const PlaybackSettings);
+
+    if let Some(settings) = ps.settings.get(&ps.selected_id) {
+        for s in &settings.fields {
+            let widget_id = CStr::from_ptr(s.int_value.base.widget_id);
+            let widget_type = widget_id.to_string_lossy();
+
+            if widget_type == search_id {
+                return Some(s);
+            }
+        }
+    }
+
+    None
+}
+
 pub unsafe extern "C" fn get_string(
-    _priv_data: *mut c_void,
+    priv_data: *mut c_void,
     _ext: *const c_char,
-    _id: *const c_char,
-    _value: *mut c_char,
-    _max_len: c_int,
+    id: *const c_char,
+    value: *mut *const c_char,
 ) -> HippoSettingsError {
-    0
+
+    if let Some(setting) = find_setting(priv_data, id) {
+        *value = setting.string_fixed_value.value;
+        HippoSettingsError_Ok
+    } else {
+        HippoSettingsError_NotFound
+    }
 }
 
 pub unsafe extern "C" fn get_int(
-    _priv_data: *mut c_void,
+    priv_data: *mut c_void,
     _ext: *const c_char,
-    _id: *const c_char,
-    _value: *mut c_int,
+    id: *const c_char,
+    value: *mut c_int,
 ) -> HippoSettingsError {
-    0
+    if let Some(setting) = find_setting(priv_data, id) {
+        *value = setting.int_value.value;
+        HippoSettingsError_Ok
+    } else {
+        HippoSettingsError_NotFound
+    }
 }
 
 pub unsafe extern "C" fn get_float(
-    _priv_data: *mut c_void,
+    priv_data: *mut c_void,
     _ext: *const c_char,
-    _id: *const c_char,
-    _value: *mut f32,
+    id: *const c_char,
+    value: *mut f32,
 ) -> HippoSettingsError {
-    0
+    if let Some(setting) = find_setting(priv_data, id) {
+        *value = setting.float_value.value;
+        HippoSettingsError_Ok
+    } else {
+        HippoSettingsError_NotFound
+    }
 }
 
 pub unsafe extern "C" fn get_bool(
-    _priv_data: *mut c_void,
+    priv_data: *mut c_void,
     _ext: *const c_char,
-    _id: *const c_char,
-    _value: *mut bool,
+    id: *const c_char,
+    value: *mut bool,
 ) -> HippoSettingsError {
-    0
+    if let Some(setting) = find_setting(priv_data, id) {
+        *value = setting.bool_value.value;
+        HippoSettingsError_Ok
+    } else {
+        HippoSettingsError_NotFound
+    }
 }
 

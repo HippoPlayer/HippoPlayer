@@ -288,8 +288,7 @@ pub struct HippoSettingsAPI {
             priv_data: *mut ::std::os::raw::c_void,
             ext: *const ::std::os::raw::c_char,
             id: *const ::std::os::raw::c_char,
-            value: *mut ::std::os::raw::c_char,
-            max_len: ::std::os::raw::c_int,
+            value: *mut *const ::std::os::raw::c_char,
         ) -> HippoSettingsError,
     >,
     pub get_int: ::std::option::Option<
