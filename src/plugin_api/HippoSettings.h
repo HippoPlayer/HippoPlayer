@@ -179,17 +179,17 @@ typedef struct HippoSettingsAPI {
 #define HippoSettings_register_settings(api, name, settings) \
     api->register_settings(api->priv_data, name, (HSSetting*)&settings, hp_sizeof_array(settings))
 
-#define HippoSettings_get_string(api, id, value, max_len) \
-    api->get_string(api->priv_data, id, value, max_len)
+#define HippoSettings_get_string(api, ext, id, value, max_len) \
+    api->get_string(api->priv_data, ext, id, value, max_len)
 
-#define HippoSettings_get_int(api, id, value) \
-    api->get_int(api->priv_data, id, value)
+#define HippoSettings_get_int(api, ext, id, value) \
+    api->get_int(api->priv_data, ext, id, value)
 
-#define HippoSettings_get_float(api, id, value) \
-    api->get_float(api->priv_data, id, value)
+#define HippoSettings_get_float(api, ext, id, value) \
+    api->get_float(api->priv_data, ext, id, value)
 
-#define HippoSettings_get_bool(api, id, value) \
-    api->get_bool(api->priv_data, id, value)
+#define HippoSettings_get_bool(api, ext, id, value) \
+    api->get_bool(api->priv_data, ext, id, value)
 
 
 

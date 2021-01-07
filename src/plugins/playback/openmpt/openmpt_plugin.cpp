@@ -69,6 +69,7 @@ static const HSIntegerRangeValue s_sample_rate[] = {
     {"96000", 96000},
 };
 
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static const HSIntegerRangeValue s_channels[] = {
@@ -121,9 +122,22 @@ static HSSetting s_settings[] = {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+enum class Channels {
+    Default,
+    Mono,
+    Stereo,
+    Quad,
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 struct OpenMptData {
     openmpt::module* mod = 0;
     const HippoMessageAPI* message_api;
+    std::string ext;
+    // number of channels to render
+    Channels channels;
+    int sample_rate;
     float length = 0.0f;
     void* song_data = 0;
 };
@@ -257,27 +271,57 @@ static void send_pattern_data(struct OpenMptData* replayer_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
 static void settings_apply(OpenMptData* data, const HippoSettingsAPI* api) {
-    /*
     int int_value = 0;
     float float_value = 0;
-    char string_data[512];
+    char str[512];
+    bool bool_value;
+    const char* ext = data->ext.c_str();
 
-    if (HippoSettings_get_int(api,
+    if (HippoSettings_get_int(api, ext, ID_SAMPLE_RATE, &int_value) == HippoSettingsError_Ok) {
+        data->sample_rate = int_value;
+    }
 
+    if (HippoSettings_get_int(api, ext, ID_CHANNELS, &int_value) == HippoSettingsError_Ok) {
+        data->channels = (Channels)int_value;
+    }
 
-    data->mod->set_render_param(openmpt::module::RENDER_MASTERGAIN_MILLIBEL, vol128_To_millibel(m_nMasterVolume));
-    data->mod->set_render_param(openmpt::module::RENDER_STEREOSEPARATION_PERCENT, get_stereo_separation());
-    data->mod->set_render_param(openmpt::module::RENDER_INTERPOLATIONFILTER_LENGTH, get_filter_length());
-    */
+    if (HippoSettings_get_int(api, ext, ID_MASTER_GAIN, &int_value) == HippoSettingsError_Ok) {
+        data->mod->set_render_param(openmpt::module::RENDER_MASTERGAIN_MILLIBEL, int_value);
+    }
 
-    // HippoSettings_get_int
+    if (HippoSettings_get_int(api, ext, ID_STEREO_SEPARATION, &int_value) == HippoSettingsError_Ok) {
+        data->mod->set_render_param(openmpt::module::RENDER_STEREOSEPARATION_PERCENT, int_value);
+    }
+
+    if (HippoSettings_get_int(api, ext, ID_VOLUME_RAMPING, &int_value) == HippoSettingsError_Ok) {
+        data->mod->set_render_param(openmpt::module::RENDER_VOLUMERAMPING_STRENGTH, int_value);
+    }
+
+    if (HippoSettings_get_int(api, ext, ID_INTERPOLATION_RANGE, &int_value) == HippoSettingsError_Ok) {
+        data->mod->set_render_param(openmpt::module::RENDER_INTERPOLATIONFILTER_LENGTH, int_value);
+    }
+
+    if (HippoSettings_get_string(api, ext, ID_AMIGA_RESAMPLER_FILTER, str, sizeof(str)) == HippoSettingsError_Ok) {
+        data->mod->ctl_set_text("render.resampler.emulate_amiga_type", str);
+    }
+
+    if (HippoSettings_get_bool(api, ext, ID_USE_AMIGA_RESAMPLER_AMIGA_MODS, &bool_value) == HippoSettingsError_Ok) {
+        data->mod->ctl_set_boolean("render.resampler.emulate_amiga", bool_value);
+    }
+
+    if (HippoSettings_get_float(api, ext, ID_TEMPO_FACTOR, &float_value) == HippoSettingsError_Ok) {
+        data->mod->ctl_set_floatingpoint("play.tempo_factor", float_value);
+    }
+
+    if (HippoSettings_get_float(api, ext, ID_PITCH_FACTOR, &float_value) == HippoSettingsError_Ok) {
+        data->mod->ctl_set_floatingpoint("play.pitch_factor", float_value);
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int openmpt_open(void* user_data, const char* filename, int subsong, const HippoSettingsAPI* api) {
+static int openmpt_open(void* user_data, const char* filename, int subsong, const HippoSettingsAPI* settings) {
     uint64_t size = 0;
     struct OpenMptData* replayer_data = (struct OpenMptData*)user_data;
 
@@ -300,6 +344,8 @@ static int openmpt_open(void* user_data, const char* filename, int subsong, cons
 
     replayer_data->length = (float)replayer_data->mod->get_duration_seconds();
     replayer_data->mod->select_subsong(subsong);
+
+    settings_apply(replayer_data, settings);
 
     return 0;
 }
@@ -453,8 +499,8 @@ static void openmpt_event(void* user_data, const unsigned char* data, int len) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void openmpt_settings_updated(void* user_data, const HippoSettingsAPI* settings_api) {
-    settings_apply((OpenMptData*)user_data, settings_api);
+static void openmpt_settings_updated(void* user_data, const HippoSettingsAPI* settings) {
+    settings_apply((OpenMptData*)user_data, settings);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
