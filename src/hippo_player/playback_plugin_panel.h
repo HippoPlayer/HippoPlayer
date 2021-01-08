@@ -50,5 +50,6 @@ private:
     std::vector<int> m_widget_indices;
 
     int m_active_file_ext_index = 0;
+    const char* m_active_plugin_name = nullptr;
 };
 

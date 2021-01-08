@@ -1,6 +1,6 @@
 use crate::ffi::{
     HSSetting, HippoSettingsError, HippoSettingsError_NotFound, HippoSettingsError_DuplicatedId, HippoSettingsError_Ok,
-    HS_FLOAT_TYPE, HS_INTEGER_TYPE, HS_BOOL_TYPE, HS_INTEGER_RANGE_TYPE, HS_STRING_RANGE_TYPE,
+    HS_FLOAT_TYPE, HS_INTEGER_TYPE, HS_BOOL_TYPE, HS_INTEGER_RANGE_TYPE,
 };
 
 use std::io::{Error, ErrorKind, Write, Read};
@@ -341,5 +341,101 @@ pub unsafe extern "C" fn get_bool(
     } else {
         HippoSettingsError_NotFound
     }
+}
+
+pub unsafe extern "C" fn register_settings_thread(
+    _priv_data: *mut c_void,
+    _name: *const c_char,
+    _settings: *const HSSetting,
+    _count: c_int,
+) -> HippoSettingsError {
+	warn!("Registering settings not supported from audio thread");
+	HippoSettingsError_DuplicatedId
+}
+
+unsafe fn find_setting_thread<'a>(priv_data: *mut c_void, id: *const c_char) -> Option<&'a HSSetting> {
+    let find_id = CStr::from_ptr(id);
+    let search_id = find_id.to_string_lossy();
+
+    let settings: &Vec<HSSetting> = &*(priv_data as *const Vec<HSSetting>);
+
+	for s in settings {
+		let widget_id = CStr::from_ptr(s.int_value.base.widget_id);
+		let widget_type = widget_id.to_string_lossy();
+
+		if widget_type == search_id {
+			return Some(s);
+		}
+	}
+
+    None
+}
+
+pub unsafe extern "C" fn get_string_thread(
+    priv_data: *mut c_void,
+    _ext: *const c_char,
+    id: *const c_char,
+    value: *mut *const c_char,
+) -> HippoSettingsError {
+
+    if let Some(setting) = find_setting_thread(priv_data, id) {
+        *value = setting.string_fixed_value.value;
+        HippoSettingsError_Ok
+    } else {
+        HippoSettingsError_NotFound
+    }
+}
+
+pub unsafe extern "C" fn get_int_thread(
+    priv_data: *mut c_void,
+    _ext: *const c_char,
+    id: *const c_char,
+    value: *mut c_int,
+) -> HippoSettingsError {
+    if let Some(setting) = find_setting_thread(priv_data, id) {
+        *value = setting.int_value.value;
+        HippoSettingsError_Ok
+    } else {
+        HippoSettingsError_NotFound
+    }
+}
+
+pub unsafe extern "C" fn get_float_thread(
+    priv_data: *mut c_void,
+    _ext: *const c_char,
+    id: *const c_char,
+    value: *mut f32,
+) -> HippoSettingsError {
+    if let Some(setting) = find_setting_thread(priv_data, id) {
+        *value = setting.float_value.value;
+        HippoSettingsError_Ok
+    } else {
+        HippoSettingsError_NotFound
+    }
+}
+
+pub unsafe extern "C" fn get_bool_thread(
+    priv_data: *mut c_void,
+    _ext: *const c_char,
+    id: *const c_char,
+    value: *mut bool,
+) -> HippoSettingsError {
+    if let Some(setting) = find_setting_thread(priv_data, id) {
+        *value = setting.bool_value.value;
+        HippoSettingsError_Ok
+    } else {
+        HippoSettingsError_NotFound
+    }
+}
+
+pub fn get_threaded_callback(callback_data: *const c_void) -> crate::ffi::HippoSettingsAPI {
+	crate::ffi::HippoSettingsAPI {
+		priv_data: callback_data as *mut _,
+		register_settings: Some(register_settings_thread),
+		get_string: Some(get_string_thread),
+		get_int: Some(get_int_thread),
+		get_float: Some(get_float_thread),
+		get_bool: Some(get_bool_thread),
+	}
 }
 

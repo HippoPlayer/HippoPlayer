@@ -27,6 +27,7 @@ use playback_settings::PlaybackSettings;
 use playlist::Playlist;
 use plugin_handler::Plugins;
 use service_ffi::{PluginService, ServiceApi};
+use std::slice;
 
 use std::io::Read;
 
@@ -631,3 +632,48 @@ pub unsafe extern "C" fn hippo_get_playback_plugin_settings(
 
     info
 }
+
+#[no_mangle]
+pub unsafe extern "C" fn hippo_playback_settings_updated(
+    core: *mut HippoCore,
+    plugin_name: *const c_char,
+    plugin_settings: *const PluginSettings,
+) {
+    let core = &mut *core;
+
+	dbg!("");
+
+    let plugin_id = CStr::from_ptr(plugin_name);
+    let id = plugin_id.to_string_lossy().to_string();
+    let info = slice::from_raw_parts((*plugin_settings).settings, (*plugin_settings).settings_count as usize);
+
+    // !CRITICAL PATH! As audio playback also uses this lock, make sure to have it conteded as short time as possible
+
+    let data_callback: &audio::DataCallback = std::mem::transmute(core.audio.data_callback);
+
+	{
+    	let mut pb = data_callback.playback.lock().unwrap();
+
+		// if we have no players just bail
+    	if pb.players.is_empty() {
+    		return;
+    	}
+
+		// TODO: Check if active player is what we tweaked, else bail (may need to check all players here)
+    	if pb.players[0].plugin.plugin_funcs.name != id {
+    		return;
+    	}
+
+    	// Current tweaked plugin is the active one, copy over the settings data and marked it as active
+    	// TODO: Slice copy
+
+    	pb.updated_settings.clear();
+
+    	for s in info {
+    		pb.updated_settings.push(*s);
+    	}
+
+    	pb.settings_active = true;
+    }
+}
+

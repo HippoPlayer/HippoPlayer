@@ -45,6 +45,7 @@ typedef int (*HippoPlaylistCount)(struct HippoCore* core);
 typedef const char* (*HippoPlaylistGet)(struct HippoCore* core, int row, int col, int* len);
 typedef PluginInfo (*HippoGetPlaybackPluginInfo)(struct HippoCore* core, int index);
 typedef PluginSettings (*HippoGetPlaybackPluginSettings)(struct HippoCore* core, const char* plugin_name);
+typedef void (*HippoPlaybackSettingsUpdated)(struct HippoCore* core, const char* plugin_name, const PluginSettings* settings);
 
 extern HippoCoreNew hippo_core_new;
 extern HippoCoreDrop hippo_core_drop;
@@ -57,6 +58,7 @@ extern HippoPlaylistCount hippo_playlist_count;
 extern HippoInitAudioDevice hippo_init_audio_device;
 extern HippoGetPlaybackPluginInfo hippo_get_playback_plugin_info;
 extern HippoGetPlaybackPluginSettings hippo_get_playback_plugin_settings;
+extern HippoPlaybackSettingsUpdated hippo_playback_settings_updated;
 
 #ifdef __cplusplus
 }

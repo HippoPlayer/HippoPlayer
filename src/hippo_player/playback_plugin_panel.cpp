@@ -104,12 +104,10 @@ void PlaybackPluginPanel::change_plugin(QTreeWidgetItem* curr, QTreeWidgetItem* 
     m_layout = new QVBoxLayout;
 
     int index = curr->data(0, Qt::UserRole).toInt();
-    const char* name = m_plugin_names[index].c_str();
+    m_active_plugin_name = m_plugin_names[index].c_str();
 
     // fetch the settings.
-    m_settings = hippo_get_playback_plugin_settings((HippoCore*)m_core, name);
-
-    printf("settings count %d\n", m_settings.settings_count);
+    m_settings = hippo_get_playback_plugin_settings((HippoCore*)m_core, m_active_plugin_name);
 
     if (m_settings.settings_count > 0) {
         QGroupBox* group_box = new QGroupBox(QStringLiteral("Settings"));
@@ -134,9 +132,7 @@ HSSetting* PlaybackPluginPanel::get_setting_from_id(QObject* sender) {
 void PlaybackPluginPanel::change_int(int v) {
     HSSetting* setting = get_setting_from_id(sender());
     setting->int_value.value = v;
-
-    QVariant data = sender()->property("hippo_data");
-    printf("id %d - val %d \n", data.toInt(), v);
+    hippo_playback_settings_updated((HippoCore*)m_core, m_active_plugin_name, &m_settings);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -144,9 +140,7 @@ void PlaybackPluginPanel::change_int(int v) {
 void PlaybackPluginPanel::change_bool(int v) {
     HSSetting* setting = get_setting_from_id(sender());
     setting->bool_value.value = v == Qt::Checked ? true : false;
-
-    QVariant data = sender()->property("hippo_data");
-    printf("id %d - bool %d\n", data.toInt(), v == Qt::Checked ? 1 : 0);
+    hippo_playback_settings_updated((HippoCore*)m_core, m_active_plugin_name, &m_settings);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -154,9 +148,7 @@ void PlaybackPluginPanel::change_bool(int v) {
 void PlaybackPluginPanel::change_double(double v) {
     HSSetting* setting = get_setting_from_id(sender());
     setting->float_value.value = v;
-
-    QVariant data = sender()->property("hippo_data");
-    printf("id %d - val %f - %p\n", data.toInt(), v, setting);
+    hippo_playback_settings_updated((HippoCore*)m_core, m_active_plugin_name, &m_settings);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -265,8 +257,6 @@ void PlaybackPluginPanel::build_ui(QVBoxLayout* group_layout, const HSSetting* s
                 }
 
                 spin_box->setValue(setting->int_value.value);
-                printf("start value %d\n", setting->int_value.value);
-
                 break;
             }
 

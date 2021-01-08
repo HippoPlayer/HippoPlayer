@@ -7,6 +7,8 @@ use miniaudio::{DataConverter, DataConverterConfig, Format, ResampleAlgorithm};
 use std::ffi::CString;
 use std::os::raw::c_void;
 use std::sync::Mutex;
+use crate::ffi::HSSetting;
+use crate::playback_settings;
 
 use crate::service_ffi::PluginService;
 //use ringbuf::{Consumer, Producer, RingBuffer};
@@ -17,12 +19,19 @@ const DEFAULT_DEVICE_NAME: &str = "Default Sound Device";
 #[derive(Clone)]
 pub struct HippoPlayback {
     plugin_user_data: u64,
-    plugin: DecoderPlugin,
+    pub plugin: DecoderPlugin,
     is_paused: bool,
 }
 
-struct DataCallback {
-    players: Mutex<Vec<HippoPlayback>>,
+pub struct Playback {
+    pub players: Vec<HippoPlayback>,
+    pub updated_settings: Vec<HSSetting>,
+    pub settings_active: bool,
+}
+
+pub struct DataCallback {
+    pub playback: Mutex<Playback>,
+    pub updated_settings: *const Vec<HSSetting>,
     mix_buffer: Vec<u8>,
     temp_gen: Vec<u8>,
     read_index: usize,
@@ -50,12 +59,19 @@ impl DataCallback {
             //ResampleAlgorithm::Speex { quality: 3 },
         );
 
+		let update_settings = unsafe { Box::new(vec![std::mem::zeroed::<HSSetting>(); 256]) };
+
         Box::new(DataCallback {
-            players: Mutex::new(Vec::<HippoPlayback>::new()),
+            playback: Mutex::new(Playback {
+                players: Vec::<HippoPlayback>::new(),
+                updated_settings: Vec::with_capacity(256),
+                settings_active: false,
+            }),
             mix_buffer: vec![0; 48000 * 32 * 4], // mix buffer of 48k, 32ch * int, should be enough for temp
             temp_gen: vec![0; 48000 * 32 * 4], // mix buffer of 48k, 32ch * int, should be enough for temp
             read_index: 0,
             frames_decoded: 0,
+            updated_settings: Box::into_raw(update_settings),
             converter: DataConverter::new(&cfg).unwrap(),
         })
     }
@@ -124,7 +140,7 @@ impl HippoPlayback {
 }
 pub struct HippoAudio {
     pub device_name: String,
-    data_callback: *mut c_void,
+    pub data_callback: *mut c_void,
     output_device: Option<Device>,
     output_devices: Option<Devices>,
     pub playbacks: Vec<Instance>,
@@ -137,20 +153,46 @@ unsafe extern "C" fn data_callback(
     frame_count: u32,
 ) {
     let data: &mut DataCallback = std::mem::transmute((*device_ptr).pUserData);
+    let mut settings_data: *const Vec<HSSetting> = std::ptr::null_mut();
     let playback;
 
     {
         // miniaudio will clear the buffer so we don't have to do it here
-        let t = data.players.lock().unwrap();
-        if t.len() == 0 {
+        let pb = data.playback.lock().unwrap();
+        if pb.players.len() == 0 {
             return;
         }
 
-        playback = t[0].clone();
+        playback = pb.players[0].clone();
+
+		if playback.is_paused {
+			return;
+		}
+
+		// if we have some settings copy them over
+
+		if pb.settings_active {
+			settings_data = data.updated_settings;
+			let dest_data: &mut Vec<HSSetting> = std::mem::transmute(data.updated_settings);
+
+			let mut len = pb.updated_settings.len();
+			// TODO: Constant
+			if len >= 256 {
+				warn!("Settings has over 256 entries! clamping");
+				len = 255;
+			}
+
+			dest_data[0..len].copy_from_slice(&pb.updated_settings[0..len]);
+		}
     }
 
-    if playback.is_paused {
-        return;
+    // now we can apply settings to the playback if we have any
+
+    if settings_data != std::ptr::null_mut() {
+    	let callback = playback_settings::get_threaded_callback(settings_data as *const _);
+		if let Some(update_callback) = (playback.plugin.plugin_funcs).settings_updated {
+			(update_callback)(playback.plugin_user_data as *mut c_void, &callback as *const _);
+		}
     }
 
     // calculate the output frame size
@@ -280,8 +322,8 @@ impl HippoAudio {
 
     pub fn stop(&mut self) {
         let data_callback: &DataCallback = unsafe { std::mem::transmute(self.data_callback) };
-        let mut t = data_callback.players.lock().unwrap();
-        t.clear();
+        let mut pb = data_callback.playback.lock().unwrap();
+        pb.players.clear();
         self.playbacks.clear();
     }
 
@@ -343,13 +385,13 @@ impl HippoAudio {
         let force = select_song.force();
 
         let data_callback: &DataCallback = unsafe { std::mem::transmute(self.data_callback) };
-        let mut t = data_callback.players.lock().unwrap();
+        let mut pb = data_callback.playback.lock().unwrap();
 
-        if t.len() == 1 {
-            t[0].is_paused = pause;
+        if pb.players.len() == 1 {
+            pb.players[0].is_paused = pause;
 
             if force {
-                t[0].is_paused = false;
+                pb.players[0].is_paused = false;
             }
         }
 
@@ -469,12 +511,12 @@ impl HippoAudio {
 
         if let Some(pb) = playback {
             let data_callback: &DataCallback = unsafe { std::mem::transmute(self.data_callback) };
-            let mut t = data_callback.players.lock().unwrap();
+            let mut t = data_callback.playback.lock().unwrap();
 
-            if t.len() == 1 {
-                t[0] = pb.0;
+            if t.players.len() == 1 {
+                t.players[0] = pb.0;
             } else {
-                t.push(pb.0);
+                t.players.push(pb.0);
             }
 
             self.playbacks.push(pb.1);
