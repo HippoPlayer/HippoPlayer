@@ -15,7 +15,6 @@ static char s_supported_extensions[MAX_EXT_COUNT];
 const char* PLUGIN_NAME = "openmpt";
 
 const HippoIoAPI* g_io_api = nullptr;
-const HippoSettingsAPI* g_settings_api = nullptr;
 HippoLogAPI* g_hp_log = nullptr;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -527,8 +526,10 @@ static void openmpt_event(void* user_data, const unsigned char* data, int len) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void openmpt_settings_updated(void* user_data, const HippoSettingsAPI* settings) {
+static HippoSettingsUpdate openmpt_settings_updated(void* user_data, const HippoSettingsAPI* settings) {
     settings_apply((OpenMptData*)user_data, settings);
+
+    return HippoSettingsUpdate_Default;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -536,9 +537,9 @@ static void openmpt_settings_updated(void* user_data, const HippoSettingsAPI* se
 static void openmpt_static_init(struct HippoLogAPI* log, const HippoServiceAPI* service_api) {
     g_hp_log = log;
 
-    g_settings_api = HippoServiceAPI_get_settings_api(service_api, HIPPO_SETTINGS_API_VERSION);
+    auto settings_api = HippoServiceAPI_get_settings_api(service_api, HIPPO_SETTINGS_API_VERSION);
 
-    if (HippoSettings_register_settings(g_settings_api, PLUGIN_NAME, s_settings) != HippoSettingsError_Ok) {
+    if (HippoSettings_register_settings(settings_api, PLUGIN_NAME, s_settings) != HippoSettingsError_Ok) {
         // hp_error("Unable to register settings, error: %s", HippoSettings_get_last_error(api));
     }
 }
