@@ -69,6 +69,13 @@ impl Settings {
 
         data != template
     }
+
+    pub fn reset(&mut self) {
+    	if self.native_count != 0 {
+			let slice = unsafe { slice::from_raw_parts(self.native_settings, self.native_count) };
+			self.fields.copy_from_slice(&slice);
+    	}
+    }
 }
 
 #[derive(Serialize, Deserialize)]

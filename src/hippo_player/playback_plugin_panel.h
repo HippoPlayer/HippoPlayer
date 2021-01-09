@@ -28,6 +28,10 @@ public:
     explicit PlaybackPluginPanel(const struct HippoCore* core, QWidget* parent = nullptr);
     virtual ~PlaybackPluginPanel();
 
+    void reset();
+    void cancel();
+    void ok();
+
 private:
     void build_ui(QVBoxLayout* group_layout, const HSSetting* settings, int count, int pixel_width, int id_offset);
 
@@ -38,6 +42,8 @@ private:
     Q_SLOT void change_bool(int v);
     Q_SLOT void change_double(double v);
 
+    void update_widgets();
+
     union HSSetting* get_setting_from_id(QObject* sender);
 
     const struct HippoCore* m_core;
@@ -47,6 +53,9 @@ private:
 
     std::vector<QWidget*> m_widgets;
     std::vector<std::string> m_plugin_names;
+
+    // used for when pressing cancel
+    union HSSetting* m_old_settings = nullptr;
 
     PluginSettings m_settings;
     std::vector<int> m_widget_indices;

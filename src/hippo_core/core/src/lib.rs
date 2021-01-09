@@ -1,13 +1,13 @@
 use anyhow::*;
 use logger::*;
 use song_db::SongDb;
+use std::ffi::CStr;
 use std::ffi::CString;
 use std::fs;
 use std::fs::File;
 use std::os::raw::{c_char, c_void};
 use std::path::{Path, PathBuf};
 use std::time::Instant;
-use std::ffi::CStr;
 
 mod audio;
 mod core_config;
@@ -336,7 +336,6 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
     let playback_settings = Box::into_raw(Box::new(PlaybackSettings::new()));
     let service = service_ffi::PluginService::new(song_db, playback_settings);
 
-
     // TODO: We should do better error handling here
     // This to enforce we load relative to the current exe
     // TODO: clean this up
@@ -358,8 +357,8 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
     if let Ok(output_dir) = config_dir {
         let ps: &mut PlaybackSettings = unsafe { &mut *playback_settings };
         logger::init_file_log(&output_dir);
-		// load plugins config after plugins has been loaded
-    	ps.load(&output_dir, "plugins.cfg");
+        // load plugins config after plugins has been loaded
+        ps.load(&output_dir, "plugins.cfg");
         if let Ok(cfg) = CoreConfig::load(&output_dir, "global.cfg") {
             config = cfg;
         }
@@ -433,7 +432,8 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
 pub extern "C" fn hippo_core_drop(core: *mut HippoCore) {
     let mut core = unsafe { Box::from_raw(core) };
     let _ = unsafe { Box::from_raw(core.song_db as *mut SongDb) };
-    let playback_settings = unsafe { Box::from_raw(core.playback_settings as *mut PlaybackSettings) };
+    let playback_settings =
+        unsafe { Box::from_raw(core.playback_settings as *mut PlaybackSettings) };
 
     let config_dir = init_config_dir();
 
@@ -441,7 +441,7 @@ pub extern "C" fn hippo_core_drop(core: *mut HippoCore) {
 
     if let Ok(output_dir) = config_dir {
         // TODO: Fix me
-    	playback_settings.write(&output_dir, "plugins.cfg").unwrap();
+        playback_settings.write(&output_dir, "plugins.cfg").unwrap();
         core.config.write(&output_dir, "global.cfg").unwrap();
     }
 
@@ -623,12 +623,13 @@ pub unsafe extern "C" fn hippo_get_playback_plugin_settings(
         settings_count: 0,
     };
 
-	let plugins_settings = crate::service_ffi::get_playback_settings(core.plugin_service.c_service_api);
+    let plugins_settings =
+        crate::service_ffi::get_playback_settings(core.plugin_service.c_service_api);
 
-	if let Some(ps) = plugins_settings.settings.get(&id) {
-		info.settings = ps.fields.as_ptr();
-		info.settings_count = ps.fields.len() as i32;
-	}
+    if let Some(ps) = plugins_settings.settings.get(&id) {
+        info.settings = ps.fields.as_ptr();
+        info.settings_count = ps.fields.len() as i32;
+    }
 
     info
 }
@@ -643,35 +644,55 @@ pub unsafe extern "C" fn hippo_playback_settings_updated(
 
     let plugin_id = CStr::from_ptr(plugin_name);
     let id = plugin_id.to_string_lossy().to_string();
-    let info = slice::from_raw_parts((*plugin_settings).settings, (*plugin_settings).settings_count as usize);
+    let info = slice::from_raw_parts(
+        (*plugin_settings).settings,
+        (*plugin_settings).settings_count as usize,
+    );
 
     // !CRITICAL PATH! As audio playback also uses this lock, make sure to have it conteded as short time as possible
 
     let data_callback: &audio::DataCallback = std::mem::transmute(core.audio.data_callback);
 
-	{
-    	let mut pb = data_callback.playback.lock().unwrap();
+    {
+        let mut pb = data_callback.playback.lock().unwrap();
 
-		// if we have no players just bail
-    	if pb.players.is_empty() {
-    		return;
-    	}
+        // if we have no players just bail
+        if pb.players.is_empty() {
+            return;
+        }
 
-		// TODO: Check if active player is what we tweaked, else bail (may need to check all players here)
-    	if pb.players[0].plugin.plugin_funcs.name != id {
-    		return;
-    	}
+        // TODO: Check if active player is what we tweaked, else bail (may need to check all players here)
+        if pb.players[0].plugin.plugin_funcs.name != id {
+            return;
+        }
 
-    	// Current tweaked plugin is the active one, copy over the settings data and marked it as active
-    	// TODO: Slice copy
+        // Current tweaked plugin is the active one, copy over the settings data and marked it as active
+        // TODO: Slice copy
 
-    	pb.updated_settings.clear();
+        pb.updated_settings.clear();
 
-    	for s in info {
-    		pb.updated_settings.push(*s);
-    	}
+        for s in info {
+            pb.updated_settings.push(*s);
+        }
 
-    	pb.settings_active = true;
+        pb.settings_active = true;
     }
 }
 
+#[no_mangle]
+pub unsafe extern "C" fn hippo_playback_settings_reset(
+    core: *mut HippoCore,
+    plugin_name: *const c_char,
+) {
+    let core = &mut *core;
+
+    let plugin_id = CStr::from_ptr(plugin_name);
+    let id = plugin_id.to_string_lossy().to_string();
+
+    let plugins_settings =
+        crate::service_ffi::get_playback_settings(core.plugin_service.c_service_api);
+
+    if let Some(ps) = plugins_settings.settings.get_mut(&id) {
+    	ps.reset();
+    }
+}

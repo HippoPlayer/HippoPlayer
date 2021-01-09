@@ -20,6 +20,8 @@ PlaybackPluginPanel::PlaybackPluginPanel(const struct HippoCore* core, QWidget* 
     : QDialog(parent), m_core(core), m_ui(new Ui_PlaybackPluginPanel) {
     m_ui->setupUi(this);
 
+    memset(&m_settings, 0, sizeof(m_settings));
+
     QStringList headerLabels;
     headerLabels.push_back(QStringLiteral("Name"));
     headerLabels.push_back(QStringLiteral("Version"));
@@ -110,6 +112,12 @@ void PlaybackPluginPanel::change_plugin(QTreeWidgetItem* curr, QTreeWidgetItem* 
     m_settings = hippo_get_playback_plugin_settings((HippoCore*)m_core, m_active_plugin_name);
 
     if (m_settings.settings_count > 0) {
+        free(m_old_settings);
+        // save old settings in case user cancels
+        int size = sizeof(HSSetting) * m_settings.settings_count;
+        m_old_settings = (HSSetting*)malloc(size);
+        memcpy(m_old_settings, m_settings.settings, size);
+
         QGroupBox* group_box = new QGroupBox(QStringLiteral("Settings"));
         int pixel_width = calculate_pixel_width(m_settings.settings, m_settings.settings_count);
         build_ui(m_layout, m_settings.settings, m_settings.settings_count, pixel_width, 0);
@@ -165,6 +173,115 @@ void PlaybackPluginPanel::change_double(double v) {
     HSSetting* setting = get_setting_from_id(sender());
     setting->float_value.value = v;
     hippo_playback_settings_updated((HippoCore*)m_core, m_active_plugin_name, &m_settings);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void PlaybackPluginPanel::reset() {
+    hippo_playback_settings_reset((HippoCore*)m_core, m_active_plugin_name);
+    update_widgets();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static int find_selection_for_fixed_int(const HSSetting* setting) {
+    const HSIntegerFixedRange* range = &setting->int_fixed_value;
+
+    for (int p = 0; p < range->values_count; ++p) {
+        if (range->values[p].value == range->value) {
+            return p;
+        }
+    }
+
+    return 0;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static int find_selection_for_fixed_string(const HSSetting* setting) {
+    const HSStringFixedRange* range = &setting->string_fixed_value;
+
+    for (int p = 0; p < range->values_count; ++p) {
+        if (!strcmp(range->values[p].value, range->value)) {
+            return p;
+        }
+    }
+
+    return 0;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// When we have changed the settings (such as reset/cancel we need to update all the widgets)
+
+void PlaybackPluginPanel::update_widgets() {
+    HSSetting* settings = m_settings.settings;
+    int count = m_settings.settings_count;
+
+    for (int i = 0; i < count; ++i) {
+        HSSetting* setting = &settings[i];
+        HSBase* base = (HSBase*)setting;
+        int widget_index = m_widget_indices[i];
+
+        switch (base->widget_type) {
+            case HS_FLOAT_TYPE: {
+                QDoubleSpinBox* spin_box = (QDoubleSpinBox*)m_widgets[widget_index];
+                spin_box->setValue(setting->float_value.value);
+                break;
+            }
+
+            case HS_INTEGER_TYPE: {
+                QSpinBox* spin_box = (QSpinBox*)m_widgets[widget_index];
+                spin_box->setValue(setting->int_value.value);
+                break;
+            }
+
+            case HS_INTEGER_RANGE_TYPE: {
+                QComboBox* combo = (QComboBox*)m_widgets[widget_index];
+                combo->setCurrentIndex(find_selection_for_fixed_int(setting));
+                break;
+            }
+
+            case HS_STRING_RANGE_TYPE: {
+                QComboBox* combo = (QComboBox*)m_widgets[widget_index];
+                combo->setCurrentIndex(find_selection_for_fixed_string(setting));
+                break;
+            }
+
+            case HS_BOOL_TYPE: {
+                QCheckBox* check_box = (QCheckBox*)m_widgets[widget_index];
+                check_box->setCheckState(setting->bool_value.value ? Qt::Checked : Qt::Unchecked);
+                break;
+            }
+        }
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void PlaybackPluginPanel::cancel() {
+    // Make sure we have something to cancel
+    if (!m_settings.settings || m_settings.settings_count == 0) {
+        return;
+    }
+
+    // restore old settings and notify the core that settings has been updated
+    memcpy(m_settings.settings, m_old_settings, sizeof(HSSetting) * m_settings.settings_count);
+    hippo_playback_settings_updated((HippoCore*)m_core, m_active_plugin_name, &m_settings);
+
+    update_widgets();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// If we have pressed ok
+
+void PlaybackPluginPanel::ok() {
+    // Make sure we have something to cancel
+    if (!m_settings.settings || m_settings.settings_count == 0) {
+        return;
+    }
+
+    // Store the temporary settings
+    memcpy(m_old_settings, m_settings.settings, sizeof(HSSetting) * m_settings.settings_count);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -288,18 +405,12 @@ void PlaybackPluginPanel::build_ui(QVBoxLayout* group_layout, const HSSetting* s
                 QObject::connect(combo_box, QOverload<int>::of(&QComboBox::activated), this,
                                  &PlaybackPluginPanel::change_fixed_int);
 
-                int selection = 0;
-
                 for (int p = 0; p < range->values_count; ++p) {
-                    if (range->values[p].value == range->value) {
-                        selection = p;
-                    }
-
                     combo_box->addItem(QString::fromUtf8(range->values[p].name), QVariant(range->values[p].value));
                 }
 
                 combo_box->setToolTip(tool_tip);
-                combo_box->setCurrentIndex(selection);
+                combo_box->setCurrentIndex(find_selection_for_fixed_int(setting));
                 layout->addWidget(combo_box, i, 1);
                 break;
             }
@@ -313,13 +424,7 @@ void PlaybackPluginPanel::build_ui(QVBoxLayout* group_layout, const HSSetting* s
                 QObject::connect(combo_box, QOverload<int>::of(&QComboBox::activated), this,
                                  &PlaybackPluginPanel::change_fixed_string);
 
-                int current_index = 0;
-
                 for (int p = 0; p < range->values_count; ++p) {
-                    if (!strcmp(range->values[p].value, range->value)) {
-                        current_index = p;
-                    }
-
                     combo_box->addItem(QString::fromUtf8(range->values[p].name),
                                        QVariant(QString::fromUtf8(range->values[p].value)));
                 }
@@ -327,7 +432,7 @@ void PlaybackPluginPanel::build_ui(QVBoxLayout* group_layout, const HSSetting* s
                 m_widget_indices.push_back(int(m_widgets.size()));
                 m_widgets.push_back(combo_box);
 
-                combo_box->setCurrentIndex(current_index);
+                combo_box->setCurrentIndex(find_selection_for_fixed_string(setting));
                 combo_box->setToolTip(tool_tip);
                 layout->addWidget(combo_box, i, 1);
                 break;
@@ -364,5 +469,6 @@ void PlaybackPluginPanel::build_ui(QVBoxLayout* group_layout, const HSSetting* s
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 PlaybackPluginPanel::~PlaybackPluginPanel() {
+    free(m_old_settings);
     delete m_ui;
 }
