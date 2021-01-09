@@ -145,6 +145,14 @@ void PlaybackPluginPanel::change_fixed_string(int v) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void PlaybackPluginPanel::change_fixed_int(int v) {
+    HSSetting* setting = get_setting_from_id(sender());
+    setting->int_fixed_value.value = setting->int_fixed_value.values[v].value;
+    hippo_playback_settings_updated((HippoCore*)m_core, m_active_plugin_name, &m_settings);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void PlaybackPluginPanel::change_bool(int v) {
     HSSetting* setting = get_setting_from_id(sender());
     setting->bool_value.value = v == Qt::Checked ? true : false;
@@ -278,14 +286,20 @@ void PlaybackPluginPanel::build_ui(QVBoxLayout* group_layout, const HSSetting* s
 
                 combo_box->setProperty("hippo_data", QVariant(widget_id));
                 QObject::connect(combo_box, QOverload<int>::of(&QComboBox::activated), this,
-                                 &PlaybackPluginPanel::change_int);
+                                 &PlaybackPluginPanel::change_fixed_int);
+
+                int selection = 0;
 
                 for (int p = 0; p < range->values_count; ++p) {
+                    if (range->values[p].value == range->value) {
+                        selection = p;
+                    }
+
                     combo_box->addItem(QString::fromUtf8(range->values[p].name), QVariant(range->values[p].value));
                 }
 
                 combo_box->setToolTip(tool_tip);
-                combo_box->setCurrentIndex(range->value);
+                combo_box->setCurrentIndex(selection);
                 layout->addWidget(combo_box, i, 1);
                 break;
             }

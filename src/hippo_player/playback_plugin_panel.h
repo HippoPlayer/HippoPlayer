@@ -33,6 +33,7 @@ private:
 
     Q_SLOT void change_plugin(QTreeWidgetItem* curr, QTreeWidgetItem* prev);
     Q_SLOT void change_int(int v);
+    Q_SLOT void change_fixed_int(int v);
     Q_SLOT void change_fixed_string(int v);
     Q_SLOT void change_bool(int v);
     Q_SLOT void change_double(double v);
