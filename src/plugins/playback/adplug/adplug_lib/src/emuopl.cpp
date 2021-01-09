@@ -48,8 +48,6 @@ void CEmuopl::update(short *buf, int samples)
 {
   int i;
 
-  printf("samples to write %d\n", samples);
-
   //ensure that our mix buffers are adequately sized
   if(mixbufSamples < samples) {
     if(mixbufSamples) { delete[] mixbuf0; delete[] mixbuf1; delete[] mixbuf2; }

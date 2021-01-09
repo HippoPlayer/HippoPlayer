@@ -7,10 +7,83 @@
 #include <stdlib.h>
 #include <string.h>
 #include <wemuopl.h>
+#include <nemuopl.h>
+#include <kemuopl.h>
+#include <surroundopl.h>
 
 extern "C" {
 HippoLogAPI* g_hp_log = NULL;
 }
+
+#define PLUGIN_NAME "adplug"
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#define ID_SAMPLE_RATE "SampleRate"
+#define ID_CHANNELS "Channels"
+#define ID_ADLIB_CORE "AdlibCore"
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// clang-format off
+
+static const HSIntegerRangeValue s_sample_rate[] = {
+    {"Default", 49716},
+    {"6000", 6000},
+    {"8000", 6000},
+    {"11025", 11025},
+    {"22050", 22050},
+    {"32000", 32000},
+    {"44100", 44100},
+    {"48000", 48000},
+    {"49716", 49716},
+    {"82000", 82000},
+    {"96000", 96000},
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static const HSIntegerRangeValue s_channels[] = {
+    {"Default", 0},
+    {"Mono", 1},
+    {"Stereo", 2},
+    {"Quad", 3},
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+enum class Channels {
+    Default,
+    Mono,
+    Stereo,
+    Surround,
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static const HSIntegerRangeValue s_core[] = {
+    {"Harekiet's", 0},
+    {"Ken Silverman's", 1},
+    {"Jarek Burczynski's", 2},
+    {"Nuked OPL3", 3},
+};
+
+enum class Core {
+    Harekiet,
+    Ken,
+    Jarek,
+    Nuked,
+};
+
+// clang-format on
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static HSSetting s_settings[] = {
+    HSIntValue_DescRange(ID_SAMPLE_RATE, "Sample rate",
+                         "Default (recommended) uses the sample rate by the output device", 49716, s_sample_rate),
+    HSIntValue_DescRange(ID_CHANNELS, "Channels",
+                         "Default (recommended) uses the number of channels the current song has.", 0, s_channels),
+    HSIntValue_DescRange(ID_ADLIB_CORE, "Adlib Core", "Select the Adlib core to be used", 0, s_core),
+};
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -38,10 +111,8 @@ void get_file_stem(char* dest, const char* path) {
 // This is a adplug plugin used as a reference and not inteded to do anything
 
 struct AdplugPlugin {
-    AdplugPlugin() : emu_opl(48000, true, true) {
-    }
+    COPLprops* emu_core = nullptr;
     CPlayer* player = nullptr;
-    CWemuopl emu_opl;
     int to_add = 0;
 };
 
@@ -73,8 +144,89 @@ enum HippoProbeResult adplug_probe_can_play(const uint8_t* data, uint32_t data_s
 
 static void* adplug_create(const struct HippoServiceAPI* services) {
     AdplugPlugin* plugin = new AdplugPlugin;
-
     return plugin;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static COPLprops* create_adlib(Core core, uint16_t sample_rate, bool stereo) {
+    struct COPLprops* emu_core = new COPLprops;
+
+    emu_core->use16bit = true;
+    emu_core->stereo = stereo;
+
+    switch (core) {
+        case Core::Nuked: {
+            printf("created neke %d\n", sample_rate);
+            emu_core->opl = new CNemuopl(sample_rate);
+            emu_core->stereo = true;
+            break;
+        }
+        case Core::Jarek: {
+            printf("created jake %d\n", sample_rate);
+            emu_core->opl = new CEmuopl(sample_rate, true, stereo);
+            break;
+        }
+        case Core::Ken: {
+            printf("created keyn %d\n", sample_rate);
+            emu_core->opl = new CKemuopl(sample_rate, true, stereo);
+            break;
+        }
+        case Core::Harekiet: {
+            printf("create hare %d\n", sample_rate);
+            emu_core->opl = new CWemuopl(sample_rate, true, stereo);
+        }
+    }
+
+    return emu_core;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static COPLprops* create_adlib_surround(Core core, uint16_t srate) {
+    COPLprops* left = create_adlib(core, srate, false);
+    COPLprops* right = create_adlib(core, srate, false);
+
+    COPLprops* emu_core = new COPLprops;
+    emu_core->use16bit = true;
+    emu_core->stereo = true;
+
+    emu_core->opl = new CSurroundopl(left, right, true);
+
+    return emu_core;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+COPLprops* create_core(const struct HippoSettingsAPI* api) {
+    COPLprops* core = nullptr;
+    int sample_rate = 49716;
+    int channels = (int)Channels::Stereo;
+    int core_id = (int)Core::Harekiet;
+
+    HippoSettings_get_int(api, nullptr, ID_SAMPLE_RATE, &sample_rate);
+    HippoSettings_get_int(api, nullptr, ID_CHANNELS, &channels);
+    HippoSettings_get_int(api, nullptr, ID_ADLIB_CORE, &core_id);
+
+    switch ((Channels)channels) {
+        case Channels::Surround: {
+            core = create_adlib_surround((Core)core_id, sample_rate);
+            break;
+        };
+        case Channels::Mono: {
+            core = create_adlib((Core)core_id, sample_rate, false);
+            break;
+        };
+
+        default:
+        case Channels::Default:
+        case Channels::Stereo: {
+            core = create_adlib((Core)core_id, sample_rate, true);
+            break;
+        };
+    }
+
+    return core;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -82,15 +234,17 @@ static void* adplug_create(const struct HippoServiceAPI* services) {
 static int adplug_open(void* user_data, const char* url, int subsong, const struct HippoSettingsAPI* settings) {
     AdplugPlugin* plugin = (AdplugPlugin*)user_data;
 
-    (void)settings;
+    plugin->emu_core = create_core(settings);
 
     // TODO: File io api
-    plugin->player = CAdPlug::factory(url, &plugin->emu_opl);
+    plugin->player = CAdPlug::factory(url, plugin->emu_core->opl);
 
     if (!plugin->player) {
         hp_error("Unable to playing: %s\n", url);
         return 0;
     }
+
+    plugin->emu_core->opl->init();
 
     plugin->player->rewind(subsong);
 
@@ -103,6 +257,11 @@ static int adplug_open(void* user_data, const char* url, int subsong, const stru
 
 static int adplug_close(void* user_data) {
     AdplugPlugin* plugin = (AdplugPlugin*)user_data;
+
+    if (plugin->emu_core) {
+        delete plugin->emu_core->opl;
+        delete plugin->emu_core;
+    }
 
     delete plugin->player;
     delete plugin;
@@ -149,19 +308,14 @@ static HippoReadInfo adplug_read_data(void* user_data, void* dest, uint32_t max_
             plugin->player->update();
         }
         i = min_t(towrite, (int)(plugin->to_add / plugin->player->getrefresh() + 4) & ~3);
-        plugin->emu_opl.update((short*)sndbufpos, i);
+        plugin->emu_core->opl->update((short*)sndbufpos, i);
         sndbufpos += i * sampsize;
         towrite -= i;
         i = (int)(plugin->player->getrefresh() * i);
         plugin->to_add -= (int)max_t(1, i);
     }
 
-    return HippoReadInfo {
-        freq,
-        samples_to_read,
-        2,
-        HippoOutputType_s16
-    };
+    return HippoReadInfo{freq, samples_to_read, 2, HippoOutputType_s16};
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -240,8 +394,13 @@ static void adplug_event(void* user_data, const unsigned char* data, int len) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void adplug_static_init(struct HippoLogAPI* log, const struct HippoServiceAPI* service) {
-    (void)service;
     g_hp_log = log;
+
+    auto settings_api = HippoServiceAPI_get_settings_api(service, HIPPO_SETTINGS_API_VERSION);
+
+    if (HippoSettings_register_settings(settings_api, PLUGIN_NAME, s_settings) != HippoSettingsError_Ok) {
+        // hp_error("Unable to register settings, error: %s", HippoSettings_get_last_error(api));
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -269,7 +428,7 @@ extern "C" void AdPlug_LogWrite(const char* fmt, ...) {
 
 static HippoPlaybackPlugin g_adplug_plugin = {
     HIPPO_PLAYBACK_PLUGIN_API_VERSION,
-    "adplug",
+    PLUGIN_NAME,
     "1.0.0",
     "adplug 2.3.3",
     adplug_probe_can_play,
