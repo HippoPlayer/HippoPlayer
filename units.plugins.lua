@@ -672,7 +672,10 @@ SharedLibrary {
 
 	Env = {
 		CCOPTS = { adplug_opts },
-		CXXOPTS = { adplug_opts },
+		CXXOPTS = {
+		    adplug_opts,
+			{ "/std:c++latest"; Config = "win64-*-*" },
+		},
 	},
 
 	Includes = {
