@@ -368,15 +368,21 @@ static int openmpt_close(void* user_data) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static HippoReadInfo openmpt_read_data(void* user_data, void* dest, uint32_t max_output_bytes,
-                                       uint32_t native_sample_rate) {
+                                       uint32_t sample_rate) {
     struct OpenMptData* replayer_data = (struct OpenMptData*)user_data;
 
     const int samples_to_generate = hippo_min(512, max_output_bytes / 8);
 
+    // support overringing the default sample rate
+    if (replayer_data->sample_rate != 0) {
+        sample_rate = replayer_data->sample_rate;
+    }
+
     uint16_t gen_count =
-        (uint16_t)replayer_data->mod->read_interleaved_stereo(native_sample_rate, samples_to_generate, (float*)dest);
+        (uint16_t)replayer_data->mod->read_interleaved_stereo(sample_rate, samples_to_generate, (float*)dest);
 
     // Send current positions back to frontend if we have some more data
+    /*
     if (gen_count > 0) {
         flatbuffers::FlatBufferBuilder builder(1024);
         builder.Finish(CreateHippoMessageDirect(
@@ -387,8 +393,9 @@ static HippoReadInfo openmpt_read_data(void* user_data, void* dest, uint32_t max
                 .Union()));
         HippoMessageAPI_send(replayer_data->message_api, builder.GetBufferPointer(), builder.GetSize());
     }
+    */
 
-    return HippoReadInfo{native_sample_rate, gen_count, 2, HippoOutputType_f32};
+    return HippoReadInfo{sample_rate, gen_count, 2, HippoOutputType_f32};
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
