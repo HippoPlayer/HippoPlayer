@@ -641,8 +641,6 @@ pub unsafe extern "C" fn hippo_playback_settings_updated(
 ) {
     let core = &mut *core;
 
-	dbg!("");
-
     let plugin_id = CStr::from_ptr(plugin_name);
     let id = plugin_id.to_string_lossy().to_string();
     let info = slice::from_raw_parts((*plugin_settings).settings, (*plugin_settings).settings_count as usize);

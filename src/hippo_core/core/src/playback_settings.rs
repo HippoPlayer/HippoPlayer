@@ -242,10 +242,7 @@ impl PlaybackSettings {
             let sel = unsafe { CStr::from_ptr(v.value) };
             let sel_name = sel.to_string_lossy();
 
-            dbg!("trying to match {} - {}", &sel_name, &name);
-
             if sel_name == name {
-            	dbg!("found!");
             	return v.value;
             }
         }
@@ -261,7 +258,6 @@ impl PlaybackSettings {
                     SerValue::IntValue(v) => wd.int_value.value = v,
                     SerValue::BoolValue(v) => wd.bool_value.value = v,
                     SerValue::StrValue(ref v) => {
-                    	dbg!("str value {}", v);
                         wd.string_fixed_value.value = Self::get_string_range_value(wd, &v)
                     }
                     SerValue::NoSetting => (),

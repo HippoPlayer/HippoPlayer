@@ -378,8 +378,29 @@ static HippoReadInfo openmpt_read_data(void* user_data, void* dest, uint32_t max
         sample_rate = replayer_data->sample_rate;
     }
 
-    uint16_t gen_count =
-        (uint16_t)replayer_data->mod->read_interleaved_stereo(sample_rate, samples_to_generate, (float*)dest);
+    uint8_t channel_count = 2;
+    uint16_t gen_count = 0;
+
+    switch (replayer_data->channels) {
+        default:
+        case Channels::Stereo:
+        case Channels::Default: {
+            gen_count = (uint16_t)replayer_data->mod->read_interleaved_stereo(sample_rate, samples_to_generate, (float*)dest);
+            break;
+        }
+
+        case Channels::Mono: {
+            gen_count = (uint16_t)replayer_data->mod->read(sample_rate, samples_to_generate, (float*)dest);
+            channel_count = 1;
+            break;
+        }
+
+        case Channels::Quad: {
+            gen_count = (uint16_t)replayer_data->mod->read_interleaved_quad(sample_rate, samples_to_generate, (float*)dest);
+            channel_count = 4;
+            break;
+        }
+    }
 
     // Send current positions back to frontend if we have some more data
     /*
@@ -395,7 +416,7 @@ static HippoReadInfo openmpt_read_data(void* user_data, void* dest, uint32_t max
     }
     */
 
-    return HippoReadInfo{sample_rate, gen_count, 2, HippoOutputType_f32};
+    return HippoReadInfo{sample_rate, gen_count, channel_count, HippoOutputType_f32};
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
