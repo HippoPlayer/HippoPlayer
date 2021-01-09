@@ -137,6 +137,14 @@ void PlaybackPluginPanel::change_int(int v) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void PlaybackPluginPanel::change_fixed_string(int v) {
+    HSSetting* setting = get_setting_from_id(sender());
+    setting->string_fixed_value.value = setting->string_fixed_value.values[v].value;
+    hippo_playback_settings_updated((HippoCore*)m_core, m_active_plugin_name, &m_settings);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void PlaybackPluginPanel::change_bool(int v) {
     HSSetting* setting = get_setting_from_id(sender());
     setting->bool_value.value = v == Qt::Checked ? true : false;
@@ -289,9 +297,15 @@ void PlaybackPluginPanel::build_ui(QVBoxLayout* group_layout, const HSSetting* s
 
                 combo_box->setProperty("hippo_data", QVariant(widget_id));
                 QObject::connect(combo_box, QOverload<int>::of(&QComboBox::activated), this,
-                                 &PlaybackPluginPanel::change_int);
+                                 &PlaybackPluginPanel::change_fixed_string);
+
+                int current_index = 0;
 
                 for (int p = 0; p < range->values_count; ++p) {
+                    if (!strcmp(range->values[p].value, range->value)) {
+                        current_index = p;
+                    }
+
                     combo_box->addItem(QString::fromUtf8(range->values[p].name),
                                        QVariant(QString::fromUtf8(range->values[p].value)));
                 }
@@ -299,6 +313,7 @@ void PlaybackPluginPanel::build_ui(QVBoxLayout* group_layout, const HSSetting* s
                 m_widget_indices.push_back(int(m_widgets.size()));
                 m_widgets.push_back(combo_box);
 
+                combo_box->setCurrentIndex(current_index);
                 combo_box->setToolTip(tool_tip);
                 layout->addWidget(combo_box, i, 1);
                 break;

@@ -1,26 +1,28 @@
 use crate::ffi::{
-    HSSetting, HippoSettingsError, HippoSettingsError_NotFound, HippoSettingsError_DuplicatedId, HippoSettingsError_Ok,
-    HS_FLOAT_TYPE, HS_INTEGER_TYPE, HS_BOOL_TYPE, HS_INTEGER_RANGE_TYPE,
+    HSSetting, HippoSettingsError, HippoSettingsError_DuplicatedId, HippoSettingsError_NotFound,
+    HippoSettingsError_Ok, HS_BOOL_TYPE, HS_FLOAT_TYPE, HS_INTEGER_RANGE_TYPE, HS_INTEGER_TYPE,
+    HS_STRING_RANGE_TYPE,
 };
 
-use std::io::{Error, ErrorKind, Write, Read};
-use std::path::PathBuf;
-use serde_derive::{Deserialize, Serialize};
 use logger::*;
+use serde_derive::{Deserialize, Serialize};
+use serde_json;
 use std::collections::HashMap;
 use std::ffi::CStr;
-use std::os::raw::{c_char, c_int, c_void};
-use std::slice;
-use std::mem;
 use std::fs::File;
-use serde_json;
+use std::io::{Error, ErrorKind, Read, Write};
+use std::mem;
+use std::os::raw::{c_char, c_int, c_void};
+use std::path::PathBuf;
+use std::slice;
 
-#[derive(Clone, Copy, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 enum SerValue {
     NoSetting,
     FloatValue(f32),
     IntValue(i32),
     BoolValue(bool),
+    StrValue(String),
 }
 
 #[derive(Serialize, Deserialize)]
@@ -62,7 +64,8 @@ impl Settings {
 
         let bytes_size = mem::size_of::<HSSetting>() * self.native_count;
         let data = unsafe { slice::from_raw_parts(self.native_settings as *const u8, bytes_size) };
-        let template = unsafe { slice::from_raw_parts(self.fields.as_ptr() as *const u8, bytes_size) };
+        let template =
+            unsafe { slice::from_raw_parts(self.fields.as_ptr() as *const u8, bytes_size) };
 
         data != template
     }
@@ -107,36 +110,58 @@ impl PlaybackSettings {
             println!("Trying to register settings for {} twice, skipping", id);
             HippoSettingsError_DuplicatedId
         } else {
-            self.settings.insert(id.to_owned(), Settings::new(native_settings, count));
+            self.settings
+                .insert(id.to_owned(), Settings::new(native_settings, count));
             HippoSettingsError_Ok
         }
     }
 
     fn build_ser_settings(settings: &Settings) -> Vec<SerSetting> {
         let mut ser_settings = Vec::new();
-        let native_settings = unsafe { slice::from_raw_parts(settings.native_settings as *const _, settings.native_count) };
+        let native_settings = unsafe {
+            slice::from_raw_parts(settings.native_settings as *const _, settings.native_count)
+        };
 
         let bytes_size = std::mem::size_of::<HSSetting>();
 
         for (s, t) in settings.fields.iter().zip(native_settings.iter()) {
-            let t0 = unsafe { slice::from_raw_parts(mem::transmute::<_, *const u8>(t), bytes_size) };
-            let t1 = unsafe { slice::from_raw_parts(mem::transmute::<_, *const u8>(s), bytes_size) };
+            let t0 =
+                unsafe { slice::from_raw_parts(mem::transmute::<_, *const u8>(t), bytes_size) };
+            let t1 =
+                unsafe { slice::from_raw_parts(mem::transmute::<_, *const u8>(s), bytes_size) };
 
             if t0 != t1 {
-                let widget_id = unsafe { CStr::from_ptr(s.int_value.base.name) };
+                let widget_id = unsafe { CStr::from_ptr(s.int_value.base.widget_id) };
                 let widget_type = widget_id.to_string_lossy();
                 println!("field that differs is {}", &widget_id.to_string_lossy());
 
-                let t = unsafe { match s.int_value.base.widget_type as u32 {
-                    HS_FLOAT_TYPE => SerSetting::new(&widget_type, SerValue::FloatValue(s.float_value.value)),
-                    HS_INTEGER_TYPE => SerSetting::new(&widget_type, SerValue::IntValue(s.int_value.value)),
-                    HS_INTEGER_RANGE_TYPE => SerSetting::new(&widget_type, SerValue::IntValue(s.int_value.value)),
-                    HS_BOOL_TYPE => SerSetting::new(&widget_type, SerValue::BoolValue(s.bool_value.value)),
-                    t => {
-                        warn!("Setting id {} unknown {}", t, widget_type);
-                        SerSetting::new("", SerValue::NoSetting)
+                println!("id {}", widget_type);
+
+                let t = unsafe {
+                    match s.int_value.base.widget_type as u32 {
+                        HS_FLOAT_TYPE => {
+                            SerSetting::new(&widget_type, SerValue::FloatValue(s.float_value.value))
+                        }
+                        HS_INTEGER_TYPE => {
+                            SerSetting::new(&widget_type, SerValue::IntValue(s.int_value.value))
+                        }
+                        HS_INTEGER_RANGE_TYPE => {
+                            SerSetting::new(&widget_type, SerValue::IntValue(s.int_value.value))
+                        }
+                        HS_BOOL_TYPE => {
+                            SerSetting::new(&widget_type, SerValue::BoolValue(s.bool_value.value))
+                        }
+                        HS_STRING_RANGE_TYPE => {
+                            let value_us = CStr::from_ptr(s.string_fixed_value.value);
+                            let value = value_us.to_string_lossy().to_string();
+                            SerSetting::new(&widget_type, SerValue::StrValue(value))
+                        }
+                        t => {
+                            warn!("Setting id {} unknown {}", t, widget_type);
+                            SerSetting::new("", SerValue::NoSetting)
+                        }
                     }
-                }};
+                };
 
                 ser_settings.push(t);
             }
@@ -160,8 +185,8 @@ impl PlaybackSettings {
             }
 
             if !ser_settings.settings.is_empty() {
-               ser_settings.plugin_name = plugin_name.to_owned();
-               ser_plugin_settings.push(ser_settings);
+                ser_settings.plugin_name = plugin_name.to_owned();
+                ser_plugin_settings.push(ser_settings);
             }
         }
 
@@ -194,7 +219,7 @@ impl PlaybackSettings {
 
     fn find_id<'a>(data: &'a mut Settings, id: &str) -> Option<&'a mut HSSetting> {
         for s in &mut data.fields {
-            let widget_id = unsafe { CStr::from_ptr(s.int_value.base.name) };
+            let widget_id = unsafe { CStr::from_ptr(s.int_value.base.widget_id) };
             let widget_type = widget_id.to_string_lossy();
 
             if id == widget_type {
@@ -205,13 +230,40 @@ impl PlaybackSettings {
         None
     }
 
+    fn get_string_range_value(s: &HSSetting, name: &str) -> *const c_char {
+        let slice: &[crate::ffi::HSStringRangeValue] = unsafe {
+            slice::from_raw_parts(
+                s.string_fixed_value.values as *const _,
+                s.string_fixed_value.values_count as usize,
+            )
+        };
+
+        for v in slice {
+            let sel = unsafe { CStr::from_ptr(v.value) };
+            let sel_name = sel.to_string_lossy();
+
+            dbg!("trying to match {} - {}", &sel_name, &name);
+
+            if sel_name == name {
+            	dbg!("found!");
+            	return v.value;
+            }
+        }
+
+        std::ptr::null()
+    }
+
     fn patch_data(data: &mut Settings, input_data: &Vec<SerSetting>) {
         for input in input_data {
             if let Some(wd) = Self::find_id(data, &input.id) {
                 match input.value {
                     SerValue::FloatValue(v) => wd.float_value.value = v,
                     SerValue::IntValue(v) => wd.int_value.value = v,
-                    SerValue::BoolValue(v) => wd.bool_value.value =v,
+                    SerValue::BoolValue(v) => wd.bool_value.value = v,
+                    SerValue::StrValue(ref v) => {
+                    	dbg!("str value {}", v);
+                        wd.string_fixed_value.value = Self::get_string_range_value(wd, &v)
+                    }
                     SerValue::NoSetting => (),
                 }
             } else {
@@ -239,7 +291,10 @@ impl PlaybackSettings {
             if let Some(ps) = self.settings.get_mut(&s.plugin_name) {
                 Self::patch_data(ps, &s.settings);
             } else {
-                warn!("Plugin {} not loaded, setting will be dropped", s.plugin_name);
+                warn!(
+                    "Plugin {} not loaded, setting will be dropped",
+                    s.plugin_name
+                );
             }
         }
     }
@@ -292,7 +347,6 @@ pub unsafe extern "C" fn get_string(
     id: *const c_char,
     value: *mut *const c_char,
 ) -> HippoSettingsError {
-
     if let Some(setting) = find_setting(priv_data, id) {
         *value = setting.string_fixed_value.value;
         HippoSettingsError_Ok
@@ -349,24 +403,27 @@ pub unsafe extern "C" fn register_settings_thread(
     _settings: *const HSSetting,
     _count: c_int,
 ) -> HippoSettingsError {
-	warn!("Registering settings not supported from audio thread");
-	HippoSettingsError_DuplicatedId
+    warn!("Registering settings not supported from audio thread");
+    HippoSettingsError_DuplicatedId
 }
 
-unsafe fn find_setting_thread<'a>(priv_data: *mut c_void, id: *const c_char) -> Option<&'a HSSetting> {
+unsafe fn find_setting_thread<'a>(
+    priv_data: *mut c_void,
+    id: *const c_char,
+) -> Option<&'a HSSetting> {
     let find_id = CStr::from_ptr(id);
     let search_id = find_id.to_string_lossy();
 
     let settings: &Vec<HSSetting> = &*(priv_data as *const Vec<HSSetting>);
 
-	for s in settings {
-		let widget_id = CStr::from_ptr(s.int_value.base.widget_id);
-		let widget_type = widget_id.to_string_lossy();
+    for s in settings {
+        let widget_id = CStr::from_ptr(s.int_value.base.widget_id);
+        let widget_type = widget_id.to_string_lossy();
 
-		if widget_type == search_id {
-			return Some(s);
-		}
-	}
+        if widget_type == search_id {
+            return Some(s);
+        }
+    }
 
     None
 }
@@ -377,7 +434,6 @@ pub unsafe extern "C" fn get_string_thread(
     id: *const c_char,
     value: *mut *const c_char,
 ) -> HippoSettingsError {
-
     if let Some(setting) = find_setting_thread(priv_data, id) {
         *value = setting.string_fixed_value.value;
         HippoSettingsError_Ok
@@ -429,13 +485,12 @@ pub unsafe extern "C" fn get_bool_thread(
 }
 
 pub fn get_threaded_callback(callback_data: *const c_void) -> crate::ffi::HippoSettingsAPI {
-	crate::ffi::HippoSettingsAPI {
-		priv_data: callback_data as *mut _,
-		register_settings: Some(register_settings_thread),
-		get_string: Some(get_string_thread),
-		get_int: Some(get_int_thread),
-		get_float: Some(get_float_thread),
-		get_bool: Some(get_bool_thread),
-	}
+    crate::ffi::HippoSettingsAPI {
+        priv_data: callback_data as *mut _,
+        register_settings: Some(register_settings_thread),
+        get_string: Some(get_string_thread),
+        get_int: Some(get_int_thread),
+        get_float: Some(get_float_thread),
+        get_bool: Some(get_bool_thread),
+    }
 }
-
