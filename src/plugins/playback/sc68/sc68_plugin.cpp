@@ -205,7 +205,7 @@ static void* sc68_plugin_create(const struct HippoServiceAPI* service_api) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int sc68_plugin_open(void* user_data, const char* buffer, int subsong) {
+static int sc68_plugin_open(void* user_data, const char* buffer, int subsong, const HippoSettingsAPI*) {
     uint64_t size = 0;
     void* load_data = nullptr;
     Sc68Plugin* data = (Sc68Plugin*)user_data;
@@ -313,7 +313,6 @@ static HippoPlaybackPlugin g_sc68_plugin_plugin = {
     sc68_plugin_plugin_seek,
     sc68_plugin_metadata,
     sc68_plugin_static_init,
-    NULL,
     NULL,
 };
 

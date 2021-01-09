@@ -111,7 +111,8 @@ static int vgm_destroy(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int vgm_open(void* user_data, const char* buffer, int subsong) {
+static int vgm_open(void* user_data, const char* buffer, int subsong, const struct HippoSettingsAPI* settings) {
+    (void)settings;
 	// TODO: Add reader functions etc to be used instead of fopen as file may come from zip, etc
 
 	struct VgmReplayerData* replayer_data = (struct VgmReplayerData*)user_data;
@@ -303,8 +304,7 @@ static HippoPlaybackPlugin g_vgm_plugin = {
 	vgm_seek,
 	vgm_metadata,
 	vgm_set_log,
-	NULL,
-	NULL,
+	nullptr,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

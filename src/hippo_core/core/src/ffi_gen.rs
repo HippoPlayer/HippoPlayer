@@ -91,7 +91,7 @@ pub const HS_FLOAT_TYPE: u32 = 4096;
 pub const HS_INTEGER_TYPE: u32 = 4097;
 pub const HS_BOOL_TYPE: u32 = 4098;
 pub const HS_INTEGER_RANGE_TYPE: u32 = 4099;
-pub const HS_STRING_RANGE_TYPE: u32 = 4099;
+pub const HS_STRING_RANGE_TYPE: u32 = 4100;
 pub const HIPPO_SETTINGS_API_VERSION: u32 = 1;
 pub const HIPPO_FILE_API_VERSION: u32 = 1;
 pub const HippoMetadata_TitleTag: &'static [u8; 6usize] = b"title\0";
@@ -107,6 +107,7 @@ pub const HippoMetadata_SamplesTag: &'static [u8; 8usize] = b"sample_\0";
 pub const HippoMetadata_InstrumentsTag: &'static [u8; 12usize] = b"instrument_\0";
 pub const HIPPO_METADATA_API_VERSION: u32 = 1;
 pub const HIPPO_LOG_API_VERSION: u32 = 1;
+pub const FOOBAR: u32 = 2;
 pub const HIPPO_PLAYBACK_PLUGIN_API_VERSION: u32 = 1;
 pub const HIPPO_MESSAGE_API_VERSION: u32 = 1;
 pub type __u_char = ::std::os::raw::c_uchar;
@@ -189,17 +190,17 @@ pub type uintmax_t = __uintmax_t;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct HSBase {
-    pub widget_type: ::std::os::raw::c_int,
-    pub widget_id: ::std::os::raw::c_int,
+    pub widget_id: *const ::std::os::raw::c_char,
     pub name: *const ::std::os::raw::c_char,
     pub desc: *const ::std::os::raw::c_char,
+    pub widget_type: ::std::os::raw::c_int,
 }
 #[doc = ""]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct HSFloat {
     pub base: HSBase,
-    pub start_value: f32,
+    pub value: f32,
     pub start_range: f32,
     pub end_range: f32,
 }
@@ -208,7 +209,7 @@ pub struct HSFloat {
 #[derive(Debug, Copy, Clone)]
 pub struct HSInteger {
     pub base: HSBase,
-    pub start_value: ::std::os::raw::c_int,
+    pub value: ::std::os::raw::c_int,
     pub start_range: ::std::os::raw::c_int,
     pub end_range: ::std::os::raw::c_int,
 }
@@ -261,7 +262,7 @@ pub union HSSetting {
     pub int_fixed_value: HSIntegerFixedRange,
     pub string_fixed_value: HSStringFixedRange,
     pub bool_value: HSBool,
-    _bindgen_union_align: [u64; 6usize],
+    _bindgen_union_align: [u64; 7usize],
 }
 pub const HippoSettingsError_Ok: HippoSettingsError = 0;
 pub const HippoSettingsError_NotFound: HippoSettingsError = 1;
@@ -274,15 +275,7 @@ pub type HippoSettingsError = u32;
 #[derive(Debug, Copy, Clone)]
 pub struct HippoSettingsAPI {
     pub priv_data: *mut ::std::os::raw::c_void,
-    pub register_filetype_settings: ::std::option::Option<
-        unsafe extern "C" fn(
-            priv_data: *mut ::std::os::raw::c_void,
-            name: *const ::std::os::raw::c_char,
-            settings: *const HSSetting,
-            count: ::std::os::raw::c_int,
-        ) -> HippoSettingsError,
-    >,
-    pub register_global_settings: ::std::option::Option<
+    pub register_settings: ::std::option::Option<
         unsafe extern "C" fn(
             priv_data: *mut ::std::os::raw::c_void,
             name: *const ::std::os::raw::c_char,
@@ -293,23 +286,33 @@ pub struct HippoSettingsAPI {
     pub get_string: ::std::option::Option<
         unsafe extern "C" fn(
             priv_data: *mut ::std::os::raw::c_void,
-            id: ::std::os::raw::c_int,
-            value: *mut ::std::os::raw::c_char,
-            max_len: ::std::os::raw::c_int,
+            ext: *const ::std::os::raw::c_char,
+            id: *const ::std::os::raw::c_char,
+            value: *mut *const ::std::os::raw::c_char,
         ) -> HippoSettingsError,
     >,
     pub get_int: ::std::option::Option<
         unsafe extern "C" fn(
             priv_data: *mut ::std::os::raw::c_void,
-            id: ::std::os::raw::c_int,
+            ext: *const ::std::os::raw::c_char,
+            id: *const ::std::os::raw::c_char,
             value: *mut ::std::os::raw::c_int,
         ) -> HippoSettingsError,
     >,
     pub get_float: ::std::option::Option<
         unsafe extern "C" fn(
             priv_data: *mut ::std::os::raw::c_void,
-            id: ::std::os::raw::c_int,
+            ext: *const ::std::os::raw::c_char,
+            id: *const ::std::os::raw::c_char,
             value: *mut f32,
+        ) -> HippoSettingsError,
+    >,
+    pub get_bool: ::std::option::Option<
+        unsafe extern "C" fn(
+            priv_data: *mut ::std::os::raw::c_void,
+            ext: *const ::std::os::raw::c_char,
+            id: *const ::std::os::raw::c_char,
+            value: *mut bool,
         ) -> HippoSettingsError,
     >,
 }
@@ -630,8 +633,9 @@ pub struct HippoPlaybackPlugin {
     pub open: ::std::option::Option<
         unsafe extern "C" fn(
             user_data: *mut ::std::os::raw::c_void,
-            buffer: *const ::std::os::raw::c_char,
+            url: *const ::std::os::raw::c_char,
             subsong: ::std::os::raw::c_int,
+            settings: *const HippoSettingsAPI,
         ) -> ::std::os::raw::c_int,
     >,
     pub close: ::std::option::Option<
@@ -660,13 +664,10 @@ pub struct HippoPlaybackPlugin {
     pub static_init: ::std::option::Option<
         unsafe extern "C" fn(log: *mut HippoLogAPI, services: *const HippoServiceAPI),
     >,
-    pub register_settings: ::std::option::Option<
-        unsafe extern "C" fn(settings: *const HippoSettingsAPI) -> ::std::os::raw::c_int,
-    >,
-    pub update_settings: ::std::option::Option<
+    pub settings_updated: ::std::option::Option<
         unsafe extern "C" fn(
             user_data: *mut ::std::os::raw::c_void,
             settings: *const HippoSettingsAPI,
-        ) -> ::std::os::raw::c_int,
+        ),
     >,
 }

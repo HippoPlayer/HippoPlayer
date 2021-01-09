@@ -9,7 +9,6 @@ use walkdir::{DirEntry, WalkDir};
 //use hippo_api::ffi::{CHippoPlaybackPlugin};
 use crate::service_ffi::PluginService;
 use crate::service_ffi::ServiceApi;
-use crate::PlaybackSettings;
 use logger::*;
 
 #[derive(Debug, Clone)]
@@ -30,7 +29,7 @@ pub struct HippoPlaybackPluginFFI {
     pub destroy: unsafe extern "C" fn(user_data: *mut c_void) -> i32,
     pub event: Option<unsafe extern "C" fn(user_data: *mut c_void, data: *const u8, len: i32)>,
 
-    pub open: unsafe extern "C" fn(user_data: *mut c_void, buffer: *const c_char, subsong: i32) -> i32,
+    pub open: unsafe extern "C" fn(user_data: *mut c_void, buffer: *const c_char, subsong: i32, *const ffi::HippoSettingsAPI) -> i32,
     pub close: unsafe extern "C" fn(user_data: *mut c_void) -> i32,
     pub read_data: unsafe extern "C" fn(
         user_data: *mut c_void,
@@ -42,8 +41,8 @@ pub struct HippoPlaybackPluginFFI {
     pub metadata: Option<
         unsafe extern "C" fn(buffer: *const i8, services: *const ffi::HippoServiceAPI) -> i32,
     >,
-    pub update_settings: Option<
-        unsafe extern "C" fn(user_data: *mut c_void, settings_api: *const ffi::HippoSettingsAPI) -> i32,
+    pub settings_updated: Option<
+        unsafe extern "C" fn(user_data: *mut c_void, settings_api: *const ffi::HippoSettingsAPI),
     >,
 }
 
@@ -156,28 +155,12 @@ impl Plugins {
                 read_data: native_plugin.read_data.unwrap(),
                 seek: native_plugin.seek.unwrap(),
                 metadata: native_plugin.metadata,
-                update_settings: native_plugin.update_settings,
+                settings_updated: native_plugin.settings_updated,
             };
 
             trace!("Loaded playback plugin {} {}", plugin_funcs.name, plugin_funcs.version);
 
             if let Some(static_init) = native_plugin.static_init {
-                // To prepare for settings setup we get the supported extensions and register
-                // them with the settings api
-
-                let extensions = unsafe { (plugin_funcs.supported_extensions)() };
-
-                if extensions == std::ptr::null() {
-                    warn!("Plugin {}: No extensions returned. This will cause settings to not work correct", plugin_funcs.name);
-                } else {
-                    unsafe {
-                        let settings_api = ((*service_api).get_settings_api.unwrap())((*service_api).private_data, 0);
-                        let ps: &mut PlaybackSettings = &mut *((*settings_api).priv_data as *mut PlaybackSettings);
-                        let ext = CStr::from_ptr(extensions).to_string_lossy();
-                        ps.register_file_extensions(&plugin_funcs.name, &ext);
-                    }
-                }
-
                 // TODO: Memory leak
                 let name = format!("{} {}", plugin_funcs.name, plugin_funcs.version);
                 let c_name = CString::new(name).unwrap();

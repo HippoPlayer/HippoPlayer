@@ -1,6 +1,7 @@
 use anyhow::*;
 use logger::*;
 use song_db::SongDb;
+use std::ffi::CStr;
 use std::ffi::CString;
 use std::fs;
 use std::fs::File;
@@ -10,9 +11,9 @@ use std::time::Instant;
 
 mod audio;
 mod core_config;
+mod playback_settings;
 mod playlist;
 mod plugin_handler;
-mod playback_settings;
 
 pub mod ffi;
 mod service;
@@ -20,11 +21,13 @@ pub mod service_ffi;
 
 use audio::HippoAudio;
 use core_config::CoreConfig;
+use ffi::HSSetting;
 use messages::*;
+use playback_settings::PlaybackSettings;
 use playlist::Playlist;
 use plugin_handler::Plugins;
 use service_ffi::{PluginService, ServiceApi};
-use playback_settings::PlaybackSettings;
+use std::slice;
 
 use std::io::Read;
 
@@ -321,7 +324,7 @@ fn init_config_dir() -> Result<PathBuf> {
     }
 
     error!("Unable to create data directory for user");
-    Err(anyhow!("Unable to init output dir for genertaed files!"))
+    Err(anyhow!("Unable to init output dir for generated files!"))
 }
 
 #[no_mangle]
@@ -332,13 +335,6 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
     let song_db = Box::into_raw(Box::new(SongDb::new("songdb.db").unwrap()));
     let playback_settings = Box::into_raw(Box::new(PlaybackSettings::new()));
     let service = service_ffi::PluginService::new(song_db, playback_settings);
-
-    if let Ok(output_dir) = config_dir {
-        logger::init_file_log(&output_dir);
-        if let Ok(cfg) = CoreConfig::load(&output_dir, "global.cfg") {
-            config = cfg;
-        }
-    }
 
     // TODO: We should do better error handling here
     // This to enforce we load relative to the current exe
@@ -357,6 +353,16 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
     let mut plugins = Plugins::new();
 
     plugins.add_plugins_from_path(service.c_service_api);
+
+    if let Ok(output_dir) = config_dir {
+        let ps: &mut PlaybackSettings = unsafe { &mut *playback_settings };
+        logger::init_file_log(&output_dir);
+        // load plugins config after plugins has been loaded
+        ps.load(&output_dir, "plugins.cfg");
+        if let Ok(cfg) = CoreConfig::load(&output_dir, "global.cfg") {
+            config = cfg;
+        }
+    }
 
     // sort plugins according to priority order
 
@@ -395,7 +401,6 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
         std::env::set_current_dir(current_path).unwrap();
     }
 
-
     let mut core = Box::new(HippoCore {
         error_string: None,
         config: config,
@@ -427,12 +432,16 @@ pub extern "C" fn hippo_core_new() -> *const HippoCore {
 pub extern "C" fn hippo_core_drop(core: *mut HippoCore) {
     let mut core = unsafe { Box::from_raw(core) };
     let _ = unsafe { Box::from_raw(core.song_db as *mut SongDb) };
+    let playback_settings =
+        unsafe { Box::from_raw(core.playback_settings as *mut PlaybackSettings) };
 
     let config_dir = init_config_dir();
+
     core.config.audio_device = core.audio.device_name.to_owned();
 
     if let Ok(output_dir) = config_dir {
         // TODO: Fix me
+        playback_settings.write(&output_dir, "plugins.cfg").unwrap();
         core.config.write(&output_dir, "global.cfg").unwrap();
     }
 
@@ -477,7 +486,9 @@ pub unsafe extern "C" fn hippo_init_audio_device(_core: *mut HippoCore) -> *cons
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn hippo_service_api_new(core: *mut HippoCore) -> *const ffi::HippoServiceAPI {
+pub unsafe extern "C" fn hippo_service_api_new(
+    core: *mut HippoCore,
+) -> *const ffi::HippoServiceAPI {
     let core = &mut *core;
     PluginService::new_c_api(core.song_db, core.playback_settings)
 }
@@ -532,21 +543,156 @@ pub unsafe extern "C" fn hippo_playlist_get(
                 let entry = &core.playlist.entries[row as usize].title;
                 *len = entry.len() as i32;
                 entry.as_ptr()
-            },
+            }
 
             1 => {
                 let entry = &core.playlist.entries[row as usize].duration_string;
                 *len = entry.len() as i32;
                 entry.as_ptr()
-            },
+            }
 
             2 => {
                 let entry = &core.playlist.entries[row as usize].song_type;
                 *len = entry.len() as i32;
                 entry.as_ptr()
-            },
+            }
 
             _ => std::ptr::null(),
         }
+    }
+}
+
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct PluginInfo {
+    name: *const u8,
+    name_len: i32,
+    version: *const u8,
+    version_len: i32,
+    library: *const u8,
+    library_len: i32,
+}
+
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct PluginSettings {
+    settings: *const HSSetting,
+    settings_count: i32,
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn hippo_get_playback_plugin_info(
+    core: *mut HippoCore,
+    index: i32,
+) -> PluginInfo {
+    let core = &mut *core;
+    let mut info = PluginInfo {
+        name: std::ptr::null(),
+        name_len: 0,
+        version: std::ptr::null(),
+        version_len: 0,
+        library: std::ptr::null(),
+        library_len: 0,
+    };
+
+    if index >= 0 && core.plugins.decoder_plugins.len() > index as usize {
+        let plugin = &core.plugins.decoder_plugins[index as usize];
+        info.name = plugin.plugin_funcs.name.as_ptr();
+        info.name_len = plugin.plugin_funcs.name.len() as i32;
+        info.version = plugin.plugin_funcs.version.as_ptr();
+        info.version_len = plugin.plugin_funcs.version.len() as i32;
+        info.library = plugin.plugin_funcs.library_version.as_ptr();
+        info.library_len = plugin.plugin_funcs.library_version.len() as i32;
+    }
+
+    info
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn hippo_get_playback_plugin_settings(
+    core: *mut HippoCore,
+    plugin_name: *const c_char,
+) -> PluginSettings {
+    let core = &mut *core;
+
+    let plugin_id = CStr::from_ptr(plugin_name);
+    let id = plugin_id.to_string_lossy().to_string();
+
+    let mut info = PluginSettings {
+        settings: std::ptr::null(),
+        settings_count: 0,
+    };
+
+    let plugins_settings =
+        crate::service_ffi::get_playback_settings(core.plugin_service.c_service_api);
+
+    if let Some(ps) = plugins_settings.settings.get(&id) {
+        info.settings = ps.fields.as_ptr();
+        info.settings_count = ps.fields.len() as i32;
+    }
+
+    info
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn hippo_playback_settings_updated(
+    core: *mut HippoCore,
+    plugin_name: *const c_char,
+    plugin_settings: *const PluginSettings,
+) {
+    let core = &mut *core;
+
+    let plugin_id = CStr::from_ptr(plugin_name);
+    let id = plugin_id.to_string_lossy().to_string();
+    let info = slice::from_raw_parts(
+        (*plugin_settings).settings,
+        (*plugin_settings).settings_count as usize,
+    );
+
+    // !CRITICAL PATH! As audio playback also uses this lock, make sure to have it conteded as short time as possible
+
+    let data_callback: &audio::DataCallback = std::mem::transmute(core.audio.data_callback);
+
+    {
+        let mut pb = data_callback.playback.lock().unwrap();
+
+        // if we have no players just bail
+        if pb.players.is_empty() {
+            return;
+        }
+
+        // TODO: Check if active player is what we tweaked, else bail (may need to check all players here)
+        if pb.players[0].plugin.plugin_funcs.name != id {
+            return;
+        }
+
+        // Current tweaked plugin is the active one, copy over the settings data and marked it as active
+        // TODO: Slice copy
+
+        pb.updated_settings.clear();
+
+        for s in info {
+            pb.updated_settings.push(*s);
+        }
+
+        pb.settings_active = true;
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn hippo_playback_settings_reset(
+    core: *mut HippoCore,
+    plugin_name: *const c_char,
+) {
+    let core = &mut *core;
+
+    let plugin_id = CStr::from_ptr(plugin_name);
+    let id = plugin_id.to_string_lossy().to_string();
+
+    let plugins_settings =
+        crate::service_ffi::get_playback_settings(core.plugin_service.c_service_api);
+
+    if let Some(ps) = plugins_settings.settings.get_mut(&id) {
+    	ps.reset();
     }
 }

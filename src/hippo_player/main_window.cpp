@@ -50,7 +50,7 @@ MainWindow::MainWindow(HippoCore* core) : QMainWindow(0), m_core(core) {
     layout->QLayout::addWidget(m_docking_manager);
 
     m_console = new ConsoleView(m_general_messages, nullptr);
-    m_prefs_dialog = new PrefsDialog(m_general_messages);
+    m_prefs_dialog = new PrefsDialog(m_core, m_general_messages);
 
     m_docking_manager->addToolWindow(m_console, FastDock::NewFloatingArea,
                                      FastDock::ToolWindowProperty::HideOnClose);

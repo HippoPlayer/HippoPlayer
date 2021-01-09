@@ -47,7 +47,7 @@ static int mp3_destroy(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int mp3_open(void* user_data, const char* filename, int subsong) {
+static int mp3_open(void* user_data, const char* filename, int subsong, const struct HippoSettingsAPI* api) {
     struct ReplayerData* data = (struct ReplayerData*)user_data;
 
 	// TODO: Use IO APIs
@@ -165,7 +165,6 @@ static HippoPlaybackPlugin s_mp3_plugin = {
     mp3_seek,
     mp3_metadata,
     mp3_static_init,
-    NULL,
     NULL,
 };
 

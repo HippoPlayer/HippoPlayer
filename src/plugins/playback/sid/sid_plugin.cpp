@@ -89,7 +89,7 @@ static int sid_destroy(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int sid_open(void* user_data, const char* buffer, int subsong) {
+static int sid_open(void* user_data, const char* buffer, int subsong, const HippoSettingsAPI*) {
     SidReplayerData* data = (SidReplayerData*)user_data;
 
     SidTune* tune = new SidTune(buffer);
@@ -265,7 +265,6 @@ static HippoPlaybackPlugin g_sid_plugin = {
     sid_seek,
     sid_metadata,
     sid_static_init,
-    nullptr,
     nullptr,
 };
 

@@ -78,10 +78,11 @@ static void* mdx_plugin_create(const struct HippoServiceAPI* services) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int mdx_plugin_open(void* user_data, const char* buffer, int subsong) {
+static int mdx_plugin_open(void* user_data, const char* buffer, int subsong, const struct HippoSettingsAPI* settings) {
     char dir_name[4096];
     MDXPlugin* plugin = (MDXPlugin*)user_data;
 
+	(void)settings;
     (void)subsong;
 
     get_dirname(buffer, dir_name);
@@ -199,7 +200,6 @@ static HippoPlaybackPlugin g_mdx_plugin = {
     mdx_plugin_plugin_seek,
     mdx_metadata,
     mdx_static_init,
-    NULL,
     NULL,
 };
 

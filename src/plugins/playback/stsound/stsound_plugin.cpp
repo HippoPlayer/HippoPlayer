@@ -51,10 +51,12 @@ static int stsound_destroy(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int stsound_open(void* user_data, const char* filename, int subsong) {
+static int stsound_open(void* user_data, const char* filename, int subsong, const struct HippoSettingsAPI* api) {
     uint64_t size = 0;
     void* file_data;
     struct ReplayerData* data = (struct ReplayerData*)user_data;
+
+    (void)api;
 
     HippoIoErrorCode res = HippoIo_read_file_to_memory(g_io_api, filename, &file_data, &size);
 
@@ -205,8 +207,7 @@ static HippoPlaybackPlugin g_stsound_plugin = {
     stsound_seek,
     stsound_metadata,
     stsound_static_init,
-    NULL,
-    NULL,
+    nullptr,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

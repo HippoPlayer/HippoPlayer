@@ -6,24 +6,24 @@
 #define HS_INTEGER_TYPE 0x1001
 #define HS_BOOL_TYPE 0x1002
 #define HS_INTEGER_RANGE_TYPE 0x1003
-#define HS_STRING_RANGE_TYPE 0x1003
+#define HS_STRING_RANGE_TYPE 0x1004
 
 #define HIPPO_SETTINGS_API_VERSION 1
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef struct HSBase {
-    int widget_type;
-    int widget_id;
+    const char* widget_id;
     const char* name;
     const char* desc;
+    int widget_type;
 } HSBase;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef struct HSFloat {
     HSBase base;
-    float start_value;
+    float value;
     float start_range;
     float end_range;
 } HSFloat;
@@ -32,7 +32,7 @@ typedef struct HSFloat {
 
 typedef struct HSInteger {
     HSBase base;
-    int start_value;
+    int value;
     int start_range;
     int end_range;
 } HSInteger;
@@ -59,6 +59,7 @@ typedef struct HSStringRangeValue {
 } HSStringRangeValue;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// start of this layout has to match HSInteger
 
 typedef struct HSIntegerFixedRange {
     HSBase base;
@@ -89,29 +90,33 @@ typedef union HSSetting {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define hp_sizeof_array(x) sizeof(x) / sizeof(x[0])
-#define HSIntValue(id, name, desc, value)                               \
-    {                                                                   \
-        .int_value = { HS_INTEGER_TYPE, id, name, desc, value, -1, ~0 } \
+#define HSIntValue(id, name, desc, value)                             \
+    {                                                                 \
+        .int_value = { id, name, desc, HS_INTEGER_TYPE, value, 0, 0 } \
     }
-#define HSFloatValue(id, name, desc, value)                                  \
-    {                                                                        \
-        .float_value = { HS_FLOAT_TYPE, id, name, desc, value, 0.0f, 10.0f } \
+#define HSFloatValue(id, name, desc, value)                                 \
+    {                                                                       \
+        .float_value = { id, name, desc, HS_FLOAT_TYPE, value, 0.0f, 0.0f } \
+    }
+#define HSFloatValue_Range(id, name, desc, value, start, end)               \
+    {                                                                       \
+        .float_value = { id, name, desc, HS_FLOAT_TYPE, value, start, end } \
     }
 #define HSBoolValue(id, name, desc, value)                    \
     {                                                         \
-        .bool_value = { HS_BOOL_TYPE, id, name, desc, value } \
+        .bool_value = { id, name, desc, HS_BOOL_TYPE, value } \
     }
 #define HSIntValue_Range(id, name, desc, value, min, max)                 \
     {                                                                     \
-        .int_value = { HS_INTEGER_TYPE, id, name, desc, value, min, max } \
+        .int_value = { id, name, desc, HS_INTEGER_TYPE, value, min, max } \
     }
 #define HSIntValue_DescRange(id, name, desc, value, ranges) \
     {                                                       \
         .int_fixed_value = {                                \
-            HS_INTEGER_RANGE_TYPE,                          \
             id,                                             \
             name,                                           \
             desc,                                           \
+            HS_INTEGER_RANGE_TYPE,                          \
             value,                                          \
             (HSIntegerRangeValue*)&ranges,                  \
             hp_sizeof_array(ranges)                         \
@@ -120,10 +125,10 @@ typedef union HSSetting {
 #define HSStringValue_DescRange(id, name, desc, value, ranges) \
     {                                                          \
         .string_fixed_value = {                                \
-            HS_STRING_RANGE_TYPE,                              \
             id,                                                \
             name,                                              \
             desc,                                              \
+            HS_STRING_RANGE_TYPE,                              \
             value,                                             \
             (HSStringRangeValue*)&ranges,                      \
             hp_sizeof_array(ranges)                            \
@@ -145,18 +150,16 @@ typedef struct HippoSettingsAPI {
     void* priv_data;
 
     // Register the settings to be used for the playback plugin
-    HippoSettingsError (*register_filetype_settings)(void* priv_data, const char* name, const HSSetting* settings,
-                                                     int count);
-    HippoSettingsError (*register_global_settings)(void* priv_data, const char* name, const HSSetting* settings,
-                                                   int count);
+    HippoSettingsError (*register_settings)(void* priv_data, const char* name, const HSSetting* settings, int count);
 
     // This will be used to allow structring the layout a bit better
-    //HippoSettingsError (*layout_hints)(void* priv_data, void* data);
+    // HippoSettingsError (*layout_hints)(void* priv_data, void* data);
 
     // access settings
-    HippoSettingsError (*get_string)(void* priv_data, int id, char* value, int max_len);
-    HippoSettingsError (*get_int)(void* priv_data, int id, int* value);
-    HippoSettingsError (*get_float)(void* priv_data, int id, float* value);
+    HippoSettingsError (*get_string)(void* priv_data, const char* ext, const char* id, char** value);
+    HippoSettingsError (*get_int)(void* priv_data, const char* ext, const char* id, int* value);
+    HippoSettingsError (*get_float)(void* priv_data, const char* ext, const char* id, float* value);
+    HippoSettingsError (*get_bool)(void* priv_data, const char* ext, const char* id, bool* value);
 
     // Update settings
     // HippoSettingError (*set_string)(void* priv_data, int id, char* value);
@@ -164,19 +167,30 @@ typedef struct HippoSettingsAPI {
     // HippoSettingError (*set_float)(void* priv_data, int id, int* value);
 
     // makes it possible to disable / enable a control
-    //HippoSettingsError (*enable_ctl)(void* priv_data, int id, bool state);
+    // HippoSettingsError (*enable_ctl)(void* priv_data, int id, bool state);
 
     // get the last error (null if no error)
-    //const char* (*get_last_error)(void* priv_data);
+    // const char* (*get_last_error)(void* priv_data);
 
 } HippoRegisterSettingsAPI;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define HippoSettings_register_filetype_settings(api, name, settings) \
-    api->register_filetype_settings(api->priv_data, name, (HSSetting*)&settings, hp_sizeof_array(settings))
+#define HippoSettings_register_settings(api, name, settings) \
+    api->register_settings(api->priv_data, name, (HSSetting*)&settings, hp_sizeof_array(settings))
 
-#define HippoSettings_register_global_settings(api, name, settings) \
-    api->register_global_settings(api->priv_data, name, (HSSetting*)&settings, hp_sizeof_array(settings))
+#define HippoSettings_get_string(api, ext, id, value) \
+    api->get_string(api->priv_data, ext, id, value)
+
+#define HippoSettings_get_int(api, ext, id, value) \
+    api->get_int(api->priv_data, ext, id, value)
+
+#define HippoSettings_get_float(api, ext, id, value) \
+    api->get_float(api->priv_data, ext, id, value)
+
+#define HippoSettings_get_bool(api, ext, id, value) \
+    api->get_bool(api->priv_data, ext, id, value)
+
+
 
 // #define HippoSettings_get_last_error(api) api->get_last_error(api->priv_data)

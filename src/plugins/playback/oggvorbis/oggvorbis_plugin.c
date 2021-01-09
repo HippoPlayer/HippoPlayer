@@ -50,8 +50,10 @@ static int oggvorbis_destroy(void* user_data) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int oggvorbis_open(void* user_data, const char* filename, int subsong) {
+static int oggvorbis_open(void* user_data, const char* filename, int subsong, const struct HippoSettingsAPI* api) {
     struct ReplayerData* data = (struct ReplayerData*)user_data;
+
+    (void)api;
 
 	// TODO: Use IO APIs
     if (ov_fopen(filename, &data->song) < 0) {
@@ -170,7 +172,6 @@ static HippoPlaybackPlugin s_oggvorbis_plugin = {
     oggvorbis_seek,
     oggvorbis_metadata,
     oggvorbis_static_init,
-    NULL,
     NULL,
 };
 

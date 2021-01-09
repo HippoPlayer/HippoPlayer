@@ -104,7 +104,7 @@ static ASAP* open_asap(const char* filename, const struct HippoIoAPI* io) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int asap_open(void* user_data, const char* filename, int subsong) {
+static int asap_open(void* user_data, const char* filename, int subsong, const struct HippoSettingsAPI* api) {
     struct ReplayerData* data = (struct ReplayerData*)user_data;
 
     if (!(data->song = open_asap(filename, g_io_api))) {
@@ -282,7 +282,6 @@ static HippoPlaybackPlugin g_asap_plugin = {
     asap_seek,
     asap_metadata,
     asap_static_init,
-    NULL,
     NULL,
 };
 

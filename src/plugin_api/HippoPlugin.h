@@ -377,14 +377,13 @@ typedef struct HippoPlaybackPlugin {
 	void* (*create)(const HippoServiceAPI* services);
 	int (*destroy)(void* user_data);
 	void (*event)(void* user_data, const unsigned char* data, int len);
-	int (*open)(void* user_data, const char* buffer, int subsong);
+	int (*open)(void* user_data, const char* url, int subsong, const struct HippoSettingsAPI* settings);
 	int (*close)(void* user_data);
 	HippoReadInfo (*read_data)(void* user_data, void* dest, uint32_t max_output_bytes, uint32_t native_sample_rate);
 	int (*seek)(void* user_data, int ms);
 	int (*metadata)(const char* url, const HippoServiceAPI* services);
 	void (*static_init)(struct HippoLogAPI* log, const HippoServiceAPI* services);
-	int (*register_settings)(const struct HippoSettingsAPI* settings);
-	int (*update_settings)(void* user_data, const struct HippoSettingsAPI* settings);
+	void (*settings_updated)(void* user_data, const struct HippoSettingsAPI* settings);
 } HippoPlaybackPlugin;
 
 #define FOOBAR 2
