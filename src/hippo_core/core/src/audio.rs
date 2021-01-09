@@ -158,7 +158,7 @@ unsafe extern "C" fn data_callback(
 
     {
         // miniaudio will clear the buffer so we don't have to do it here
-        let pb = data.playback.lock().unwrap();
+        let mut pb = data.playback.lock().unwrap();
         if pb.players.len() == 0 {
             return;
         }
@@ -183,6 +183,7 @@ unsafe extern "C" fn data_callback(
 			}
 
 			dest_data[0..len].copy_from_slice(&pb.updated_settings[0..len]);
+			pb.settings_active = false;
 		}
     }
 
