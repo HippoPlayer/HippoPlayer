@@ -317,14 +317,14 @@ pub struct HippoSettingsAPI {
     >,
 }
 pub type HippoRegisterSettingsAPI = HippoSettingsAPI;
-pub const HippoProbeResult_HippoProbeResult_Supported: HippoProbeResult = 0;
-pub const HippoProbeResult_HippoProbeResult_Unsupported: HippoProbeResult = 1;
-pub const HippoProbeResult_HippoProbeResult_Unsure: HippoProbeResult = 2;
+pub const HippoProbeResult_Supported: HippoProbeResult = 0;
+pub const HippoProbeResult_Unsupported: HippoProbeResult = 1;
+pub const HippoProbeResult_Unsure: HippoProbeResult = 2;
 #[doc = ""]
 pub type HippoProbeResult = u32;
-pub const HippoFileSeek_HippoFileSeek_Start: HippoFileSeek = 0;
-pub const HippoFileSeek_HippoFileSeek_Current: HippoFileSeek = 1;
-pub const HippoFileSeek_HippoFileSeek_End: HippoFileSeek = 2;
+pub const HippoFileSeek_Start: HippoFileSeek = 0;
+pub const HippoFileSeek_Current: HippoFileSeek = 1;
+pub const HippoFileSeek_End: HippoFileSeek = 2;
 pub type HippoFileSeek = u32;
 pub type HippoIoHandle = *mut ::std::os::raw::c_void;
 #[repr(C)]
@@ -396,11 +396,11 @@ pub struct HippoIoAPI {
 pub struct HippoMetadataAPIPrivData {
     _unused: [u8; 0],
 }
-pub const HippoMetaEncoding_HippoMetaEncoding_UTF8: HippoMetaEncoding = 0;
-pub const HippoMetaEncoding_HippoMetaEncoding_ShiftJS2: HippoMetaEncoding = 1;
+pub const HippoMetaEncoding_UTF8: HippoMetaEncoding = 0;
+pub const HippoMetaEncoding_ShiftJS2: HippoMetaEncoding = 1;
 pub type HippoMetaEncoding = u32;
-pub const HippoMetadataResult_HippoMetadataResult_KeyNotFound: HippoMetadataResult = 0;
-pub const HippoMetadataResult_HippoMetadataResult_UnableToMakeQuery: HippoMetadataResult = -1;
+pub const HippoMetadataResult_KeyNotFound: HippoMetadataResult = 0;
+pub const HippoMetadataResult_UnableToMakeQuery: HippoMetadataResult = -1;
 pub type HippoMetadataResult = i32;
 pub type HippoMetadataId = u64;
 #[doc = ""]
@@ -488,10 +488,10 @@ pub struct HippoMetadataAPI {
         ) -> ::std::os::raw::c_int,
     >,
 }
-pub const HippoSettingResult_HippoSettingsResult_Ok: HippoSettingResult = 0;
-pub const HippoSettingResult_HippoSettingsResult_SettingNotFound: HippoSettingResult = 1;
-pub const HippoSettingResult_HippoSettingsResult_KeyNotFound: HippoSettingResult = 2;
-pub const HippoSettingResult_HippoSettingsResult_InvalidType: HippoSettingResult = 3;
+pub const HippoSettingsResult_Ok: HippoSettingResult = 0;
+pub const HippoSettingsResult_SettingNotFound: HippoSettingResult = 1;
+pub const HippoSettingsResult_KeyNotFound: HippoSettingResult = 2;
+pub const HippoSettingsResult_InvalidType: HippoSettingResult = 3;
 #[doc = ""]
 pub type HippoSettingResult = u32;
 #[doc = ""]
@@ -600,6 +600,9 @@ pub struct HippoReadInfo {
     pub channel_count: u8,
     pub output_format: u8,
 }
+pub const HippoSettingsUpdate_Default: HippoSettingsUpdate = 0;
+pub const HippoSettingsUpdate_RequireSongRestart: HippoSettingsUpdate = 1;
+pub type HippoSettingsUpdate = u32;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct HippoPlaybackPlugin {
@@ -668,6 +671,6 @@ pub struct HippoPlaybackPlugin {
         unsafe extern "C" fn(
             user_data: *mut ::std::os::raw::c_void,
             settings: *const HippoSettingsAPI,
-        ),
+        ) -> HippoSettingsUpdate,
     >,
 }

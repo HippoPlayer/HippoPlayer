@@ -405,6 +405,15 @@ static void adplug_static_init(struct HippoLogAPI* log, const struct HippoServic
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static HippoSettingsUpdate adplug_settings_updated(void* user_data, const HippoSettingsAPI* settings) {
+    (void)user_data;
+    (void)settings;
+    // TODO: Support seeking
+    return HippoSettingsUpdate_RequireSongRestart;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 extern "C" void AdPlug_LogWrite(const char* fmt, ...) {
     /*
     char buffer[2048];

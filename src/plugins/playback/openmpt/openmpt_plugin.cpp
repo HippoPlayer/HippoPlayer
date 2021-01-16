@@ -273,7 +273,7 @@ static void send_pattern_data(struct OpenMptData* replayer_data) {
 static void settings_apply(OpenMptData* data, const HippoSettingsAPI* api) {
     int int_value = 0;
     float float_value = 0;
-    char* str = nullptr;
+    const char* str = nullptr;
     bool bool_value = false;
     const char* ext = data->ext.c_str();
 

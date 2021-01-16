@@ -1,14 +1,15 @@
 use logger::*;
 use messages::*;
 use miniaudio::{Device, Devices};
+use std::time::Instant;
 
+use crate::ffi::{HSSetting, HippoSettingsUpdate_Default};
+use crate::playback_settings;
 use crate::plugin_handler::DecoderPlugin;
 use miniaudio::{DataConverter, DataConverterConfig, Format, ResampleAlgorithm};
 use std::ffi::CString;
 use std::os::raw::c_void;
 use std::sync::Mutex;
-use crate::ffi::HSSetting;
-use crate::playback_settings;
 
 use crate::service_ffi::PluginService;
 //use ringbuf::{Consumer, Producer, RingBuffer};
@@ -27,6 +28,7 @@ pub struct Playback {
     pub players: Vec<HippoPlayback>,
     pub updated_settings: Vec<HSSetting>,
     pub settings_active: bool,
+    pub updated_time: Option<Instant>,
 }
 
 pub struct DataCallback {
@@ -53,19 +55,19 @@ impl DataCallback {
             input_output_sample_rate,
             input_output_sample_rate,
             ResampleAlgorithm::Linear {
-            	lpf_order: 1,
-            	lpf_nyquist_factor: 1.0,
-            }
-            //ResampleAlgorithm::Speex { quality: 3 },
+                lpf_order: 1,
+                lpf_nyquist_factor: 1.0,
+            }, //ResampleAlgorithm::Speex { quality: 3 },
         );
 
-		let update_settings = unsafe { Box::new(vec![std::mem::zeroed::<HSSetting>(); 256]) };
+        let update_settings = unsafe { Box::new(vec![std::mem::zeroed::<HSSetting>(); 256]) };
 
         Box::new(DataCallback {
             playback: Mutex::new(Playback {
                 players: Vec::<HippoPlayback>::new(),
                 updated_settings: Vec::with_capacity(256),
                 settings_active: false,
+                updated_time: None,
             }),
             mix_buffer: vec![0; 48000 * 32 * 4], // mix buffer of 48k, 32ch * int, should be enough for temp
             temp_gen: vec![0; 48000 * 32 * 4], // mix buffer of 48k, 32ch * int, should be enough for temp
@@ -109,11 +111,17 @@ impl HippoPlayback {
         let ps = crate::service_ffi::get_playback_settings(plugin_service.c_service_api);
         ps.selected_id = (plugin.plugin_funcs).name.to_owned();
 
-        let settings_api = crate::service_ffi::get_playback_settings_c(plugin_service.c_service_api);
+        let settings_api =
+            crate::service_ffi::get_playback_settings_c(plugin_service.c_service_api);
 
         //let frame_size = (((plugin.plugin_funcs).frame_size)(ptr_user_data)) as usize;
         let open_state = unsafe {
-            ((plugin.plugin_funcs).open)(ptr_user_data, c_filename.as_ptr(), subsong_index, settings_api)
+            ((plugin.plugin_funcs).open)(
+                ptr_user_data,
+                c_filename.as_ptr(),
+                subsong_index,
+                settings_api,
+            )
         };
 
         if open_state < 0 {
@@ -165,35 +173,45 @@ unsafe extern "C" fn data_callback(
 
         playback = pb.players[0].clone();
 
-		if playback.is_paused {
-			return;
-		}
+        if playback.is_paused {
+            return;
+        }
 
-		// if we have some settings copy them over
+        // if we have some settings copy them over
 
-		if pb.settings_active {
-			settings_data = data.updated_settings;
-			let dest_data: &mut Vec<HSSetting> = std::mem::transmute(data.updated_settings);
+        if pb.settings_active {
+            settings_data = data.updated_settings;
+            let dest_data: &mut Vec<HSSetting> = std::mem::transmute(data.updated_settings);
 
-			let mut len = pb.updated_settings.len();
-			// TODO: Constant
-			if len >= 256 {
-				warn!("Settings has over 256 entries! clamping");
-				len = 255;
-			}
+            let mut len = pb.updated_settings.len();
+            // TODO: Constant
+            if len >= 256 {
+                warn!("Settings has over 256 entries! clamping");
+                len = 255;
+            }
 
-			dest_data[0..len].copy_from_slice(&pb.updated_settings[0..len]);
-			pb.settings_active = false;
-		}
+            dest_data[0..len].copy_from_slice(&pb.updated_settings[0..len]);
+            pb.settings_active = false;
+        }
     }
 
     // now we can apply settings to the playback if we have any
 
     if settings_data != std::ptr::null_mut() {
-    	let callback = playback_settings::get_threaded_callback(settings_data as *const _);
-		if let Some(update_callback) = (playback.plugin.plugin_funcs).settings_updated {
-			(update_callback)(playback.plugin_user_data as *mut c_void, &callback as *const _);
-		}
+        let callback = playback_settings::get_threaded_callback(settings_data as *const _);
+        if let Some(update_callback) = (playback.plugin.plugin_funcs).settings_updated {
+            if (update_callback)(
+                playback.plugin_user_data as *mut c_void,
+                &callback as *const _,
+            ) == HippoSettingsUpdate_Default
+            {
+                // No need to track time if we live tweak everything
+                let mut pb = data.playback.lock().unwrap();
+                pb.updated_time = None;
+            } else {
+                println!("setting tweak requires restart");
+            }
+        }
     }
 
     // calculate the output frame size
@@ -211,92 +229,100 @@ unsafe extern "C" fn data_callback(
 
     // if we have decoded enough data we can just copy it
     if (data.read_index + frames_to_read) <= data.frames_decoded {
-    	//println!("[COPY ALL]  Remaining from last offset {} size {} ", data.read_index, frames_to_read);
+        //println!("[COPY ALL]  Remaining from last offset {} size {} ", data.read_index, frames_to_read);
         output.copy_from_slice(&data.mix_buffer[data.read_index..data.read_index + frames_to_read]);
         data.read_index += frames_to_read;
         return;
     }
-	// else we need to copy what we have left, decode new frame(s) and put that into the output buffer
-	let diff = data.frames_decoded - data.read_index;
+    // else we need to copy what we have left, decode new frame(s) and put that into the output buffer
+    let diff = data.frames_decoded - data.read_index;
 
-	if diff != 0 {
-		let read_end = data.read_index + diff;
-		//println!("[COPY]     Remaining from last offset {} size {} ", data.read_index, diff);
-		// copy the remaining stored data
-		output[0..diff].copy_from_slice(&data.mix_buffer[data.read_index..read_end]);
-	}
+    if diff != 0 {
+        let read_end = data.read_index + diff;
+        //println!("[COPY]     Remaining from last offset {} size {} ", data.read_index, diff);
+        // copy the remaining stored data
+        output[0..diff].copy_from_slice(&data.mix_buffer[data.read_index..read_end]);
+    }
 
-	let mut write_offset = diff;
+    let mut write_offset = diff;
 
-	//println!("[WRITE ST] {}", write_offset);
+    //println!("[WRITE ST] {}", write_offset);
 
-	// Start produce new frames to fill up the whole buffer
-	loop {
-		let data_left = frames_to_read - write_offset;
+    // Start produce new frames to fill up the whole buffer
+    loop {
+        let data_left = frames_to_read - write_offset;
 
-		//println!("data left to generate {} (bytes) frames {}", data_left, data_left / frame_stride);
+        //println!("data left to generate {} (bytes) frames {}", data_left, data_left / frame_stride);
 
-		let info = ((playback.plugin.plugin_funcs).read_data)(
-			playback.plugin_user_data as *mut c_void,
-			data.temp_gen.as_mut_ptr() as *mut _,
-			data.temp_gen.len() as u32,
-			output_sample_rate);
+        let info = ((playback.plugin.plugin_funcs).read_data)(
+            playback.plugin_user_data as *mut c_void,
+            data.temp_gen.as_mut_ptr() as *mut _,
+            data.temp_gen.len() as u32,
+            output_sample_rate,
+        );
 
-		let read_format = Format::from_c(info.output_format as u32);
-		let frames_read = info.sample_count;// * info.channel_count as u16;
+        let read_format = Format::from_c(info.output_format as u32);
+        let frames_read = info.sample_count; // * info.channel_count as u16;
 
-		// TODO: proper handling of this
-		if frames_read == 0 {
-			break;
-		}
+        // TODO: proper handling of this
+        if frames_read == 0 {
+            break;
+        }
 
-		//println!("updating converter with channel count {}, format {:#?} sample rate {}",
-		//	info.channel_count, read_format, info.sample_rate);
+        //println!("updating converter with channel count {}, format {:#?} sample rate {}",
+        //	info.channel_count, read_format, info.sample_rate);
 
-		// update the data converter with the current format (will re-init if needed)
-		data.converter.update(info.channel_count, read_format, info.sample_rate);
+        // update the data converter with the current format (will re-init if needed)
+        data.converter
+            .update(info.channel_count, read_format, info.sample_rate);
 
-		// We calculate how how much data we will generate with the converter.
-		let frames_out = data.converter.expected_output_frame_count(frames_read as _) as usize;
-		let expected_output = frames_out * frame_stride;
+        // We calculate how how much data we will generate with the converter.
+        let frames_out = data.converter.expected_output_frame_count(frames_read as _) as usize;
+        let expected_output = frames_out * frame_stride;
 
-		//println!("[GEN]      Expected output frames {} from input {}", frames_out, frames_read);
+        //println!("[GEN]      Expected output frames {} from input {}", frames_out, frames_read);
 
-		// if we are about to generate more frames than we have place for in the output buffer
-		// we generate them to a temporary mix buffer, copy the part we need and will copy the rest during the next update.
-		if expected_output >= data_left {
-			data.converter.process_pcm_frames(
-				data.mix_buffer.as_mut_ptr() as *mut _,
-				data.temp_gen.as_ptr() as *const _,
-				frames_out,
-				frames_read as _).unwrap();
-			//println!("{:#?}", p);
+        // if we are about to generate more frames than we have place for in the output buffer
+        // we generate them to a temporary mix buffer, copy the part we need and will copy the rest during the next update.
+        if expected_output >= data_left {
+            data.converter
+                .process_pcm_frames(
+                    data.mix_buffer.as_mut_ptr() as *mut _,
+                    data.temp_gen.as_ptr() as *const _,
+                    frames_out,
+                    frames_read as _,
+                )
+                .unwrap();
+            //println!("{:#?}", p);
 
-			output[write_offset..].copy_from_slice(&data.mix_buffer[0..data_left]);
-			data.read_index = data_left;
-			data.frames_decoded = expected_output;
+            output[write_offset..].copy_from_slice(&data.mix_buffer[0..data_left]);
+            data.read_index = data_left;
+            data.frames_decoded = expected_output;
 
-			//println!("[GEN BR]   Generate to temp size {}", expected_output);
-			//println!("[GEN BR]   Copy frome slice to offset {} - len {}", write_offset, data_left);
+            //println!("[GEN BR]   Generate to temp size {}", expected_output);
+            //println!("[GEN BR]   Copy frome slice to offset {} - len {}", write_offset, data_left);
 
-			break;
-		} else {
-			//println!("[GEN]      Generate to output offset {} - size {}", write_offset, expected_output);
+            break;
+        } else {
+            //println!("[GEN]      Generate to output offset {} - size {}", write_offset, expected_output);
 
-			// if here we haven't filled up the buffer just yet, copy what we have and processed to decode another frame
-			let offset_end = write_offset + expected_output;
+            // if here we haven't filled up the buffer just yet, copy what we have and processed to decode another frame
+            let offset_end = write_offset + expected_output;
 
-			data.converter.process_pcm_frames(
-				output[write_offset..offset_end].as_mut_ptr() as *mut _,
-				data.temp_gen.as_ptr() as *const _,
-				frames_out,
-				frames_read as _).unwrap();
+            data.converter
+                .process_pcm_frames(
+                    output[write_offset..offset_end].as_mut_ptr() as *mut _,
+                    data.temp_gen.as_ptr() as *const _,
+                    frames_out,
+                    frames_read as _,
+                )
+                .unwrap();
 
-			write_offset += expected_output;
-		}
-	}
+            write_offset += expected_output;
+        }
+    }
 
-	/*
+    /*
     let mut file = std::fs::OpenOptions::new()
         .write(true)
         .append(true)
@@ -322,6 +348,7 @@ impl HippoAudio {
     }
 
     pub fn stop(&mut self) {
+        // TODO: Call playback destruction of data
         let data_callback: &DataCallback = unsafe { std::mem::transmute(self.data_callback) };
         let mut pb = data_callback.playback.lock().unwrap();
         pb.players.clear();
@@ -480,7 +507,11 @@ impl HippoAudio {
         );
 
         let data_callback: &mut DataCallback = unsafe { std::mem::transmute(self.data_callback) };
-        data_callback.converter.update_output(device.channels() as u8, device.format(), device.sample_rate());
+        data_callback.converter.update_output(
+            device.channels() as u8,
+            device.format(),
+            device.sample_rate(),
+        );
 
         device.start()
     }

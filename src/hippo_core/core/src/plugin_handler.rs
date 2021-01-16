@@ -42,7 +42,7 @@ pub struct HippoPlaybackPluginFFI {
         unsafe extern "C" fn(buffer: *const i8, services: *const ffi::HippoServiceAPI) -> i32,
     >,
     pub settings_updated: Option<
-        unsafe extern "C" fn(user_data: *mut c_void, settings_api: *const ffi::HippoSettingsAPI),
+        unsafe extern "C" fn(user_data: *mut c_void, settings_api: *const ffi::HippoSettingsAPI) -> u32,
     >,
 }
 

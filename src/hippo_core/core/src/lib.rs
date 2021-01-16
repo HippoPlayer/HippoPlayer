@@ -155,6 +155,17 @@ impl HippoCore {
 
             if self.current_song_time <= 0.0 {
                 self.playlist.next_song();
+            } else {
+                let data_callback: &audio::DataCallback = unsafe { std::mem::transmute(self.audio.data_callback) };
+                let mut pb = data_callback.playback.lock().unwrap();
+
+                if let Some(tweak_time) = pb.updated_time {
+                    let delta = (current_time - tweak_time).as_secs_f32();
+                    if delta >= 0.5 {
+                        self.playlist.restart_song();
+                        pb.updated_time = None;
+                    }
+                }
             }
         }
 
@@ -676,6 +687,12 @@ pub unsafe extern "C" fn hippo_playback_settings_updated(
         }
 
         pb.settings_active = true;
+        // We store the time here so it's possible to not reload the current song directly
+        // This is useful if user drags a slider so it doesn't restart all the time but after
+        // n secs (like 0.5)
+        pb.updated_time = Some(std::time::Instant::now());
+
+        dbg!(pb.updated_time);
     }
 }
 
