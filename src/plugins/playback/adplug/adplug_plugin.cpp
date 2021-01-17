@@ -114,6 +114,7 @@ struct AdplugPlugin {
     COPLprops* emu_core = nullptr;
     CPlayer* player = nullptr;
     int to_add = 0;
+    int sample_rate;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -198,7 +199,8 @@ static COPLprops* create_adlib_surround(Core core, uint16_t srate) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-COPLprops* create_core(const struct HippoSettingsAPI* api) {
+COPLprops* create_core(AdplugPlugin* plugin, const struct HippoSettingsAPI* api) {
+
     COPLprops* core = nullptr;
     int sample_rate = 49716;
     int channels = (int)Channels::Stereo;
@@ -226,6 +228,8 @@ COPLprops* create_core(const struct HippoSettingsAPI* api) {
         };
     }
 
+    plugin->sample_rate = sample_rate;
+
     return core;
 }
 
@@ -234,7 +238,7 @@ COPLprops* create_core(const struct HippoSettingsAPI* api) {
 static int adplug_open(void* user_data, const char* url, int subsong, const struct HippoSettingsAPI* settings) {
     AdplugPlugin* plugin = (AdplugPlugin*)user_data;
 
-    plugin->emu_core = create_core(settings);
+    plugin->emu_core = create_core(plugin, settings);
 
     // TODO: File io api
     plugin->player = CAdPlug::factory(url, plugin->emu_core->opl);
@@ -294,8 +298,11 @@ static HippoReadInfo adplug_read_data(void* user_data, void* dest, uint32_t max_
     int towrite = 0;
     char* sndbufpos = (char*)dest;
     const int buffer_size = 2048;
-    const int sampsize = 4;  // 16-bit & stereo
-    const int freq = 49716;
+    int sampsize = 4;  // 16-bit & stereo
+
+    if (!plugin->emu_core->stereo) {
+        sampsize = 2;
+    }
 
     uint16_t samples_to_read = hippo_min(max_output_bytes / 4, buffer_size);
 
@@ -304,7 +311,7 @@ static HippoReadInfo adplug_read_data(void* user_data, void* dest, uint32_t max_
 
     while (towrite > 0) {
         while (plugin->to_add < 0) {
-            plugin->to_add += freq;
+            plugin->to_add += plugin->sample_rate;
             plugin->player->update();
         }
         i = min_t(towrite, (int)(plugin->to_add / plugin->player->getrefresh() + 4) & ~3);
@@ -315,7 +322,7 @@ static HippoReadInfo adplug_read_data(void* user_data, void* dest, uint32_t max_
         plugin->to_add -= (int)max_t(1, i);
     }
 
-    return HippoReadInfo{freq, samples_to_read, 2, HippoOutputType_s16};
+    return HippoReadInfo { (uint16_t)plugin->sample_rate, samples_to_read, 2, HippoOutputType_s16 };
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -451,7 +458,7 @@ static HippoPlaybackPlugin g_adplug_plugin = {
     adplug_plugin_seek,
     adplug_metadata,
     adplug_static_init,
-    nullptr,
+    adplug_settings_updated,
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
