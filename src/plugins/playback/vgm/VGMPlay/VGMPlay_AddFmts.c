@@ -117,7 +117,7 @@ extern INT32 VGMSmplPlayed;
 extern INT32 VGMSampleRate;
 extern UINT32 BlocksSent;
 extern UINT32 BlocksPlayed;
-bool VGMEnd;
+bool VGMEnd2;
 extern bool EndPlay;
 extern bool PausePlay;
 extern bool FadePlay;
@@ -586,7 +586,7 @@ void InterpretOther(UINT32 SampleCount)
 	bool NoteOn;
 	UINT8 OpMask;
 
-	if (VGMEnd)
+	if (VGMEnd2)
 		return;
 	if (PausePlay && ! ForceVGMExec)
 		return;
@@ -718,11 +718,11 @@ void InterpretOther(UINT32 SampleCount)
 							if (CMFMaxLoop && VGMCurLoop >= CMFMaxLoop)
 								FadePlay = true;
 							if (FadePlay && ! FadeTime)
-								VGMEnd = true;
+								VGMEnd2 = true;
 						}
 						else
 						{
-							VGMEnd = true;
+							VGMEnd2 = true;
 							break;
 						}
 						break;
@@ -939,7 +939,7 @@ void InterpretOther(UINT32 SampleCount)
 			if (Command < 0xF0)
 				LastCmd = Command;
 
-			if (VGMEnd)
+			if (VGMEnd2)
 				break;
 		}
 		break;
@@ -1129,9 +1129,9 @@ DRO_CommandSwitch:
 					VGMHead.lngTotalSamples = VGMSmplPos;
 					ErrorHappened = true;
 				}
-				VGMEnd = true;
+				VGMEnd2 = true;
 			}
-			if (VGMEnd)
+			if (VGMEnd2)
 				break;
 		}
 		break;
