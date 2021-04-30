@@ -1,19 +1,17 @@
 #include "tracker_display.h"
-#include <QtGui/QPaintEvent>
-#include <QtWidgets/QScrollBar>
-#include <QtGui/QPainter>
 #include <QtCore/QDebug>
 #include <QtCore/QTimer>
+#include <QtGui/QPaintEvent>
+#include <QtGui/QPainter>
+#include <QtWidgets/QScrollBar>
 #include "../../../plugin_api/HippoMessages.h"
 
 #define COLOR_32(r, g, b) ((255 << 24) | (r << 16) | (g << 8) | b)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-TrackerDisplay::TrackerDisplay(QWidget* parent) :
-    QAbstractScrollArea(parent),
-    m_mono_font(QStringLiteral("DejaVu Sans Mono"), 8) {
-
+TrackerDisplay::TrackerDisplay(QWidget* parent)
+    : QAbstractScrollArea(parent), m_mono_font(QStringLiteral("DejaVu Sans Mono"), 8) {
     m_settings.line_spacing = 2;
     m_settings.track_text_pad = 4;
     m_settings.margin_spacing = 4;
@@ -21,14 +19,14 @@ TrackerDisplay::TrackerDisplay(QWidget* parent) :
     m_settings.instrument_color = COLOR_32(255, 200, 200);
     m_settings.effect_color = COLOR_32(200, 200, 255);
     m_settings.volume_color = COLOR_32(200, 255, 200);
-    //m_settings.display_mask = RowDisplay_Note;
+    // m_settings.display_mask = RowDisplay_Note;
     m_settings.display_mask = RowDisplay_All;
     m_row_count = 64;
 
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
-	setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
 
-	m_scroll_predict_time.invalidate();
+    m_scroll_predict_time.invalidate();
 
     /*
     QTimer* timer = new QTimer;
@@ -37,7 +35,7 @@ TrackerDisplay::TrackerDisplay(QWidget* parent) :
     timer->start();
     */
 
-	update_font_size();
+    update_font_size();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -75,8 +73,8 @@ void TrackerDisplay::update_font_size() {
         m_track_width += font_width * 2;
     }
 
-    //m_track_width = (metrics.horizontalAdvance('0') * 12) + m_settings.track_text_pad * 2;
-    //m_track_width = (metrics.horizontalAdvance('0') * 3) + m_settings.track_text_pad * 2;
+    // m_track_width = (metrics.horizontalAdvance('0') * 12) + m_settings.track_text_pad * 2;
+    // m_track_width = (metrics.horizontalAdvance('0') * 3) + m_settings.track_text_pad * 2;
     m_left_margin_width = (metrics.horizontalAdvance('0') * 3) + m_settings.margin_spacing * 2;
 }
 
@@ -85,31 +83,31 @@ void TrackerDisplay::update_font_size() {
 void TrackerDisplay::render_numbers(QPainter& painter, const QRegion& region) {
     QFontMetrics metrics(m_mono_font);
 
-	const QRect& rect = region.boundingRect();
+    const QRect& rect = region.boundingRect();
 
-	const int first_row = qBound(0, get_row_from_physical_y(qMax(rect.top(), m_top_margin_height)), m_row_count - 1);
-	const int last_row = qBound(0, get_row_from_physical_y(qMax(rect.bottom(), m_top_margin_height)), m_row_count - 1);
+    const int first_row = qBound(0, get_row_from_physical_y(qMax(rect.top(), m_top_margin_height)), m_row_count - 1);
+    const int last_row = qBound(0, get_row_from_physical_y(qMax(rect.bottom(), m_top_margin_height)), m_row_count - 1);
 
     const int pad_zeros = (first_row >= 100 || last_row >= 100) ? 3 : 2;
 
-	painter.setClipRect(QRectF(QPointF(0.0f, m_top_margin_height - 5.5f),
-	                           QPointF(m_left_margin_width - 0.5f, rect.bottom() + 1.0f)));
+    painter.setClipRect(
+        QRectF(QPointF(0.0f, m_top_margin_height - 5.5f), QPointF(m_left_margin_width - 0.5f, rect.bottom() + 1.0f)));
 
-	QRectF padding(QPointF(rect.left(), m_top_margin_height - 5.5f),
-	               QPointF(m_left_margin_width - 0.5f, rect.bottom() + 1.0f));
-	painter.fillRect(padding, QBrush(QColor(0, 0, 0)));
+    QRectF padding(QPointF(rect.left(), m_top_margin_height - 5.5f),
+                   QPointF(m_left_margin_width - 0.5f, rect.bottom() + 1.0f));
+    painter.fillRect(padding, QBrush(QColor(0, 0, 0)));
 
-	QPen gray(QColor(180, 180, 180));
-	QPen white(QColor(255, 255, 255));
-	QPen selection(QColor(200, 200, 0));
+    QPen gray(QColor(180, 180, 180));
+    QPen white(QColor(255, 255, 255));
+    QPen selection(QColor(200, 200, 0));
 
-	painter.setPen(QColor(180, 180, 180));
+    painter.setPen(QColor(180, 180, 180));
 
-	for (int row = first_row; row <= last_row; ++row) {
-		QRect left_margin(0, get_physical_y(row), m_left_margin_width, m_row_height);
+    for (int row = first_row; row <= last_row; ++row) {
+        QRect left_margin(0, get_physical_y(row), m_left_margin_width, m_row_height);
 
-		if (!region.intersects(left_margin))
-			continue;
+        if (!region.intersects(left_margin))
+            continue;
 
         const QString number = QString("%1").arg(row, pad_zeros, 10, QLatin1Char('0'));
 
@@ -129,12 +127,13 @@ void TrackerDisplay::render_numbers(QPainter& painter, const QRegion& region) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TrackerDisplay::render_track(QPainter& painter, const QRegion& region, int track, const HippoTrackerChannel* channel, bool last_track) {
-	const QRect& rect = region.boundingRect();
-	const int first_row = qBound(0, get_row_from_physical_y(qMax(rect.top(), m_top_margin_height)), m_row_count - 1);
-	const int last_row = qBound(0, get_row_from_physical_y(qMax(rect.bottom(), m_top_margin_height)), m_row_count - 1);
+void TrackerDisplay::render_track(QPainter& painter, const QRegion& region, int track,
+                                  const HippoTrackerChannel* channel, bool last_track) {
+    const QRect& rect = region.boundingRect();
+    const int first_row = qBound(0, get_row_from_physical_y(qMax(rect.top(), m_top_margin_height)), m_row_count - 1);
+    const int last_row = qBound(0, get_row_from_physical_y(qMax(rect.bottom(), m_top_margin_height)), m_row_count - 1);
 
-	auto rows_data = channel->row_data();
+    auto rows_data = channel->row_data();
 
     QFontMetrics metrics(m_mono_font);
     auto text_advance = metrics.horizontalAdvance('0');
@@ -144,14 +143,14 @@ void TrackerDisplay::render_track(QPainter& painter, const QRegion& region, int 
     QPen m_effect_color = QPen(QColor(m_settings.effect_color));
     QPen m_volume_color = QPen(QColor(m_settings.volume_color));
 
-	QPen grayDark(QColor(80, 80, 80));
-	QPen gray(QColor(180, 180, 180));
-	QPen white(QColor(255, 255, 255));
-	QPen selection(QColor(200, 200, 0, 127));
+    QPen grayDark(QColor(80, 80, 80));
+    QPen gray(QColor(180, 180, 180));
+    QPen white(QColor(255, 255, 255));
+    QPen selection(QColor(200, 200, 0, 127));
     QBrush selection_brusch(QColor(128, 128, 128, 128));
 
-	// Draw track separation line
-	const int start_y = get_physical_y(first_row);
+    // Draw track separation line
+    const int start_y = get_physical_y(first_row);
     const int end_y = get_physical_y(last_row + 1);
     const int x_pos = get_physical_x(track);
 
@@ -163,14 +162,14 @@ void TrackerDisplay::render_track(QPainter& painter, const QRegion& region, int 
         painter.drawLine(x_pos, start_y, x_pos, end_y);
     }
 
-	for (int row = first_row; row <= last_row; ++row) {
-		QRect pattern_data_rect(get_physical_x(track) + 2, get_physical_y(row), m_track_width, m_row_height);
-		QRect region_save = pattern_data_rect;
+    for (int row = first_row; row <= last_row; ++row) {
+        QRect pattern_data_rect(get_physical_x(track) + 2, get_physical_y(row), m_track_width, m_row_height);
+        QRect region_save = pattern_data_rect;
 
-		if (!region.intersects(pattern_data_rect))
-			continue;
+        if (!region.intersects(pattern_data_rect))
+            continue;
 
-		auto row_data = rows_data->Get(row);
+        auto row_data = rows_data->Get(row);
 
         /*
         if (row == m_current_row) {
@@ -191,8 +190,7 @@ void TrackerDisplay::render_track(QPainter& painter, const QRegion& region, int 
             continue;
         }
 
-        //pattern_data_rect.moveLeft(2);
-
+        // pattern_data_rect.moveLeft(2);
 
         // TODO: We should cache all of this
         QString note_text = QString::fromLatin1(row_data->note()->c_str(), row_data->note()->size());
@@ -232,9 +230,9 @@ void TrackerDisplay::render_track(QPainter& painter, const QRegion& region, int 
             painter.fillRect(region_save, selection_brusch);
         }
 
-        //QString(QStringLiteral("%1 %2 %3%4").arg(note, instrument, effect, voleffect)));
+        // QString(QStringLiteral("%1 %2 %3%4").arg(note, instrument, effect, voleffect)));
 
-        //painter.drawText(pattern_data_rect, QString(QStringLiteral("%1").arg(note)));
+        // painter.drawText(pattern_data_rect, QString(QStringLiteral("%1").arg(note)));
     }
 }
 
@@ -259,8 +257,8 @@ void TrackerDisplay::event(const unsigned char* data, int len) {
 
     auto channels = tracker_data->channels();
 
-	m_row_count = channels->Get(0)->row_data()->Length();
-	m_track_count = channels->Length();
+    m_row_count = channels->Get(0)->row_data()->Length();
+    m_track_count = channels->Length();
 
     set_playing_row(tracker_data->current_row());
 }
@@ -281,93 +279,96 @@ void TrackerDisplay::set_playing_row(int new_row) {
             float prev_step = m_desc_step;
             m_desc_step = float(m_row_height) / float(dt);
 
-            //printf("---------------------------------------------------\n");
-            //printf("  prev_step = %f\n", prev_step);
-            //printf("m_desc_step = %f\n", m_desc_step);
+            // printf("---------------------------------------------------\n");
+            // printf("  prev_step = %f\n", prev_step);
+            // printf("m_desc_step = %f\n", m_desc_step);
 
             m_smooth_scroll_step = (m_desc_step + prev_step) * 0.5f;
 
-            //printf("m_smooth_scroll_step = %f\n", m_smooth_scroll_step);
+            // printf("m_smooth_scroll_step = %f\n", m_smooth_scroll_step);
 
             if (new_row < m_current_row) {
                 m_smooth_scroll_step = -m_smooth_scroll_step;
             }
 
-            //m_smooth_scroll_step = 1.41f;
+            // m_smooth_scroll_step = 1.41f;
         }
     }
 
-	m_current_row = new_row;
+    m_current_row = new_row;
 
-	int y_scroll = ((m_current_row * m_row_height) - ((viewport()->height() - m_top_margin_height) / 2) + m_row_height / 2) + (int)m_smooth_scroll;
-	set_scroll_pos(m_scroll_pos_x, y_scroll);
+    int y_scroll =
+        ((m_current_row * m_row_height) - ((viewport()->height() - m_top_margin_height) / 2) + m_row_height / 2) +
+        (int)m_smooth_scroll;
+    set_scroll_pos(m_scroll_pos_x, y_scroll);
 
-	m_smooth_scroll += m_smooth_scroll_step;
+    m_smooth_scroll += m_smooth_scroll_step;
 
-	viewport()->update();
+    viewport()->update();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void TrackerDisplay::set_scroll_pos(int new_scroll_pos_x, int new_scroll_pos_y) {
-	new_scroll_pos_x = qMax(new_scroll_pos_x, 0);
+    new_scroll_pos_x = qMax(new_scroll_pos_x, 0);
 
-	if ((new_scroll_pos_x != m_scroll_pos_x) ||
-	    (new_scroll_pos_y != m_scroll_pos_y)) {
-		int dx = m_scroll_pos_x - new_scroll_pos_x;
-		int dy = m_scroll_pos_y - new_scroll_pos_y;
+    if ((new_scroll_pos_x != m_scroll_pos_x) || (new_scroll_pos_y != m_scroll_pos_y)) {
+        int dx = m_scroll_pos_x - new_scroll_pos_x;
+        int dy = m_scroll_pos_y - new_scroll_pos_y;
 
-		// update scrollPos
-		m_scroll_pos_x = new_scroll_pos_x;
-		m_scroll_pos_y = new_scroll_pos_y;
+        // update scrollPos
+        m_scroll_pos_x = new_scroll_pos_x;
+        m_scroll_pos_y = new_scroll_pos_y;
 
         QRect clip = viewport()->geometry();
 
-        if (dx == 0) clip.setTop(m_top_margin_height); // don't scroll the top margin
-        if (dy == 0) clip.setLeft(m_left_margin_width); // don't scroll the left margin
+        if (dx == 0)
+            clip.setTop(m_top_margin_height);  // don't scroll the top margin
+        if (dy == 0)
+            clip.setLeft(m_left_margin_width);  // don't scroll the left margin
 
-	    viewport()->scroll(dx, dy, clip);
-	}
+        viewport()->scroll(dx, dy, clip);
+    }
 
-	//horizontalScrollBar()->setValue(new_scroll_pos_x);
-	verticalScrollBar()->setValue(m_current_row);
+    // horizontalScrollBar()->setValue(new_scroll_pos_x);
+    verticalScrollBar()->setValue(m_current_row);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void TrackerDisplay::render_tracks(QPainter& painter, const QRegion& region) {
-	const QRect& rect = region.boundingRect();
+    const QRect& rect = region.boundingRect();
 
     const HippoMessage* message = GetHippoMessage(m_tracker_data);
     const HippoTrackerData* tracker_data = message->message_as_tracker_data();
 
-	const int start_track = qBound(0, get_track_from_physical_x(qMax(rect.left(), m_left_margin_width)), m_track_count);
-	const int end_track = qBound(0, get_track_from_physical_x(rect.right()) + 1, m_track_count);
+    const int start_track = qBound(0, get_track_from_physical_x(qMax(rect.left(), m_left_margin_width)), m_track_count);
+    const int end_track = qBound(0, get_track_from_physical_x(rect.right()) + 1, m_track_count);
 
-	painter.setClipRect(QRectF(QPointF(m_left_margin_width - 0.5f, m_top_margin_height - 0.5f),
-	                           QPointF(rect.right() + 1.0f, rect.bottom() + 1.0f)));
-	painter.fillRect(rect, QBrush(QColor(0, 0, 0)));
+    painter.setClipRect(QRectF(QPointF(m_left_margin_width - 0.5f, m_top_margin_height - 0.5f),
+                               QPointF(rect.right() + 1.0f, rect.bottom() + 1.0f)));
+    painter.fillRect(rect, QBrush(QColor(0, 0, 0)));
 
-	auto channels = tracker_data->channels();
+    auto channels = tracker_data->channels();
 
-	for (int track = start_track; track < end_track; ++track) {
-		render_track(painter, region, track, channels->Get(track), track == end_track - 1);
-	}
+    for (int track = start_track; track < end_track; ++track) {
+        render_track(painter, region, track, channels->Get(track), track == end_track - 1);
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void TrackerDisplay::paintEvent(QPaintEvent* event) {
-	QPainter painter(viewport());
-	painter.setFont(m_mono_font);
+    QPainter painter(viewport());
+    painter.setFont(m_mono_font);
 
-	// render numbers but no tracks if we don't have any data
+    // render numbers but no tracks if we don't have any data
 
     render_numbers(painter, event->region());
 
-	if (!m_tracker_data) {
-	    return;
-	}
+    if (!m_tracker_data) {
+        return;
+    }
 
     render_tracks(painter, event->region());
 }
@@ -375,8 +376,7 @@ void TrackerDisplay::paintEvent(QPaintEvent* event) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void TrackerDisplay::invalidate_left_margin_row(int row) {
-    QRect rect(QPoint(0, get_physical_y(row)),
-               QPoint(m_left_margin_width, get_physical_y(row + 1) - 1));
+    QRect rect(QPoint(0, get_physical_y(row)), QPoint(m_left_margin_width, get_physical_y(row + 1) - 1));
     viewport()->update(rect);
 }
 
@@ -395,14 +395,13 @@ void TrackerDisplay::test_change_row() {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void TrackerDisplay::setup_scroll_bars() {
-	verticalScrollBar()->setValue(m_current_row);
-	verticalScrollBar()->setMinimum(0);
-	verticalScrollBar()->setMaximum(m_row_count - 1);
-	verticalScrollBar()->setPageStep(1);
+    verticalScrollBar()->setValue(m_current_row);
+    verticalScrollBar()->setMinimum(0);
+    verticalScrollBar()->setMaximum(m_row_count - 1);
+    verticalScrollBar()->setPageStep(1);
 }
 
 void TrackerDisplay::resizeEvent(QResizeEvent* event) {
-	setup_scroll_bars();
-	viewport()->update();
+    setup_scroll_bars();
+    viewport()->update();
 }
-

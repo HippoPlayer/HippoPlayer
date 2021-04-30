@@ -80,8 +80,8 @@ enum class Core {
 static HSSetting s_settings[] = {
     HSIntValue_DescRange(ID_SAMPLE_RATE, "Sample rate",
                          "Default (recommended) uses the sample rate by the output device", 49716, s_sample_rate),
-    HSIntValue_DescRange(ID_CHANNELS, "Channels",
-                         "Default (recommended) uses the number of channels the current song has.", 0, s_channels),
+    //HSIntValue_DescRange(ID_CHANNELS, "Channels",
+    //                     "Default (recommended) uses the number of channels the current song has.", 0, s_channels),
     HSIntValue_DescRange(ID_ADLIB_CORE, "Adlib Core", "Select the Adlib core to be used", 0, s_core),
 };
 
