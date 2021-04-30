@@ -156,7 +156,7 @@ typedef struct HippoSettingsAPI {
     // HippoSettingsError (*layout_hints)(void* priv_data, void* data);
 
     // access settings
-    HippoSettingsError (*get_string)(void* priv_data, const char* ext, const char* id, char** value);
+    HippoSettingsError (*get_string)(void* priv_data, const char* ext, const char* id, const char** value);
     HippoSettingsError (*get_int)(void* priv_data, const char* ext, const char* id, int* value);
     HippoSettingsError (*get_float)(void* priv_data, const char* ext, const char* id, float* value);
     HippoSettingsError (*get_bool)(void* priv_data, const char* ext, const char* id, bool* value);

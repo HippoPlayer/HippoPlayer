@@ -367,6 +367,13 @@ typedef struct HippoReadInfo {
     uint8_t output_format;
 } HippoReadInfo;
 
+typedef enum HippoSettingsUpdate {
+    // Return if setting doesn't require restart
+    HippoSettingsUpdate_Default,
+    // Return of setting require song to be restarted
+    HippoSettingsUpdate_RequireSongRestart,
+} HippoSettingsUpdate;
+
 typedef struct HippoPlaybackPlugin {
 	uint64_t api_version;
 	const char* name;
@@ -383,7 +390,7 @@ typedef struct HippoPlaybackPlugin {
 	int (*seek)(void* user_data, int ms);
 	int (*metadata)(const char* url, const HippoServiceAPI* services);
 	void (*static_init)(struct HippoLogAPI* log, const HippoServiceAPI* services);
-	void (*settings_updated)(void* user_data, const struct HippoSettingsAPI* settings);
+	HippoSettingsUpdate (*settings_updated)(void* user_data, const struct HippoSettingsAPI* settings);
 } HippoPlaybackPlugin;
 
 #define FOOBAR 2

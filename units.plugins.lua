@@ -667,8 +667,9 @@ local adplug_opts = {
    { "/wd4267"; Config = "win64-*-*" },
 }
 
-SharedLibrary {
-	Name = "adplug",
+-- Split because of compilation issues with c++ latest on Windows
+StaticLibrary {
+    Name = "adplug_lib",
 
 	Env = {
 		CCOPTS = { adplug_opts },
@@ -686,12 +687,40 @@ SharedLibrary {
 	},
 
 	Sources = {
-		get_c_cpp_src("src/plugins/playback/adplug"),
+		get_c_cpp_src("src/plugins/playback/adplug/adplug_lib"),
+	},
+}
+
+SharedLibrary {
+	Name = "adplug",
+
+	Env = {
+		CCOPTS = { adplug_opts },
+		CXXOPTS = {
+		    adplug_opts,
+			{ "/std:c++latest"; Config = "win64-*-*" },
+		},
+	},
+
+	Includes = {
+	    "src/plugin_api",
+	    "src/plugins/playback/adplug/adplug_lib/libbinio/src",
+	    "src/plugins/playback/adplug/adplug_lib/src",
+	},
+
+	Defines = {
+        { "stricmp=strcasecmp" ; Config = { "linux-*-*", "mac*-*-*" } },
+	},
+
+	Sources = {
+		"src/plugins/playback/adplug/adplug_plugin.cpp",
 	},
 
 	Libs = {
 		{ "Wsock32.lib" ; Config = "win64-*-*" },
 	},
+
+	Depends = { "adplug_lib" },
 }
 
 -----------------------------------------------------------------------------------------------------------------------

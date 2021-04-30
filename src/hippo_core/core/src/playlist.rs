@@ -62,6 +62,13 @@ impl Playlist {
     }
 
     ///
+    /// Restart the current song
+    ///
+    pub fn restart_song(&mut self) {
+        self.new_song = true;
+    }
+
+    ///
     /// Advance a song in the songlist
     ///
     pub fn advance_song(&mut self, direction: isize) -> Option<Box<[u8]>> {
