@@ -691,8 +691,6 @@ pub unsafe extern "C" fn hippo_playback_settings_updated(
         // This is useful if user drags a slider so it doesn't restart all the time but after
         // n secs (like 0.5)
         pb.updated_time = Some(std::time::Instant::now());
-
-        dbg!(pb.updated_time);
     }
 }
 
