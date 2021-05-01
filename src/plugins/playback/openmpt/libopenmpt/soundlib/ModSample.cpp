@@ -52,7 +52,7 @@ void ModSample::Convert(MODTYPE fromType, MODTYPE toType)
 		RelativeTone = 0;
 	}
 
-	// No global volume sustain loops for MOD/S3M/XM
+	// No global volume / sustain loops for MOD/S3M/XM
 	if(toType & (MOD_TYPE_MOD | MOD_TYPE_XM | MOD_TYPE_S3M))
 	{
 		nGlobalVol = 64;
@@ -163,6 +163,27 @@ uint32 ModSample::GetSampleRate(const MODTYPE type) const
 	if(type == MOD_TYPE_MOD)
 		rate = Util::muldivr_unsigned(rate, 8272, 8363);
 	return (rate > 0) ? rate : 8363;
+}
+
+
+// Copies sample data from another sample slot and ensures that the 16-bit/stereo flags are set accordingly.
+bool ModSample::CopyWaveform(const ModSample &smpFrom)
+{
+	if(!smpFrom.HasSampleData())
+		return false;
+	// If we duplicate a sample slot, avoid deleting the sample we just copy from
+	if(smpFrom.sampleb() == sampleb())
+		pData.pSample = nullptr;
+	LimitMax(nLength, smpFrom.nLength);
+	uFlags.set(CHN_16BIT, smpFrom.uFlags[CHN_16BIT]);
+	uFlags.set(CHN_STEREO, smpFrom.uFlags[CHN_STEREO]);
+	if(AllocateSample())
+	{
+		memcpy(sampleb(), smpFrom.sampleb(), GetSampleSizeInBytes());
+		return true;
+	}
+	return false;
+
 }
 
 
@@ -457,22 +478,21 @@ void ModSample::TransposeToFrequency()
 }
 
 
-// Return tranpose.finetune as 25.7 fixed point value.
-int32 ModSample::FrequencyToTranspose(uint32 freq)
+// Return a pair of {tranpose, finetune}
+std::pair<int8, int8> ModSample::FrequencyToTranspose(uint32 freq)
 {
 	if(!freq)
-		return 0;
-	else
-		return mpt::saturate_round<int32>(std::log(freq * (1.0 / 8363.0)) * (12.0 * 128.0 * (1.0 / M_LN2)));
+		return {};
+
+	const auto f2t = mpt::saturate_round<int32>(std::log(freq * (1.0 / 8363.0)) * (12.0 * 128.0 * (1.0 / M_LN2)));
+	const auto fine = std::div(Clamp(f2t, -16384, 16383), int32(128));
+	return {static_cast<int8>(fine.quot), static_cast<int8>(fine.rem)};
 }
 
 
 void ModSample::FrequencyToTranspose()
 {
-	const int f2t = Clamp(FrequencyToTranspose(nC5Speed), -16384, 16383);
-	const auto fine = std::div(f2t, 128);
-	RelativeTone = static_cast<int8>(fine.quot);
-	nFineTune = static_cast<int8>(fine.rem);
+	std::tie(RelativeTone, nFineTune) = FrequencyToTranspose(nC5Speed);
 }
 
 
@@ -488,7 +508,7 @@ bool ModSample::HasCustomCuePoints() const
 {
 	if(!uFlags[CHN_ADLIB])
 	{
-		for(SmpLength i = 0; i < CountOf(cues); i++)
+		for(SmpLength i = 0; i < std::size(cues); i++)
 		{
 			if(cues[i] != (i + 1) << 11)
 				return true;

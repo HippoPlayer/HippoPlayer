@@ -11,53 +11,31 @@
 
 #include "BuildSettings.h"
 
-#include <vector> // some C++ header in order to have the C++ standard library version information available
+#if MPT_CXX_AT_LEAST(20)
+#include <version>
+#else // !C++20
+#include <array>
+#endif // C++20
 
 #if !MPT_PLATFORM_MULTITHREADED
-#define MPT_MUTEX_STD     0
-#define MPT_MUTEX_PTHREAD 0
-#define MPT_MUTEX_WIN32   0
-#elif MPT_OS_EMSCRIPTEN
-#define MPT_MUTEX_STD     0
-#define MPT_MUTEX_PTHREAD 0
-#define MPT_MUTEX_WIN32   0
+#define MPT_MUTEX_NONE 1
 #elif MPT_COMPILER_GENERIC
-#define MPT_MUTEX_STD     1
-#define MPT_MUTEX_PTHREAD 0
-#define MPT_MUTEX_WIN32   0
+#define MPT_MUTEX_STD 1
 #elif (defined(__MINGW32__) || defined(__MINGW64__)) && !defined(_GLIBCXX_HAS_GTHREADS) && defined(MPT_WITH_MINGWSTDTHREADS)
-#define MPT_MUTEX_STD     1
-#define MPT_MUTEX_PTHREAD 0
-#define MPT_MUTEX_WIN32   0
+#define MPT_MUTEX_STD 1
 #elif (defined(__MINGW32__) || defined(__MINGW64__)) && !defined(_GLIBCXX_HAS_GTHREADS)
-#define MPT_MUTEX_STD     0
-#define MPT_MUTEX_PTHREAD 0
-#define MPT_MUTEX_WIN32   1
-#elif MPT_COMPILER_MSVC
-#define MPT_MUTEX_STD     1
-#define MPT_MUTEX_PTHREAD 0
-#define MPT_MUTEX_WIN32   0
-#elif MPT_COMPILER_GCC
-#define MPT_MUTEX_STD     1
-#define MPT_MUTEX_PTHREAD 0
-#define MPT_MUTEX_WIN32   0
-#elif MPT_COMPILER_CLANG
-#define MPT_MUTEX_STD     1
-#define MPT_MUTEX_PTHREAD 0
-#define MPT_MUTEX_WIN32   0
-#elif MPT_OS_WINDOWS
-#define MPT_MUTEX_STD     0
-#define MPT_MUTEX_PTHREAD 0
-#define MPT_MUTEX_WIN32   1
+#define MPT_MUTEX_WIN32 1
 #else
-#define MPT_MUTEX_STD     0
-#define MPT_MUTEX_PTHREAD 1
-#define MPT_MUTEX_WIN32   0
+#define MPT_MUTEX_STD 1
 #endif
 
-#if !MPT_MUTEX_STD && !MPT_MUTEX_PTHREAD && !MPT_MUTEX_WIN32
-#define MPT_MUTEX_NONE 1
-#else
+#ifndef MPT_MUTEX_STD
+#define MPT_MUTEX_STD 0
+#endif
+#ifndef MPT_MUTEX_WIN32
+#define MPT_MUTEX_WIN32 0
+#endif
+#ifndef MPT_MUTEX_NONE
 #define MPT_MUTEX_NONE 0
 #endif
 
@@ -66,15 +44,13 @@
 #endif
 
 #if MPT_MUTEX_STD
-#if (defined(__MINGW32__) || defined(__MINGW64__)) && !defined(_GLIBCXX_HAS_GTHREADS) && defined(MPT_WITH_MINGWSTDTHREADS)
+#if !MPT_COMPILER_GENERIC && (defined(__MINGW32__) || defined(__MINGW64__)) && !defined(_GLIBCXX_HAS_GTHREADS) && defined(MPT_WITH_MINGWSTDTHREADS)
 #include <mingw.mutex.h>
 #else
 #include <mutex>
 #endif
 #elif MPT_MUTEX_WIN32
 #include <windows.h>
-#elif MPT_MUTEX_PTHREAD
-#include <pthread.h>
 #endif // MPT_MUTEX
 
 OPENMPT_NAMESPACE_BEGIN
@@ -110,44 +86,6 @@ public:
 	void lock() { EnterCriticalSection(&impl); }
 	bool try_lock() { return TryEnterCriticalSection(&impl) ? true : false; }
 	void unlock() { LeaveCriticalSection(&impl); }
-};
-
-#elif MPT_MUTEX_PTHREAD
-
-class mutex {
-private:
-	pthread_mutex_t hLock;
-public:
-	mutex()
-	{
-		pthread_mutexattr_t attr;
-		pthread_mutexattr_init(&attr);
-		pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_NORMAL);
-		pthread_mutex_init(&hLock, &attr);
-		pthread_mutexattr_destroy(&attr);
-	}
-	~mutex() { pthread_mutex_destroy(&hLock); }
-	void lock() { pthread_mutex_lock(&hLock); }
-	bool try_lock() { return (pthread_mutex_trylock(&hLock) == 0); }
-	void unlock() { pthread_mutex_unlock(&hLock); }
-};
-
-class recursive_mutex {
-private:
-	pthread_mutex_t hLock;
-public:
-	recursive_mutex()
-	{
-		pthread_mutexattr_t attr;
-		pthread_mutexattr_init(&attr);
-		pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-		pthread_mutex_init(&hLock, &attr);
-		pthread_mutexattr_destroy(&attr);
-	}
-	~recursive_mutex() { pthread_mutex_destroy(&hLock); }
-	void lock() { pthread_mutex_lock(&hLock); }
-	bool try_lock() { return (pthread_mutex_trylock(&hLock) == 0); }
-	void unlock() { pthread_mutex_unlock(&hLock); }
 };
 
 #else // MPT_MUTEX_NONE
@@ -193,30 +131,49 @@ public:
 #ifdef MODPLUG_TRACKER
 
 class recursive_mutex_with_lock_count {
+
 private:
+
 	mpt::recursive_mutex mutex;
+
+#if MPT_COMPILER_MSVC
+	_Guarded_by_(mutex)
+#endif // MPT_COMPILER_MSVC
 	long lockCount;
+
 public:
+
 	recursive_mutex_with_lock_count()
 		: lockCount(0)
 	{
 		return;
 	}
+
 	~recursive_mutex_with_lock_count()
 	{
 		return;
 	}
+
+#if MPT_COMPILER_MSVC
+	_Acquires_lock_(mutex)
+#endif // MPT_COMPILER_MSVC
 	void lock()
 	{
 		mutex.lock();
 		lockCount++;
 	}
+
+#if MPT_COMPILER_MSVC
+	_Requires_lock_held_(mutex) _Releases_lock_(mutex)
+#endif // MPT_COMPILER_MSVC
 	void unlock()
 	{
 		lockCount--;
 		mutex.unlock();
 	}
+
 public:
+
 	bool IsLockedByCurrentThread() // DEBUGGING only
 	{
 		bool islocked = false;
@@ -227,6 +184,7 @@ public:
 		}
 		return islocked;
 	}
+
 };
 
 #endif // MODPLUG_TRACKER

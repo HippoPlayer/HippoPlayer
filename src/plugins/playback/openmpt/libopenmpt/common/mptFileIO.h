@@ -17,6 +17,11 @@
 #include "../common/mptPathString.h"
 #include "../common/mptIO.h"
 
+#if defined(MPT_FSTREAM_NO_WCHAR)
+#if MPT_GCC_AT_LEAST(9,1,0)
+#include <filesystem>
+#endif // MPT_GCC_AT_LEAST(9,1,0)
+#endif // MPT_FSTREAM_NO_WCHAR
 #include <fstream>
 #include <ios>
 #include <ostream>
@@ -27,9 +32,11 @@
 #include <cstdio>
 #endif // !MPT_COMPILER_MSVC
 
-#if MPT_COMPILER_MSVC
-#include <stdio.h>
-#endif // !MPT_COMPILER_MSVC
+#ifdef MODPLUG_TRACKER
+#if MPT_OS_WINDOWS
+#include <windows.h>
+#endif // MPT_OS_WINDOWS
+#endif // MODPLUG_TRACKER
 
 #endif // MPT_ENABLE_FILEIO
 
@@ -56,27 +63,32 @@ bool SetFilesystemCompression(const mpt::PathString &filename);
 namespace mpt
 {
 
-#if MPT_COMPILER_GCC && MPT_OS_WINDOWS
-// GCC C++ library has no wchar_t overloads
-#define MPT_FSTREAM_DO_CONVERSIONS_ANSI
-#endif
-
 namespace detail
 {
 
 template<typename Tbase>
 inline void fstream_open(Tbase & base, const mpt::PathString & filename, std::ios_base::openmode mode)
 {
-#if defined(MPT_FSTREAM_DO_CONVERSIONS_ANSI)
-	base.open(mpt::ToCharset(mpt::Charset::Locale, filename.AsNative()).c_str(), mode);
-#else
-	base.open(filename.AsNativePrefixed().c_str(), mode);
-#endif
+	#if defined(MPT_FSTREAM_NO_WCHAR)
+		#if MPT_GCC_AT_LEAST(9,1,0)
+			base.open(static_cast<std::filesystem::path>(filename.AsNative()), mode);
+		#else // !MPT_GCC_AT_LEAST(9,1,0)
+			// Warning: MinGW with GCC earlier than 9.1 detected. Standard library does neither provide std::fstream wchar_t overloads nor std::filesystem with wchar_t support. Unicode filename support is thus unavailable.
+			base.open(mpt::ToCharset(mpt::Charset::Locale, filename.AsNative()).c_str(), mode);
+		#endif // MPT_GCC_AT_LEAST(9,1,0)
+	#else // !MPT_FSTREAM_NO_WCHAR
+		base.open(filename.AsNativePrefixed().c_str(), mode);
+	#endif // MPT_FSTREAM_NO_WCHAR
 }
 
 } // namespace detail
 
 class SafeOutputFile;
+
+// We cannot rely on implicit conversion of mpt::PathString to std::filesystem::path when constructing std::fstream
+// because of broken overload implementation in GCC libstdc++ 8, 9, 10.
+// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=95642
+// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=90704
 
 class fstream
 	: public std::fstream
@@ -181,12 +193,12 @@ class SafeOutputFile
 private:
 	FlushMode m_FlushMode;
 #if MPT_COMPILER_MSVC
-	FILE *m_f = nullptr;
+	std::FILE *m_f = nullptr;
 #endif // MPT_COMPILER_MSVC
 	mpt::ofstream m_s;
 #if MPT_COMPILER_MSVC
 	static mpt::tstring convert_mode(std::ios_base::openmode mode, FlushMode flushMode);
-	FILE * internal_fopen(const mpt::PathString &filename, std::ios_base::openmode mode, FlushMode flushMode);
+	std::FILE * internal_fopen(const mpt::PathString &filename, std::ios_base::openmode mode, FlushMode flushMode);
 #endif // MPT_COMPILER_MSVC
 public:
 	SafeOutputFile() = delete;
@@ -199,7 +211,9 @@ public:
 #endif // MPT_COMPILER_MSVC
 	{
 		if(!stream().is_open())
+		{
 			stream().setstate(mpt::ofstream::failbit);
+		}
 	}
 	mpt::ofstream& stream()
 	{
@@ -266,20 +280,21 @@ class InputFile
 private:
 	mpt::PathString m_Filename;
 	mpt::ifstream m_File;
+	bool m_IsValid;
 	bool m_IsCached;
 	std::vector<std::byte> m_Cache;
 public:
 	static bool DefaultToLargeAddressSpaceUsage();
 public:
-	InputFile();
 	InputFile(const mpt::PathString &filename, bool allowWholeFileCaching = DefaultToLargeAddressSpaceUsage());
 	~InputFile();
-	bool Open(const mpt::PathString &filename, bool allowWholeFileCaching = DefaultToLargeAddressSpaceUsage());
 	bool IsValid() const;
 	bool IsCached() const;
-	const mpt::PathString& GetFilenameRef() const;
+	mpt::PathString GetFilename() const;
 	std::istream* GetStream();
 	mpt::const_byte_span GetCache();
+private:
+	bool Open(const mpt::PathString &filename, bool allowWholeFileCaching = DefaultToLargeAddressSpaceUsage());
 };
 
 

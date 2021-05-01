@@ -20,12 +20,16 @@
 
 #if MPT_OS_WINDOWS
 
-#ifndef _WIN32_WINNT
+#if !defined(WINVER) && !defined(_WIN32_WINDOWS) && !defined(_WIN32_WINNT)
 #define _WIN32_WINNT 0x0601 // _WIN32_WINNT_WIN7
 #endif
 
 #ifndef WINVER
-#define WINVER       _WIN32_WINNT
+#if defined(_WIN32_WINNT)
+#define WINVER _WIN32_WINNT
+#elif defined(_WIN32_WINDOWS)
+#define WINVER _WIN32_WINDOWS
+#endif
 #endif
 
 #endif // MPT_OS_WINDOWS
@@ -73,13 +77,18 @@
 #if defined(MODPLUG_TRACKER)
 
 #if MPT_OS_WINDOWS
-#if !defined(MPT_BUILD_WINESUPPORT)
+#if !defined(MPT_BUILD_WINESUPPORT) && !defined(MPT_BUILD_SIGNTOOL)
 #define MPT_WITH_MFC
-#endif // !MPT_BUILD_WINESUPPORT
+#endif // !MPT_BUILD_WINESUPPORT && !MPT_BUILD_SIGNTOOL
 #endif // MPT_OS_WINDOWS
 
 // OpenMPT-only dependencies
+#if !defined(MPT_BUILD_RETRO) && !MPT_COMPILER_CLANG
 #define MPT_WITH_ASIO
+#endif
+#if defined(MPT_BUILD_RETRO)
+#define MPT_WITH_DIRECTSOUND
+#endif
 #define MPT_WITH_DMO
 #define MPT_WITH_LAME
 #define MPT_WITH_LHASA
@@ -101,7 +110,9 @@
 #define MPT_WITH_FLAC
 //#define MPT_WITH_LTDL
 #if MPT_OS_WINDOWS
+#if (_WIN32_WINNT >= 0x0601)
 #define MPT_WITH_MEDIAFOUNDATION
+#endif
 #endif
 //#define MPT_WITH_MINIMP3
 //#define MPT_WITH_MINIZ
@@ -194,6 +205,8 @@
 
 #if defined(MODPLUG_TRACKER)
 
+#define MPT_UPDATE_LEGACY 1
+
 // Enable built-in test suite.
 #if defined(MPT_BUILD_DEBUG) || defined(MPT_BUILD_CHECKED)
 #define ENABLE_TESTS
@@ -228,6 +241,10 @@
 
 // Use inline assembly
 #define ENABLE_ASM
+
+#if !defined(MPT_BUILD_RETRO)
+#define MPT_ENABLE_UPDATE
+#endif // !MPT_BUILD_RETRO
 
 // Disable unarchiving support
 //#define NO_ARCHIVE_SUPPORT
@@ -317,16 +334,12 @@
 
 #elif MPT_OS_EMSCRIPTEN
 
-	#ifndef MPT_LOCALE_ASSUME_CHARSET
-	#define MPT_LOCALE_ASSUME_CHARSET Charset::UTF8
-	#endif
-
 #elif MPT_OS_MACOSX_OR_IOS
 
 #elif MPT_OS_DJGPP
 
 	#ifndef MPT_LOCALE_ASSUME_CHARSET
-	#define MPT_LOCALE_ASSUME_CHARSET Charset::CP437
+	#define MPT_LOCALE_ASSUME_CHARSET DJGPP_GetLocaleCharset()
 	#endif
 
 #endif
@@ -346,17 +359,6 @@
 	#define MPT_USTRING_MODE_UTF8 1
 
 #endif // MPT_COMPILER_MSVC
-
-#if MPT_USTRING_MODE_UTF8
-
-	// MPT_USTRING_MODE_UTF8 mpt::ustring is implemented via mpt::u8string
-	#define MPT_ENABLE_U8STRING 1
-
-#else
-
-	#define MPT_ENABLE_U8STRING 0
-
-#endif
 
 #if defined(MODPLUG_TRACKER) || MPT_USTRING_MODE_WIDE
 
@@ -509,6 +511,11 @@
 #define MPT_ENABLE_ALIGNED_ALLOC
 #endif
 
+#if MPT_OS_WINDOWS && MPT_GCC_BEFORE(9,1,0)
+// GCC C++ library has no wchar_t overloads
+#define MPT_FSTREAM_NO_WCHAR
+#endif
+
 
 
 #if defined(MODPLUG_TRACKER) && !defined(MPT_BUILD_WINESUPPORT) && !defined(MPT_BUILD_WINESUPPORT_WRAPPER)
@@ -555,6 +562,7 @@
 
 #ifdef MPT_WITH_MFC
 //#define MPT_MFC_FULL  // use full MFC, including MFC controls
+#define _CSTRING_DISABLE_NARROW_WIDE_CONVERSION
 #endif // MPT_WITH_MFC
 
 #if defined(MODPLUG_TRACKER)
@@ -633,18 +641,7 @@
 
 #define VC_EXTRALEAN		// Exclude rarely-used stuff from Windows headers
 
-#ifndef _CRT_SECURE_NO_WARNINGS
-#define _CRT_SECURE_NO_WARNINGS		// Define to disable the "This function or variable may be unsafe" warnings.
-#endif
-#define _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES			1
-#define _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT	1
-#ifndef _SCL_SECURE_NO_WARNINGS
-#define _SCL_SECURE_NO_WARNINGS
-#endif
-
-#ifndef NO_WARN_MBCS_MFC_DEPRECATION
-#define NO_WARN_MBCS_MFC_DEPRECATION
-#endif
+#pragma warning(default:4800) // Implicit conversion from 'int' to bool. Possible information loss
 
 #pragma warning(disable:4355) // 'this' : used in base member initializer list
 

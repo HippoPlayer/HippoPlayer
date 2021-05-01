@@ -61,17 +61,34 @@ template <> struct is_byte<std::byte>       : public std::true_type  { };
 template <> struct is_byte<const std::byte> : public std::true_type  { };
 
 
+template <typename T>
+constexpr bool declare_binary_safe(const T &) noexcept
+{
+	return false;
+}
+
+constexpr bool declare_binary_safe(const char &) noexcept
+{
+	return true;
+}
+constexpr bool declare_binary_safe(const uint8 &) noexcept
+{
+	return true;
+}
+constexpr bool declare_binary_safe(const int8 &) noexcept
+{
+	return true;
+}
+constexpr bool declare_binary_safe(const std::byte &) noexcept
+{
+	return true;
+}
+
 // Tell which types are safe to binary write into files.
 // By default, no types are safe.
 // When a safe type gets defined,
 // also specialize this template so that IO functions will work.
-template <typename T> struct is_binary_safe : public std::false_type { }; 
-
-// Specialization for byte types.
-template <> struct is_binary_safe<char>      : public std::true_type { };
-template <> struct is_binary_safe<uint8>     : public std::true_type { };
-template <> struct is_binary_safe<int8>      : public std::true_type { };
-template <> struct is_binary_safe<std::byte> : public std::true_type { };
+template <typename T> struct is_binary_safe : public std::conditional<declare_binary_safe(T{}), std::true_type, std::false_type>::type { };
 
 // Generic Specialization for arrays.
 template <typename T, std::size_t N> struct is_binary_safe<T[N]> : public is_binary_safe<T> { };
@@ -80,15 +97,24 @@ template <typename T, std::size_t N> struct is_binary_safe<std::array<T, N>> : p
 template <typename T, std::size_t N> struct is_binary_safe<const std::array<T, N>> : public is_binary_safe<T> { };
 
 
+template <typename T>
+constexpr bool check_binary_size(std::size_t size) noexcept
+{
+	return true
+		&& (sizeof(T) == size)
+		&& (alignof(T) == 1)
+		&& std::is_standard_layout<T>::value
+		&& std::has_unique_object_representations<T>::value
+		&& mpt::is_binary_safe<T>::value
+		;
+}
+
+
 } // namespace mpt
 
 #define MPT_BINARY_STRUCT(type, size) \
-	static_assert(sizeof( type ) == (size) ); \
-	static_assert(alignof( type ) == 1); \
-	static_assert(std::is_standard_layout< type >::value); \
-	namespace mpt { \
-		template <> struct is_binary_safe< type > : public std::true_type { }; \
-	} \
+	constexpr bool declare_binary_safe(const type &) { return true; } \
+	static_assert(mpt::check_binary_size<type>(size)); \
 /**/
 
 
@@ -157,7 +183,7 @@ MPT_FORCEINLINE typename std::enable_if<(sizeof(Tdst) == sizeof(Tsrc)) && std::i
 template <typename Tdst, typename Tsrc>
 struct byte_cast_impl
 {
-	inline Tdst operator () (Tsrc src) const
+	inline Tdst operator () (Tsrc src) const noexcept
 	{
 		static_assert(sizeof(Tsrc) == sizeof(std::byte));
 		static_assert(sizeof(Tdst) == sizeof(std::byte));
@@ -171,7 +197,7 @@ struct byte_cast_impl
 template <typename Tdst, typename Tsrc>
 struct byte_cast_impl<mpt::span<Tdst>, mpt::span<Tsrc> >
 {
-	inline mpt::span<Tdst> operator () (mpt::span<Tsrc> src) const
+	inline mpt::span<Tdst> operator () (mpt::span<Tsrc> src) const noexcept
 	{
 		static_assert(sizeof(Tsrc) == sizeof(std::byte));
 		static_assert(sizeof(Tdst) == sizeof(std::byte));
@@ -185,7 +211,7 @@ struct byte_cast_impl<mpt::span<Tdst>, mpt::span<Tsrc> >
 template <typename Tdst, typename Tsrc>
 struct byte_cast_impl<Tdst*, Tsrc*>
 {
-	inline Tdst* operator () (Tsrc* src) const
+	inline Tdst* operator () (Tsrc* src) const noexcept
 	{
 		static_assert(sizeof(Tsrc) == sizeof(std::byte));
 		static_assert(sizeof(Tdst) == sizeof(std::byte));
@@ -203,7 +229,7 @@ struct void_cast_impl;
 template <typename Tdst>
 struct void_cast_impl<Tdst*, void*>
 {
-	inline Tdst* operator () (void* src) const
+	inline Tdst* operator () (void* src) const noexcept
 	{
 		static_assert(sizeof(Tdst) == sizeof(std::byte));
 		static_assert(mpt::is_byte_castable<Tdst>::value);
@@ -214,7 +240,7 @@ struct void_cast_impl<Tdst*, void*>
 template <typename Tdst>
 struct void_cast_impl<Tdst*, const void*>
 {
-	inline Tdst* operator () (const void* src) const
+	inline Tdst* operator () (const void* src) const noexcept
 	{
 		static_assert(sizeof(Tdst) == sizeof(std::byte));
 		static_assert(mpt::is_byte_castable<Tdst>::value);
@@ -225,7 +251,7 @@ struct void_cast_impl<Tdst*, const void*>
 template <typename Tsrc>
 struct void_cast_impl<void*, Tsrc*>
 {
-	inline void* operator () (Tsrc* src) const
+	inline void* operator () (Tsrc* src) const noexcept
 	{
 		static_assert(sizeof(Tsrc) == sizeof(std::byte));
 		static_assert(mpt::is_byte_castable<Tsrc>::value);
@@ -236,7 +262,7 @@ struct void_cast_impl<void*, Tsrc*>
 template <typename Tsrc>
 struct void_cast_impl<const void*, Tsrc*>
 {
-	inline const void* operator () (Tsrc* src) const
+	inline const void* operator () (Tsrc* src) const noexcept
 	{
 		static_assert(sizeof(Tsrc) == sizeof(std::byte));
 		static_assert(mpt::is_byte_castable<Tsrc>::value);
@@ -247,14 +273,14 @@ struct void_cast_impl<const void*, Tsrc*>
 
 // casts between different byte (char) types or pointers to these types
 template <typename Tdst, typename Tsrc>
-inline Tdst byte_cast(Tsrc src)
+inline Tdst byte_cast(Tsrc src) noexcept
 {
 	return byte_cast_impl<Tdst, Tsrc>()(src);
 }
 
 // casts between pointers to void and pointers to byte
 template <typename Tdst, typename Tsrc>
-inline Tdst void_cast(Tsrc src)
+inline Tdst void_cast(Tsrc src) noexcept
 {
 	return void_cast_impl<Tdst, Tsrc>()(src);
 }
@@ -262,7 +288,7 @@ inline Tdst void_cast(Tsrc src)
 
 
 template <typename T>
-MPT_CONSTEXPR14_FUN std::byte as_byte(T src) noexcept
+MPT_CONSTEXPRINLINE std::byte as_byte(T src) noexcept
 {
 	static_assert(std::is_integral<T>::value);
 	return static_cast<std::byte>(static_cast<uint8>(src));

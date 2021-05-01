@@ -27,6 +27,8 @@ namespace mpt
 {
 
 
+#if !defined(MPT_COMPILER_QUIRK_RANDOM_NO_RANDOM_DEVICE)
+
 template <typename T>
 static T log2(T x)
 {
@@ -34,14 +36,14 @@ static T log2(T x)
 }
 
 
-static MPT_CONSTEXPR14_FUN int lower_bound_entropy_bits(unsigned int x)
+static MPT_CONSTEXPRINLINE int lower_bound_entropy_bits(unsigned int x)
 {
 	return detail::lower_bound_entropy_bits(x);
 }
 
 
 template <typename T>
-static MPT_CONSTEXPR14_FUN bool is_mask(T x)
+static MPT_CONSTEXPRINLINE bool is_mask(T x)
 {
 	static_assert(std::numeric_limits<T>::is_integer);
 	typedef typename std::make_unsigned<T>::type unsigned_T;
@@ -57,6 +59,8 @@ static MPT_CONSTEXPR14_FUN bool is_mask(T x)
 	}
 	return false;
 }
+
+#endif // !MPT_COMPILER_QUIRK_RANDOM_NO_RANDOM_DEVICE
 
 
 namespace {
@@ -76,12 +80,6 @@ static T generate_timeseed()
 	// or stream cipher with any pre-choosen random key and IV. The only aspect we
 	// really need here is whitening of the bits.
 	typename mpt::default_hash<T>::type hash;
-	
-#ifdef MPT_BUILD_FUZZER
-
-	return static_cast<T>(mpt::FUZZER_RNG_SEED);
-
-#else // !MPT_BUILD_FUZZER
 
 	{
 		uint64be time;
@@ -91,6 +89,7 @@ static T generate_timeseed()
 		hash(std::begin(bytes), std::end(bytes));
 	}
 
+#if !defined(MPT_COMPILER_QUIRK_CHRONO_NO_HIGH_RESOLUTION_CLOCK)
 	{
 		uint64be time;
 		time = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock().now().time_since_epoch()).count();
@@ -98,48 +97,32 @@ static T generate_timeseed()
 		std::memcpy(bytes, &time, sizeof(time));
 		hash(std::begin(bytes), std::end(bytes));
 	}
+#endif // !MPT_COMPILER_QUIRK_CHRONO_NO_HIGH_RESOLUTION_CLOCK
 
 	return static_cast<T>(hash.result());
 
-#endif // MPT_BUILD_FUZZER
-
 }
 
-
-#ifdef MODPLUG_TRACKER
-
-namespace rng
-{
-
-void crand::reseed(uint32 seed)
-{
-	std::srand(seed);
-}
-
-crand::result_type crand::operator()()
-{
-	return std::rand();
-}
-
-} // namespace rng
-
-#endif // MODPLUG_TRACKER
 
 sane_random_device::sane_random_device()
+#if !defined(MPT_COMPILER_QUIRK_RANDOM_NO_RANDOM_DEVICE)
 	: rd_reliable(false)
+#endif // MPT_COMPILER_QUIRK_RANDOM_NO_RANDOM_DEVICE
 {
+#if !defined(MPT_COMPILER_QUIRK_RANDOM_NO_RANDOM_DEVICE)
 	try
 	{
 		prd = std::make_unique<std::random_device>();
 		rd_reliable = ((*prd).entropy() > 0.0);
-	} MPT_EXCEPTION_CATCH_OUT_OF_MEMORY(e)
+	} catch(mpt::out_of_memory e)
 	{
-		MPT_EXCEPTION_RETHROW_OUT_OF_MEMORY(e);
+		mpt::rethrow_out_of_memory(e);
 	} catch(const std::exception &)
 	{
 		rd_reliable = false;	
 	}
 	if(!rd_reliable)
+#endif // MPT_COMPILER_QUIRK_RANDOM_NO_RANDOM_DEVICE
 	{
 		init_fallback();
 	}
@@ -147,20 +130,24 @@ sane_random_device::sane_random_device()
 
 sane_random_device::sane_random_device(const std::string & token_)
 	: token(token_)
+#if !defined(MPT_COMPILER_QUIRK_RANDOM_NO_RANDOM_DEVICE)
 	, rd_reliable(false)
+#endif // MPT_COMPILER_QUIRK_RANDOM_NO_RANDOM_DEVICE
 {
+#if !defined(MPT_COMPILER_QUIRK_RANDOM_NO_RANDOM_DEVICE)
 	try
 	{
 		prd = std::make_unique<std::random_device>(token);
 		rd_reliable = ((*prd).entropy() > 0.0);
-	} MPT_EXCEPTION_CATCH_OUT_OF_MEMORY(e)
+	} catch(mpt::out_of_memory e)
 	{
-		MPT_EXCEPTION_RETHROW_OUT_OF_MEMORY(e);
+		mpt::rethrow_out_of_memory(e);
 	} catch(const std::exception &)
 	{
 		rd_reliable = false;	
 	}
 	if(!rd_reliable)
+#endif // MPT_COMPILER_QUIRK_RANDOM_NO_RANDOM_DEVICE
 	{
 		init_fallback();
 	}
@@ -198,6 +185,7 @@ sane_random_device::result_type sane_random_device::operator()()
 {
 	mpt::lock_guard<mpt::mutex> l(m);
 	result_type result = 0;
+#if !defined(MPT_COMPILER_QUIRK_RANDOM_NO_RANDOM_DEVICE)
 	if(prd)
 	{
 		try
@@ -206,12 +194,12 @@ sane_random_device::result_type sane_random_device::operator()()
 			{ // insane std::random_device
 				//  This implementation is not exactly uniformly distributed but good enough
 				// for OpenMPT.
-				double rd_min = static_cast<double>(std::random_device::min());
-				double rd_max = static_cast<double>(std::random_device::max());
-				double rd_range = rd_max - rd_min;
-				double rd_size = rd_range + 1.0;
-				double rd_entropy = mpt::log2(rd_size);
-				int iterations = static_cast<int>(std::ceil(result_bits() / rd_entropy));
+				constexpr double rd_min = static_cast<double>(std::random_device::min());
+				constexpr double rd_max = static_cast<double>(std::random_device::max());
+				constexpr double rd_range = rd_max - rd_min;
+				constexpr double rd_size = rd_range + 1.0;
+				const double rd_entropy = mpt::log2(rd_size);
+				const int iterations = static_cast<int>(std::ceil(result_bits() / rd_entropy));
 				double tmp = 0.0;
 				for(int i = 0; i < iterations; ++i)
 				{
@@ -244,6 +232,7 @@ sane_random_device::result_type sane_random_device::operator()()
 		rd_reliable = false;
 	}
 	if(!rd_reliable)
+#endif // MPT_COMPILER_QUIRK_RANDOM_NO_RANDOM_DEVICE
 	{ // std::random_device is unreliable
 		//  XOR the generated random number with more entropy from the time-seeded
 		// PRNG.
@@ -255,27 +244,22 @@ sane_random_device::result_type sane_random_device::operator()()
 	return result;
 }
 
-prng_random_device_seeder::prng_random_device_seeder()
-{
-	return;
-}
-
-uint8 prng_random_device_seeder::generate_seed8()
+uint8 prng_random_device_time_seeder::generate_seed8()
 {
 	return mpt::generate_timeseed<uint8>();
 }
 
-uint16 prng_random_device_seeder::generate_seed16()
+uint16 prng_random_device_time_seeder::generate_seed16()
 {
 	return mpt::generate_timeseed<uint16>();
 }
 
-uint32 prng_random_device_seeder::generate_seed32()
+uint32 prng_random_device_time_seeder::generate_seed32()
 {
 	return mpt::generate_timeseed<uint32>();
 }
 
-uint64 prng_random_device_seeder::generate_seed64()
+uint64 prng_random_device_time_seeder::generate_seed64()
 {
 	return mpt::generate_timeseed<uint64>();
 }

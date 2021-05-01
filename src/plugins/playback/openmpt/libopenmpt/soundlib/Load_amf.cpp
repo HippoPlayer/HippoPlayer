@@ -276,7 +276,7 @@ static void AMFReadPattern(CPattern &pattern, CHANNELINDEX chn, FileReader &file
 			uint8 cmd = (command & 0x7F);
 			uint8 param = value;
 
-			if(cmd < CountOf(effTrans))
+			if(cmd < std::size(effTrans))
 			{
 				cmd = effTrans[cmd];
 			} else
@@ -435,7 +435,7 @@ bool CSoundFile::ReadAMF_DSMI(FileReader &file, ModLoadingFlags loadFlags)
 	InitializeGlobals(MOD_TYPE_AMF);
 	InitializeChannels();
 
-	m_modFormat.formatName = mpt::format(U_("DSMI v%1"))(fileHeader.version);
+	m_modFormat.formatName = MPT_UFORMAT("DSMI v{}")(fileHeader.version);
 	m_modFormat.type = U_("amf");
 	m_modFormat.charset = mpt::Charset::CP437;
 
@@ -585,9 +585,7 @@ bool CSoundFile::ReadAMF_DSMI(FileReader &file, ModLoadingFlags loadFlags)
 	for(uint16 i = 0; i < trackCount; i++)
 	{
 		// Track size is a 24-Bit value describing the number of byte triplets in this track.
-		uint8 trackSize[3];
-		file.ReadArray(trackSize);
-		trackData[i] = file.ReadChunk((trackSize[0] | (trackSize[1] << 8) | (trackSize[2] << 16)) * 3);
+		trackData[i] = file.ReadChunk(file.ReadUint24LE() * 3);
 	}
 
 	if(loadFlags & loadSampleData)

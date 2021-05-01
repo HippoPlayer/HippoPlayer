@@ -56,11 +56,11 @@ IMixPlugin* DMOPlugin::Create(VSTPluginLib &factory, CSoundFile &sndFile, SNDMIX
 				return p;
 			}
 #ifdef DMO_LOG
-			MPT_LOG(LogDebug, "DMO", factory.libraryName.ToUnicode() + U_(": Unable to use this DMO"));
+			MPT_LOG_GLOBAL(LogDebug, "DMO", factory.libraryName.ToUnicode() + U_(": Unable to use this DMO"));
 #endif
 		}
 #ifdef DMO_LOG
-		else MPT_LOG(LogDebug, "DMO", factory.libraryName.ToUnicode() + U_(": Failed to get IMediaObject & IMediaObjectInPlace interfaces"));
+		else MPT_LOG_GLOBAL(LogDebug, "DMO", factory.libraryName.ToUnicode() + U_(": Failed to get IMediaObject & IMediaObjectInPlace interfaces"));
 #endif
 		if (pMO) pMO->Release();
 		if (pMOIP) pMOIP->Release();
@@ -86,7 +86,6 @@ DMOPlugin::DMOPlugin(VSTPluginLib &factory, CSoundFile &sndFile, SNDMIXPLUGIN *m
 
 	m_mixBuffer.Initialize(2, 2);
 	InsertIntoFactoryList();
-
 }
 
 
@@ -133,7 +132,7 @@ static constexpr float _si2f = 1.0f / 32768.0f;
 static void InterleaveStereo(const float * MPT_RESTRICT inputL, const float * MPT_RESTRICT inputR, float * MPT_RESTRICT output, uint32 numFrames)
 {
 #if defined(ENABLE_SSE)
-	if(GetProcSupport() & PROCSUPPORT_SSE)
+	if(CPU::HasFeatureSet(CPU::feature::sse))
 	{
 		// We may read beyond the wanted length... this works because we know that we will always work on our buffers of size MIXBUFFERSIZE
 		static_assert((MIXBUFFERSIZE & 7) == 0);
@@ -167,7 +166,7 @@ static void InterleaveStereo(const float * MPT_RESTRICT inputL, const float * MP
 static void DeinterleaveStereo(const float * MPT_RESTRICT input, float * MPT_RESTRICT outputL, float * MPT_RESTRICT outputR, uint32 numFrames)
 {
 #if defined(ENABLE_SSE)
-	if(GetProcSupport() & PROCSUPPORT_SSE)
+	if(CPU::HasFeatureSet(CPU::feature::sse))
 	{
 		// We may read beyond the wanted length... this works because we know that we will always work on our buffers of size MIXBUFFERSIZE
 		static_assert((MIXBUFFERSIZE & 7) == 0);
@@ -204,7 +203,7 @@ static void InterleaveFloatToInt16(const float * MPT_RESTRICT inputL, const floa
 #if defined(ENABLE_MMX) && defined(ENABLE_SSE)
 	// This uses __m64, so it's not available on the MSVC 64-bit compiler.
 	// But if the user runs a 64-bit operating system, they will go the floating-point path anyway.
-	if((GetProcSupport() & (PROCSUPPORT_MMX | PROCSUPPORT_SSE)) == (PROCSUPPORT_MMX | PROCSUPPORT_SSE))
+	if(CPU::HasFeatureSet(CPU::feature::mmx | CPU::feature::sse))
 	{
 		// We may read beyond the wanted length... this works because we know that we will always work on our buffers of size MIXBUFFERSIZE
 		static_assert((MIXBUFFERSIZE & 7) == 0);
@@ -256,7 +255,7 @@ static void DeinterleaveInt16ToFloat(const int16 * MPT_RESTRICT input, float * M
 #if defined(ENABLE_MMX) && defined(ENABLE_SSE)
 	// This uses __m64, so it's not available on the MSVC 64-bit compiler.
 	// But if the user runs a 64-bit operating system, they will go the floating-point path anyway.
-	if((GetProcSupport() & (PROCSUPPORT_MMX | PROCSUPPORT_SSE)) == (PROCSUPPORT_MMX | PROCSUPPORT_SSE))
+	if(CPU::HasFeatureSet(CPU::feature::mmx | CPU::feature::sse))
 	{
 		// We may read beyond the wanted length... this works because we know that we will always work on our buffers of size MIXBUFFERSIZE
 		static_assert((MIXBUFFERSIZE & 7) == 0);
@@ -438,7 +437,7 @@ void DMOPlugin::Resume()
 			|| FAILED(m_pMediaObject->SetOutputType(0, &mt, 0)))
 		{
 #ifdef DMO_LOG
-			MPT_LOG(LogDebug, "DMO", U_("DMO: Failed to set I/O media type"));
+			MPT_LOG_GLOBAL(LogDebug, "DMO", U_("DMO: Failed to set I/O media type"));
 #endif
 		}
 	}
@@ -473,7 +472,7 @@ CString DMOPlugin::GetParamName(PlugParamIndex param)
 		mpi.szLabel[0] = 0;
 		if(m_pParamInfo->GetParamInfo(param, &mpi) == S_OK)
 		{
-			return mpi.szLabel;
+			return mpt::ToCString(mpi.szLabel);
 		}
 	}
 	return CString();
@@ -491,7 +490,7 @@ CString DMOPlugin::GetParamLabel(PlugParamIndex param)
 		mpi.szLabel[0] = 0;
 		if(m_pParamInfo->GetParamInfo(param, &mpi) == S_OK)
 		{
-			return mpi.szUnitText;
+			return mpt::ToCString(mpi.szUnitText);
 		}
 	}
 	return CString();
@@ -536,7 +535,7 @@ CString DMOPlugin::GetParamDisplay(PlugParamIndex param)
 						{
 							text += wcslen(text) + 1;
 						}
-						return CString(text);
+						return mpt::ToCString(text);
 					}
 					break;
 

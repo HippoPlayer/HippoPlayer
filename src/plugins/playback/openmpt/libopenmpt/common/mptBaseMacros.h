@@ -14,6 +14,12 @@
 
 
 
+#if MPT_CXX_AT_LEAST(20)
+#include <version>
+#else // !C++20
+#include <array>
+#endif // C++20
+
 #include <array>
 #include <iterator>
 #include <type_traits>
@@ -86,9 +92,7 @@ OPENMPT_NAMESPACE_BEGIN
 
 
 // constexpr
-#define MPT_CONSTEXPR11_FUN constexpr MPT_FORCEINLINE
-#define MPT_CONSTEXPR14_FUN constexpr MPT_FORCEINLINE
-#define MPT_CONSTEXPR17_FUN constexpr MPT_FORCEINLINE
+#define MPT_CONSTEXPRINLINE constexpr MPT_FORCEINLINE
 #if MPT_CXX_AT_LEAST(20)
 #define MPT_CONSTEXPR20_FUN constexpr MPT_FORCEINLINE
 #define MPT_CONSTEXPR20_VAR constexpr
@@ -99,11 +103,10 @@ OPENMPT_NAMESPACE_BEGIN
 
 
 
-namespace mpt
-{
-template <auto V> struct constant_value { static constexpr decltype(V) value() { return V; } };
-#define MPT_FORCE_CONSTEXPR(expr) (mpt::constant_value<( expr )>::value())
-}  // namespace mpt
+#define MPT_FORCE_CONSTEXPR(expr) [&]() { \
+  constexpr auto x = (expr); \
+  return x; \
+}()
 
 
 
@@ -112,62 +115,8 @@ template <auto V> struct constant_value { static constexpr decltype(V) value() {
 #define MPT_IS_CONSTANT_EVALUATED() std::is_constant_evaluated()
 #else // !C++20
 #define MPT_IS_CONSTANT_EVALUATED20() false
-// this pessimizes the case for C++17 by always assuming constexpr context, which implies always running constexpr-friendly code
-#define MPT_IS_CONSTANT_EVALUATED() true
+#define MPT_IS_CONSTANT_EVALUATED() true // this pessimizes the case for C++17 by always assuming constexpr context, which implies always running constexpr-friendly code
 #endif // C++20
-
-
-
-namespace mpt
-{
-
-template <typename T>
-struct stdarray_extent : std::integral_constant<std::size_t, 0> {};
-
-template <typename T, std::size_t N>
-struct stdarray_extent<std::array<T, N>> : std::integral_constant<std::size_t, N> {};
-
-template <typename T>
-struct is_stdarray : std::false_type {};
-
-template <typename T, std::size_t N>
-struct is_stdarray<std::array<T, N>> : std::true_type {};
-
-// mpt::extent is the same as std::extent,
-// but also works for std::array,
-// and asserts that the given type is actually an array type instead of returning 0.
-// use as:
-// mpt::extent<decltype(expr)>()
-// mpt::extent<decltype(variable)>()
-// mpt::extent<decltype(type)>()
-// mpt::extent<type>()
-template <typename T>
-constexpr std::size_t extent() noexcept
-{
-	using Tarray = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
-	static_assert(std::is_array<Tarray>::value || mpt::is_stdarray<Tarray>::value);
-	if constexpr(mpt::is_stdarray<Tarray>::value)
-	{
-		return mpt::stdarray_extent<Tarray>();
-	} else
-	{
-		return std::extent<Tarray>();
-	}
-}
-
-} // namespace mpt
-
-// legacy
-#if MPT_COMPILER_MSVC
-OPENMPT_NAMESPACE_END
-#include <cstdlib>
-#include <stdlib.h>
-OPENMPT_NAMESPACE_BEGIN
-#define MPT_ARRAY_COUNT(x) _countof(x)
-#else
-#define MPT_ARRAY_COUNT(x) (sizeof((x))/sizeof((x)[0]))
-#endif
-#define CountOf(x) MPT_ARRAY_COUNT(x)
 
 
 
@@ -180,7 +129,6 @@ OPENMPT_NAMESPACE_BEGIN
 
 
 
-#define MPT_ATTR_NODISCARD [[nodiscard]]
 #define MPT_DISCARD(expr) static_cast<void>(expr)
 
 
@@ -217,23 +165,6 @@ OPENMPT_NAMESPACE_BEGIN
 #if !defined(MPT_MAYBE_CONSTANT_IF)
 // MPT_MAYBE_CONSTANT_IF disables compiler warnings for conditions that may in some case be either always false or always true (this may turn out to be useful in ASSERTions in some cases).
 #define MPT_MAYBE_CONSTANT_IF(x) if(x)
-#endif
-
-
-
-#if MPT_COMPILER_MSVC
-// MSVC warns for the well-known and widespread "do { } while(0)" idiom with warning level 4 ("conditional expression is constant").
-// It does not warn with "while(0,0)". However this again causes warnings with other compilers.
-// Solve it with a macro.
-#define MPT_DO do
-#define MPT_WHILE_0 while(0,0)
-#endif
-
-#ifndef MPT_DO
-#define MPT_DO do
-#endif
-#ifndef MPT_WHILE_0
-#define MPT_WHILE_0 while(0)
 #endif
 
 

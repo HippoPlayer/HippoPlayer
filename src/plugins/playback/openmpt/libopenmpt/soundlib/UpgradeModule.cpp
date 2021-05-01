@@ -221,6 +221,14 @@ struct UpgradePatternData
 			m.volcmd = VOLCMD_NONE;
 		}
 
+		// Previously CMD_OFFSET simply overrode VOLCMD_OFFSET, now they work together as a combined command
+		if(m.volcmd == VOLCMD_OFFSET && m.command == CMD_OFFSET && version < MPT_V("1.30.00.14"))
+		{
+			if(m.param != 0 || m.vol == 0)
+				m.volcmd = VOLCMD_NONE;
+			else
+				m.command = CMD_NONE;
+		}
 	}
 
 	const CSoundFile &sndFile;
@@ -356,9 +364,9 @@ void CSoundFile::UpgradeModule()
 	{
 		if(m_dwLastSavedWithVersion >= MPT_V("1.22.07.19")
 			&& m_dwLastSavedWithVersion < MPT_V("1.23.01.04")
-			&& GetMixLevels() == mixLevelsCompatible)
+			&& GetMixLevels() == MixLevels::Compatible)
 		{
-			SetMixLevels(mixLevelsCompatibleFT2);
+			SetMixLevels(MixLevels::CompatibleFT2);
 		}
 	}
 
@@ -565,7 +573,7 @@ void CSoundFile::UpgradeModule()
 		{
 			{ kFT2NoteOffFlags,              MPT_V("1.27.00.27") },
 			{ kRowDelayWithNoteDelay,        MPT_V("1.27.00.37") },
-			{ kFT2TremoloRampWaveform,       MPT_V("1.27.00.37") },
+			{ kFT2MODTremoloRampWaveform,    MPT_V("1.27.00.37") },
 			{ kFT2PortaUpDownMemory,         MPT_V("1.27.00.37") },
 			{ kFT2PanSustainRelease,         MPT_V("1.28.00.09") },
 			{ kFT2NoteDelayWithoutInstr,     MPT_V("1.28.00.44") },
@@ -656,16 +664,22 @@ void CSoundFile::UpgradeModule()
 		}
 	}
 
-	if(GetType() == MOD_TYPE_MPT && GetNumInstruments() && m_dwLastSavedWithVersion >= MPT_V("1.28.00.20") && m_dwLastSavedWithVersion <= MPT_V("1.29.55.00"))
+	if(GetType() & (MOD_TYPE_MPT | MOD_TYPE_S3M))
 	{
+		bool anyAdlibSlots = false;
 		for(SAMPLEINDEX i = 1; i <= GetNumSamples(); i++)
 		{
 			if(Samples[i].uFlags[CHN_ADLIB])
 			{
-				m_playBehaviour.set(kOPLNoResetAtEnvelopeEnd);
+				anyAdlibSlots = true;
 				break;
 			}
 		}
+
+		if(anyAdlibSlots && GetType() == MOD_TYPE_MPT && GetNumInstruments() && m_dwLastSavedWithVersion >= MPT_V("1.28.00.20") && m_dwLastSavedWithVersion <= MPT_V("1.29.00.55"))
+			m_playBehaviour.set(kOPLNoResetAtEnvelopeEnd);
+		if(anyAdlibSlots && (m_dwLastSavedWithVersion <= MPT_V("1.30.00.34") && m_dwLastSavedWithVersion != MPT_V("1.30")))
+			m_playBehaviour.reset(kOPLNoteOffOnNoteChange);
 	}
 }
 

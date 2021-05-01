@@ -34,8 +34,8 @@
 #define MPT_CLANG_AT_LEAST(major,minor,patch)        (MPT_COMPILER_CLANG_VERSION >= MPT_COMPILER_MAKE_VERSION3((major),(minor),(patch)))
 #define MPT_CLANG_BEFORE(major,minor,patch)          (MPT_COMPILER_CLANG_VERSION <  MPT_COMPILER_MAKE_VERSION3((major),(minor),(patch)))
 
-#if MPT_CLANG_BEFORE(5,0,0)
-#error "clang version 5 required"
+#if MPT_CLANG_BEFORE(7,0,0)
+#error "clang version 7 required"
 #endif
 
 #if defined(__clang_analyzer__)
@@ -51,8 +51,8 @@
 #define MPT_GCC_AT_LEAST(major,minor,patch)          (MPT_COMPILER_GCC_VERSION >= MPT_COMPILER_MAKE_VERSION3((major),(minor),(patch)))
 #define MPT_GCC_BEFORE(major,minor,patch)            (MPT_COMPILER_GCC_VERSION <  MPT_COMPILER_MAKE_VERSION3((major),(minor),(patch)))
 
-#if MPT_GCC_BEFORE(7,1,0)
-#error "GCC version 7.1 required"
+#if MPT_GCC_BEFORE(8,1,0)
+#error "GCC version 8.1 required"
 #endif
 
 #elif defined(_MSC_VER)
@@ -297,15 +297,22 @@
 #define MPT_OS_UNKNOWN 0
 #endif
 
-#ifndef MPT_OS_EMSCRIPTEN_ANCIENT
-#define MPT_OS_EMSCRIPTEN_ANCIENT 0
+
+
+#if MPT_OS_DJGPP
+#undef MPT_PLATFORM_MULTITHREADED
+#define MPT_PLATFORM_MULTITHREADED 0
+#endif
+
+#if (MPT_OS_EMSCRIPTEN && !defined(__EMSCRIPTEN_PTHREADS__))
+#undef MPT_PLATFORM_MULTITHREADED
+#define MPT_PLATFORM_MULTITHREADED 0
 #endif
 
 
-
-#if (MPT_OS_DJGPP || MPT_OS_EMSCRIPTEN)
-#undef MPT_PLATFORM_MULTITHREADED
-#define MPT_PLATFORM_MULTITHREADED 0
+#if MPT_OS_EMSCRIPTEN && defined(MPT_BUILD_AUDIOWORKLETPROCESSOR)
+#define MPT_COMPILER_QUIRK_CHRONO_NO_HIGH_RESOLUTION_CLOCK
+#define MPT_COMPILER_QUIRK_RANDOM_NO_RANDOM_DEVICE
 #endif
 
 

@@ -802,6 +802,7 @@ Declare Function openmpt_module_get_repeat_count(ByVal module As openmpt_module 
 
   \param module The module handle to work on.
   \return Approximate duration of current sub-song in seconds.
+  \remarks The function may return infinity if the pattern data is too complex to evaluate.
 '/
 Declare Function openmpt_module_get_duration_seconds(ByVal module As openmpt_module Ptr) As Double
 
@@ -981,7 +982,7 @@ Declare Function openmpt_module_read_interleaved_stereo(ByVal module As openmpt_
   \param module The module handle to work on.
   \param samplerate Sample rate to render output. Should be in [8000,192000], but this is not enforced.
   \param count Number of audio frames to render per channel.
-  \param interleaved_quad Pointer to a buffer of at least count*4 elements that receives the interleaved suad surround output in the order (L,R,RL,RR).
+  \param interleaved_quad Pointer to a buffer of at least count*4 elements that receives the interleaved quad surround output in the order (L,R,RL,RR).
   \return The number of frames actually rendered.
   \retval 0 The end of song has been reached.
   \remarks The output buffers are only written to up to the returned number of elements.
@@ -1011,7 +1012,7 @@ Declare Function openmpt_module_read_interleaved_float_stereo(ByVal module As op
   \param module The module handle to work on.
   \param samplerate Sample rate to render output. Should be in [8000,192000], but this is not enforced.
   \param count Number of audio frames to render per channel.
-  \param interleaved_quad Pointer to a buffer of at least count*4 elements that receives the interleaved suad surround output in the order (L,R,RL,RR).
+  \param interleaved_quad Pointer to a buffer of at least count*4 elements that receives the interleaved quad surround output in the order (L,R,RL,RR).
   \return The number of frames actually rendered.
   \retval 0 The end of song has been reached.
   \remarks The output buffers are only written to up to the returned number of elements.
@@ -1036,7 +1037,7 @@ Declare Function openmpt_module_get_metadata_keys_ Alias "openmpt_module_get_met
   \param module The module handle to work on.
   \param key Metadata item key to query. Use openmpt_module_get_metadata_keys to check for available keys.
            Possible keys are:
-           - type: Module format extension (e.g. it)
+           - type: Module format extension (e.g. it) or another similar identifier for modules formats that typically do not use a file extension
            - type_long: Format name associated with the module format (e.g. Impulse Tracker)
            - originaltype: Module format extension (e.g. it) of the original module in case the actual type is a converted format (e.g. mo3 or gdm)
            - originaltype_long: Format name associated with the module format (e.g. Impulse Tracker) of the original module in case the actual type is a converted format (e.g. mo3 or gdm)

@@ -550,7 +550,7 @@ static HippoPlaybackPlugin s_openmpt_plugin = {
     HIPPO_PLAYBACK_PLUGIN_API_VERSION,
     PLUGIN_NAME,
     "0.0.2",
-    "libopenmpt 0.5.4",
+    "libopenmpt SVN 2021-05-01",
     openmpt_probe_can_play,
     openmpt_supported_extensions,
     openmpt_create,

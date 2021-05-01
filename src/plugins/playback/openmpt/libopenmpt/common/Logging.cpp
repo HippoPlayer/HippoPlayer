@@ -63,7 +63,7 @@ void SetFacilities(const std::string &solo, const std::string &blocked)
 	std::strcpy(g_FacilityBlocked, blocked.c_str());
 }
 
-bool IsFacilityActive(const char *facility)
+bool IsFacilityActive(const char *facility) noexcept
 {
 	if(facility)
 	{
@@ -88,7 +88,7 @@ bool IsFacilityActive(const char *facility)
 #endif
 
 
-void Logger::SendLogMessage(const mpt::source_location &loc, LogLevel level, const char *facility, const mpt::ustring &text)
+void GlobalLogger::SendLogMessage(const mpt::source_location &loc, LogLevel level, const char *facility, const mpt::ustring &text) const
 {
 #ifdef MPT_LOG_IS_DISABLED
 	MPT_UNREFERENCED_PARAMETER(loc);
@@ -125,14 +125,14 @@ void Logger::SendLogMessage(const mpt::source_location &loc, LogLevel level, con
 #endif
 		if(mpt::log::FileEnabled)
 		{
-			static mpt::ofstream s_logfile;
+			static std::optional<mpt::ofstream> s_logfile;
 			if(!s_logfile)
 			{
-				s_logfile.open(P_("mptrack.log"), std::ios::app);
+				s_logfile.emplace(P_("mptrack.log"), std::ios::app);
 			}
 			if(s_logfile)
 			{
-				mpt::IO::WriteText(s_logfile, mpt::ToCharset(mpt::CharsetLogfile, mpt::format(U_("%1+%2 %3(%4): %5 [%6]\n"))
+				mpt::IO::WriteText(*s_logfile, mpt::ToCharset(mpt::CharsetLogfile, MPT_UFORMAT("{}+{} {}({}): {} [{}]\n")
 					( mpt::Date::ANSI::ToUString(cur)
 					, mpt::ufmt::right(6, mpt::ufmt::dec(diff))
 					, file
@@ -140,12 +140,12 @@ void Logger::SendLogMessage(const mpt::source_location &loc, LogLevel level, con
 					, message
 					, function
 					)));
-				mpt::IO::Flush(s_logfile);
+				mpt::IO::Flush(*s_logfile);
 			}
 		}
 		if(mpt::log::DebuggerEnabled)
 		{
-			OutputDebugStringW(mpt::ToWide(mpt::format(U_("%1(%2): +%3 %4 [%5]\n"))
+			OutputDebugStringW(mpt::ToWide(MPT_UFORMAT("{}({}): +{} {} [{}]\n")
 				( file
 				, line
 				, mpt::ufmt::right(6, mpt::ufmt::dec(diff))
@@ -198,7 +198,7 @@ namespace Trace {
 
 // Debugging functionality will use simple globals.
 
-std::atomic<bool> g_Enabled = ATOMIC_VAR_INIT(false);
+std::atomic<bool> g_Enabled{false};
 
 static bool g_Sealed = false;
 
@@ -349,7 +349,7 @@ bool Dump(const mpt::PathString &filename)
 			time = mpt::ToCharset(mpt::CharsetLogfile, mpt::Date::ANSI::ToUString( ftNow - static_cast<int64>( static_cast<double>(qpcNow.QuadPart - entry.Timestamp) * (10000000.0 / static_cast<double>(qpcFreq.QuadPart) ) ) ) );
 		} else
 		{
-			time = mpt::format("0x%1")(mpt::fmt::hex0<16>(entry.Timestamp));
+			time = MPT_FORMAT("0x{}")(mpt::fmt::hex0<16>(entry.Timestamp));
 		}
 		f << time;
 		if(entry.ThreadId == ThreadIdGUI)

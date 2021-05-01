@@ -21,6 +21,7 @@
 #if MPT_CXX_AT_LEAST(20)
 #include <source_location>
 #endif // C++20
+#include <type_traits>
 
 #include <cstddef>
 #include <cstdint>
@@ -33,26 +34,6 @@ OPENMPT_NAMESPACE_BEGIN
 
 
 
-namespace mpt
-{
-template <bool cond, typename Ta, typename Tb>
-struct select_type
-{
-};
-template <typename Ta, typename Tb>
-struct select_type<true, Ta, Tb>
-{
-	using type = Ta;
-};
-template <typename Ta, typename Tb>
-struct select_type<false, Ta, Tb>
-{
-	using type = Tb;
-};
-} // namespace mpt
-
-
-
 using int8   = std::int8_t;
 using int16  = std::int16_t;
 using int32  = std::int32_t;
@@ -62,20 +43,20 @@ using uint16 = std::uint16_t;
 using uint32 = std::uint32_t;
 using uint64 = std::uint64_t;
 
-constexpr int8 int8_min     = std::numeric_limits<int8>::min();
-constexpr int16 int16_min   = std::numeric_limits<int16>::min();
-constexpr int32 int32_min   = std::numeric_limits<int32>::min();
-constexpr int64 int64_min   = std::numeric_limits<int64>::min();
+constexpr inline int8 int8_min     = std::numeric_limits<int8>::min();
+constexpr inline int16 int16_min   = std::numeric_limits<int16>::min();
+constexpr inline int32 int32_min   = std::numeric_limits<int32>::min();
+constexpr inline int64 int64_min   = std::numeric_limits<int64>::min();
 
-constexpr int8 int8_max     = std::numeric_limits<int8>::max();
-constexpr int16 int16_max   = std::numeric_limits<int16>::max();
-constexpr int32 int32_max   = std::numeric_limits<int32>::max();
-constexpr int64 int64_max   = std::numeric_limits<int64>::max();
+constexpr inline int8 int8_max     = std::numeric_limits<int8>::max();
+constexpr inline int16 int16_max   = std::numeric_limits<int16>::max();
+constexpr inline int32 int32_max   = std::numeric_limits<int32>::max();
+constexpr inline int64 int64_max   = std::numeric_limits<int64>::max();
 
-constexpr uint8 uint8_max   = std::numeric_limits<uint8>::max();
-constexpr uint16 uint16_max = std::numeric_limits<uint16>::max();
-constexpr uint32 uint32_max = std::numeric_limits<uint32>::max();
-constexpr uint64 uint64_max = std::numeric_limits<uint64>::max();
+constexpr inline uint8 uint8_max   = std::numeric_limits<uint8>::max();
+constexpr inline uint16 uint16_max = std::numeric_limits<uint16>::max();
+constexpr inline uint32 uint32_max = std::numeric_limits<uint32>::max();
+constexpr inline uint64 uint64_max = std::numeric_limits<uint64>::max();
 
 
 
@@ -84,19 +65,19 @@ constexpr uint64 uint64_max = std::numeric_limits<uint64>::max();
 
 // fp single
 using single = float;
-constexpr single operator"" _fs(long double lit)
+constexpr single operator"" _fs(long double lit) noexcept
 {
 	return static_cast<single>(lit);
 }
 
 // fp double
-constexpr double operator"" _fd(long double lit)
+constexpr double operator"" _fd(long double lit) noexcept
 {
 	return static_cast<double>(lit);
 }
 
 // fp extended
-constexpr long double operator"" _fe(long double lit)
+constexpr long double operator"" _fe(long double lit) noexcept
 {
 	return static_cast<long double>(lit);
 }
@@ -104,38 +85,38 @@ constexpr long double operator"" _fe(long double lit)
 // fp quad
 // n/a
 
-using float32 = mpt::select_type<sizeof(float) == 4,
+using float32 = std::conditional<sizeof(float) == 4,
 		float
 	,
-		mpt::select_type<sizeof(double) == 4,
+		std::conditional<sizeof(double) == 4,
 			double
 		,
-      mpt::select_type<sizeof(long double) == 4,
+      std::conditional<sizeof(long double) == 4,
 				long double
 			,
 				float
 			>::type
 		>::type
 	>::type;
-constexpr float32 operator"" _f32(long double lit)
+constexpr float32 operator"" _f32(long double lit) noexcept
 {
 	return static_cast<float32>(lit);
 }
 
-using float64 = mpt::select_type<sizeof(float) == 8,
+using float64 = std::conditional<sizeof(float) == 8,
 		float
 	,
-		mpt::select_type<sizeof(double) == 8,
+		std::conditional<sizeof(double) == 8,
 			double
 		,
-      mpt::select_type<sizeof(long double) == 8,
+      std::conditional<sizeof(long double) == 8,
 				long double
 			,
 				double
 			>::type
 		>::type
 	>::type;
-constexpr float64 operator"" _f64(long double lit)
+constexpr float64 operator"" _f64(long double lit) noexcept
 {
 	return static_cast<float64>(lit);
 }
@@ -156,30 +137,34 @@ struct float_traits
 	static constexpr bool is_ieee754_binary64 = is_float && is_ieee754_binary && is_float64;
 	static constexpr bool is_ieee754_binary32ne = is_float && is_ieee754_binary && is_float32 && is_native_endian;
 	static constexpr bool is_ieee754_binary64ne = is_float && is_ieee754_binary && is_float64 && is_native_endian;
+	static constexpr bool is_preferred = is_float && ((is_float32 && MPT_COMPILER_QUIRK_FLOAT_PREFER32) || (is_float64 && MPT_COMPILER_QUIRK_FLOAT_PREFER64));
 };
 }  // namespace mpt
 
-#if MPT_COMPILER_QUIRK_FLOAT_PREFER32
-using nativefloat = float32;
-#elif MPT_COMPILER_QUIRK_FLOAT_PREFER64
-using nativefloat = float64;
-#else
 // prefer smaller floats, but try to use IEEE754 floats
-using nativefloat = mpt::select_type<std::numeric_limits<float>::is_iec559,
-		float
+using nativefloat =
+	std::conditional<mpt::float_traits<float32>::is_preferred,
+		float32
 	,
-		mpt::select_type<std::numeric_limits<double>::is_iec559,
-			double
+		std::conditional<mpt::float_traits<float64>::is_preferred,
+			float64
 		,
-			mpt::select_type<std::numeric_limits<long double>::is_iec559,
-				long double
-			,
+			std::conditional<std::numeric_limits<float>::is_iec559,
 				float
+			,
+				std::conditional<std::numeric_limits<double>::is_iec559,
+					double
+				,
+					std::conditional<std::numeric_limits<long double>::is_iec559,
+						long double
+					,
+						float
+					>::type
+				>::type
 			>::type
 		>::type
-	>::type;	
-#endif
-constexpr nativefloat operator"" _nf(long double lit)
+	>::type;
+constexpr nativefloat operator"" _nf(long double lit) noexcept
 {
 	return static_cast<nativefloat>(lit);
 }
@@ -199,24 +184,11 @@ static_assert(alignof(std::byte) == 1);
 
 
 namespace mpt {
-constexpr int arch_bits = sizeof(void*) * 8;
-constexpr std::size_t pointer_size = sizeof(void*);
+inline constexpr int arch_bits = sizeof(void*) * 8;
+inline constexpr std::size_t pointer_size = sizeof(void*);
 } // namespace mpt
 
 static_assert(mpt::arch_bits == static_cast<int>(mpt::pointer_size) * 8);
-
-
-
-namespace mpt {
-
-template <typename T>
-struct limits
-{
-	static constexpr typename std::remove_cv<T>::type min() noexcept { return std::numeric_limits<typename std::remove_cv<T>::type>::min(); }
-	static constexpr typename std::remove_cv<T>::type max() noexcept { return std::numeric_limits<typename std::remove_cv<T>::type>::max(); }
-};
-
-} // namespace mpt
 
 
 
@@ -230,6 +202,36 @@ using std::source_location;
 #define MPT_SOURCE_LOCATION_CURRENT() std::source_location::current()
 
 #else // !C++20
+
+#if MPT_COMPILER_MSVC && MPT_MSVC_AT_LEAST(2019,6)
+
+#define MPT_SOURCE_LOCATION_FILE __builtin_FILE()
+#define MPT_SOURCE_LOCATION_FUNCTION __builtin_FUNCTION()
+#define MPT_SOURCE_LOCATION_LINE __builtin_LINE()
+#define MPT_SOURCE_LOCATION_COLUMN __builtin_COLUMN()
+
+#elif MPT_COMPILER_GCC
+
+#define MPT_SOURCE_LOCATION_FILE __builtin_FILE()
+#define MPT_SOURCE_LOCATION_FUNCTION __builtin_FUNCTION()
+#define MPT_SOURCE_LOCATION_LINE __builtin_LINE()
+#define MPT_SOURCE_LOCATION_COLUMN 0
+
+#elif MPT_COMPILER_CLANG && MPT_CLANG_AT_LEAST(9,0,0)
+
+#define MPT_SOURCE_LOCATION_FILE __builtin_FILE()
+#define MPT_SOURCE_LOCATION_FUNCTION __builtin_FUNCTION()
+#define MPT_SOURCE_LOCATION_LINE __builtin_LINE()
+#define MPT_SOURCE_LOCATION_COLUMN __builtin_COLUMN()
+
+#else
+
+#define MPT_SOURCE_LOCATION_FILE __FILE__
+#define MPT_SOURCE_LOCATION_FUNCTION ""
+#define MPT_SOURCE_LOCATION_LINE __LINE__
+#define MPT_SOURCE_LOCATION_COLUMN 0
+
+#endif
 
 // compatible with std::experimental::source_location from Library Fundamentals TS v2.
 struct source_location
@@ -256,8 +258,7 @@ public:
 	}
 	source_location(const source_location&) = default;
 	source_location(source_location&&) = default;
-	//static constexpr current() noexcept;  // use MPT_SOURCE_LOCATION_CURRENT()
-	static constexpr source_location current(const char* file, const char* function, uint32 line, uint32 column) noexcept
+	static constexpr source_location current(const char * file = MPT_SOURCE_LOCATION_FILE, const char * function = MPT_SOURCE_LOCATION_FUNCTION, uint32 line = MPT_SOURCE_LOCATION_LINE, uint32 column = MPT_SOURCE_LOCATION_COLUMN) noexcept
 	{
 		return source_location(file, function, line, column);
 	}
@@ -279,7 +280,11 @@ public:
 	}
 };
 
+#if (MPT_COMPILER_MSVC && MPT_MSVC_AT_LEAST(2019,6)) || MPT_COMPILER_GCC || (MPT_COMPILER_CLANG && MPT_CLANG_AT_LEAST(9,0,0))
+#define MPT_SOURCE_LOCATION_CURRENT() mpt::source_location::current()
+#else
 #define MPT_SOURCE_LOCATION_CURRENT() mpt::source_location::current( __FILE__ , __func__ , __LINE__ , 0 )
+#endif
 
 #endif // C++20
 

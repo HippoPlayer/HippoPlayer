@@ -55,8 +55,65 @@ OPENMPT_NAMESPACE_BEGIN
 
 namespace mpt
 {
+
+template <typename T>
+struct stdarray_extent : std::integral_constant<std::size_t, 0> {};
+
+template <typename T, std::size_t N>
+struct stdarray_extent<std::array<T, N>> : std::integral_constant<std::size_t, N> {};
+
+template <typename T>
+struct is_stdarray : std::false_type {};
+
+template <typename T, std::size_t N>
+struct is_stdarray<std::array<T, N>> : std::true_type {};
+
+// mpt::extent is the same as std::extent,
+// but also works for std::array,
+// and asserts that the given type is actually an array type instead of returning 0.
+// use as:
+// mpt::extent<decltype(expr)>()
+// mpt::extent<decltype(variable)>()
+// mpt::extent<decltype(type)>()
+// mpt::extent<type>()
+template <typename T>
+constexpr std::size_t extent() noexcept
+{
+	using Tarray = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
+	static_assert(std::is_array<Tarray>::value || mpt::is_stdarray<Tarray>::value);
+	if constexpr(mpt::is_stdarray<Tarray>::value)
+	{
+		return mpt::stdarray_extent<Tarray>();
+	} else
+	{
+		return std::extent<Tarray>();
+	}
+}
+
+template<typename>
+struct array_size;
+
+template <typename T, std::size_t N>
+struct array_size<std::array<T, N>>
+{
+	static constexpr std::size_t size = N;
+};
+
+template <typename T, std::size_t N>
+struct array_size<T[N]>
+{
+	static constexpr std::size_t size = N;
+};
+
+} // namespace mpt
+
+
+
+namespace mpt
+{
+
 template <typename T, std::size_t N, typename Tx>
-MPT_CONSTEXPR14_FUN std::array<T, N> init_array(const Tx & x)
+constexpr std::array<T, N> init_array(const Tx & x)
 {
 	std::array<T, N> result{};
 	for(std::size_t i = 0; i < N; ++i)
@@ -65,8 +122,29 @@ MPT_CONSTEXPR14_FUN std::array<T, N> init_array(const Tx & x)
 	}
 	return result;
 }
+
 } // namespace mpt
 
+
+
+namespace mpt
+{
+
+#if MPT_CXX_AT_LEAST(23)
+
+using std::to_underlying;
+
+#else // !C++23
+
+template <typename T>
+constexpr std::underlying_type_t<T> to_underlying(T value) noexcept
+{
+	return static_cast<typename std::underlying_type<T>::type>(value);
+}
+
+#endif // C++23
+
+} // namespace mpt
 
 
 namespace mpt
@@ -75,7 +153,7 @@ namespace mpt
 // Work-around for the requirement of at least 1 non-throwing function argument combination in C++ (17,2a).
 
 template <typename Exception>
-MPT_CONSTEXPR14_FUN bool constexpr_throw_helper(Exception && e, bool really = true)
+constexpr bool constexpr_throw_helper(Exception && e, bool really = true)
 {
 	//return !really ? really : throw std::forward<Exception>(e);
 	if(really)
@@ -86,7 +164,7 @@ MPT_CONSTEXPR14_FUN bool constexpr_throw_helper(Exception && e, bool really = tr
 	return really;
 }
 template <typename Exception>
-MPT_CONSTEXPR14_FUN bool constexpr_throw(Exception && e)
+constexpr bool constexpr_throw(Exception && e)
 {
 	return mpt::constexpr_throw_helper(std::forward<Exception>(e));
 }
@@ -118,13 +196,13 @@ namespace mpt {
 // For example, wrapping_modulo(-1, m) == (m - 1).
 // Behaviour is undefined if m<=0.
 template<typename T, typename M>
-MPT_CONSTEXPR11_FUN auto wrapping_modulo(T x, M m) -> decltype(x % m)
+constexpr auto wrapping_modulo(T x, M m) -> decltype(x % m)
 {
 	return (x >= 0) ? (x % m) : (m - 1 - ((-1 - x) % m));
 }
 
 template<typename T, typename D>
-MPT_CONSTEXPR11_FUN auto wrapping_divide(T x, D d) -> decltype(x / d)
+constexpr auto wrapping_divide(T x, D d) -> decltype(x / d)
 {
 	return (x >= 0) ? (x / d) : (((x + 1) / d) - 1);
 }
@@ -139,7 +217,7 @@ namespace mpt {
 
 // Saturate the value of src to the domain of Tdst
 template <typename Tdst, typename Tsrc>
-inline Tdst saturate_cast(Tsrc src)
+constexpr Tdst saturate_cast(Tsrc src) noexcept
 {
 	// This code tries not only to obviously avoid overflows but also to avoid signed/unsigned comparison warnings and type truncation warnings (which in fact would be safe here) by explicit casting.
 	static_assert(std::numeric_limits<Tdst>::is_integer);
@@ -187,7 +265,7 @@ inline Tdst saturate_cast(Tsrc src)
 }
 
 template <typename Tdst>
-inline Tdst saturate_cast(double src)
+constexpr Tdst saturate_cast(double src)
 {
 	if(src >= static_cast<double>(std::numeric_limits<Tdst>::max()))
 	{
@@ -201,7 +279,7 @@ inline Tdst saturate_cast(double src)
 }
 
 template <typename Tdst>
-inline Tdst saturate_cast(float src)
+constexpr Tdst saturate_cast(float src)
 {
 	if(src >= static_cast<float>(std::numeric_limits<Tdst>::max()))
 	{
@@ -222,6 +300,10 @@ using std::has_single_bit;
 using std::bit_ceil;
 using std::bit_floor;
 using std::bit_width;
+using std::countl_zero;
+using std::countl_one;
+using std::countr_zero;
+using std::countr_one;
 using std::rotl;
 using std::rotr;
 
@@ -231,7 +313,7 @@ using std::rotr;
 // Note that we do not use SFINAE here but instead rely on static_assert.
 
 template <typename T>
-MPT_CONSTEXPR14_FUN int popcount(T val) noexcept
+constexpr int popcount(T val) noexcept
 {
 	static_assert(std::numeric_limits<T>::is_integer);
 	static_assert(std::is_unsigned<T>::value);
@@ -248,7 +330,7 @@ MPT_CONSTEXPR14_FUN int popcount(T val) noexcept
 }
 
 template <typename T>
-MPT_CONSTEXPR14_FUN bool has_single_bit(T x) noexcept
+constexpr bool has_single_bit(T x) noexcept
 {
 	static_assert(std::numeric_limits<T>::is_integer);
 	static_assert(std::is_unsigned<T>::value);
@@ -256,7 +338,7 @@ MPT_CONSTEXPR14_FUN bool has_single_bit(T x) noexcept
 }
 
 template <typename T>
-MPT_CONSTEXPR14_FUN T bit_ceil(T x) noexcept
+constexpr T bit_ceil(T x) noexcept
 {
 	static_assert(std::numeric_limits<T>::is_integer);
 	static_assert(std::is_unsigned<T>::value);
@@ -274,7 +356,7 @@ MPT_CONSTEXPR14_FUN T bit_ceil(T x) noexcept
 }
 
 template <typename T>
-MPT_CONSTEXPR14_FUN T bit_floor(T x) noexcept
+constexpr T bit_floor(T x) noexcept
 {
 	static_assert(std::numeric_limits<T>::is_integer);
 	static_assert(std::is_unsigned<T>::value);
@@ -296,7 +378,7 @@ MPT_CONSTEXPR14_FUN T bit_floor(T x) noexcept
 }
  
 template <typename T>
-MPT_CONSTEXPR14_FUN T bit_width(T x) noexcept
+constexpr T bit_width(T x) noexcept
 {
 	static_assert(std::numeric_limits<T>::is_integer);
 	static_assert(std::is_unsigned<T>::value);
@@ -309,18 +391,94 @@ MPT_CONSTEXPR14_FUN T bit_width(T x) noexcept
 	return result;
 }
 
+template <typename T>
+constexpr int countl_zero(T x) noexcept
+{
+	static_assert(std::numeric_limits<T>::is_integer);
+	static_assert(std::is_unsigned<T>::value);
+	int count = 0;
+	for(int bit = std::numeric_limits<T>::digits - 1; bit >= 0; --bit)
+	{
+		if((x & (1u<<bit)) == 0u)
+		{
+			count++;
+		} else
+		{
+			break;
+		}
+	}
+	return count;
+}
+
+template <typename T>
+constexpr int countl_one(T x) noexcept
+{
+	static_assert(std::numeric_limits<T>::is_integer);
+	static_assert(std::is_unsigned<T>::value);
+	int count = 0;
+	for(int bit = std::numeric_limits<T>::digits - 1; bit >= 0; --bit)
+	{
+		if((x & (1u<<bit)) != 0u)
+		{
+			count++;
+		} else
+		{
+			break;
+		}
+	}
+	return count;
+}
+
+template <typename T>
+constexpr int countr_zero(T x) noexcept
+{
+	static_assert(std::numeric_limits<T>::is_integer);
+	static_assert(std::is_unsigned<T>::value);
+	int count = 0;
+	for(int bit = 0; bit < std::numeric_limits<T>::digits; ++bit)
+	{
+		if((x & (1u<<bit)) == 0u)
+		{
+			count++;
+		} else
+		{
+			break;
+		}
+	}
+	return count;
+}
+
+template <typename T>
+constexpr int countr_one(T x) noexcept
+{
+	static_assert(std::numeric_limits<T>::is_integer);
+	static_assert(std::is_unsigned<T>::value);
+	int count = 0;
+	for(int bit = 0; bit < std::numeric_limits<T>::digits; ++bit)
+	{
+		if((x & (1u<<bit)) != 0u)
+		{
+			count++;
+		} else
+		{
+			break;
+		}
+	}
+	return count;
+}
+
 namespace detail
 {
 
 template <typename T>
-MPT_CONSTEXPR14_FUN T rotl(T x, int r) noexcept
+constexpr T rotl(T x, int r) noexcept
 {
 	auto N = std::numeric_limits<T>::digits;
 	return (x >> (N - r)) | (x << r);
 }
 
 template <typename T>
-MPT_CONSTEXPR14_FUN T rotr(T x, int r) noexcept
+constexpr T rotr(T x, int r) noexcept
 {
 	auto N = std::numeric_limits<T>::digits;
 	return (x << (N - r)) | (x >> r);
@@ -329,7 +487,7 @@ MPT_CONSTEXPR14_FUN T rotr(T x, int r) noexcept
 } // namespace detail
 
 template <typename T>
-MPT_CONSTEXPR14_FUN T rotl(T x, int s) noexcept
+constexpr T rotl(T x, int s) noexcept
 {
 	static_assert(std::numeric_limits<T>::is_integer);
 	static_assert(std::is_unsigned<T>::value);
@@ -339,13 +497,29 @@ MPT_CONSTEXPR14_FUN T rotl(T x, int s) noexcept
 }
 
 template <typename T>
-MPT_CONSTEXPR14_FUN T rotr(T x, int s) noexcept
+constexpr T rotr(T x, int s) noexcept
 {
 	static_assert(std::numeric_limits<T>::is_integer);
 	static_assert(std::is_unsigned<T>::value);
 	auto N = std::numeric_limits<T>::digits;
 	auto r = s % N;
 	return (s < 0) ? detail::rotl(x, -s) : ((x << (N - r)) | (x >> r));
+}
+
+#endif
+
+#if MPT_CXX_AT_LEAST(20)
+
+using std::in_range;
+
+#else
+
+// Returns true iff Tdst can represent the value val.
+// Use as if(mpt::in_range<uint8>(-1)).
+template <typename Tdst, typename Tsrc>
+constexpr bool in_range(Tsrc val)
+{
+	return (static_cast<Tsrc>(mpt::saturate_cast<Tdst>(val)) == val);
 }
 
 #endif
@@ -362,7 +536,7 @@ template <typename Tmod, Tmod m>
 struct ModIfNotZeroImpl
 {
 	template <typename Tval>
-	inline Tval mod(Tval x)
+	constexpr Tval mod(Tval x)
 	{
 		static_assert(std::numeric_limits<Tmod>::is_integer);
 		static_assert(!std::numeric_limits<Tmod>::is_signed);
@@ -371,25 +545,17 @@ struct ModIfNotZeroImpl
 		return static_cast<Tval>(x % m);
 	}
 };
-template <> struct ModIfNotZeroImpl<uint8 , 0> { template <typename Tval> inline Tval mod(Tval x) { return x; } };
-template <> struct ModIfNotZeroImpl<uint16, 0> { template <typename Tval> inline Tval mod(Tval x) { return x; } };
-template <> struct ModIfNotZeroImpl<uint32, 0> { template <typename Tval> inline Tval mod(Tval x) { return x; } };
-template <> struct ModIfNotZeroImpl<uint64, 0> { template <typename Tval> inline Tval mod(Tval x) { return x; } };
+template <> struct ModIfNotZeroImpl<uint8 , 0> { template <typename Tval> constexpr Tval mod(Tval x) { return x; } };
+template <> struct ModIfNotZeroImpl<uint16, 0> { template <typename Tval> constexpr Tval mod(Tval x) { return x; } };
+template <> struct ModIfNotZeroImpl<uint32, 0> { template <typename Tval> constexpr Tval mod(Tval x) { return x; } };
+template <> struct ModIfNotZeroImpl<uint64, 0> { template <typename Tval> constexpr Tval mod(Tval x) { return x; } };
 } // namespace detail
 // Returns x % m if m != 0, x otherwise.
 // i.e. "return (m == 0) ? x : (x % m);", but without causing a warning with stupid older compilers
 template <typename Tmod, Tmod m, typename Tval>
-inline Tval ModIfNotZero(Tval x)
+constexpr Tval ModIfNotZero(Tval x)
 {
 	return detail::ModIfNotZeroImpl<Tmod, m>().mod(x);
-}
-
-// Returns true iff Tdst can represent the value val.
-// Use as if(Util::TypeCanHoldValue<uint8>(-1)).
-template <typename Tdst, typename Tsrc>
-inline bool TypeCanHoldValue(Tsrc val)
-{
-	return (static_cast<Tsrc>(mpt::saturate_cast<Tdst>(val)) == val);
 }
 
 // Grows x with an exponential factor suitable for increasing buffer sizes.
@@ -459,7 +625,7 @@ inline void LimitMax(T& val, const C upperLimit)
 
 // Returns sign of a number (-1 for negative numbers, 1 for positive numbers, 0 for 0)
 template <class T>
-int sgn(T value)
+constexpr int sgn(T value)
 {
 	return (value > T(0)) - (value < T(0));
 }
@@ -475,7 +641,7 @@ namespace mpt
 {
 
 template <typename T>
-MPT_FORCEINLINE auto rshift_signed_standard(T x, int y) -> decltype(x >> y)
+constexpr auto rshift_signed_standard(T x, int y) noexcept -> decltype(x >> y)
 {
 	static_assert(std::numeric_limits<T>::is_integer);
 	static_assert(std::numeric_limits<T>::is_signed);
@@ -491,7 +657,7 @@ MPT_FORCEINLINE auto rshift_signed_standard(T x, int y) -> decltype(x >> y)
 }
 
 template <typename T>
-MPT_FORCEINLINE auto lshift_signed_standard(T x, int y) -> decltype(x << y)
+constexpr auto lshift_signed_standard(T x, int y) noexcept -> decltype(x << y)
 {
 	static_assert(std::numeric_limits<T>::is_integer);
 	static_assert(std::numeric_limits<T>::is_signed);
@@ -509,7 +675,7 @@ MPT_FORCEINLINE auto lshift_signed_standard(T x, int y) -> decltype(x << y)
 #if MPT_COMPILER_SHIFT_SIGNED
 
 template <typename T>
-MPT_FORCEINLINE auto rshift_signed_undefined(T x, int y) -> decltype(x >> y)
+constexpr auto rshift_signed_undefined(T x, int y) noexcept -> decltype(x >> y)
 {
 	static_assert(std::numeric_limits<T>::is_integer);
 	static_assert(std::numeric_limits<T>::is_signed);
@@ -517,7 +683,7 @@ MPT_FORCEINLINE auto rshift_signed_undefined(T x, int y) -> decltype(x >> y)
 }
 
 template <typename T>
-MPT_FORCEINLINE auto lshift_signed_undefined(T x, int y) -> decltype(x << y)
+constexpr auto lshift_signed_undefined(T x, int y) noexcept -> decltype(x << y)
 {
 	static_assert(std::numeric_limits<T>::is_integer);
 	static_assert(std::numeric_limits<T>::is_signed);
@@ -525,13 +691,13 @@ MPT_FORCEINLINE auto lshift_signed_undefined(T x, int y) -> decltype(x << y)
 }
 
 template <typename T>
-MPT_FORCEINLINE auto rshift_signed(T x, int y) -> decltype(x >> y)
+constexpr auto rshift_signed(T x, int y) noexcept -> decltype(x >> y)
 {
 	return mpt::rshift_signed_undefined(x, y);
 }
 
 template <typename T>
-MPT_FORCEINLINE auto lshift_signed(T x, int y) -> decltype(x << y)
+constexpr auto lshift_signed(T x, int y) noexcept -> decltype(x << y)
 {
 	return mpt::lshift_signed_undefined(x, y);
 }
@@ -539,35 +705,22 @@ MPT_FORCEINLINE auto lshift_signed(T x, int y) -> decltype(x << y)
 #else
 
 template <typename T>
-MPT_FORCEINLINE auto rshift_signed(T x, int y) -> decltype(x >> y)
+constexpr auto rshift_signed(T x, int y) noexcept -> decltype(x >> y)
 {
 	return mpt::rshift_signed_standard(x, y);
 }
 
 template <typename T>
-MPT_FORCEINLINE auto lshift_signed(T x, int y) -> decltype(x << y)
+constexpr auto lshift_signed(T x, int y) noexcept -> decltype(x << y)
 {
 	return mpt::lshift_signed_standard(x, y);
 }
 
 #endif
 
-template<typename>
-struct array_size;
-
-template <typename T, std::size_t N>
-struct array_size<std::array<T, N>>
-{
-	static constexpr std::size_t size = N;
-};
-
-template <typename T, std::size_t N>
-struct array_size<T[N]>
-{
-	static constexpr std::size_t size = N;
-};
-
 }  // namespace mpt
+
+
 
 namespace Util
 {
@@ -614,45 +767,57 @@ namespace Util {
 
 	// Multiply two 32-bit integers, receive 64-bit result.
 	// MSVC generates unnecessarily complicated code for the unoptimized variant using _allmul.
-	MPT_FORCEINLINE int64 mul32to64(int32 a, int32 b)
+	MPT_CONSTEXPR20_FUN int64 mul32to64(int32 a, int32 b)
 	{
-#if MPT_COMPILER_MSVC && (defined(_M_IX86) || defined(_M_X64))
-		return __emul(a, b);
-#else
-		return static_cast<int64>(a) * b;
-#endif
+		#if MPT_COMPILER_MSVC && (defined(_M_IX86) || defined(_M_X64))
+			MPT_MAYBE_CONSTANT_IF(MPT_IS_CONSTANT_EVALUATED20())
+			{
+				return static_cast<int64>(a) * b;
+			} else
+			{
+				return __emul(a, b);
+			}
+		#else
+			return static_cast<int64>(a) * b;
+		#endif
 	}
 
-	MPT_FORCEINLINE uint64 mul32to64_unsigned(uint32 a, uint32 b)
+	MPT_CONSTEXPR20_FUN uint64 mul32to64_unsigned(uint32 a, uint32 b)
 	{
-#if MPT_COMPILER_MSVC && (defined(_M_IX86) || defined(_M_X64))
-		return __emulu(a, b);
-#else
-		return static_cast<uint64>(a) * b;
-#endif
+		#if MPT_COMPILER_MSVC && (defined(_M_IX86) || defined(_M_X64))
+			MPT_MAYBE_CONSTANT_IF(MPT_IS_CONSTANT_EVALUATED20())
+			{
+				return static_cast<uint64>(a) * b;
+			} else
+			{
+				return __emulu(a, b);
+			}
+		#else
+			return static_cast<uint64>(a) * b;
+		#endif
 	}
 
-	MPT_FORCEINLINE int32 muldiv(int32 a, int32 b, int32 c)
+	MPT_CONSTEXPR20_FUN int32 muldiv(int32 a, int32 b, int32 c)
 	{
 		return mpt::saturate_cast<int32>( mul32to64( a, b ) / c );
 	}
 
-	MPT_FORCEINLINE int32 muldivr(int32 a, int32 b, int32 c)
+	MPT_CONSTEXPR20_FUN int32 muldivr(int32 a, int32 b, int32 c)
 	{
 		return mpt::saturate_cast<int32>( ( mul32to64( a, b ) + ( c / 2 ) ) / c );
 	}
 
 	// Do not use overloading because catching unsigned version by accident results in slower X86 code.
-	MPT_FORCEINLINE uint32 muldiv_unsigned(uint32 a, uint32 b, uint32 c)
+	MPT_CONSTEXPR20_FUN uint32 muldiv_unsigned(uint32 a, uint32 b, uint32 c)
 	{
 		return mpt::saturate_cast<uint32>( mul32to64_unsigned( a, b ) / c );
 	}
-	MPT_FORCEINLINE uint32 muldivr_unsigned(uint32 a, uint32 b, uint32 c)
+	MPT_CONSTEXPR20_FUN uint32 muldivr_unsigned(uint32 a, uint32 b, uint32 c)
 	{
 		return mpt::saturate_cast<uint32>( ( mul32to64_unsigned( a, b ) + ( c / 2u ) ) / c );
 	}
 
-	MPT_FORCEINLINE int32 muldivrfloor(int64 a, uint32 b, uint32 c)
+	constexpr MPT_FORCEINLINE int32 muldivrfloor(int64 a, uint32 b, uint32 c)
 	{
 		a *= b;
 		a += c / 2u;
@@ -661,20 +826,31 @@ namespace Util {
 
 	// rounds x up to multiples of target
 	template <typename T>
-	inline T AlignUp(T x, T target)
+	constexpr T AlignUp(T x, T target)
 	{
 		return ((x + (target - 1)) / target) * target;
 	}
 
 	// rounds x down to multiples of target
 	template <typename T>
-	inline T AlignDown(T x, T target)
+	constexpr T AlignDown(T x, T target)
 	{
 		return (x / target) * target;
 	}
 
 } // namespace Util
 
+
+namespace mpt
+{
+
+template <typename TContainer, typename TVal>
+MPT_CONSTEXPR20_FUN bool contains(const TContainer &container, const TVal &value) noexcept(noexcept(std::find(std::begin(container), std::end(container), value)))
+{
+	return std::find(std::begin(container), std::end(container), value) != std::end(container);
+}
+
+}  // namespace mpt
 
 
 OPENMPT_NAMESPACE_END

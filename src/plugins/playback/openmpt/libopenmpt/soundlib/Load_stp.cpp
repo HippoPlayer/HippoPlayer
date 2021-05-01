@@ -256,7 +256,7 @@ bool CSoundFile::ReadSTP(FileReader &file, ModLoadingFlags loadFlags)
 
 	InitializeGlobals(MOD_TYPE_STP);
 
-	m_modFormat.formatName = mpt::format(U_("Soundtracker Pro II v%1"))(fileHeader.version);
+	m_modFormat.formatName = MPT_UFORMAT("Soundtracker Pro II v{}")(fileHeader.version);
 	m_modFormat.type = U_("stp");
 	m_modFormat.charset = mpt::Charset::ISO8859_1;
 
@@ -333,7 +333,9 @@ bool CSoundFile::ReadSTP(FileReader &file, ModLoadingFlags loadFlags)
 			STPLoopList &loopList = loopInfo[actualSmp - 1];
 			loopList.clear();
 
-			uint16 numLoops = file.ReadUint16BE();
+			const uint16 numLoops = file.ReadUint16BE();
+			if(!file.CanRead(numLoops * 8u))
+				return false;
 			loopList.reserve(numLoops);
 
 			STPLoopInfo loop;

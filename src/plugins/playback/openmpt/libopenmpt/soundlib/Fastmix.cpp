@@ -347,6 +347,15 @@ void CSoundFile::CreateStereoMix(int count)
 		}
 #endif // NO_PLUGINS
 
+		if(chn.isPaused)
+		{
+			EndChannelOfs(chn, pbuffer, count);
+			*pOfsR += chn.nROfs;
+			*pOfsL += chn.nLOfs;
+			chn.nROfs = chn.nLOfs = 0;
+			continue;
+		}
+
 		MixLoopState mixLoopState(chn);
 
 		////////////////////////////////////////////////////

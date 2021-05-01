@@ -66,8 +66,8 @@ MPT_WARNING("Warning: libopenmpt built in non thread-safe mode because mutexes a
 MPT_WARNING("Warning: Building libopenmpt with MinGW-w64 without std::thread support is not recommended and is deprecated. Please use MinGW-w64 with posix threading model (as opposed to win32 threading model), or build with mingw-std-threads.")
 #endif // MINGW
 
-#if MPT_CLANG_AT_LEAST(5,0,0) && defined(__powerpc__) && !defined(__powerpc64__)
-MPT_WARNING("Warning: libopenmpt is known to trigger bad code generation with Clang 5 or later on powerpc (32bit) when using -O3. See <https://bugs.llvm.org/show_bug.cgi?id=46683>.")
+#if MPT_CLANG_AT_LEAST(5,0,0) && MPT_CLANG_BEFORE(11,0,0) && defined(__powerpc__) && !defined(__powerpc64__)
+MPT_WARNING("Warning: libopenmpt is known to trigger bad code generation with Clang 5..10 on powerpc (32bit) when using -O3. See <https://bugs.llvm.org/show_bug.cgi?id=46683>.")
 #endif
 
 #endif // !MPT_BUILD_SILENCE_LIBOPENMPT_CONFIGURATION_WARNINGS
@@ -78,12 +78,12 @@ MPT_NOINLINE void AssertHandler(const mpt::source_location &loc, const char *exp
 {
 	if(msg)
 	{
-		mpt::log::Logger().SendLogMessage(loc, LogError, "ASSERT",
+		mpt::log::GlobalLogger().SendLogMessage(loc, LogError, "ASSERT",
 			U_("ASSERTION FAILED: ") + mpt::ToUnicode(mpt::CharsetSource, msg) + U_(" (") + mpt::ToUnicode(mpt::CharsetSource, expr) + U_(")")
 			);
 	} else
 	{
-		mpt::log::Logger().SendLogMessage(loc, LogError, "ASSERT",
+		mpt::log::GlobalLogger().SendLogMessage(loc, LogError, "ASSERT",
 			U_("ASSERTION FAILED: ") + mpt::ToUnicode(mpt::CharsetSource, expr)
 			);
 	}
@@ -96,7 +96,9 @@ MPT_NOINLINE void AssertHandler(const mpt::source_location &loc, const char *exp
 
 OPENMPT_NAMESPACE_END
 
-using namespace OpenMPT;
+#ifndef MPT_NO_NAMESPACE
+using namespace OPENMPT_NAMESPACE;
+#endif
 
 namespace openmpt {
 
@@ -494,7 +496,7 @@ std::size_t module_impl::read_wrapper( std::size_t count, std::int16_t * left, s
 	m_sndFile->m_bIsRendering = ( m_ctl_play_at_end != song_end_action::fadeout_song );
 	std::size_t count_read = 0;
 	std::int16_t * const buffers[4] = { left, right, rear_left, rear_right };
-	AudioReadTargetGainBuffer<audio_buffer_planar<std::int16_t>> target( audio_buffer_planar<std::int16_t>( buffers, planar_audio_buffer_valid_channels( buffers, std::size( buffers) ), count ), *m_Dither, m_Gain );
+	AudioReadTargetGainBuffer<audio_buffer_planar<std::int16_t>> target( audio_buffer_planar<std::int16_t>( buffers, planar_audio_buffer_valid_channels( buffers, std::size( buffers ) ), count ), *m_Dither, m_Gain );
 	while ( count > 0 ) {
 		std::size_t count_chunk = m_sndFile->Read(
 			static_cast<CSoundFile::samplecount_t>( std::min( static_cast<std::uint64_t>( count ), static_cast<std::uint64_t>( std::numeric_limits<CSoundFile::samplecount_t>::max() / 2 / 4 / 4 ) ) ), // safety margin / samplesize / channels
@@ -517,7 +519,7 @@ std::size_t module_impl::read_wrapper( std::size_t count, float * left, float * 
 	m_sndFile->m_bIsRendering = ( m_ctl_play_at_end != song_end_action::fadeout_song );
 	std::size_t count_read = 0;
 	float * const buffers[4] = { left, right, rear_left, rear_right };
-	AudioReadTargetGainBuffer<audio_buffer_planar<float>> target( audio_buffer_planar<float>( buffers, planar_audio_buffer_valid_channels( buffers, std::size( buffers) ), count ), *m_Dither, m_Gain );
+	AudioReadTargetGainBuffer<audio_buffer_planar<float>> target( audio_buffer_planar<float>( buffers, planar_audio_buffer_valid_channels( buffers, std::size( buffers ) ), count ), *m_Dither, m_Gain );
 	while ( count > 0 ) {
 		std::size_t count_chunk = m_sndFile->Read(
 			static_cast<CSoundFile::samplecount_t>( std::min( static_cast<std::uint64_t>( count ), static_cast<std::uint64_t>( std::numeric_limits<CSoundFile::samplecount_t>::max() / 2 / 4 / 4 ) ) ), // safety margin / samplesize / channels
@@ -620,7 +622,7 @@ double module_impl::could_open_probability( const OpenMPT::FileReader & file, do
 			return 0.6;
 		} else if ( effort >= 0.1 ) {
 			FileReader::PinnedRawDataView view = file.GetPinnedRawDataView( probe_file_header_get_recommended_size() );
-			int probe_file_header_result = probe_file_header( probe_file_header_flags_default, view.data(), view.size(), file.GetLength() );
+			int probe_file_header_result = probe_file_header( probe_file_header_flags_default2, view.data(), view.size(), file.GetLength() );
 			double result = 0.0;
 			switch ( probe_file_header_result ) {
 				case probe_file_header_result_success:
@@ -1106,10 +1108,11 @@ double module_impl::set_position_seconds( double seconds ) {
 	} else {
 		subsong = &subsongs[m_current_subsong];
 	}
+	m_sndFile->SetCurrentOrder( static_cast<ORDERINDEX>( subsong->start_order ) );
 	GetLengthType t = m_sndFile->GetLength( m_ctl_seek_sync_samples ? eAdjustSamplePositions : eAdjust, GetLengthTarget( seconds ).StartPos( static_cast<SEQUENCEINDEX>( subsong->sequence ), static_cast<ORDERINDEX>( subsong->start_order ), static_cast<ROWINDEX>( subsong->start_row ) ) ).back();
-	m_sndFile->m_PlayState.m_nCurrentOrder = t.lastOrder;
-	m_sndFile->SetCurrentOrder( t.lastOrder );
-	m_sndFile->m_PlayState.m_nNextRow = t.lastRow;
+	m_sndFile->m_PlayState.m_nNextOrder = m_sndFile->m_PlayState.m_nCurrentOrder = t.targetReached ? t.lastOrder : t.endOrder;
+	m_sndFile->m_PlayState.m_nNextRow = t.targetReached ? t.lastRow : t.endRow;
+	m_sndFile->m_PlayState.m_nTickCount = CSoundFile::TICKS_ROW_FINISHED;
 	m_currentPositionSeconds = base_seconds + t.duration;
 	return m_currentPositionSeconds;
 }
@@ -1128,6 +1131,7 @@ double module_impl::set_position_order_row( std::int32_t order, std::int32_t row
 	m_sndFile->m_PlayState.m_nCurrentOrder = static_cast<ORDERINDEX>( order );
 	m_sndFile->SetCurrentOrder( static_cast<ORDERINDEX>( order ) );
 	m_sndFile->m_PlayState.m_nNextRow = static_cast<ROWINDEX>( row );
+	m_sndFile->m_PlayState.m_nTickCount = CSoundFile::TICKS_ROW_FINISHED;
 	m_currentPositionSeconds = m_sndFile->GetLength( m_ctl_seek_sync_samples ? eAdjustSamplePositions : eAdjust, GetLengthTarget( static_cast<ORDERINDEX>( order ), static_cast<ROWINDEX>( row ) ) ).back().duration;
 	return m_currentPositionSeconds;
 }

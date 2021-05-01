@@ -96,16 +96,31 @@ void IMixPlugin::SetSlot(PLUGINDEX slot)
 }
 
 
+PlugParamValue IMixPlugin::GetScaledUIParam(PlugParamIndex param)
+{
+	const auto [paramMin, paramMax] = GetParamUIRange(param);
+	return (std::clamp(GetParameter(param), paramMin, paramMax) - paramMin) / (paramMax - paramMin);
+}
+
+
+void IMixPlugin::SetScaledUIParam(PlugParamIndex param, PlugParamValue value)
+{
+	const auto [paramMin, paramMax] = GetParamUIRange(param);
+	const auto scaledVal = paramMin + std::clamp(value, 0.0f, 1.0f) * (paramMax - paramMin);
+	SetParameter(param, scaledVal);
+}
+
+
 CString IMixPlugin::GetFormattedParamName(PlugParamIndex param)
 {
 	CString paramName = GetParamName(param);
 	CString name;
 	if(paramName.IsEmpty())
 	{
-		name = mpt::cformat(_T("%1: Parameter %2"))(mpt::cfmt::dec0<2>(param), mpt::cfmt::dec0<2>(param));
+		name = MPT_CFORMAT("{}: Parameter {}")(mpt::cfmt::dec0<2>(param), mpt::cfmt::dec0<2>(param));
 	} else
 	{
-		name = mpt::cformat(_T("%1: %2"))(mpt::cfmt::dec0<2>(param), paramName);
+		name = MPT_CFORMAT("{}: {}")(mpt::cfmt::dec0<2>(param), paramName);
 	}
 	return name;
 }
@@ -134,9 +149,9 @@ CString IMixPlugin::GetFormattedProgramName(int32 index)
 
 	CString formattedName;
 	if(rawname[0] >= 0 && rawname[0] < _T(' '))
-		formattedName = mpt::cformat(_T("%1 - Program %2"))(mpt::cfmt::dec0<2>(index), index);
+		formattedName = MPT_CFORMAT("{} - Program {}")(mpt::cfmt::dec0<2>(index), index);
 	else
-		formattedName = mpt::cformat(_T("%1 - %2"))(mpt::cfmt::dec0<2>(index), rawname);
+		formattedName = MPT_CFORMAT("{} - {}")(mpt::cfmt::dec0<2>(index), rawname);
 
 	return formattedName;
 }
@@ -358,7 +373,7 @@ float IMixPlugin::RenderSilence(uint32 numFrames)
 	while(numFrames > 0)
 	{
 		uint32 renderSamples = numFrames;
-		LimitMax(renderSamples, mpt::saturate_cast<uint32>(MPT_ARRAY_COUNT(out[0])));
+		LimitMax(renderSamples, mpt::saturate_cast<uint32>(std::size(out[0])));
 		MemsetZero(out);
 
 		Process(out[0], out[1], renderSamples);
@@ -492,10 +507,10 @@ void IMixPlugin::SaveAllParameters()
 			mpt::IO::Write(memFile, IEEE754binary32LE(GetParameter(i)));
 		}
 		EndGetProgram();
-	} MPT_EXCEPTION_CATCH_OUT_OF_MEMORY(e)
+	} catch(mpt::out_of_memory e)
 	{
 		m_pMixStruct->pluginData.clear();
-		MPT_EXCEPTION_DELETE_OUT_OF_MEMORY(e);
+		mpt::delete_out_of_memory(e);
 	}
 }
 
@@ -554,9 +569,9 @@ CAbstractVstEditor *IMixPlugin::OpenEditor()
 	try
 	{
 		return new CDefaultVstEditor(*this);
-	} MPT_EXCEPTION_CATCH_OUT_OF_MEMORY(e)
+	} catch(mpt::out_of_memory e)
 	{
-		MPT_EXCEPTION_DELETE_OUT_OF_MEMORY(e);
+		mpt::delete_out_of_memory(e);
 		return nullptr;
 	}
 }
@@ -779,6 +794,13 @@ void IMidiPlugin::MidiCC(MIDIEvents::MidiCC nController, uint8 nParam, CHANNELIN
 }
 
 
+// Set MIDI pitch for given MIDI channel to the specified raw 14-bit position
+void IMidiPlugin::MidiPitchBendRaw(int32 pitchbend, CHANNELINDEX trackerChn)
+{
+	SendMidiPitchBend(GetMidiChannel(trackerChn), EncodePitchBendParam(Clamp(pitchbend, MIDIEvents::pitchBendMin, MIDIEvents::pitchBendMax)));
+}
+
+
 // Bend MIDI pitch for given MIDI channel using fine tracker param (one unit = 1/64th of a note step)
 void IMidiPlugin::MidiPitchBend(int32 increment, int8 pwd, CHANNELINDEX trackerChn)
 {
@@ -794,15 +816,15 @@ void IMidiPlugin::MidiPitchBend(int32 increment, int8 pwd, CHANNELINDEX trackerC
 		ApplyPitchWheelDepth(increment, pwd);
 	}
 
-	int32 newPitchBendPos = (increment + m_MidiCh[midiCh].midiPitchBendPos) & vstPitchBendMask;
+	int32 newPitchBendPos = (increment + m_MidiCh[midiCh].midiPitchBendPos) & kPitchBendMask;
 	Limit(newPitchBendPos, EncodePitchBendParam(MIDIEvents::pitchBendMin), EncodePitchBendParam(MIDIEvents::pitchBendMax));
 
-	MidiPitchBend(midiCh, newPitchBendPos);
+	SendMidiPitchBend(midiCh, newPitchBendPos);
 }
 
 
 // Set MIDI pitch for given MIDI channel using fixed point pitch bend value (converted back to 0-16383 MIDI range)
-void IMidiPlugin::MidiPitchBend(uint8 midiCh, int32 newPitchBendPos)
+void IMidiPlugin::SendMidiPitchBend(uint8 midiCh, int32 newPitchBendPos)
 {
 	MPT_ASSERT(EncodePitchBendParam(MIDIEvents::pitchBendMin) <= newPitchBendPos && newPitchBendPos <= EncodePitchBendParam(MIDIEvents::pitchBendMax));
 	m_MidiCh[midiCh].midiPitchBendPos = newPitchBendPos;
@@ -815,12 +837,12 @@ void IMidiPlugin::MidiVibrato(int32 depth, int8 pwd, CHANNELINDEX trackerChn)
 {
 	auto midiCh = GetMidiChannel(trackerChn);
 	depth = EncodePitchBendParam(depth);
-	if(depth != 0 || (m_MidiCh[midiCh].midiPitchBendPos & vstVibratoFlag))
+	if(depth != 0 || (m_MidiCh[midiCh].midiPitchBendPos & kVibratoFlag))
 	{
 		ApplyPitchWheelDepth(depth, pwd);
 
 		// Temporarily add vibrato offset to current pitch
-		int32 newPitchBendPos = (depth + m_MidiCh[midiCh].midiPitchBendPos) & vstPitchBendMask;
+		int32 newPitchBendPos = (depth + m_MidiCh[midiCh].midiPitchBendPos) & kPitchBendMask;
 		Limit(newPitchBendPos, EncodePitchBendParam(MIDIEvents::pitchBendMin), EncodePitchBendParam(MIDIEvents::pitchBendMax));
 
 		MidiSend(MIDIEvents::PitchBend(midiCh, DecodePitchBendParam(newPitchBendPos)));
@@ -828,14 +850,17 @@ void IMidiPlugin::MidiVibrato(int32 depth, int8 pwd, CHANNELINDEX trackerChn)
 
 	// Update vibrato status
 	if(depth != 0)
-		m_MidiCh[midiCh].midiPitchBendPos |= vstVibratoFlag;
+		m_MidiCh[midiCh].midiPitchBendPos |= kVibratoFlag;
 	else
-		m_MidiCh[midiCh].midiPitchBendPos &= ~vstVibratoFlag;
+		m_MidiCh[midiCh].midiPitchBendPos &= ~kVibratoFlag;
 }
 
 
 void IMidiPlugin::MidiCommand(const ModInstrument &instr, uint16 note, uint16 vol, CHANNELINDEX trackChannel)
 {
+	if(trackChannel >= MAX_CHANNELS)
+		return;
+
 	auto midiCh = GetMidiChannel(trackChannel);
 	PlugInstrChannel &channel = m_MidiCh[midiCh];
 
@@ -890,7 +915,7 @@ void IMidiPlugin::MidiCommand(const ModInstrument &instr, uint16 note, uint16 vo
 		MidiSend(MIDIEvents::CC(MIDIEvents::MIDICC_AllSoundOff, midiCh, 0));
 
 		// Turn off all notes
-		for(uint8 i = 0; i < CountOf(channel.noteOnMap); i++)
+		for(uint8 i = 0; i < std::size(channel.noteOnMap); i++)
 		{
 			channel.noteOnMap[i][trackChannel] = 0;
 			MidiSend(MIDIEvents::NoteOff(midiCh, i, volume));
@@ -902,7 +927,7 @@ void IMidiPlugin::MidiCommand(const ModInstrument &instr, uint16 note, uint16 vo
 	// using note mask.
 	else if(note == NOTE_KEYOFF || note == NOTE_FADE) // ==, ~~
 	{
-		for(uint8 i = 0; i < CountOf(channel.noteOnMap); i++)
+		for(uint8 i = 0; i < std::size(channel.noteOnMap); i++)
 		{
 			// Some VSTis need a note off for each instance of a note on, e.g. fabfilter.
 			while(channel.noteOnMap[i][trackChannel])
@@ -914,30 +939,24 @@ void IMidiPlugin::MidiCommand(const ModInstrument &instr, uint16 note, uint16 vo
 	}
 
 	// Note On
-	else if(ModCommand::IsNote(static_cast<ModCommand::NOTE>(note)))
+	else if(note >= NOTE_MIN && note < NOTE_MIN + mpt::array_size<decltype(channel.noteOnMap)>::size)
 	{
 		note -= NOTE_MIN;
 
 		// Reset pitch bend on each new note, tracker style.
 		// This is done if the pitch wheel has been moved or there was a vibrato on the previous row (in which case the "vstVibratoFlag" bit of the pitch bend memory is set)
-		if(m_MidiCh[midiCh].midiPitchBendPos != EncodePitchBendParam(MIDIEvents::pitchBendCentre))
+		auto newPitchBendPos = EncodePitchBendParam(Clamp(m_SndFile.m_PlayState.Chn[trackChannel].GetMIDIPitchBend(), MIDIEvents::pitchBendMin, MIDIEvents::pitchBendMax));
+		if(m_MidiCh[midiCh].midiPitchBendPos != newPitchBendPos)
 		{
-			MidiPitchBend(midiCh, EncodePitchBendParam(MIDIEvents::pitchBendCentre));
+			SendMidiPitchBend(midiCh, newPitchBendPos);
 		}
 
 		// count instances of active notes.
 		// This is to send a note off for each instance of a note, for plugs like Fabfilter.
 		// Problem: if a note dies out naturally and we never send a note off, this counter
 		// will block at max until note off. Is this a problem?
-		// Safe to assume we won't need more than 16 note offs max on a given note?
-#if MPT_COMPILER_MSVC
-#pragma warning(push)
-#pragma warning(disable:6385) // false-positive: Reading invalid data from 'channel.noteOnMap': the readable size is '32768' bytes, but 'note' bytes may be read.
-#endif // MPT_COMPILER_MSVC
+		// Safe to assume we won't need more than 255 note offs max on a given note?
 		if(channel.noteOnMap[note][trackChannel] < uint8_max)
-#if MPT_COMPILER_MSVC
-#pragma warning(pop)
-#endif // MPT_COMPILER_MSVC
 		{
 			channel.noteOnMap[note][trackChannel]++;
 		}
@@ -947,8 +966,11 @@ void IMidiPlugin::MidiCommand(const ModInstrument &instr, uint16 note, uint16 vo
 }
 
 
-bool IMidiPlugin::IsNotePlaying(uint32 note, CHANNELINDEX trackerChn)
+bool IMidiPlugin::IsNotePlaying(uint8 note, CHANNELINDEX trackerChn)
 {
+	if(!ModCommand::IsNote(note) || trackerChn >= std::size(m_MidiCh[GetMidiChannel(trackerChn)].noteOnMap[note]))
+		return false;
+
 	note -= NOTE_MIN;
 	return (m_MidiCh[GetMidiChannel(trackerChn)].noteOnMap[note][trackerChn] != 0);
 }

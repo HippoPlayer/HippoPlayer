@@ -138,7 +138,7 @@ static FileTags ReadMFMetadata(IMFMediaSource *mediaSource)
 
 class ComponentMediaFoundation : public ComponentLibrary
 {
-	MPT_DECLARE_COMPONENT_MEMBERS
+	MPT_DECLARE_COMPONENT_MEMBERS(ComponentMediaFoundation, "MediaFoundation")
 public:
 	ComponentMediaFoundation()
 		: ComponentLibrary(ComponentTypeSystem)
@@ -147,7 +147,7 @@ public:
 	}
 	bool DoInitialize() override
 	{
-		if(!mpt::Windows::Version::Current().IsAtLeast(mpt::Windows::Version::Win7))
+		if(!mpt::OS::Windows::Version::Current().IsAtLeast(mpt::OS::Windows::Version::Win7))
 		{
 			return false;
 		}
@@ -176,7 +176,6 @@ public:
 		}
 	}
 };
-MPT_REGISTERED_COMPONENT(ComponentMediaFoundation, "MediaFoundation")
 
 #endif // MPT_WITH_MEDIAFOUNDATION
 
@@ -228,16 +227,16 @@ std::vector<FileType> CSoundFile::GetMediaFoundationFileTypes()
 			continue;
 		}
 
+		std::vector<WCHAR> valueNameBuf(16384);
+		std::vector<BYTE> valueData(16384);
 		for(DWORD valueIndex = 0; ; ++valueIndex)
 		{
-			WCHAR valueNameBuf[16384];
-			MemsetZero(valueNameBuf);
+			std::fill(valueNameBuf.begin(), valueNameBuf.end(), WCHAR{0});
 			DWORD valueNameBufLen = 16384;
 			DWORD valueType = 0;
-			BYTE valueData[16384];
-			MemsetZero(valueData);
+			std::fill(valueData.begin(), valueData.end(), BYTE{0});
 			DWORD valueDataLen = 16384;
-			regResult = RegEnumValueW(hkHandler, valueIndex, valueNameBuf, &valueNameBufLen, NULL, &valueType, valueData, &valueDataLen);
+			regResult = RegEnumValueW(hkHandler, valueIndex, valueNameBuf.data(), &valueNameBufLen, NULL, &valueType, valueData.data(), &valueDataLen);
 			if(regResult != ERROR_SUCCESS)
 			{
 				break;
@@ -247,9 +246,9 @@ std::vector<FileType> CSoundFile::GetMediaFoundationFileTypes()
 				continue;
 			}
 
-			std::wstring guid = std::wstring(valueNameBuf);
+			std::wstring guid = std::wstring(valueNameBuf.data());
 
-			mpt::ustring description = mpt::ToUnicode(std::wstring(reinterpret_cast<WCHAR*>(valueData)));
+			mpt::ustring description = mpt::ToUnicode(ParseMaybeNullTerminatedStringFromBufferWithSizeInBytes<std::wstring>(valueData.data(), valueDataLen));
 			description = mpt::String::Replace(description, U_("Byte Stream Handler"), U_("Files"));
 			description = mpt::String::Replace(description, U_("ByteStreamHandler"), U_("Files"));
 
@@ -316,13 +315,13 @@ bool CSoundFile::ReadMediaFoundationSample(SAMPLEINDEX sample, FileReader &file,
 		return false;
 	}
 
-	#define MPT_MF_CHECKED(x) MPT_DO { \
+	#define MPT_MF_CHECKED(x) do { \
 		HRESULT hr = (x); \
 		if(!SUCCEEDED(hr)) \
 		{ \
 			return false; \
 		} \
-	} MPT_WHILE_0
+	} while(0)
 
 	CComPtr<IMFSourceResolver> sourceResolver;
 	MPT_MF_CHECKED(MFCreateSourceResolver(&sourceResolver));
@@ -387,7 +386,7 @@ bool CSoundFile::ReadMediaFoundationSample(SAMPLEINDEX sample, FileReader &file,
 			BYTE *data = NULL;
 			DWORD dataSize = 0;
 			MPT_MF_CHECKED(buffer->Lock(&data, NULL, &dataSize));
-			rawData.insert(rawData.end(), mpt::byte_cast<char*>(data), mpt::byte_cast<char*>(data + dataSize));
+			mpt::append(rawData, mpt::byte_cast<char*>(data), mpt::byte_cast<char*>(data + dataSize));
 			MPT_MF_CHECKED(buffer->Unlock());
 			if(rawData.size() / numChannels / (bitsPerSample / 8) > MAX_SAMPLE_LENGTH)
 			{

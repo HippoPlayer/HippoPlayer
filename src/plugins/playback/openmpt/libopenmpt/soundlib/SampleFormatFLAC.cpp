@@ -75,7 +75,7 @@ struct FLACDecoder
 		{
 			FileReader::off_t readBytes = *bytes;
 			LimitMax(readBytes, file.BytesLeft());
-			file.ReadRaw(buffer, readBytes);
+			file.ReadRaw(mpt::byte_cast<mpt::byte_span>(mpt::span(buffer, readBytes)));
 			*bytes = readBytes;
 			if(*bytes == 0)
 				return FLAC__STREAM_DECODER_READ_STATUS_END_OF_STREAM;
@@ -287,7 +287,7 @@ bool CSoundFile::ReadFLACSample(SAMPLEINDEX sample, FileReader &file)
 				needMoreData = false;
 				break;
 			}
-			readSize = file.ReadRaw(buf, bufsize);
+			readSize = file.ReadRaw(mpt::span(buf, bufsize)).size();
 			if(ogg_sync_wrote(&oy, static_cast<long>(readSize)) != 0)
 			{
 				oggOK = false;
@@ -499,7 +499,7 @@ struct FLAC__StreamEncoder_RAII
 	{
 		mpt::ofstream & file = *reinterpret_cast<mpt::ofstream*>(client_data);
 		MPT_UNUSED_VARIABLE(encoder);
-		if(!Util::TypeCanHoldValue<mpt::IO::Offset>(absolute_byte_offset))
+		if(!mpt::in_range<mpt::IO::Offset>(absolute_byte_offset))
 		{
 			return FLAC__STREAM_ENCODER_SEEK_STATUS_ERROR;
 		}
@@ -649,14 +649,14 @@ bool CSoundFile::SaveFLACSample(SAMPLEINDEX nSample, std::ostream &f) const
 		{
 			RIFFChunk header;
 			uint32le numPoints;
-			WAVCuePoint cues[CountOf(sample.cues)];
-		} chunk;
+			WAVCuePoint cues[mpt::array_size<decltype(sample.cues)>::size];
+		} chunk{};
 
 		chunk.header.id = RIFFChunk::idcue_;
 		chunk.header.length = 4 + sizeof(chunk.cues);
-		chunk.numPoints = CountOf(sample.cues);
+		chunk.numPoints = mpt::saturate_cast<uint32>(std::size(sample.cues));
 
-		for(uint32 i = 0; i < CountOf(sample.cues); i++)
+		for(uint32 i = 0; i < std::size(sample.cues); i++)
 		{
 			chunk.cues[i].ConvertToWAV(i, sample.cues[i]);
 		}

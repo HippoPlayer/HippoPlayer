@@ -18,6 +18,12 @@
 #include "mptMemory.h"
 #include "mptSpan.h"
 
+#if MPT_CXX_AT_LEAST(20)
+#include <version>
+#else // !C++20
+#include <array>
+#endif // C++20
+
 #include <array>
 #include <memory>
 #include <new>
@@ -33,19 +39,69 @@ namespace mpt {
 
 
 
-template <typename T> inline mpt::span<T> as_span(std::vector<T> & cont) { return mpt::span<T>(cont); }
+template <typename T> inline mpt::span<T> as_span(std::vector<T> & cont)
+{
+	return mpt::span<T>(cont.data(), cont.data() + cont.size());
+}
 
-template <typename T> inline mpt::span<const T> as_span(const std::vector<T> & cont) { return mpt::span<const T>(cont); }
+template <typename T> inline mpt::span<const T> as_span(const std::vector<T> & cont)
+{
+	return mpt::span<const T>(cont.data(), cont.data() + cont.size());
+}
 
 
 
-template <typename T> inline std::vector<typename std::remove_const<T>::type> make_vector(T * beg, T * end) { return std::vector<typename std::remove_const<T>::type>(beg, end); }
+template <typename T> inline std::vector<typename std::remove_const<T>::type> make_vector(T * beg, T * end)
+{
+	return std::vector<typename std::remove_const<T>::type>(beg, end);
+}
 
-template <typename T> inline std::vector<typename std::remove_const<T>::type> make_vector(T * data, std::size_t size) { return std::vector<typename std::remove_const<T>::type>(data, data + size); }
+template <typename T> inline std::vector<typename std::remove_const<T>::type> make_vector(T * data, std::size_t size)
+{
+	return std::vector<typename std::remove_const<T>::type>(data, data + size);
+}
 
-template <typename T> inline std::vector<typename std::remove_const<T>::type> make_vector(mpt::span<T> data) { return std::vector<typename std::remove_const<T>::type>(data.data(), data.data() + data.size()); }
+template <typename T> inline std::vector<typename std::remove_const<T>::type> make_vector(mpt::span<T> data)
+{
+	return std::vector<typename std::remove_const<T>::type>(data.data(), data.data() + data.size());
+}
 
-template <typename T, std::size_t N> inline std::vector<typename std::remove_const<T>::type> make_vector(T (&arr)[N]) { return std::vector<typename std::remove_const<T>::type>(std::begin(arr), std::end(arr)); }
+template <typename T, std::size_t N> inline std::vector<typename std::remove_const<T>::type> make_vector(T (&arr)[N])
+{
+	return std::vector<typename std::remove_const<T>::type>(std::begin(arr), std::end(arr));
+}
+
+
+
+template <typename Tcont2, typename Tcont1> inline Tcont1 & append(Tcont1 & cont1, const Tcont2 & cont2)
+{
+	cont1.insert(cont1.end(), cont2.begin(), cont2.end());
+	return cont1;
+}
+
+template <typename Tit2, typename Tcont1> inline Tcont1 & append(Tcont1 & cont1, Tit2 beg, Tit2 end)
+{
+	cont1.insert(cont1.end(), beg, end);
+	return cont1;
+}
+
+
+
+template <typename Tdst, typename Tsrc>
+struct buffer_cast_impl
+{
+	inline Tdst operator () (const Tsrc &src) const
+	{
+		return Tdst(mpt::byte_cast<const typename Tdst::value_type *>(src.data()), mpt::byte_cast<const typename Tdst::value_type *>(src.data()) + src.size());
+	}
+};
+
+// casts between vector<->string of byte-castable types
+template <typename Tdst, typename Tsrc>
+inline Tdst buffer_cast(Tsrc src)
+{
+	return buffer_cast_impl<Tdst, Tsrc>()(src);
+}
 
 
 
@@ -86,18 +142,6 @@ struct GetRawBytesFunctor<const std::vector<T>>
 
 namespace mpt
 {
-
-
-
-#if !(MPT_COMPILER_CLANG && defined(__GLIBCXX__)) && !(MPT_COMPILER_CLANG && MPT_OS_MACOSX_OR_IOS)
-using std::launder;
-#else
-template <class T>
-MPT_NOINLINE T* launder(T* p) noexcept
-{
-	return p;
-}
-#endif
 
 
 

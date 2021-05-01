@@ -55,10 +55,12 @@ void CSoundFile::S3MConvert(ModCommand &m, bool fromIT)
 	case 'X': m.command = CMD_PANNING8; break;
 	case 'Y': m.command = CMD_PANBRELLO; break;
 	case 'Z': m.command = CMD_MIDI; break;
-	case '\\': m.command = static_cast<ModCommand::COMMAND>(fromIT ? CMD_SMOOTHMIDI : CMD_MIDI); break;
-	// Chars under 0x40 don't save properly, so map : to ] and # to [.
-	case ']': m.command = CMD_DELAYCUT; break;
-	case '[': m.command = CMD_XPARAM; break;
+	case '\\': m.command = fromIT ? CMD_SMOOTHMIDI : CMD_MIDI; break;
+	// Chars under 0x40 don't save properly, so the following commands don't map to their pattern editor representations
+	case ']': m.command = fromIT ? CMD_DELAYCUT : CMD_NONE; break;
+	case '[': m.command = fromIT ? CMD_XPARAM : CMD_NONE; break;
+	case '^': m.command = fromIT ? CMD_FINETUNE : CMD_NONE; break;
+	case '_': m.command = fromIT ? CMD_FINETUNE_SMOOTH : CMD_NONE; break;
 	default: m.command = CMD_NONE;
 	}
 }
@@ -67,6 +69,7 @@ void CSoundFile::S3MConvert(ModCommand &m, bool fromIT)
 
 void CSoundFile::S3MSaveConvert(uint8 &command, uint8 &param, bool toIT, bool compatibilityExport) const
 {
+	const bool extendedIT = !compatibilityExport && toIT;
 	switch(command)
 	{
 	case CMD_DUMMY:           command = (param ? '@' : 0); break;
@@ -84,6 +87,7 @@ void CSoundFile::S3MSaveConvert(uint8 &command, uint8 &param, bool toIT, bool co
 	case CMD_TONEPORTAVOL:    command = 'L'; break;
 	case CMD_CHANNELVOLUME:   command = 'M'; break;
 	case CMD_CHANNELVOLSLIDE: command = 'N'; break;
+	case CMD_OFFSETPERCENTAGE:
 	case CMD_OFFSET:          command = 'O'; break;
 	case CMD_PANNINGSLIDE:    command = 'P'; break;
 	case CMD_RETRIG:          command = 'Q'; break;
@@ -109,10 +113,10 @@ void CSoundFile::S3MSaveConvert(uint8 &command, uint8 &param, bool toIT, bool co
 	case CMD_PANBRELLO: command = 'Y'; break;
 	case CMD_MIDI:      command = 'Z'; break;
 	case CMD_SMOOTHMIDI:
-		if(compatibilityExport || !toIT)
-			command = 'Z';
-		else
+		if(extendedIT)
 			command = '\\';
+		else
+			command = 'Z';
 		break;
 	case CMD_XFINEPORTAUPDOWN:
 		switch(param & 0xF0)
@@ -136,10 +140,16 @@ void CSoundFile::S3MSaveConvert(uint8 &command, uint8 &param, bool toIT, bool co
 		return;
 	// Chars under 0x40 don't save properly, so map : to ] and # to [.
 	case CMD_DELAYCUT:
-		command = (compatibilityExport || !toIT) ? 0 : ']';
+		command = extendedIT ? ']' : 0;
 		break;
 	case CMD_XPARAM:
-		command = (compatibilityExport || !toIT) ? 0 : '[';
+		command = extendedIT ? '[' : 0;
+		break;
+	case CMD_FINETUNE:
+		command = extendedIT ? '^' : 0;
+		break;
+	case CMD_FINETUNE_SMOOTH:
+		command = extendedIT ? '_' : 0;
 		break;
 	default:
 		command = 0;
@@ -271,7 +281,7 @@ bool CSoundFile::ReadS3M(FileReader &file, ModLoadingFlags loadFlags)
 			formatTrackerStr = true;
 		} else
 		{
-			madeWithTracker = mpt::format(U_("Impulse Tracker 2.14p%1"))(fileHeader.cwtv - S3MFileHeader::trkIT2_14);
+			madeWithTracker = MPT_UFORMAT("Impulse Tracker 2.14p{}")(fileHeader.cwtv - S3MFileHeader::trkIT2_14);
 		}
 		if(fileHeader.cwtv >= S3MFileHeader::trkIT2_07 && fileHeader.reserved3 != 0)
 		{
@@ -318,7 +328,7 @@ bool CSoundFile::ReadS3M(FileReader &file, ModLoadingFlags loadFlags)
 	}
 	if(formatTrackerStr)
 	{
-		madeWithTracker = mpt::format(U_("%1 %2.%3"))(madeWithTracker, (fileHeader.cwtv & 0xF00) >> 8, mpt::ufmt::hex0<2>(fileHeader.cwtv & 0xFF));
+		madeWithTracker = MPT_UFORMAT("{} {}.{}")(madeWithTracker, (fileHeader.cwtv & 0xF00) >> 8, mpt::ufmt::hex0<2>(fileHeader.cwtv & 0xFF));
 	}
 
 	m_modFormat.formatName = U_("ScreamTracker 3");
@@ -465,7 +475,7 @@ bool CSoundFile::ReadS3M(FileReader &file, ModLoadingFlags loadFlags)
 			continue;
 		}
 
-		sampleHeader.ConvertToMPT(Samples[smp + 1]);
+		sampleHeader.ConvertToMPT(Samples[smp + 1], isST3);
 		m_szNames[smp + 1] = mpt::String::ReadBuf(mpt::String::nullTerminated, sampleHeader.name);
 
 		if(sampleHeader.sampleType < S3MSampleHeader::typeAdMel)
@@ -527,7 +537,7 @@ bool CSoundFile::ReadS3M(FileReader &file, ModLoadingFlags loadFlags)
 			}
 
 			CHANNELINDEX channel = (info & s3mChannelMask);
-			ModCommand dummy = ModCommand::Empty();
+			ModCommand dummy;
 			ModCommand &m = (channel < GetNumChannels()) ? rowBase[channel] : dummy;
 
 			if(info & s3mNotePresent)
@@ -577,12 +587,9 @@ bool CSoundFile::ReadS3M(FileReader &file, ModLoadingFlags loadFlags)
 					} else
 					{
 						if(m.param < 0x08)
-						{
 							zxxCountLeft++;
-						} else if(m.param > 0x08)
-						{
+						else if(m.param > 0x08)
 							zxxCountRight++;
-						}
 					}
 				}
 			}
@@ -758,7 +765,7 @@ bool CSoundFile::SaveS3M(std::ostream &f) const
 		mpt::IO::Offset patOffset = mpt::IO::TellWrite(f);
 		if(patOffset > 0xFFFF0)
 		{
-			AddToLog(LogError, mpt::format(U_("Too much pattern data! Writing patterns failed starting from pattern %1."))(pat));
+			AddToLog(LogError, MPT_UFORMAT("Too much pattern data! Writing patterns failed starting from pattern {}.")(pat));
 			break;
 		}
 		MPT_ASSERT((patOffset % 16) == 0);
@@ -934,7 +941,7 @@ bool CSoundFile::SaveS3M(std::ostream &f) const
 			// Write sample data
 			if(sampleDataOffset > 0xFFFFFF0)
 			{
-				AddToLog(LogError, mpt::format(U_("Too much sample data! Writing samples failed starting from sample %1."))(realSmp));
+				AddToLog(LogError, MPT_UFORMAT("Too much sample data! Writing samples failed starting from sample {}.")(realSmp));
 				break;
 			}
 
@@ -961,7 +968,7 @@ bool CSoundFile::SaveS3M(std::ostream &f) const
 		{
 			if(channelType[chn][S3MChannelType::kPCM] && channelType[chn][S3MChannelType::kAdlib])
 			{
-				AddToLog(LogWarning, mpt::format(U_("Pattern channel %1 constains both samples and OPL instruments, which is not supported by Scream Tracker 3."))(chn + 1));
+				AddToLog(LogWarning, MPT_UFORMAT("Pattern channel {} constains both samples and OPL instruments, which is not supported by Scream Tracker 3.")(chn + 1));
 			}
 			// ST3 only supports 16 PCM channels, so if channels 17-32 are used,
 			// they must be mapped to the same "internal channels" as channels 1-16.
@@ -989,11 +996,11 @@ bool CSoundFile::SaveS3M(std::ostream &f) const
 	}
 	if(sampleCh > 16)
 	{
-		AddToLog(LogWarning, mpt::format(U_("This module has more than 16 (%1) sample channels, which is not supported by Scream Tracker 3."))(sampleCh));
+		AddToLog(LogWarning, MPT_UFORMAT("This module has more than 16 ({}) sample channels, which is not supported by Scream Tracker 3.")(sampleCh));
 	}
 	if(adlibCh > 9)
 	{
-		AddToLog(LogWarning, mpt::format(U_("This module has more than 9 (%1) OPL channels, which is not supported by Scream Tracker 3."))(adlibCh));
+		AddToLog(LogWarning, MPT_UFORMAT("This module has more than 9 ({}) OPL channels, which is not supported by Scream Tracker 3.")(adlibCh));
 	}
 
 	mpt::IO::SeekAbsolute(f, 0);

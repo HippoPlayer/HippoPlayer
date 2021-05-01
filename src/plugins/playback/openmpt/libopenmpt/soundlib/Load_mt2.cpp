@@ -455,7 +455,7 @@ bool CSoundFile::ReadMT2(FileReader &file, ModLoadingFlags loadFlags)
 	InitializeGlobals(MOD_TYPE_MT2);
 	InitializeChannels();
 
-	m_modFormat.formatName = mpt::format(U_("MadTracker %1.%2"))(fileHeader.version >> 8, mpt::ufmt::hex0<2>(fileHeader.version & 0xFF));
+	m_modFormat.formatName = MPT_UFORMAT("MadTracker {}.{}")(fileHeader.version >> 8, mpt::ufmt::hex0<2>(fileHeader.version & 0xFF));
 	m_modFormat.type = U_("mt2");
 	m_modFormat.madeWithTracker = mpt::ToUnicode(mpt::Charset::Windows1252, mpt::String::ReadBuf(mpt::String::maybeNullTerminated, fileHeader.trackerName));
 	m_modFormat.charset = mpt::Charset::Windows1252;
@@ -538,6 +538,8 @@ bool CSoundFile::ReadMT2(FileReader &file, ModLoadingFlags loadFlags)
 					for(ROWINDEX r = 0; r < fillRows; r++)
 					{
 						m += GetNumChannels();
+						// cppcheck false-positive
+						// cppcheck-suppress selfAssignment
 						*m = orig;
 					}
 				}
@@ -565,11 +567,11 @@ bool CSoundFile::ReadMT2(FileReader &file, ModLoadingFlags loadFlags)
 		if(hasLegacyTempo)
 		{
 			m_nDefaultTempo.SetRaw(Util::muldivr(110250, TEMPO::fractFact, fileHeader.samplesPerTick));
-			m_nTempoMode = tempoModeClassic;
+			m_nTempoMode = TempoMode::Classic;
 		} else
 		{
 			m_nDefaultTempo = TEMPO(44100.0 * 60.0 / (m_nDefaultSpeed * m_nDefaultRowsPerBeat * fileHeader.samplesPerTick));
-			m_nTempoMode = tempoModeModern;
+			m_nTempoMode = TempoMode::Modern;
 		}
 	}
 
@@ -586,7 +588,7 @@ bool CSoundFile::ReadMT2(FileReader &file, ModLoadingFlags loadFlags)
 		case MagicLE("BPM+"):
 			if(!hasLegacyTempo)
 			{
-				m_nTempoMode = tempoModeModern;
+				m_nTempoMode = TempoMode::Modern;
 				double d = chunk.ReadDoubleLE();
 				if(d != 0.0)
 				{
@@ -719,19 +721,19 @@ bool CSoundFile::ReadMT2(FileReader &file, ModLoadingFlags loadFlags)
 						// MT2 only ever calls effGetChunk for programs, and OpenMPT uses the defaultProgram value to determine
 						// whether it should use effSetChunk for programs or banks...
 						mixPlug.defaultProgram = -1;
-						LimitMax(vstHeader.n, Util::MaxValueOfType(dataSize) - 4);
+						LimitMax(vstHeader.n, std::numeric_limits<decltype(dataSize)>::max() - 4);
 						dataSize = vstHeader.n + 4;
 					} else
 					{
 						mixPlug.defaultProgram = vstHeader.programNr;
-						LimitMax(vstHeader.n, (Util::MaxValueOfType(dataSize) / 4u) - 1);
+						LimitMax(vstHeader.n, (std::numeric_limits<decltype(dataSize)>::max() / 4u) - 1);
 						dataSize = vstHeader.n * 4 + 4;
 					}
 					mixPlug.pluginData.resize(dataSize);
 					if(vstHeader.useChunks)
 					{
-						memcpy(mixPlug.pluginData.data(), "fEvN", 4);	// 'NvEf' plugin data type
-						chunk.ReadRaw(mixPlug.pluginData.data() + 4, vstHeader.n);
+						std::memcpy(mixPlug.pluginData.data(), "fEvN", 4);	// 'NvEf' plugin data type
+						chunk.ReadRaw(mpt::span(mixPlug.pluginData.data() + 4, vstHeader.n));
 					} else
 					{
 						float32 *f = reinterpret_cast<float32 *>(mixPlug.pluginData.data());
@@ -796,7 +798,7 @@ bool CSoundFile::ReadMT2(FileReader &file, ModLoadingFlags loadFlags)
 				ModInstrument *mptIns = AllocateInstrument(drumMap[i], drumHeader.DrumSamples[i] + 1);
 				if(mptIns != nullptr)
 				{
-					mptIns->name = mpt::format("Drum #%1")(i+1);
+					mptIns->name = MPT_FORMAT("Drum #{}")(i+1);
 				}
 			} else
 			{
@@ -921,9 +923,9 @@ bool CSoundFile::ReadMT2(FileReader &file, ModLoadingFlags loadFlags)
 		if(fileHeader.version >= 0x0202) envMask = instrChunk.ReadUint32LE();
 
 		mptIns->nFadeOut = insHeader.fadeout;
-		const NewNoteAction NNA[4]       = { NNA_NOTECUT, NNA_CONTINUE, NNA_NOTEOFF, NNA_NOTEFADE };
-		const DuplicateCheckType DCT[4]  = { DCT_NONE, DCT_NOTE, DCT_SAMPLE, DCT_INSTRUMENT };
-		const DuplicateNoteAction DNA[4] = { DNA_NOTECUT, DNA_NOTEFADE /* actually continue, but IT doesn't have that */, DNA_NOTEOFF, DNA_NOTEFADE };
+		const NewNoteAction NNA[4]       = { NewNoteAction::NoteCut, NewNoteAction::Continue, NewNoteAction::NoteOff, NewNoteAction::NoteFade };
+		const DuplicateCheckType DCT[4]  = { DuplicateCheckType::None, DuplicateCheckType::Note, DuplicateCheckType::Sample, DuplicateCheckType::Instrument };
+		const DuplicateNoteAction DNA[4] = { DuplicateNoteAction::NoteCut, DuplicateNoteAction::NoteFade /* actually continue, but IT doesn't have that */, DuplicateNoteAction::NoteOff, DuplicateNoteAction::NoteFade };
 		mptIns->nNNA = NNA[insHeader.nna & 3];
 		mptIns->nDCT = DCT[(insHeader.nna >> 8) & 3];
 		mptIns->nDNA = DNA[(insHeader.nna >> 12) & 3];
@@ -956,7 +958,7 @@ bool CSoundFile::ReadMT2(FileReader &file, ModLoadingFlags loadFlags)
 			}
 			envMask >>= 1;
 		}
-		if(!mptIns->VolEnv.dwFlags[ENV_ENABLED] && mptIns->nNNA != NNA_NOTEFADE)
+		if(!mptIns->VolEnv.dwFlags[ENV_ENABLED] && mptIns->nNNA != NewNoteAction::NoteFade)
 		{
 			mptIns->nFadeOut = int16_max;
 		}
@@ -1154,7 +1156,7 @@ bool CSoundFile::ReadMT2(FileReader &file, ModLoadingFlags loadFlags)
 			}
 			SetSamplePath(i + 1, mpt::PathString::FromLocaleSilent(filename));
 #elif !defined(LIBOPENMPT_BUILD_TEST)
-			AddToLog(LogWarning, mpt::format(U_("Loading external sample %1 ('%2') failed: External samples are not supported."))(i + 1, mpt::ToUnicode(GetCharsetFile(), filename)));
+			AddToLog(LogWarning, MPT_UFORMAT("Loading external sample {} ('{}') failed: External samples are not supported.")(i + 1, mpt::ToUnicode(GetCharsetFile(), filename)));
 #endif // MPT_EXTERNAL_SAMPLES
 		}
 	}

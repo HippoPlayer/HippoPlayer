@@ -405,7 +405,7 @@ struct AMInstrument
 			uint16 level, speed;
 		} points[] = {{startLevel, 0}, {attack1Level, attack1Speed}, {attack2Level, attack2Speed}, {sustainLevel, decaySpeed}, {sustainLevel, sustainTime}, {0, releaseSpeed}};
 
-		for(uint8 i = 1; i < CountOf(points); i++)
+		for(uint8 i = 1; i < std::size(points); i++)
 		{
 			int duration = std::min(points[i].speed, uint16(256));
 			// Sustain time is already in ticks, no need to compute the segment duration.
@@ -1160,6 +1160,10 @@ bool CSoundFile::ReadMOD(FileReader &file, ModLoadingFlags loadFlags)
 	{
 		m_SongFlags.set(SONG_ISAMIGA);
 	}
+	if(isGenericMultiChannel || isMdKd)
+	{
+		m_playBehaviour.set(kFT2MODTremoloRampWaveform);
+	}
 	if(isInconexia)
 	{
 		m_playBehaviour.set(kMODIgnorePanning);
@@ -1206,33 +1210,37 @@ bool CSoundFile::ReadMOD(FileReader &file, ModLoadingFlags loadFlags)
 	if((loadFlags & loadSampleData) && isStartrekker)
 	{
 #ifdef MPT_EXTERNAL_SAMPLES
-		InputFile amFile;
+		std::optional<InputFile> amFile;
 		FileReader amData;
-		mpt::PathString filename = file.GetFileName();
-		if(!filename.empty())
+		if(file.GetOptionalFileName())
 		{
+			mpt::PathString filename = file.GetOptionalFileName().value();
 			// Find instrument definition file
 			const mpt::PathString exts[] = {P_(".nt"), P_(".NT"), P_(".as"), P_(".AS")};
 			for(const auto &ext : exts)
 			{
 				mpt::PathString infoName = filename + ext;
 				char stMagic[16];
-				if(infoName.IsFile() && amFile.Open(infoName, SettingCacheCompleteFileBeforeLoading()) && (amData = GetFileReader(amFile)).IsValid() && amData.ReadArray(stMagic))
+				if(infoName.IsFile())
 				{
-					if(!memcmp(stMagic, "ST1.2 ModuleINFO", 16))
-						modMagicResult.madeWithTracker = UL_("Startrekker 1.2");
-					else if(!memcmp(stMagic, "ST1.3 ModuleINFO", 16))
-						modMagicResult.madeWithTracker = UL_("Startrekker 1.3");
-					else if(!memcmp(stMagic, "AudioSculpture10", 16))
-						modMagicResult.madeWithTracker = UL_("AudioSculpture 1.0");
-					else
-						continue;
-
-					if(amData.Seek(144))
+					amFile.emplace(infoName, SettingCacheCompleteFileBeforeLoading());
+					if(amFile->IsValid() && (amData = GetFileReader(*amFile)).IsValid() && amData.ReadArray(stMagic))
 					{
-						// Looks like a valid instrument definition file!
-						m_nInstruments = 31;
-						break;
+						if(!memcmp(stMagic, "ST1.2 ModuleINFO", 16))
+							modMagicResult.madeWithTracker = UL_("Startrekker 1.2");
+						else if(!memcmp(stMagic, "ST1.3 ModuleINFO", 16))
+							modMagicResult.madeWithTracker = UL_("Startrekker 1.3");
+						else if(!memcmp(stMagic, "AudioSculpture10", 16))
+							modMagicResult.madeWithTracker = UL_("AudioSculpture 1.0");
+						else
+							continue;
+
+						if(amData.Seek(144))
+						{
+							// Looks like a valid instrument definition file!
+							m_nInstruments = 31;
+							break;
+						}
 					}
 				}
 			}
@@ -1295,7 +1303,7 @@ bool CSoundFile::ReadMOD(FileReader &file, ModLoadingFlags loadFlags)
 	}
 
 	std::transform(std::begin(magic), std::end(magic), std::begin(magic), [](unsigned char c) -> unsigned char { return (c < ' ') ? ' ' : c; });
-	m_modFormat.formatName = mpt::format(U_("ProTracker MOD (%1)"))(mpt::ToUnicode(mpt::Charset::ASCII, std::string(std::begin(magic), std::end(magic))));
+	m_modFormat.formatName = MPT_UFORMAT("ProTracker MOD ({})")(mpt::ToUnicode(mpt::Charset::ASCII, std::string(std::begin(magic), std::end(magic))));
 	m_modFormat.type = U_("mod");
 	if(modMagicResult.madeWithTracker)
 		m_modFormat.madeWithTracker = modMagicResult.madeWithTracker;
@@ -1560,7 +1568,7 @@ bool CSoundFile::ReadM15(FileReader &file, ModLoadingFlags loadFlags)
 	uint32 illegalBytes = 0, totalNumDxx = 0;
 	for(PATTERNINDEX pat = 0; pat < numPatterns; pat++)
 	{
-		bool patternInUse = std::find(Order().cbegin(), Order().cend(), pat) != Order().cend();
+		const bool patternInUse = mpt::contains(Order(), pat);
 		uint8 numDxx = 0;
 		uint8 emptyCmds = 0;
 		MODPatternData patternData;
@@ -1947,7 +1955,7 @@ bool CSoundFile::ReadICE(FileReader &file, ModLoadingFlags loadFlags)
 	m_nMinPeriod = 14 * 4;
 	m_nMaxPeriod = 3424 * 4;
 	m_nSamplePreAmp = 64;
-	m_SongFlags.set(SONG_PT_MODE);
+	m_SongFlags.set(SONG_PT_MODE | SONG_IMPORTED);
 
 	// Setup channel pan positions and volume
 	SetupMODPanning();
@@ -2362,7 +2370,7 @@ bool CSoundFile::SaveMod(std::ostream &f) const
 
 	if(invalidInstruments)
 	{
-		AddToLog("Warning: This track references sample slots higher than 31. Such samples cannot be saved in the MOD format, and thus the notes will not sound correct. Use the Cleanup tool to rearrange and remove unused samples.");
+		AddToLog(LogWarning, U_("Warning: This track references sample slots higher than 31. Such samples cannot be saved in the MOD format, and thus the notes will not sound correct. Use the Cleanup tool to rearrange and remove unused samples."));
 	}
 
 	//Check for unsaved patterns
@@ -2370,7 +2378,7 @@ bool CSoundFile::SaveMod(std::ostream &f) const
 	{
 		if(Patterns.IsValidPat(pat))
 		{
-			AddToLog("Warning: This track contains at least one pattern after the highest pattern number referred to in the sequence. Such patterns are not saved in the MOD format.");
+			AddToLog(LogWarning, U_("Warning: This track contains at least one pattern after the highest pattern number referred to in the sequence. Such patterns are not saved in the MOD format."));
 			break;
 		}
 	}

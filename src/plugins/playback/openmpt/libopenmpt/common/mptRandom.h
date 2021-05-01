@@ -43,114 +43,15 @@ namespace mpt
 {
 
 
-#ifdef MPT_BUILD_FUZZER
-static constexpr uint32 FUZZER_RNG_SEED = 3141592653u; // pi
-#endif // MPT_BUILD_FUZZER
+inline constexpr uint32 DETERMINISTIC_RNG_SEED = 3141592653u; // pi
 
 
 namespace detail
 {
 
-MPT_CONSTEXPR14_FUN int lower_bound_entropy_bits(unsigned int x)
+MPT_CONSTEXPRINLINE int lower_bound_entropy_bits(unsigned int x)
 {
-	if(x >= 0xffffffffu)
-	{
-		return 32;
-	} else if(x >= 0x7fffffffu)
-	{
-		return 31;
-	} else if(x >= 0x3fffffffu)
-	{
-		return 30;
-	} else if(x >= 0x1fffffffu)
-	{
-		return 29;
-	} else if(x >= 0x0fffffffu)
-	{
-		return 28;
-	} else if(x >= 0x07ffffffu)
-	{
-		return 27;
-	} else if(x >= 0x03ffffffu)
-	{
-		return 26;
-	} else if(x >= 0x01ffffffu)
-	{
-		return 25;
-	} else if(x >= 0x00ffffffu)
-	{
-		return 24;
-	} else if(x >= 0x007fffffu)
-	{
-		return 23;
-	} else if(x >= 0x003fffffu)
-	{
-		return 22;
-	} else if(x >= 0x001fffffu)
-	{
-		return 21;
-	} else if(x >= 0x000fffffu)
-	{
-		return 20;
-	} else if(x >= 0x0007ffffu)
-	{
-		return 19;
-	} else if(x >= 0x0003ffffu)
-	{
-		return 18;
-	} else if(x >= 0x0001ffffu)
-	{
-		return 17;
-	} else if(x >= 0x0000ffffu)
-	{
-		return 16;
-	} else if(x >= 0x00007fffu)
-	{
-		return 15;
-	} else if(x >= 0x00003fffu)
-	{
-		return 14;
-	} else if(x >= 0x00001fffu)
-	{
-		return 13;
-	} else if(x >= 0x00000fffu)
-	{
-		return 12;
-	} else if(x >= 0x000007ffu)
-	{
-		return 11;
-	} else if(x >= 0x000003ffu)
-	{
-		return 10;
-	} else if(x >= 0x000001ffu)
-	{
-		return  9;
-	} else if(x >= 0x000000ffu)
-	{
-		return  8;
-	} else if(x >= 0x0000007fu)
-	{
-		return  7;
-	} else if(x >= 0x0000003fu)
-	{
-		return  6;
-	} else if(x >= 0x0000001fu)
-	{
-		return  5;
-	} else if(x >= 0x0000000fu)
-	{
-		return  4;
-	} else if(x >= 0x00000007u)
-	{
-		return  3;
-	} else if(x >= 0x00000003u)
-	{
-		return  2;
-	} else if(x >= 0x00000001u)
-	{
-		return  1;
-	}
-	return 0;
+	return mpt::bit_width(x) == static_cast<unsigned int>(mpt::popcount(x)) ? mpt::bit_width(x) : mpt::bit_width(x) - 1;
 }
 
 }
@@ -159,7 +60,7 @@ MPT_CONSTEXPR14_FUN int lower_bound_entropy_bits(unsigned int x)
 template <typename Trng> struct engine_traits
 {
 	typedef typename Trng::result_type result_type;
-	static MPT_CONSTEXPR11_FUN int result_bits()
+	static MPT_CONSTEXPRINLINE int result_bits()
 	{
 		return Trng::result_bits();
 	}
@@ -253,9 +154,9 @@ private:
 	T a;
 	T b;
 public:
-	inline uniform_real_distribution(T a, T b)
-		: a(a)
-		, b(b)
+	inline uniform_real_distribution(T a_, T b_)
+		: a(a_)
+		, b(b_)
 	{
 		return;
 	}
@@ -307,16 +208,16 @@ public:
 		operator()(); // we return results from the current state and update state after returning. results in better pipelining.
 	}
 public:
-	static MPT_CONSTEXPR11_FUN result_type min()
+	static MPT_CONSTEXPRINLINE result_type min()
 	{
 		return static_cast<result_type>(0);
 	}
-	static MPT_CONSTEXPR11_FUN result_type max()
+	static MPT_CONSTEXPRINLINE result_type max()
 	{
 		static_assert(((result_mask >> result_shift) << result_shift) == result_mask);
 		return static_cast<result_type>(result_mask >> result_shift);
 	}
-	static MPT_CONSTEXPR11_FUN int result_bits()
+	static MPT_CONSTEXPRINLINE int result_bits()
 	{
 		static_assert(((static_cast<Tstate>(1) << result_bits_) - 1) == (result_mask >> result_shift));
 		return result_bits_;
@@ -362,15 +263,15 @@ public:
 	{
 	}
 public:
-	static MPT_CONSTEXPR11_FUN result_type min()
+	static MPT_CONSTEXPRINLINE result_type min()
 	{
 		return static_cast<result_type>(0);
 	}
-	static MPT_CONSTEXPR11_FUN result_type max()
+	static MPT_CONSTEXPRINLINE result_type max()
 	{
 		return std::numeric_limits<result_type>::max();
 	}
-	static MPT_CONSTEXPR11_FUN int result_bits()
+	static MPT_CONSTEXPRINLINE int result_bits()
 	{
 		static_assert(std::is_integral<result_type>::value);
 		static_assert(std::is_unsigned<result_type>::value);
@@ -404,10 +305,13 @@ namespace rng
 class crand
 {
 public:
-	typedef void state_type;
-	typedef int result_type;
+	using state_type = void;
+	using result_type = int;
 private:
-	static void reseed(uint32 seed);
+	static void reseed(uint32 seed)
+	{
+		std::srand(seed);
+	}
 public:
 	template <typename Trd>
 	static void reseed(Trd & rd)
@@ -415,22 +319,28 @@ public:
 		reseed(mpt::random<uint32>(rd));
 	}
 public:
-	crand() { }
-	explicit crand(const std::string &) { }
+	crand() = default;
+	explicit crand(const std::string &)
+	{
+		return;
+	}
 public:
-	static MPT_CONSTEXPR11_FUN result_type min()
+	static MPT_CONSTEXPRINLINE result_type min()
 	{
 		return 0;
 	}
-	static MPT_CONSTEXPR11_FUN result_type max()
+	static MPT_CONSTEXPRINLINE result_type max()
 	{
 		return RAND_MAX;
 	}
-	static MPT_CONSTEXPR14_FUN int result_bits()
+	static MPT_CONSTEXPRINLINE int result_bits()
 	{
 		return detail::lower_bound_entropy_bits(RAND_MAX);
 	}
-	result_type operator()();
+	result_type operator()()
+	{
+		return std::rand();
+	}
 };
 
 } // namespace rng
@@ -449,25 +359,27 @@ class sane_random_device
 private:
 	mpt::mutex m;
 	std::string token;
+#if !defined(MPT_COMPILER_QUIRK_RANDOM_NO_RANDOM_DEVICE)
 	std::unique_ptr<std::random_device> prd;
 	bool rd_reliable;
+#endif // !MPT_COMPILER_QUIRK_RANDOM_NO_RANDOM_DEVICE
 	std::unique_ptr<std::mt19937> rd_fallback;
 public:
-	typedef unsigned int result_type;
+	using result_type = unsigned int;
 private:
 	void init_fallback();
 public:
 	sane_random_device();
 	sane_random_device(const std::string & token);
-	static MPT_CONSTEXPR11_FUN result_type min()
+	static MPT_CONSTEXPRINLINE result_type min()
 	{
 		return std::numeric_limits<result_type>::min();
 	}
-	static MPT_CONSTEXPR11_FUN result_type max()
+	static MPT_CONSTEXPRINLINE result_type max()
 	{
 		return std::numeric_limits<result_type>::max();
 	}
-	static MPT_CONSTEXPR11_FUN int result_bits()
+	static MPT_CONSTEXPRINLINE int result_bits()
 	{
 		return sizeof(result_type) * 8;
 	}
@@ -508,7 +420,7 @@ template <> struct engine_traits<std::mt19937> {
 	enum : std::size_t { seed_bits = sizeof(std::mt19937::result_type) * 8 * std::mt19937::state_size };
 	typedef std::mt19937 rng_type;
 	typedef rng_type::result_type result_type;
-	static MPT_CONSTEXPR11_FUN int result_bits() { return rng_type::word_size; }
+	static MPT_CONSTEXPRINLINE int result_bits() { return rng_type::word_size; }
 	template<typename Trd> static inline rng_type make(Trd & rd)
 	{
 		std::unique_ptr<mpt::seed_seq_values<seed_bits / sizeof(unsigned int)>> values = std::make_unique<mpt::seed_seq_values<seed_bits / sizeof(unsigned int)>>(rd);
@@ -521,7 +433,7 @@ template <> struct engine_traits<std::mt19937_64> {
 	enum : std::size_t { seed_bits = sizeof(std::mt19937_64::result_type) * 8 * std::mt19937_64::state_size };
 	typedef std::mt19937_64 rng_type;
 	typedef rng_type::result_type result_type;
-	static MPT_CONSTEXPR11_FUN int result_bits() { return rng_type::word_size; }
+	static MPT_CONSTEXPRINLINE int result_bits() { return rng_type::word_size; }
 	template<typename Trd> static inline rng_type make(Trd & rd)
 	{
 		std::unique_ptr<mpt::seed_seq_values<seed_bits / sizeof(unsigned int)>> values = std::make_unique<mpt::seed_seq_values<seed_bits / sizeof(unsigned int)>>(rd);
@@ -534,7 +446,7 @@ template <> struct engine_traits<std::ranlux24_base> {
 	enum : std::size_t { seed_bits = std::ranlux24_base::word_size };
 	typedef std::ranlux24_base rng_type;
 	typedef rng_type::result_type result_type;
-	static MPT_CONSTEXPR11_FUN int result_bits() { return rng_type::word_size; }
+	static MPT_CONSTEXPRINLINE int result_bits() { return rng_type::word_size; }
 	template<typename Trd> static inline rng_type make(Trd & rd)
 	{
 		mpt::seed_seq_values<seed_bits / sizeof(unsigned int)> values(rd);
@@ -547,7 +459,7 @@ template <> struct engine_traits<std::ranlux48_base> {
 	enum : std::size_t { seed_bits = std::ranlux48_base::word_size };
 	typedef std::ranlux48_base rng_type;
 	typedef rng_type::result_type result_type;
-	static MPT_CONSTEXPR11_FUN int result_bits() { return rng_type::word_size; }
+	static MPT_CONSTEXPRINLINE int result_bits() { return rng_type::word_size; }
 	template<typename Trd> static inline rng_type make(Trd & rd)
 	{
 		mpt::seed_seq_values<seed_bits / sizeof(unsigned int)> values(rd);
@@ -560,7 +472,7 @@ template <> struct engine_traits<std::ranlux24> {
 	enum : std::size_t { seed_bits = std::ranlux24_base::word_size };
 	typedef std::ranlux24 rng_type;
 	typedef rng_type::result_type result_type;
-	static MPT_CONSTEXPR11_FUN int result_bits() { return std::ranlux24_base::word_size; }
+	static MPT_CONSTEXPRINLINE int result_bits() { return std::ranlux24_base::word_size; }
 	template<typename Trd> static inline rng_type make(Trd & rd)
 	{
 		mpt::seed_seq_values<seed_bits / sizeof(unsigned int)> values(rd);
@@ -573,7 +485,7 @@ template <> struct engine_traits<std::ranlux48> {
 	enum : std::size_t { seed_bits = std::ranlux48_base::word_size };
 	typedef std::ranlux48 rng_type;
 	typedef rng_type::result_type result_type;
-	static MPT_CONSTEXPR11_FUN int result_bits() { return std::ranlux48_base::word_size; }
+	static MPT_CONSTEXPRINLINE int result_bits() { return std::ranlux48_base::word_size; }
 	template<typename Trd> static inline rng_type make(Trd & rd)
 	{
 		mpt::seed_seq_values<seed_bits / sizeof(unsigned int)> values(rd);
@@ -583,7 +495,7 @@ template <> struct engine_traits<std::ranlux48> {
 };
 
 
-class prng_random_device_seeder
+class prng_random_device_time_seeder
 {
 private:
 	uint8 generate_seed8();
@@ -593,43 +505,54 @@ private:
 protected:
 	template <typename T> inline T generate_seed();
 protected:
-	prng_random_device_seeder();
+	prng_random_device_time_seeder() = default;
 };
 
-template <> inline uint8 prng_random_device_seeder::generate_seed() { return generate_seed8(); }
-template <> inline uint16 prng_random_device_seeder::generate_seed() { return generate_seed16(); }
-template <> inline uint32 prng_random_device_seeder::generate_seed() { return generate_seed32(); }
-template <> inline uint64 prng_random_device_seeder::generate_seed() { return generate_seed64(); }
+template <> inline uint8 prng_random_device_time_seeder::generate_seed() { return generate_seed8(); }
+template <> inline uint16 prng_random_device_time_seeder::generate_seed() { return generate_seed16(); }
+template <> inline uint32 prng_random_device_time_seeder::generate_seed() { return generate_seed32(); }
+template <> inline uint64 prng_random_device_time_seeder::generate_seed() { return generate_seed64(); }
 
-template <typename Trng = mpt::rng::lcg_musl>
+class prng_random_device_deterministic_seeder
+{
+protected:
+	template <typename T> constexpr T generate_seed() noexcept
+	{
+		return static_cast<T>(mpt::DETERMINISTIC_RNG_SEED);
+	}
+protected:
+	prng_random_device_deterministic_seeder() = default;
+};
+
+template <typename Trng = mpt::rng::lcg_musl, typename seeder = mpt::prng_random_device_time_seeder>
 class prng_random_device
-	: public prng_random_device_seeder
+	: private seeder
 {
 public:
-	typedef unsigned int result_type;
+	using result_type = unsigned int;
 private:
 	mpt::mutex m;
 	Trng rng;
 public:
 	prng_random_device()
-		: rng(generate_seed<typename Trng::state_type>())
+		: rng(seeder::template generate_seed<typename Trng::state_type>())
 	{
 		return;
 	}
 	prng_random_device(const std::string &)
-		: rng(generate_seed<typename Trng::state_type>())
+		: rng(seeder::template generate_seed<typename Trng::state_type>())
 	{
 		return;
 	}
-	static MPT_CONSTEXPR11_FUN result_type min()
+	static MPT_CONSTEXPRINLINE result_type min()
 	{
 		return std::numeric_limits<unsigned int>::min();
 	}
-	static MPT_CONSTEXPR11_FUN result_type max()
+	static MPT_CONSTEXPRINLINE result_type max()
 	{
 		return std::numeric_limits<unsigned int>::max();
 	}
-	static MPT_CONSTEXPR11_FUN int result_bits()
+	static MPT_CONSTEXPRINLINE int result_bits()
 	{
 		return sizeof(unsigned int) * 8;
 	}
@@ -641,30 +564,10 @@ public:
 };
 
 
-#ifdef MPT_BUILD_FUZZER
+using deterministc_random_device = mpt::prng_random_device<mpt::rng::lcg_musl>;
 
-//  1. Use deterministic seeding
-typedef mpt::prng_random_device<mpt::rng::lcg_musl> random_device;
-
-//  2. Use fast PRNGs in order to not waste time fuzzing more complex PRNG
-//     implementations.
-typedef mpt::rng::lcg_msvc fast_prng;
-typedef mpt::rng::lcg_musl good_prng;
-
-#else // !MPT_BUILD_FUZZER
-
-// mpt::random_device always generates 32 bits of entropy
-typedef mpt::sane_random_device random_device;
-
-// We cannot use std::minstd_rand here because it has not a power-of-2 sized
-// output domain which we rely upon.
-typedef mpt::rng::lcg_msvc fast_prng; // about 3 ALU operations, ~32bit of state, suited for inner loops
-typedef std::ranlux48      good_prng;
-
-#endif // MPT_BUILD_FUZZER
-
-
-typedef mpt::good_prng default_prng;
+using deterministic_fast_prng = mpt::rng::lcg_msvc;
+using deterministic_good_prng = mpt::rng::lcg_musl;
 
 
 template <typename Trng, typename Trd>
@@ -695,15 +598,15 @@ public:
 		return;
 	}
 public:
-	static MPT_CONSTEXPR11_FUN typename engine_traits<Trng>::result_type min()
+	static MPT_CONSTEXPRINLINE typename engine_traits<Trng>::result_type min()
 	{
 		return Trng::min();
 	}
-	static MPT_CONSTEXPR11_FUN typename engine_traits<Trng>::result_type max()
+	static MPT_CONSTEXPRINLINE typename engine_traits<Trng>::result_type max()
 	{
 		return Trng::max();
 	}
-	static MPT_CONSTEXPR11_FUN int result_bits()
+	static MPT_CONSTEXPRINLINE int result_bits()
 	{
 		return engine_traits<Trng>::result_bits();
 	}
@@ -714,6 +617,32 @@ public:
 		return Trng::operator()();
 	}
 };
+
+
+#ifdef MPT_BUILD_FUZZER
+
+//  1. Use deterministic seeding
+using random_device = deterministc_random_device;
+
+//  2. Use fast PRNGs in order to not waste time fuzzing more complex PRNG
+//     implementations.
+using fast_prng = deterministic_fast_prng;
+using good_prng = deterministic_good_prng;
+
+#else // !MPT_BUILD_FUZZER
+
+// mpt::random_device always generates 32 bits of entropy
+using random_device = mpt::sane_random_device;
+
+// We cannot use std::minstd_rand here because it has not a power-of-2 sized
+// output domain which we rely upon.
+using fast_prng = mpt::rng::lcg_msvc; // about 3 ALU operations, ~32bit of state, suited for inner loops
+using good_prng = std::ranlux48;
+
+#endif // MPT_BUILD_FUZZER
+
+
+using default_prng = mpt::good_prng;
 
 
 mpt::random_device & global_random_device();

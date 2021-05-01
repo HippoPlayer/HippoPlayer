@@ -12,15 +12,34 @@
 #ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
 #endif
+#if !defined(WINVER) && !defined(_WIN32_WINDOWS)
 #ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x0501 // _WIN32_WINNT_WINXP
 #endif
+#endif
+#if !defined(MPT_BUILD_RETRO)
+#if defined(_MSC_VER)
+#define MPT_WITH_MFC
+#endif
+#else
+#if defined(_WIN32_WINNT)
+#if (_WIN32_WINNT >= 0x0501)
+#if defined(_MSC_VER)
+#define MPT_WITH_MFC
+#endif
+#endif
+#endif
+#endif
+#if defined(MPT_WITH_MFC)
 #define _AFX_NO_MFC_CONTROLS_IN_DIALOGS // Avoid binary bloat from linking unused MFC controls
+#endif // MPT_WITH_MFC
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
+#if defined(MPT_WITH_MFC)
 #include <afxwin.h>
 #include <afxcmn.h>
+#endif // MPT_WITH_MFC
 #include <windows.h>
 #include <WindowsX.h>
 
@@ -38,11 +57,18 @@
 #endif // _MSC_VER
 
 #include <cctype>
+#include <cstring>
+
+#include <tchar.h>
 
 #include "libopenmpt.hpp"
 #include "libopenmpt_ext.hpp"
 
+#include "libopenmpt_plugin_settings.hpp"
+
+#if defined(MPT_WITH_MFC)
 #include "libopenmpt_plugin_gui.hpp"
+#endif // MPT_WITH_MFC
 
 #include "svn_version.h"
 #if defined(OPENMPT_VERSION_REVISION)
@@ -113,18 +139,31 @@ static void save_options();
 
 static void apply_and_save_options();
 
+
+static std::string convert_to_native( const std::string & str );
+
+static std::string StringEncode( const std::wstring &src, UINT codepage );
+
+static std::wstring StringDecode( const std::string & src, UINT codepage );
+
+#if defined(UNICODE)
+static std::wstring StringToWINAPI( const std::wstring & src );
+#else
+static std::string StringToWINAPI( const std::wstring & src );
+#endif
+
 class xmp_openmpt_settings
  : public libopenmpt::plugin::settings
 {
 protected:
-	void read_setting( const std::string & key, const std::wstring & keyW, int & val ) override {
+	void read_setting( const std::string & key, const std::basic_string<TCHAR> & keyW, int & val ) override {
 		libopenmpt::plugin::settings::read_setting( key, keyW, val );
 		int storedVal = 0;
 		if ( xmpfregistry->GetInt( "OpenMPT", key.c_str(), &storedVal ) ) {
 			val = storedVal;
 		}
 	}
-	void write_setting( const std::string & key, const std::wstring & /* keyW */ , int val ) override {
+	void write_setting( const std::string & key, const std::basic_string<TCHAR> & /* keyW */ , int val ) override {
 		if ( !xmpfregistry->SetInt( "OpenMPT", key.c_str(), &val ) ) {
 			// error
 		}
@@ -205,6 +244,22 @@ static std::wstring StringDecode( const std::string & src, UINT codepage )
 	MultiByteToWideChar( codepage, 0, src.c_str(), -1, &decoded_string[0], decoded_string.size() );
 	return &decoded_string[0];
 }
+
+#if defined(UNICODE)
+
+static std::wstring StringToWINAPI( const std::wstring & src )
+{
+	return src;
+}
+
+#else
+
+static std::string StringToWINAPI( const std::wstring & src )
+{
+	return StringEncode( src, CP_ACP );
+}
+
+#endif
 
 template <typename Tstring, typename Tstring2, typename Tstring3>
 static inline Tstring StringReplace( Tstring str, const Tstring2 & oldStr_, const Tstring3 & newStr_ ) {
@@ -465,13 +520,13 @@ static void clear_current_timeinfo() {
 static void WINAPI openmpt_About( HWND win ) {
 	std::ostringstream about;
 	about << SHORT_TITLE << " version " << openmpt::string::get( "library_version" ) << " " << "(built " << openmpt::string::get( "build" ) << ")" << std::endl;
-	about << " Copyright (c) 2013-2020 OpenMPT developers (https://lib.openmpt.org/)" << std::endl;
+	about << " Copyright (c) 2013-2021 OpenMPT Project Developers and Contributors (https://lib.openmpt.org/)" << std::endl;
 	about << " OpenMPT version " << openmpt::string::get( "core_version" ) << std::endl;
 	about << std::endl;
 	about << openmpt::string::get( "contact" ) << std::endl;
 	about << std::endl;
 	about << "Show full credits?" << std::endl;
-	if ( MessageBox( win, StringDecode( about.str(), CP_UTF8 ).c_str(), TEXT(SHORT_TITLE), MB_ICONINFORMATION | MB_YESNOCANCEL | MB_DEFBUTTON1 ) != IDYES ) {
+	if ( MessageBox( win, StringToWINAPI( StringDecode( about.str(), CP_UTF8 ) ).c_str(), TEXT(SHORT_TITLE), MB_ICONINFORMATION | MB_YESNOCANCEL | MB_DEFBUTTON1 ) != IDYES ) {
 		return;
 	}
 	std::ostringstream credits;
@@ -480,11 +535,17 @@ static void WINAPI openmpt_About( HWND win ) {
 	credits << std::endl;
 	credits << "Arseny Kapoulkine for pugixml" << std::endl;
 	credits << "https://pugixml.org/" << std::endl;
+#if defined(MPT_WITH_MFC)
 	libopenmpt::plugin::gui_show_file_info( win, TEXT(SHORT_TITLE), StringReplace( StringDecode( credits.str(), CP_UTF8 ), L"\n", L"\r\n" ) );
+#else
+	MessageBox( win, StringToWINAPI( StringReplace( StringDecode( credits.str(), CP_UTF8 ), L"\n", L"\r\n" ) ).c_str(), TEXT(SHORT_TITLE), MB_OK );
+#endif
 }
 
 static void WINAPI openmpt_Config( HWND win ) {
+#if defined(MPT_WITH_MFC)
 	libopenmpt::plugin::gui_edit_settings( &self->settings, win, TEXT(SHORT_TITLE) );
+#endif
 	apply_and_save_options();
 }
 
@@ -773,7 +834,7 @@ static BOOL WINAPI openmpt_CheckFile( const char * filename, XMPFILE file ) {
 					case XMPFILE_TYPE_MEMORY:
 						{
 							xmplay_imemstream s( reinterpret_cast<const char *>( xmpffile->GetMemory( file ) ), xmpffile->GetSize( file ) );
-							return ( openmpt::probe_file_header( openmpt::probe_file_header_flags_default, s ) == openmpt::probe_file_header_result_success ) ? TRUE : FALSE;
+							return ( openmpt::probe_file_header( openmpt::probe_file_header_flags_default2, s ) == openmpt::probe_file_header_result_success ) ? TRUE : FALSE;
 						}
 						break;
 					case XMPFILE_TYPE_FILE:
@@ -782,7 +843,7 @@ static BOOL WINAPI openmpt_CheckFile( const char * filename, XMPFILE file ) {
 					default:
 						{
 							xmplay_istream s( file );
-							return ( openmpt::probe_file_header( openmpt::probe_file_header_flags_default, s ) == openmpt::probe_file_header_result_success ) ? TRUE : FALSE;
+							return ( openmpt::probe_file_header( openmpt::probe_file_header_flags_default2, s ) == openmpt::probe_file_header_result_success ) ? TRUE : FALSE;
 						}
 						break;
 				}
@@ -790,16 +851,16 @@ static BOOL WINAPI openmpt_CheckFile( const char * filename, XMPFILE file ) {
 				if ( xmpffile->GetType( file ) == XMPFILE_TYPE_MEMORY ) {
 					std::string data( reinterpret_cast<const char*>( xmpffile->GetMemory( file ) ), xmpffile->GetSize( file ) );
 					std::istringstream s( data );
-					return ( openmpt::probe_file_header( openmpt::probe_file_header_flags_default, s ) == openmpt::probe_file_header_result_success ) ? TRUE : FALSE;
+					return ( openmpt::probe_file_header( openmpt::probe_file_header_flags_default2, s ) == openmpt::probe_file_header_result_success ) ? TRUE : FALSE;
 				} else {
 					std::string data = read_XMPFILE_string( file );
 					std::istringstream s(data);
-					return ( openmpt::probe_file_header( openmpt::probe_file_header_flags_default, s ) == openmpt::probe_file_header_result_success ) ? TRUE : FALSE;
+					return ( openmpt::probe_file_header( openmpt::probe_file_header_flags_default2, s ) == openmpt::probe_file_header_result_success ) ? TRUE : FALSE;
 				}
 			#endif
 		#else
 			std::ifstream s( filename, std::ios_base::binary );
-			return ( openmpt::probe_file_header( openmpt::probe_file_header_flags_default, s ) == openmpt::probe_file_header_result_success ) ? TRUE : FALSE;
+			return ( openmpt::probe_file_header( openmpt::probe_file_header_flags_default2, s ) == openmpt::probe_file_header_result_success ) ? TRUE : FALSE;
 		#endif
 	} catch ( ... ) {
 		return FALSE;
@@ -1382,7 +1443,7 @@ static BOOL WINAPI VisRenderDC( HDC dc, SIZE size, DWORD flags ) {
 		// Force usage of a nice monospace font
 		LOGFONT logfont;
 		GetObject ( GetCurrentObject( dc, OBJ_FONT ), sizeof(logfont), &logfont );
-		wcscpy( logfont.lfFaceName, L"Lucida Console" );
+		_tcscpy( logfont.lfFaceName, TEXT("Lucida Console") );
 		visfont = CreateFontIndirect( &logfont );
 	}
 	SIZE text_size;
@@ -1740,15 +1801,22 @@ static XMPIN * XMPIN_GetInterface_cxx( DWORD face, InterfaceProc faceproc ) {
 extern "C" {
 
 // XMPLAY expects a WINAPI (which is __stdcall) function using an undecorated symbol name.
+#if defined(__GNUC__)
+XMPIN * WINAPI XMPIN_GetInterface_( DWORD face, InterfaceProc faceproc ) {
+	return XMPIN_GetInterface_cxx( face, faceproc );
+}
+__declspec(dllexport) void XMPIN_GetInterface() __attribute__((alias("XMPIN_GetInterface_@8")));
+#else
 XMPIN * WINAPI XMPIN_GetInterface( DWORD face, InterfaceProc faceproc ) {
 	return XMPIN_GetInterface_cxx( face, faceproc );
 }
 #pragma comment(linker, "/EXPORT:XMPIN_GetInterface=_XMPIN_GetInterface@8")
+#endif
 
 }; // extern "C"
 
 
-#ifdef _MFC_VER
+#if defined(MPT_WITH_MFC) && defined(_MFC_VER)
 
 namespace libopenmpt {
 namespace plugin {

@@ -630,10 +630,14 @@ static PATTERNINDEX ConvertDMFPattern(FileReader &file, const uint8 fileVersion,
 
 					switch(effect2)
 					{
-					case 1:  // Note Finetune
-						effect2 = static_cast<ModCommand::COMMAND>(effectParam2 < 128 ? CMD_PORTAMENTOUP : CMD_PORTAMENTODOWN);
-						if(effectParam2 > 128) effectParam2 = 255 - effectParam2 + 1;
-						effectParam2 = 0xF0 | std::min(uint8(0x0F), effectParam2);  // Well, this is not too accurate...
+					case 1:  // Note Finetune (1/16th of a semitone signed 8-bit value, not 1/128th as the interface claims)
+						{
+							const auto fine = std::div(static_cast<int8>(effectParam2) * 8, 128);
+							if(m->IsNote())
+								m->note = static_cast<ModCommand::NOTE>(Clamp(m->note + fine.quot, NOTE_MIN, NOTE_MAX));
+							effect2 = CMD_FINETUNE;
+							effectParam2 = static_cast<uint8>(fine.rem) ^ 0x80;
+						}
 						break;
 					case 2:  // Note Delay (wtf is the difference to Sample Delay?)
 						effectParam2 = DMFdelay2MPT(effectParam2, settings.internalTicks);
@@ -654,7 +658,7 @@ static PATTERNINDEX ConvertDMFPattern(FileReader &file, const uint8 fileVersion,
 					case 4:  // Portamento Up
 					case 5:  // Portamento Down
 						effectParam2 = DMFporta2MPT(effectParam2, settings.internalTicks, true);
-						effect2 = static_cast<ModCommand::COMMAND>(effect2 == 4 ? CMD_PORTAMENTOUP : CMD_PORTAMENTODOWN);
+						effect2 = (effect2 == 4) ? CMD_PORTAMENTOUP : CMD_PORTAMENTODOWN;
 						useMem2 = true;
 						break;
 					case 6:  // Portamento to Note
@@ -811,6 +815,12 @@ static PATTERNINDEX ConvertDMFPattern(FileReader &file, const uint8 fileVersion,
 				// Prefer instrument effects over any other effects
 				if(effect1 != CMD_NONE)
 				{
+					ModCommand::TwoRegularCommandsToMPT(effect3, effectParam3, effect1, effectParam1);
+					if(m->volcmd == VOLCMD_NONE && effect3 != VOLCMD_NONE)
+					{
+						m->volcmd = effect3;
+						m->vol = effectParam3;
+					}
 					m->command = effect1;
 					m->param = effectParam1;
 				} else if(effect3 != CMD_NONE)
@@ -897,7 +907,7 @@ bool CSoundFile::ReadDMF(FileReader &file, ModLoadingFlags loadFlags)
 
 	InitializeGlobals(MOD_TYPE_DMF);
 
-	m_modFormat.formatName = mpt::format(U_("X-Tracker v%1"))(fileHeader.version);
+	m_modFormat.formatName = MPT_UFORMAT("X-Tracker v{}")(fileHeader.version);
 	m_modFormat.type = U_("dmf");
 	m_modFormat.charset = mpt::Charset::CP437;
 
@@ -919,10 +929,10 @@ bool CSoundFile::ReadDMF(FileReader &file, ModLoadingFlags loadFlags)
 		file.Read(chunkHeader);
 		uint32 chunkLength = chunkHeader.length, chunkSkip = 0;
 		// When loop start was added to version 3, the chunk size was not updated...
-		if(fileHeader.version == 3 && chunkHeader.GetID() == DMFChunk::idSEQU && chunkLength < uint32_max - 2)
+		if(fileHeader.version == 3 && chunkHeader.GetID() == DMFChunk::idSEQU)
 			chunkSkip = 2;
 		// ...and when the loop end was added to version 4, it was also note updated! Luckily they fixed it in version 5.
-		else if(fileHeader.version == 4 && chunkHeader.GetID() == DMFChunk::idSEQU && chunkLength < uint32_max - 4)
+		else if(fileHeader.version == 4 && chunkHeader.GetID() == DMFChunk::idSEQU)
 			chunkSkip = 4;
 		// Earlier X-Tracker versions also write a garbage length for the SMPD chunk if samples are compressed.
 		// I don't know when exactly this stopped, but I have no version 5-7 files to check (and no X-Tracker version that writes those versions).
@@ -1056,15 +1066,12 @@ struct DMFHNode
 struct DMFHTree
 {
 	BitReader file;
-	int lastnode, nodecount;
-	DMFHNode nodes[256];
+	int lastnode = 0, nodecount = 0;
+	DMFHNode nodes[256]{};
 
 	DMFHTree(FileReader &file)
 	    : file(file)
-		, lastnode(0)
-		, nodecount(0)
 	{
-		MemsetZero(nodes);
 	}
 	
 	//

@@ -122,6 +122,9 @@ struct ModSample
 	// Initialize sample slot with default values.
 	void Initialize(MODTYPE type = MOD_TYPE_NONE);
 
+	// Copies sample data from another sample slot and ensures that the 16-bit/stereo flags are set accordingly.
+	bool CopyWaveform(const ModSample &smpFrom);
+
 	// Allocate sample based on a ModSample's properties.
 	// Returns number of bytes allocated, 0 on failure.
 	size_t AllocateSample();
@@ -140,13 +143,18 @@ struct ModSample
 	// Update loop wrap-around buffer
 	void PrecomputeLoops(CSoundFile &sndFile, bool updateChannels = true);
 
+	constexpr bool HasLoop() const noexcept { return uFlags[CHN_LOOP] && nLoopEnd > nLoopStart; }
+	constexpr bool HasSustainLoop() const noexcept { return uFlags[CHN_SUSTAINLOOP] && nSustainEnd > nSustainStart; }
+	constexpr bool HasPingPongLoop() const noexcept { return uFlags.test_all(CHN_LOOP | CHN_PINGPONGLOOP) && nLoopEnd > nLoopStart; }
+	constexpr bool HasPingPongSustainLoop() const noexcept { return uFlags.test_all(CHN_SUSTAINLOOP | CHN_PINGPONGSUSTAIN) && nSustainEnd > nSustainStart; }
+
 	// Remove loop points if they're invalid.
 	void SanitizeLoops();
 
 	// Transpose <-> Frequency conversions
 	static uint32 TransposeToFrequency(int transpose, int finetune = 0);
 	void TransposeToFrequency();
-	static int32 FrequencyToTranspose(uint32 freq);
+	static std::pair<int8, int8> FrequencyToTranspose(uint32 freq);
 	void FrequencyToTranspose();
 
 	// Transpose the sample by amount specified in octaves (i.e. amount=1 transposes one octave up)

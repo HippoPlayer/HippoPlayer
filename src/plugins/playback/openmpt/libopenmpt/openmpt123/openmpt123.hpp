@@ -357,7 +357,7 @@ static inline std::wstring LocaleDecode(const std::string &str, const std::local
 	codecvt_type::result result = codecvt_type::partial;
 	const char * in_begin = str.data();
 	const char * in_end = in_begin + str.size();
-	out.resize((in_end - in_begin) * (facet.max_length() + 1));
+	out.resize((in_end - in_begin) * (facet.max_length() + std::size_t{1}));
 	wchar_t * out_begin = &(out[0]);
 	wchar_t * out_end = &(out[0]) + out.size();
 	const char * in_next = nullptr;
@@ -442,7 +442,7 @@ static inline std::string LocaleEncode(const std::wstring &str, const std::local
 	codecvt_type::result result = codecvt_type::partial;
 	const wchar_t * in_begin = str.data();
 	const wchar_t * in_end = in_begin + str.size();
-	out.resize((in_end - in_begin) * (facet.max_length() + 1));
+	out.resize((in_end - in_begin) * (facet.max_length() + std::size_t{1}));
 	char * out_begin = &(out[0]);
 	char * out_end = &(out[0]) + out.size();
 	const wchar_t * in_next = nullptr;
@@ -514,93 +514,15 @@ static inline std::string LocaleEncode(const std::wstring &str, const std::local
 	return std::string(&(out[0]), out_next);
 }
 
-static inline std::wstring FromLocaleCpp(const std::string &str, wchar_t replacement)
-{
-	try
-	{
-		std::locale locale(""); // user locale
-		return LocaleDecode(str, locale, replacement);
-	} catch ( const std::bad_alloc & )
-	{
-		throw;
-	} catch(...)
-	{
-		// nothing
-	}
-	try
-	{
-		std::locale locale; // current c++ locale
-		return LocaleDecode(str, locale, replacement);
-	} catch ( const std::bad_alloc & )
-	{
-		throw;
-	} catch(...)
-	{
-		// nothing
-	}
-	try
-	{
-		std::locale locale = std::locale::classic(); // "C" locale
-		return LocaleDecode(str, locale, replacement);
-	} catch ( const std::bad_alloc & )
-	{
-		throw;
-	} catch(...)
-	{
-		// nothing
-	}
-	assert(0);
-	return FromAscii(str, replacement); // fallback
-}
-
-static inline std::string ToLocaleCpp(const std::wstring &str, char replacement)
-{
-	try
-	{
-		std::locale locale(""); // user locale
-		return LocaleEncode(str, locale, replacement);
-	} catch ( const std::bad_alloc & )
-	{
-		throw;
-	} catch(...)
-	{
-		// nothing
-	}
-	try
-	{
-		std::locale locale; // current c++ locale
-		return LocaleEncode(str, locale, replacement);
-	} catch ( const std::bad_alloc & )
-	{
-		throw;
-	} catch(...)
-	{
-		// nothing
-	}
-	try
-	{
-		std::locale locale = std::locale::classic(); // "C" locale
-		return LocaleEncode(str, locale, replacement);
-	} catch ( const std::bad_alloc & )
-	{
-		throw;
-	} catch(...)
-	{
-		// nothing
-	}
-	assert(0);
-	return ToAscii(str, replacement); // fallback
-}
-
 
 static inline std::wstring FromLocale(const std::string &str, wchar_t replacement = L'\uFFFD')
 {
-	return FromLocaleCpp(str, replacement);
+	return LocaleDecode(str, std::locale(""), replacement);
 }
 
 static inline std::string ToLocale(const std::wstring &str, char replacement = '?')
 {
-	return ToLocaleCpp(str, replacement);
+	return LocaleEncode(str, std::locale(""), replacement);
 }
 
 
@@ -890,11 +812,19 @@ public:
 
 class textout_ostream_console : public textout {
 private:
+#if defined(UNICODE)
 	std::wostream & s;
+#else
+	std::ostream & s;
+#endif
 	HANDLE handle;
 	bool console;
 public:
+#if defined(UNICODE)
 	textout_ostream_console( std::wostream & s_, DWORD stdHandle_ )
+#else
+	textout_ostream_console( std::ostream & s_, DWORD stdHandle_ )
+#endif
 		: s(s_)
 		, handle(GetStdHandle( stdHandle_ ))
 		, console(IsConsole( stdHandle_ ))

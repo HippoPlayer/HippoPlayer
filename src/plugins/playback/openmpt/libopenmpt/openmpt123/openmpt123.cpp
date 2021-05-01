@@ -8,7 +8,7 @@
  */
 
 static const char * const license =
-"Copyright (c) 2004-2020, OpenMPT contributors" "\n"
+"Copyright (c) 2004-2021, OpenMPT Project Developers and Contributors" "\n"
 "Copyright (c) 1997-2003, Olivier Lapicque" "\n"
 "All rights reserved." "\n"
 "" "\n"
@@ -23,16 +23,16 @@ static const char * const license =
 "      names of its contributors may be used to endorse or promote products" "\n"
 "      derived from this software without specific prior written permission." "\n"
 "" "\n"
-"THIS SOFTWARE IS PROVIDED BY THE CONTRIBUTORS ``AS IS'' AND ANY" "\n"
-"EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED" "\n"
-"WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE" "\n"
-"DISCLAIMED. IN NO EVENT SHALL THE CONTRIBUTORS BE LIABLE FOR ANY" "\n"
-"DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES" "\n"
-"(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;" "\n"
-"LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND" "\n"
-"ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT" "\n"
-"(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS" "\n"
-"SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE." "\n"
+"THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\"" "\n"
+"AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE" "\n"
+"IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE" "\n"
+"DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE" "\n"
+"FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL" "\n"
+"DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR" "\n"
+"SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER" "\n"
+"CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY," "\n"
+"OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE" "\n"
+"OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE." "\n"
 ;
 
 #include "openmpt123_config.hpp"
@@ -74,6 +74,10 @@ static const char * const license =
 #include <conio.h>
 #include <fcntl.h>
 #include <io.h>
+#include <stdio.h>
+#if defined(__MINGW32__) && !defined(__MINGW64__)
+#include <string.h>
+#endif
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <windows.h>
@@ -459,7 +463,7 @@ static std::string seconds_to_string( double time ) {
 
 static void show_info( std::ostream & log, bool verbose ) {
 	log << "openmpt123" << " v" << OPENMPT123_VERSION_STRING << ", libopenmpt " << openmpt::string::get( "library_version" ) << " (" << "OpenMPT " << openmpt::string::get( "core_version" ) << ")" << std::endl;
-	log << "Copyright (c) 2013-2020 OpenMPT developers <https://lib.openmpt.org/>" << std::endl;
+	log << "Copyright (c) 2013-2021 OpenMPT Project Developers and Contributors <https://lib.openmpt.org/>" << std::endl;
 	if ( !verbose ) {
 		log << std::endl;
 		return;
@@ -536,7 +540,7 @@ static void show_info( std::ostream & log, bool verbose ) {
 static void show_man_version( textout & log ) {
 	log << "openmpt123" << " v" << OPENMPT123_VERSION_STRING << std::endl;
 	log << std::endl;
-	log << "Copyright (c) 2013-2020 OpenMPT developers <https://lib.openmpt.org/>" << std::endl;
+	log << "Copyright (c) 2013-2021 OpenMPT Project Developers and Contributors <https://lib.openmpt.org/>" << std::endl;
 }
 
 static void show_short_version( textout & log ) {
@@ -920,9 +924,9 @@ static std::string channel_to_string( int channels, int channel, const meter_cha
 			<< " : "
 			;
 		res2 
-			<< std::string(val,'>') << std::string(48-val,' ')
+			<< std::string(val,'>') << std::string(std::size_t{48}-val,' ')
 			<< ( ( meter.clip != 0.0f ) ? "#" : ":" )
-			<< std::string(headroom,'>') << std::string(12-headroom,' ')
+			<< std::string(headroom,'>') << std::string(std::size_t{12}-headroom,' ')
 			;
 		std::string tmp = res2.str();
 		if ( 0 <= hold_pos && hold_pos <= 60 ) {
@@ -1028,7 +1032,7 @@ void render_loop( commandlineflags & flags, Tmod & mod, double & duration, texto
 		bufsize = 1024;
 	}
 
-	std::int64_t last_redraw_frame = 0 - flags.ui_redraw_interval;
+	std::int64_t last_redraw_frame = std::int64_t{0} - flags.ui_redraw_interval;
 	std::int64_t rendered_frames = 0;
 
 	std::vector<Tsample> left( bufsize );
@@ -1444,7 +1448,7 @@ static void probe_mod_file( commandlineflags & flags, const std::string & filena
 		set_field( fields, "Size" ).ostream() << bytes_to_string( filesize );
 	}
 	
-	int probe_result = openmpt::probe_file_header( openmpt::probe_file_header_flags_default, data_stream );
+	int probe_result = openmpt::probe_file_header( openmpt::probe_file_header_flags_default2, data_stream );
 	std::string probe_result_string;
 	switch ( probe_result ) {
 		case openmpt::probe_file_header_result_success:
@@ -2288,8 +2292,13 @@ static int main( int argc, char * argv [] ) {
 #endif
 	textout_dummy dummy_log;
 #if defined(WIN32)
+#if defined(UNICODE)
 	textout_ostream_console std_out( std::wcout, STD_OUTPUT_HANDLE );
 	textout_ostream_console std_err( std::wclog, STD_ERROR_HANDLE );
+#else
+	textout_ostream_console std_out( std::cout, STD_OUTPUT_HANDLE );
+	textout_ostream_console std_err( std::clog, STD_ERROR_HANDLE );
+#endif
 #else
 	textout_ostream std_out( std::cout );
 	textout_ostream std_err( std::clog );
@@ -2520,6 +2529,7 @@ static int main( int argc, char * argv [] ) {
 #if defined(WIN32) && defined(UNICODE)
 #if defined(__GNUC__)
 // mingw64 does only default to special C linkage for "main", but not for "wmain".
+extern "C" int wmain( int wargc, wchar_t * wargv [] );
 extern "C"
 #endif
 int wmain( int wargc, wchar_t * wargv [] ) {

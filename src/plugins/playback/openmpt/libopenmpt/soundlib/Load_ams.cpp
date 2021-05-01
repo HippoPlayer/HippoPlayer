@@ -157,7 +157,7 @@ static void ReadAMSPattern(CPattern &pattern, bool newVersion, FileReader &patte
 							}
 							break;
 						}
-					} else if(effect < 0x10 + CountOf(effTrans))
+					} else if(effect < 0x10 + mpt::array_size<decltype(effTrans)>::size)
 					{
 						// Extended commands
 						m.command = effTrans[effect - 0x10];
@@ -408,7 +408,7 @@ bool CSoundFile::ReadAMS(FileReader &file, ModLoadingFlags loadFlags)
 
 	m_modFormat.formatName = U_("Extreme's Tracker");
 	m_modFormat.type = U_("ams");
-	m_modFormat.madeWithTracker = mpt::format(U_("Extreme's Tracker %1.%2"))(fileHeader.versionHigh, fileHeader.versionLow);
+	m_modFormat.madeWithTracker = MPT_UFORMAT("Extreme's Tracker {}.{}")(fileHeader.versionHigh, fileHeader.versionLow);
 	m_modFormat.charset = mpt::Charset::CP437;
 
 	std::vector<bool> packSample(fileHeader.numSamps);
@@ -556,8 +556,8 @@ struct AMS2Envelope
 			return;
 		}
 
-		static_assert(MAX_ENVPOINTS >= CountOf(data));
-		mptEnv.resize(std::min(numPoints, uint8(CountOf(data))));
+		static_assert(MAX_ENVPOINTS >= std::size(data));
+		mptEnv.resize(std::min(numPoints, mpt::saturate_cast<uint8>(std::size(data))));
 		mptEnv.nLoopStart = loopStart;
 		mptEnv.nLoopEnd = loopEnd;
 		mptEnv.nSustainStart = mptEnv.nSustainEnd = sustainPoint;
@@ -783,7 +783,7 @@ bool CSoundFile::ReadAMS2(FileReader &file, ModLoadingFlags loadFlags)
 
 	m_modFormat.formatName = U_("Velvet Studio");
 	m_modFormat.type = U_("ams");
-	m_modFormat.madeWithTracker = mpt::format(U_("Velvet Studio %1.%2"))(fileHeader.versionHigh.get(), mpt::ufmt::dec0<2>(fileHeader.versionLow.get()));
+	m_modFormat.madeWithTracker = MPT_UFORMAT("Velvet Studio {}.{}")(fileHeader.versionHigh.get(), mpt::ufmt::dec0<2>(fileHeader.versionLow.get()));
 	m_modFormat.charset = mpt::Charset::CP437;
 
 	uint16 headerFlags;
@@ -830,7 +830,7 @@ bool CSoundFile::ReadAMS2(FileReader &file, ModLoadingFlags loadFlags)
 
 		if(numSamples == 0
 			|| (fileHeader.versionLow > 0 && !file.ReadArray(sampleAssignment))	// v2.01+: 120 Notes
-			|| (fileHeader.versionLow == 0 && !file.ReadRaw(sampleAssignment + 12, 96)))	// v2.0: 96 Notes
+			|| (fileHeader.versionLow == 0 && !file.ReadRaw(mpt::span(sampleAssignment + 12, 96)).size()))	// v2.0: 96 Notes
 		{
 			continue;
 		}
@@ -903,12 +903,9 @@ bool CSoundFile::ReadAMS2(FileReader &file, ModLoadingFlags loadFlags)
 	// Text
 
 	// Read composer name
-	uint8 composerLength = file.ReadUint8();
-	if(composerLength)
+	if(std::string composer; file.ReadSizedString<uint8le, mpt::String::spacePadded>(composer))
 	{
-		std::string str;
-		file.ReadString<mpt::String::spacePadded>(str, composerLength);
-		m_songArtist = mpt::ToUnicode(mpt::Charset::CP437AMS2, str);
+		m_songArtist = mpt::ToUnicode(mpt::Charset::CP437AMS2, composer);
 	}
 
 	// Channel names
@@ -926,11 +923,13 @@ bool CSoundFile::ReadAMS2(FileReader &file, ModLoadingFlags loadFlags)
 	}
 	if(descriptionHeader.packedLen > sizeof(descriptionHeader) && file.CanRead(descriptionHeader.packedLen - sizeof(descriptionHeader)))
 	{
-		const size_t textLength = descriptionHeader.packedLen - sizeof(descriptionHeader);
+		const uint32 textLength = descriptionHeader.packedLen - static_cast<uint32>(sizeof(descriptionHeader));
 		std::vector<uint8> textIn;
 		file.ReadVector(textIn, textLength);
+		// In the best case, every byte triplet can decode to 255 bytes, which is a ratio of exactly 1:85
+		const uint32 maxLength = std::min(textLength, Util::MaxValueOfType(textLength) / 85u) * 85u;
 		std::string textOut;
-		textOut.reserve(descriptionHeader.unpackedLen);
+		textOut.reserve(std::min(maxLength, descriptionHeader.unpackedLen.get()));
 
 		size_t readLen = 0;
 		while(readLen < textLength)

@@ -61,6 +61,7 @@
 // this will be available everywhere
 
 #include "../common/mptBaseMacros.h"
+// <version>
 // <array>
 // <iterator>
 // <type_traits>
@@ -106,6 +107,7 @@
 // "mptBaseMacros.h"
 // "mptMemory.h"
 // "mptSpan.h"
+// <version>
 // <array>
 // <memory>
 // <new>
@@ -133,6 +135,7 @@
 // <exception>
 
 #include "../common/mptStringFormat.h"
+// <stdexcept>
 
 #include "../common/mptPathString.h"
 
@@ -140,6 +143,9 @@
 // <atomic>
 
 #include "../common/misc_util.h"
+// <stdexcept>
+// <optional>
+// <vector>
 
 // for std::abs
 #include <cstdlib>

@@ -375,8 +375,9 @@ static TEMPO MMDTempoToBPM(uint32 tempo, bool is8Ch, bool bpmMode, uint8 rowsPer
 	if(is8Ch && tempo > 0)
 	{
 		LimitMax(tempo, 10u);
-		static constexpr uint8 tempos[10] = { 47, 43, 40, 37, 35, 32, 30, 29, 27, 26 };
-		tempo = tempos[tempo - 1];
+		// MED Soundstudio uses these tempos when importing old files
+		static constexpr uint8 tempos[10] = {179, 164, 152, 141, 131, 123, 116, 110, 104, 99};
+		return TEMPO(tempos[tempo - 1], 0);
 	} else if(tempo > 0 && tempo <= 10)
 	{
 		// SoundTracker compatible tempo
@@ -774,7 +775,7 @@ bool CSoundFile::ReadMED(FileReader &file, ModLoadingFlags loadFlags)
 				mixPlug = {};
 				mixPlug.Info.dwPluginId1 = Vst::kEffectMagic;
 				mixPlug.Info.gain = 10;
-				mixPlug.Info.szName = mpt::ToCharset(mpt::CharsetLocaleOrUTF8, name);
+				mixPlug.Info.szName = mpt::ToCharset(mpt::Charset::Locale, name);
 				mixPlug.Info.szLibraryName = mpt::ToCharset(mpt::Charset::UTF8, name);
 				instr.nMixPlug = numPlugins + 1;
 				instr.nMidiChannel = MidiFirstChannel;
@@ -1422,7 +1423,7 @@ bool CSoundFile::ReadMED(FileReader &file, ModLoadingFlags loadFlags)
 	case 3: madeWithTracker = MPT_ULITERAL("OctaMED Soundstudio (MMD3)"); break;
 	}
 
-	m_modFormat.formatName = mpt::format(MPT_USTRING("OctaMED (MMD%1)"))(version);
+	m_modFormat.formatName = MPT_UFORMAT("OctaMED (MMD{})")(version);
 	m_modFormat.type = MPT_USTRING("med");
 	m_modFormat.madeWithTracker = madeWithTracker;
 	m_modFormat.charset = mpt::Charset::ISO8859_1;

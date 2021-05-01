@@ -87,12 +87,12 @@ bool CSoundFile::ReadOpusSample(SAMPLEINDEX sample, FileReader &file)
 	std::string sampleName;
 
 	FileReader initial = file.GetChunk(65536); // 512 is recommended by libopusfile
-	if(op_test(NULL, initial.GetRawData<unsigned char>(), initial.GetLength()) != 0)
+	if(op_test(NULL, initial.GetRawData<unsigned char>().data(), initial.GetLength()) != 0)
 	{
 		return false;
 	}
 
-	OggOpusFile *of = op_open_memory(file.GetRawData<unsigned char>(), file.GetLength(), NULL);
+	OggOpusFile *of = op_open_memory(file.GetRawData<unsigned char>().data(), file.GetLength(), NULL);
 	if(!of)
 	{
 		return false;
@@ -117,6 +117,9 @@ bool CSoundFile::ReadOpusSample(SAMPLEINDEX sample, FileReader &file)
 
 	sampleName = mpt::ToCharset(GetCharsetInternal(), GetSampleNameFromTags(GetOpusFileTags(of)));
 
+	if(auto length = op_pcm_total(of, 0); length != OP_EINVAL)
+		raw_sample_data.reserve(std::min(MAX_SAMPLE_LENGTH, mpt::saturate_cast<SmpLength>(length)) * channels);
+
 	std::vector<int16> decodeBuf(120 * 48000 / 1000); // 120ms (max Opus packet), 48kHz
 	bool eof = false;
 	while(!eof)
@@ -131,7 +134,7 @@ bool CSoundFile::ReadOpusSample(SAMPLEINDEX sample, FileReader &file)
 		}
 		if(framesRead > 0)
 		{
-			raw_sample_data.insert(raw_sample_data.end(), decodeBuf.begin(), decodeBuf.begin() + (framesRead * channels));
+			mpt::append(raw_sample_data, decodeBuf.begin(), decodeBuf.begin() + (framesRead * channels));
 		} else if(framesRead == 0)
 		{
 			eof = true;
@@ -157,29 +160,30 @@ bool CSoundFile::ReadOpusSample(SAMPLEINDEX sample, FileReader &file)
 		return false;
 	}
 
-	if((raw_sample_data.size() / channels) > MAX_SAMPLE_LENGTH)
-	{
-		return false;
-	}
-
 	DestroySampleThreadsafe(sample);
-	m_szNames[sample] = sampleName;
-	Samples[sample].Initialize();
-	Samples[sample].nC5Speed = rate;
-	Samples[sample].nLength = mpt::saturate_cast<SmpLength>(raw_sample_data.size() / channels);
+	ModSample &mptSample = Samples[sample];
+	mptSample.Initialize();
+	mptSample.nC5Speed = rate;
+	mptSample.nLength = std::min(MAX_SAMPLE_LENGTH, mpt::saturate_cast<SmpLength>(raw_sample_data.size() / channels));
 
-	Samples[sample].uFlags.set(CHN_16BIT);
-	Samples[sample].uFlags.set(CHN_STEREO, channels == 2);
+	mptSample.uFlags.set(CHN_16BIT);
+	mptSample.uFlags.set(CHN_STEREO, channels == 2);
 
-	if(!Samples[sample].AllocateSample())
+	if(!mptSample.AllocateSample())
 	{
 		return false;
 	}
 
-	std::copy(raw_sample_data.begin(), raw_sample_data.end(), Samples[sample].sample16());
+	if(raw_sample_data.size() / channels > MAX_SAMPLE_LENGTH)
+	{
+		AddToLog(LogWarning, U_("Sample has been truncated!"));
+	}
 
-	Samples[sample].Convert(MOD_TYPE_IT, GetType());
-	Samples[sample].PrecomputeLoops(*this, false);
+	std::copy(raw_sample_data.begin(), raw_sample_data.begin() + mptSample.nLength * channels, mptSample.sample16());
+
+	mptSample.Convert(MOD_TYPE_IT, GetType());
+	mptSample.PrecomputeLoops(*this, false);
+	m_szNames[sample] = sampleName;
 
 	return true;
 

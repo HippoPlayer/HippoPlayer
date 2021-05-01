@@ -31,10 +31,10 @@ namespace IO {
 
 typedef int64 Offset;
 
-static constexpr std::size_t BUFFERSIZE_TINY   =    1 * 1024; // on stack usage
-static constexpr std::size_t BUFFERSIZE_SMALL  =    4 * 1024; // on heap
-static constexpr std::size_t BUFFERSIZE_NORMAL =   64 * 1024; // FILE I/O
-static constexpr std::size_t BUFFERSIZE_LARGE  = 1024 * 1024;
+inline constexpr std::size_t BUFFERSIZE_TINY   =    1 * 1024; // on stack usage
+inline constexpr std::size_t BUFFERSIZE_SMALL  =    4 * 1024; // on heap
+inline constexpr std::size_t BUFFERSIZE_NORMAL =   64 * 1024; // FILE I/O
+inline constexpr std::size_t BUFFERSIZE_LARGE  = 1024 * 1024;
 
 
 
@@ -66,7 +66,7 @@ bool SeekAbsolute(std::iostream & f, IO::Offset pos);
 bool SeekRelative(std::ostream & f, IO::Offset off);
 bool SeekRelative(std::istream & f, IO::Offset off);
 bool SeekRelative(std::iostream & f, IO::Offset off);
-IO::Offset ReadRawImpl(std::istream & f, mpt::byte_span data);
+mpt::byte_span ReadRawImpl(std::istream & f, mpt::byte_span data);
 bool WriteRawImpl(std::ostream & f, mpt::const_byte_span data);
 bool IsEof(std::istream & f);
 bool Flush(std::ostream & f);
@@ -84,7 +84,7 @@ template <typename Tfile> bool SeekBegin(WriteBuffer<Tfile> & f) { f.FlushLocal(
 template <typename Tfile> bool SeekEnd(WriteBuffer<Tfile> & f) { f.FlushLocal(); return SeekEnd(f.file()); }
 template <typename Tfile> bool SeekAbsolute(WriteBuffer<Tfile> & f, IO::Offset pos) { f.FlushLocal(); return SeekAbsolute(f.file(), pos); }
 template <typename Tfile> bool SeekRelative(WriteBuffer<Tfile> & f, IO::Offset off) { f.FlushLocal(); return SeekRelative(f.file(), off); }
-template <typename Tfile> IO::Offset ReadRawImpl(WriteBuffer<Tfile> & f, mpt::byte_span data) { f.FlushLocal(); return ReadRawImpl(f.file(), data); }
+template <typename Tfile> mpt::byte_span ReadRawImpl(WriteBuffer<Tfile> & f, mpt::byte_span data) { f.FlushLocal(); return ReadRawImpl(f.file(), data); }
 template <typename Tfile> bool WriteRawImpl(WriteBuffer<Tfile> & f, mpt::const_byte_span data) { return f.Write(data); }
 template <typename Tfile> bool IsEof(WriteBuffer<Tfile> & f) { f.FlushLocal(); return IsEof(f.file()); }
 template <typename Tfile> bool Flush(WriteBuffer<Tfile> & f) { f.FlushLocal(); return Flush(f.file()); }
@@ -96,6 +96,16 @@ template <typename Tfile> bool Flush(WriteBuffer<Tfile> & f) { f.FlushLocal(); r
 template <typename Tbyte> bool IsValid(std::pair<mpt::span<Tbyte>, IO::Offset> & f)
 {
 	return (f.second >= 0);
+}
+template <typename Tbyte> bool IsReadSeekable(std::pair<mpt::span<Tbyte>, IO::Offset> & f)
+{
+	MPT_UNREFERENCED_PARAMETER(f);
+	return true;
+}
+template <typename Tbyte> bool IsWriteSeekable(std::pair<mpt::span<Tbyte>, IO::Offset> & f)
+{
+	MPT_UNREFERENCED_PARAMETER(f);
+	return true;
 }
 template <typename Tbyte> IO::Offset TellRead(std::pair<mpt::span<Tbyte>, IO::Offset> & f)
 {
@@ -129,20 +139,20 @@ template <typename Tbyte> bool SeekRelative(std::pair<mpt::span<Tbyte>, IO::Offs
 	f.second += off;
 	return true;
 }
-template <typename Tbyte> IO::Offset ReadRawImpl(std::pair<mpt::span<Tbyte>, IO::Offset> & f, mpt::byte_span data)
+template <typename Tbyte> mpt::byte_span ReadRawImpl(std::pair<mpt::span<Tbyte>, IO::Offset> & f, mpt::byte_span data)
 {
 	if(f.second < 0)
 	{
-		return 0;
+		return data.first(0);
 	}
 	if(f.second >= static_cast<IO::Offset>(f.first.size()))
 	{
-		return 0;
+		return data.first(0);
 	}
 	std::size_t num = mpt::saturate_cast<std::size_t>(std::min(static_cast<IO::Offset>(f.first.size()) - f.second, static_cast<IO::Offset>(data.size())));
 	std::copy(mpt::byte_cast<const std::byte*>(f.first.data() + f.second), mpt::byte_cast<const std::byte*>(f.first.data() + f.second + num), data.data());
 	f.second += num;
-	return num;
+	return data.first(num);
 }
 template <typename Tbyte> bool WriteRawImpl(std::pair<mpt::span<Tbyte>, IO::Offset> & f, mpt::const_byte_span data)
 {
@@ -175,14 +185,369 @@ template <typename Tbyte> bool Flush(std::pair<mpt::span<Tbyte>, IO::Offset> & f
 
 
 
+class IFileBase
+{
+protected:
+	IFileBase() = default;
+	virtual ~IFileBase() = default;
+public:
+	virtual bool IsValid() = 0;
+	virtual bool IsReadSeekable() = 0;
+	virtual IO::Offset TellRead() = 0;
+	virtual bool SeekBegin() = 0;
+	virtual bool SeekEnd() = 0;
+	virtual bool SeekAbsolute(IO::Offset pos) = 0;
+	virtual bool SeekRelative(IO::Offset off) = 0;
+	virtual mpt::byte_span ReadRawImpl(mpt::byte_span data) = 0;
+	virtual bool IsEof() = 0;
+};
+
+template <typename Tfile>
+class IFile
+	: public IFileBase
+{
+private:
+	Tfile & f;
+public:
+	IFile(Tfile & f_)
+		: f(f_)
+	{
+	}
+	~IFile() override = default;
+public:
+	bool IsValid() override
+	{
+		return mpt::IO::IsValid(f);
+	}
+	bool IsReadSeekable() override
+	{
+		return mpt::IO::IsReadSeekable(f);
+	}
+	IO::Offset TellRead() override
+	{
+		return mpt::IO::TellRead(f);
+	}
+	bool SeekBegin() override
+	{
+		return mpt::IO::SeekBegin(f);
+	}
+	bool SeekEnd() override
+	{
+		return mpt::IO::SeekEnd(f);
+	}
+	bool SeekAbsolute(IO::Offset pos) override
+	{
+		return mpt::IO::SeekAbsolute(f, pos);
+	}
+	bool SeekRelative(IO::Offset off) override
+	{
+		return mpt::IO::SeekRelative(f, off);
+	}
+	mpt::byte_span ReadRawImpl(mpt::byte_span data) override
+	{
+		return mpt::IO::ReadRawImpl(f, data);
+	}
+	bool IsEof() override
+	{
+		return mpt::IO::IsEof(f);
+	}
+};
+
+inline bool IsValid(IFileBase & f)
+{
+	return f.IsValid();
+}
+inline bool IsReadSeekable(IFileBase & f)
+{
+	return f.IsReadSeekable();
+}
+inline IO::Offset TellRead(IFileBase & f)
+{
+	return f.TellRead();
+}
+inline bool SeekBegin(IFileBase & f)
+{
+	return f.SeekBegin();
+}
+inline bool SeekEnd(IFileBase & f)
+{
+	return f.SeekEnd();
+}
+inline bool SeekAbsolute(IFileBase & f, IO::Offset pos)
+{
+	return f.SeekAbsolute(pos);
+}
+inline bool SeekRelative(IFileBase & f, IO::Offset off)
+{
+	return f.SeekRelative(off);
+}
+inline mpt::byte_span ReadRawImpl(IFileBase & f, mpt::byte_span data)
+{
+	return f.ReadRawImpl(data);
+}
+inline bool IsEof(IFileBase & f)
+{
+	return f.IsEof();
+}
+
+
+class OFileBase
+{
+protected:
+	OFileBase() = default;
+	virtual ~OFileBase() = default;
+public:
+	virtual bool IsValid() = 0;
+	virtual bool IsWriteSeekable() = 0;
+	virtual IO::Offset TellWrite() = 0;
+	virtual bool SeekBegin() = 0;
+	virtual bool SeekEnd() = 0;
+	virtual bool SeekAbsolute(IO::Offset pos) = 0;
+	virtual bool SeekRelative(IO::Offset off) = 0;
+	virtual bool WriteRawImpl(mpt::const_byte_span data) = 0;
+	virtual bool Flush() = 0;
+};
+
+template <typename Tfile>
+class OFile
+	: public OFileBase
+{
+private:
+	Tfile & f;
+public:
+	OFile(Tfile & f_)
+		: f(f_)
+	{
+	}
+	~OFile() override = default;
+public:
+	bool IsValid() override
+	{
+		return mpt::IO::IsValid(f);
+	}
+	bool IsWriteSeekable() override
+	{
+		return mpt::IO::IsWriteSeekable(f);
+	}
+	IO::Offset TellWrite() override
+	{
+		return mpt::IO::TellWrite(f);
+	}
+	bool SeekBegin() override
+	{
+		return mpt::IO::SeekBegin(f);
+	}
+	bool SeekEnd() override
+	{
+		return mpt::IO::SeekEnd(f);
+	}
+	bool SeekAbsolute(IO::Offset pos) override
+	{
+		return mpt::IO::SeekAbsolute(f, pos);
+	}
+	bool SeekRelative(IO::Offset off) override
+	{
+		return mpt::IO::SeekRelative(f, off);
+	}
+	bool WriteRawImpl(mpt::const_byte_span data) override
+	{
+		return mpt::IO::WriteRawImpl(f, data);
+	}
+	bool Flush() override
+	{
+		return mpt::IO::Flush(f);
+	}
+};
+
+inline bool IsValid(OFileBase & f)
+{
+	return f.IsValid();
+}
+inline bool IsWriteSeekable(OFileBase & f)
+{
+	return f.IsWriteSeekable();
+}
+inline IO::Offset TellWrite(OFileBase & f)
+{
+	return f.TellWrite();
+}
+inline bool SeekBegin(OFileBase & f)
+{
+	return f.SeekBegin();
+}
+inline bool SeekEnd(OFileBase & f)
+{
+	return f.SeekEnd();
+}
+inline bool SeekAbsolute(OFileBase & f, IO::Offset pos)
+{
+	return f.SeekAbsolute(pos);
+}
+inline bool SeekRelative(OFileBase & f, IO::Offset off)
+{
+	return f.SeekRelative(off);
+}
+inline bool WriteRawImpl(OFileBase & f, mpt::const_byte_span data)
+{
+	return f.WriteRawImpl(data);
+}
+inline bool Flush(OFileBase & f)
+{
+	return f.Flush();
+}
+
+
+class IOFileBase
+{
+protected:
+	IOFileBase() = default;
+	virtual ~IOFileBase() = default;
+public:
+	virtual bool IsValid() = 0;
+	virtual bool IsReadSeekable() = 0;
+	virtual bool IsWriteSeekable() = 0;
+	virtual IO::Offset TellRead() = 0;
+	virtual IO::Offset TellWrite() = 0;
+	virtual bool SeekBegin() = 0;
+	virtual bool SeekEnd() = 0;
+	virtual bool SeekAbsolute(IO::Offset pos) = 0;
+	virtual bool SeekRelative(IO::Offset off) = 0;
+	virtual mpt::byte_span ReadRawImpl(mpt::byte_span data) = 0;
+	virtual bool WriteRawImpl(mpt::const_byte_span data) = 0;
+	virtual bool IsEof() = 0;
+	virtual bool Flush() = 0;
+};
+
+template <typename Tfile>
+class IOFile
+	: public IOFileBase
+{
+private:
+	Tfile & f;
+public:
+	IOFile(Tfile & f_)
+		: f(f_)
+	{
+	}
+	~IOFile() override = default;
+public:
+	bool IsValid() override
+	{
+		return mpt::IO::IsValid(f);
+	}
+	bool IsReadSeekable() override
+	{
+		return mpt::IO::IsReadSeekable(f);
+	}
+	bool IsWriteSeekable() override
+	{
+		return mpt::IO::IsWriteSeekable(f);
+	}
+	IO::Offset TellRead() override
+	{
+		return mpt::IO::TellRead(f);
+	}
+	IO::Offset TellWrite() override
+	{
+		return mpt::IO::TellWrite(f);
+	}
+	bool SeekBegin() override
+	{
+		return mpt::IO::SeekBegin(f);
+	}
+	bool SeekEnd() override
+	{
+		return mpt::IO::SeekEnd(f);
+	}
+	bool SeekAbsolute(IO::Offset pos) override
+	{
+		return mpt::IO::SeekAbsolute(f, pos);
+	}
+	bool SeekRelative(IO::Offset off) override
+	{
+		return mpt::IO::SeekRelative(f, off);
+	}
+	mpt::byte_span ReadRawImpl(mpt::byte_span data) override
+	{
+		return mpt::IO::ReadRawImpl(f, data);
+	}
+	bool WriteRawImpl(mpt::const_byte_span data) override
+	{
+		return mpt::IO::WriteRawImpl(f, data);
+	}
+	bool IsEof() override
+	{
+		return mpt::IO::IsEof(f);
+	}
+	bool Flush() override
+	{
+		return mpt::IO::Flush(f);
+	}
+};
+
+inline bool IsValid(IOFileBase & f)
+{
+	return f.IsValid();
+}
+inline bool IsReadSeekable(IOFileBase & f)
+{
+	return f.IsReadSeekable();
+}
+inline bool IsWriteSeekable(IOFileBase & f)
+{
+	return f.IsWriteSeekable();
+}
+inline IO::Offset TellRead(IOFileBase & f)
+{
+	return f.TellRead();
+}
+inline IO::Offset TellWrite(IOFileBase & f)
+{
+	return f.TellWrite();
+}
+inline bool SeekBegin(IOFileBase & f)
+{
+	return f.SeekBegin();
+}
+inline bool SeekEnd(IOFileBase & f)
+{
+	return f.SeekEnd();
+}
+inline bool SeekAbsolute(IOFileBase & f, IO::Offset pos)
+{
+	return f.SeekAbsolute(pos);
+}
+inline bool SeekRelative(IOFileBase & f, IO::Offset off)
+{
+	return f.SeekRelative(off);
+}
+inline mpt::byte_span ReadRawImpl(IOFileBase & f, mpt::byte_span data)
+{
+	return f.ReadRawImpl(data);
+}
+inline bool WriteRawImpl(IOFileBase & f, mpt::const_byte_span data)
+{
+	return f.WriteRawImpl(data);
+}
+inline bool IsEof(IOFileBase & f)
+{
+	return f.IsEof();
+}
+inline bool Flush(IOFileBase & f)
+{
+	return f.Flush();
+}
+
+
+
 template <typename Tbyte, typename Tfile>
-inline IO::Offset ReadRaw(Tfile & f, Tbyte * data, std::size_t size)
+inline mpt::byte_span ReadRaw(Tfile & f, Tbyte * data, std::size_t size)
 {
 	return IO::ReadRawImpl(f, mpt::as_span(mpt::byte_cast<std::byte*>(data), size));
 }
 
 template <typename Tbyte, typename Tfile>
-inline IO::Offset ReadRaw(Tfile & f, mpt::span<Tbyte> data)
+inline mpt::byte_span ReadRaw(Tfile & f, mpt::span<Tbyte> data)
 {
 	return IO::ReadRawImpl(f, mpt::byte_cast<mpt::byte_span>(data));
 }
@@ -202,7 +567,7 @@ inline bool WriteRaw(Tfile & f, mpt::span<Tbyte> data)
 template <typename Tbinary, typename Tfile>
 inline bool Read(Tfile & f, Tbinary & v)
 {
-	return IO::ReadRaw(f, mpt::as_raw_memory(v)) == mpt::saturate_cast<mpt::IO::Offset>(mpt::as_raw_memory(v).size());
+	return IO::ReadRaw(f, mpt::as_raw_memory(v)).size() == mpt::as_raw_memory(v).size();
 }
 
 template <typename Tbinary, typename Tfile>
@@ -230,14 +595,8 @@ inline bool ReadByte(Tfile & f, std::byte & v)
 {
 	bool result = false;
 	std::byte byte = mpt::as_byte(0);
-	const IO::Offset readResult = IO::ReadRaw(f, &byte, sizeof(std::byte));
-	if(readResult < 0)
-	{
-		result = false;
-	} else
-	{
-		result = (static_cast<uint64>(readResult) == sizeof(std::byte));
-	}
+	const std::size_t readResult = IO::ReadRaw(f, &byte, sizeof(std::byte)).size();
+	result = (readResult == sizeof(std::byte));
 	v = byte;
 	return result;
 }
@@ -249,14 +608,8 @@ inline bool ReadBinaryTruncatedLE(Tfile & f, T & v, std::size_t size)
 	static_assert(std::numeric_limits<T>::is_integer);
 	uint8 bytes[sizeof(T)];
 	std::memset(bytes, 0, sizeof(T));
-	const IO::Offset readResult = IO::ReadRaw(f, bytes, std::min(size, sizeof(T)));
-	if(readResult < 0)
-	{
-		result = false;
-	} else
-	{
-		result = (static_cast<uint64>(readResult) == std::min(size, sizeof(T)));
-	}
+	const std::size_t readResult = IO::ReadRaw(f, bytes, std::min(size, sizeof(T))).size();
+	result = (readResult == std::min(size, sizeof(T)));
 	typename mpt::make_le<T>::type val;
 	std::memcpy(&val, bytes, sizeof(T));
 	v = val;
@@ -270,14 +623,8 @@ inline bool ReadIntLE(Tfile & f, T & v)
 	static_assert(std::numeric_limits<T>::is_integer);
 	uint8 bytes[sizeof(T)];
 	std::memset(bytes, 0, sizeof(T));
-	const IO::Offset readResult = IO::ReadRaw(f, bytes, sizeof(T));
-	if(readResult < 0)
-	{
-		result = false;
-	} else
-	{
-		result = (static_cast<uint64>(readResult) == sizeof(T));
-	}
+	const std::size_t readResult = IO::ReadRaw(f, bytes, sizeof(T)).size();
+	result = (readResult == sizeof(T));
 	typename mpt::make_le<T>::type val;
 	std::memcpy(&val, bytes, sizeof(T));
 	v = val;
@@ -291,14 +638,8 @@ inline bool ReadIntBE(Tfile & f, T & v)
 	static_assert(std::numeric_limits<T>::is_integer);
 	uint8 bytes[sizeof(T)];
 	std::memset(bytes, 0, sizeof(T));
-	const IO::Offset readResult = IO::ReadRaw(f, bytes, sizeof(T));
-	if(readResult < 0)
-	{
-		result = false;
-	} else
-	{
-		result = (static_cast<uint64>(readResult) == sizeof(T));
-	}
+	const std::size_t readResult = IO::ReadRaw(f, bytes, sizeof(T)).size();
+	result = (readResult == sizeof(T));
 	typename mpt::make_be<T>::type val;
 	std::memcpy(&val, bytes, sizeof(T));
 	v = val;
@@ -694,14 +1035,9 @@ public:
 	virtual bool HasPinnedView() const = 0;
 	virtual const std::byte *GetRawData() const = 0;
 	virtual off_t GetLength() const = 0;
-	virtual off_t Read(std::byte *dst, off_t pos, off_t count) const = 0;
+	virtual mpt::byte_span Read(off_t pos, mpt::byte_span dst) const = 0;
 
-	virtual off_t Read(off_t pos, mpt::byte_span dst) const
-	{
-		return Read(dst.data(), pos, dst.size());
-	}
-
-	virtual bool CanRead(off_t pos, off_t length) const
+	virtual bool CanRead(off_t pos, std::size_t length) const
 	{
 		off_t dataLength = GetLength();
 		if((pos == dataLength) && (length == 0))
@@ -715,7 +1051,7 @@ public:
 		return length <= dataLength - pos;
 	}
 
-	virtual off_t GetReadableLength(off_t pos, off_t length) const
+	virtual std::size_t GetReadableLength(off_t pos, std::size_t length) const
 	{
 		off_t dataLength = GetLength();
 		if(pos >= dataLength)
@@ -755,9 +1091,9 @@ public:
 	{
 		return 0;
 	}
-	off_t Read(std::byte * /*dst*/, off_t /*pos*/, off_t /*count*/) const override
+	mpt::byte_span Read(off_t /* pos */ , mpt::byte_span dst) const override
 	{
-		return 0;
+		return dst.first(0);
 	}
 };
 
@@ -791,15 +1127,15 @@ public:
 	{
 		return dataLength;
 	}
-	off_t Read(std::byte *dst, off_t pos, off_t count) const override
+	mpt::byte_span Read(off_t pos, mpt::byte_span dst) const override
 	{
 		if(pos >= dataLength)
 		{
-			return 0;
+			return dst.first(0);
 		}
-		return data->Read(dst, dataOffset + pos, std::min(count, dataLength - pos));
+		return data->Read(dataOffset + pos, dst.first(std::min(dst.size(), dataLength - pos)));
 	}
-	bool CanRead(off_t pos, off_t length) const override
+	bool CanRead(off_t pos, std::size_t length) const override
 	{
 		if((pos == dataLength) && (length == 0))
 		{
@@ -811,7 +1147,7 @@ public:
 		}
 		return (length <= dataLength - pos);
 	}
-	off_t GetReadableLength(off_t pos, off_t length) const override
+	off_t GetReadableLength(off_t pos, std::size_t length) const override
 	{
 		if(pos >= dataLength)
 		{
@@ -871,13 +1207,13 @@ public:
 	bool HasPinnedView() const override;
 	const std::byte *GetRawData() const override;
 	off_t GetLength() const override;
-	off_t Read(std::byte *dst, off_t pos, off_t count) const override;
+	mpt::byte_span Read(off_t pos, mpt::byte_span dst) const override;
 
 private:
 
-	off_t InternalReadBuffered(std::byte* dst, off_t pos, off_t count) const;
+	mpt::byte_span InternalReadBuffered(off_t pos, mpt::byte_span dst) const;
 
-	virtual off_t InternalRead(std::byte *dst, off_t pos, off_t count) const = 0;
+	virtual mpt::byte_span InternalRead(off_t pos, mpt::byte_span dst) const = 0;
 
 };
 
@@ -897,7 +1233,7 @@ public:
 
 private:
 
-	off_t InternalRead(std::byte *dst, off_t pos, off_t count) const override;
+	mpt::byte_span InternalRead(off_t pos, mpt::byte_span dst) const override;
 
 };
 
@@ -927,7 +1263,7 @@ private:
 
 private:
 
-	void ReadCached(std::byte *dst, off_t pos, off_t count) const;
+	void ReadCached(off_t pos, mpt::byte_span dst) const;
 
 public:
 
@@ -936,14 +1272,14 @@ public:
 	bool HasPinnedView() const override;
 	const std::byte *GetRawData() const override;
 	off_t GetLength() const override;
-	off_t Read(std::byte *dst, off_t pos, off_t count) const override;
-	bool CanRead(off_t pos, off_t length) const override;
-	off_t GetReadableLength(off_t pos, off_t length) const override;
+	mpt::byte_span Read(off_t pos, mpt::byte_span dst) const override;
+	bool CanRead(off_t pos, std::size_t length) const override;
+	std::size_t GetReadableLength(off_t pos, std::size_t length) const override;
 
 private:
 
 	virtual bool InternalEof() const = 0;
-	virtual off_t InternalRead(std::byte *dst, off_t count) const = 0;
+	virtual mpt::byte_span InternalRead(mpt::byte_span dst) const = 0;
 
 };
 
@@ -961,7 +1297,7 @@ public:
 private:
 
 	bool InternalEof() const override;
-	off_t InternalRead(std::byte *dst, off_t count) const override;
+	mpt::byte_span InternalRead(mpt::byte_span dst) const override;
 
 };
 
@@ -992,7 +1328,7 @@ public:
 	static off_t GetLength(CallbackStream stream);
 	FileDataContainerCallbackStreamSeekable(CallbackStream s);
 private:
-	off_t InternalRead(std::byte *dst, off_t pos, off_t count) const override;
+	mpt::byte_span InternalRead(off_t pos, mpt::byte_span dst) const override;
 };
 
 
@@ -1005,7 +1341,7 @@ public:
 	FileDataContainerCallbackStream(CallbackStream s);
 private:
 	bool InternalEof() const override;
-	off_t InternalRead(std::byte *dst, off_t count) const override;
+	mpt::byte_span InternalRead(mpt::byte_span dst) const override;
 };
 
 
@@ -1052,23 +1388,18 @@ public:
 		return streamLength;
 	}
 
-	off_t Read(std::byte *dst, off_t pos, off_t count) const override
+	mpt::byte_span Read(off_t pos, mpt::byte_span dst) const override
 	{
 		if(pos >= streamLength)
 		{
-			return 0;
+			return dst.first(0);
 		}
-		off_t avail = std::min(streamLength - pos, count);
-		std::copy(streamData + pos, streamData + pos + avail, dst);
-		return avail;
+		off_t avail = std::min(streamLength - pos, dst.size());
+		std::copy(streamData + pos, streamData + pos + avail, dst.data());
+		return dst.first(avail);
 	}
 
-	off_t Read(off_t pos, mpt::byte_span dst) const override
-	{
-		return Read(dst.data(), pos, dst.size());
-	}
-
-	bool CanRead(off_t pos, off_t length) const override
+	bool CanRead(off_t pos, std::size_t length) const override
 	{
 		if((pos == streamLength) && (length == 0))
 		{
@@ -1081,7 +1412,7 @@ public:
 		return (length <= streamLength - pos);
 	}
 
-	off_t GetReadableLength(off_t pos, off_t length) const override
+	std::size_t GetReadableLength(off_t pos, std::size_t length) const override
 	{
 		if(pos >= streamLength)
 		{

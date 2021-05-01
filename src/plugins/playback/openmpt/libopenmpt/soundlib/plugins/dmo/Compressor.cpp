@@ -15,6 +15,7 @@
 #ifndef NO_PLUGINS
 #include "../../Sndfile.h"
 #include "Compressor.h"
+#include "DMOUtils.h"
 #endif // !NO_PLUGINS
 
 OPENMPT_NAMESPACE_BEGIN
@@ -24,8 +25,6 @@ OPENMPT_NAMESPACE_BEGIN
 namespace DMO
 {
 
-// See Distortion.cpp
-float logGain(float x, int32 shiftL, int32 shiftR);
 
 IMixPlugin* Compressor::Create(VSTPluginLib &factory, CSoundFile &sndFile, SNDMIXPLUGIN *mixStruct)
 {
@@ -140,9 +139,9 @@ void Compressor::PositionChanged()
 	try
 	{
 		m_buffer.assign(m_bufSize * 2, 0.0f);
-	} MPT_EXCEPTION_CATCH_OUT_OF_MEMORY(e)
+	} catch(mpt::out_of_memory e)
 	{
-		MPT_EXCEPTION_DELETE_OUT_OF_MEMORY(e);
+		mpt::delete_out_of_memory(e);
 		m_bufSize = 0;
 	}
 	m_bufPos = 0;

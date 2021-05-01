@@ -88,7 +88,7 @@ CSoundFile::CSoundFile() :
 #endif
 	Order(*this),
 	m_PRNG(mpt::make_prng<mpt::fast_prng>(mpt::global_prng())),
-	visitedSongRows(*this)
+	m_visitedRows(*this)
 {
 	MemsetZero(MixSoundBuffer);
 	MemsetZero(MixRearBuffer);
@@ -129,7 +129,7 @@ void CSoundFile::AddToLog(LogLevel level, const mpt::ustring &text) const
 		#ifdef MODPLUG_TRACKER
 			if(GetpModDoc()) GetpModDoc()->AddToLog(level, text);
 		#else
-			MPT_LOG(level, "soundlib", text);
+			MPT_LOG_GLOBAL(level, "soundlib", text);
 		#endif
 	}
 }
@@ -169,7 +169,7 @@ void CSoundFile::InitializeGlobals(MODTYPE type)
 	m_dwLastSavedWithVersion = Version(0);
 	m_dwCreatedWithVersion = Version(0);
 
-	SetMixLevels(mixLevelsCompatible);
+	SetMixLevels(MixLevels::Compatible);
 
 	Patterns.ClearPatterns();
 	Order.Initialize();
@@ -256,8 +256,12 @@ static constexpr FileFormatLoader ModuleFormatLoaders[] =
 	MPT_DECLARE_FORMAT(AM),
 	MPT_DECLARE_FORMAT(J2B),
 	MPT_DECLARE_FORMAT(PT36),
+	MPT_DECLARE_FORMAT(SymMOD),
+	MPT_DECLARE_FORMAT(MUS_KM),
+	MPT_DECLARE_FORMAT(FMT),
 	MPT_DECLARE_FORMAT(SFX),
 	MPT_DECLARE_FORMAT(STP),
+	MPT_DECLARE_FORMAT(DSym),
 	MPT_DECLARE_FORMAT(MOD),
 	MPT_DECLARE_FORMAT(ICE),
 	MPT_DECLARE_FORMAT(669),
@@ -298,14 +302,14 @@ CSoundFile::ProbeResult CSoundFile::ProbeAdditionalSize(MemoryFileReader &file, 
 
 
 #define MPT_DO_PROBE( storedResult , call ) \
-	MPT_DO { \
+	do { \
 		ProbeResult lastResult = call ; \
 		if(lastResult == ProbeSuccess) { \
 			return ProbeSuccess; \
 		} else if(lastResult == ProbeWantMoreData) { \
 			storedResult = ProbeWantMoreData; \
 		} \
-	} MPT_WHILE_0 \
+	} while(0) \
 /**/
 
 
@@ -455,20 +459,28 @@ bool CSoundFile::Create(FileReader file, ModLoadingFlags loadFlags)
 				m_songMessage.assign(mpt::ToCharset(mpt::Charset::Locale, unarchiver.GetComment()));
 			}
 #endif
-		} MPT_EXCEPTION_CATCH_OUT_OF_MEMORY(e)
+
+			m_visitedRows.Initialize(true);
+#ifdef MODPLUG_TRACKER
+		} catch(mpt::out_of_memory e)
 		{
-			MPT_EXCEPTION_DELETE_OUT_OF_MEMORY(e);
+			mpt::delete_out_of_memory(e);
+			return false;
+#endif  // MODPLUG_TRACKER
+		} catch(const std::exception &)
+		{
 #ifdef MODPLUG_TRACKER
 			return false;
 #else
 			// libopenmpt already handles this.
 			throw;
-#endif // MODPLUG_TRACKER
+#endif  // MODPLUG_TRACKER
 		}
 	} else
 	{
 		// New song
 		InitializeGlobals();
+		m_visitedRows.Initialize(true);
 		m_dwCreatedWithVersion = Version::Current();
 	}
 
@@ -489,9 +501,9 @@ bool CSoundFile::Create(FileReader file, ModLoadingFlags loadFlags)
 		if(SampleHasPath(nSmp))
 		{
 			mpt::PathString filename = GetSamplePath(nSmp);
-			if(!file.GetFileName().empty())
+			if(file.GetOptionalFileName())
 			{
-				filename = filename.RelativePathToAbsolute(file.GetFileName().GetPath());
+				filename = filename.RelativePathToAbsolute(file.GetOptionalFileName()->GetPath());
 			} else if(GetpModDoc() != nullptr)
 			{
 				filename = filename.RelativePathToAbsolute(GetpModDoc()->GetPathNameMpt().GetPath());
@@ -500,7 +512,7 @@ bool CSoundFile::Create(FileReader file, ModLoadingFlags loadFlags)
 			{
 #ifndef MODPLUG_TRACKER
 				// OpenMPT has its own way of reporting this error in CModDoc.
-				AddToLog(LogError, mpt::format(U_("Unable to load sample %1: %2"))(i, filename.ToUnicode()));
+				AddToLog(LogError, MPT_UFORMAT("Unable to load sample {}: {}")(i, filename.ToUnicode()));
 #endif // MODPLUG_TRACKER
 			}
 		} else
@@ -537,9 +549,14 @@ bool CSoundFile::Create(FileReader file, ModLoadingFlags loadFlags)
 	m_nInstruments = maxInstr;
 
 	// Set default play state values
-	if (!m_nDefaultTempo.GetInt()) m_nDefaultTempo.Set(125);
-	if (!m_nDefaultSpeed) m_nDefaultSpeed = 6;
-	if (m_nDefaultRowsPerMeasure < m_nDefaultRowsPerBeat) m_nDefaultRowsPerMeasure = m_nDefaultRowsPerBeat;
+	if(!m_nDefaultTempo.GetInt())
+		m_nDefaultTempo.Set(125);
+	else
+		LimitMax(m_nDefaultTempo, TEMPO(uint16_max, 0));
+	if(!m_nDefaultSpeed)
+		m_nDefaultSpeed = 6;
+	if(m_nDefaultRowsPerMeasure < m_nDefaultRowsPerBeat)
+		m_nDefaultRowsPerMeasure = m_nDefaultRowsPerBeat;
 	m_PlayState.m_nMusicSpeed = m_nDefaultSpeed;
 	m_PlayState.m_nMusicTempo = m_nDefaultTempo;
 	m_PlayState.m_nCurrentRowsPerBeat = m_nDefaultRowsPerBeat;
@@ -551,18 +568,17 @@ bool CSoundFile::Create(FileReader file, ModLoadingFlags loadFlags)
 	m_PlayState.m_nPattern = 0;
 	m_PlayState.m_nBufferCount = 0;
 	m_PlayState.m_dBufferDiff = 0;
-	m_PlayState.m_nTickCount = m_PlayState.m_nMusicSpeed;
+	m_PlayState.m_nTickCount = TICKS_ROW_FINISHED;
 	m_PlayState.m_nNextRow = 0;
 	m_PlayState.m_nRow = 0;
 	m_PlayState.m_nPatternDelay = 0;
 	m_PlayState.m_nFrameDelay = 0;
-	m_PlayState.m_nNextPatStartRow = 0;
+	m_PlayState.m_nextPatStartRow = 0;
 	m_PlayState.m_nSeqOverride = ORDERINDEX_INVALID;
 
 	m_nMaxOrderPosition = 0;
 
 	RecalculateSamplesPerTick();
-	visitedSongRows.Initialize(true);
 
 	for(auto &order : Order)
 	{
@@ -576,7 +592,7 @@ bool CSoundFile::Create(FileReader file, ModLoadingFlags loadFlags)
 #ifndef NO_PLUGINS
 	// Load plugins
 #ifdef MODPLUG_TRACKER
-	std::string notFoundText;
+	mpt::ustring notFoundText;
 #endif // MODPLUG_TRACKER
 	std::vector<const SNDMIXPLUGININFO *> notFoundIDs;
 
@@ -590,7 +606,7 @@ bool CSoundFile::Create(FileReader file, ModLoadingFlags loadFlags)
 #ifdef MODPLUG_TRACKER
 				// Provide some visual feedback
 				{
-					mpt::ustring s = mpt::format(U_("Loading Plugin FX%1: %2 (%3)"))(
+					mpt::ustring s = MPT_UFORMAT("Loading Plugin FX{}: {} ({})")(
 						mpt::ufmt::dec0<2>(plug + 1),
 						mpt::ToUnicode(mpt::Charset::UTF8, plugin.Info.szLibraryName),
 						mpt::ToUnicode(mpt::Charset::Locale, plugin.Info.szName));
@@ -613,9 +629,9 @@ bool CSoundFile::Create(FileReader file, ModLoadingFlags loadFlags)
 						notFoundIDs.push_back(&plugin.Info);
 #ifdef MODPLUG_TRACKER
 						notFoundText.append(plugin.GetLibraryName());
-						notFoundText.append("\n");
+						notFoundText.append(UL_("\n"));
 #else
-						AddToLog(LogWarning, U_("Plugin not found: ") + mpt::ToUnicode(mpt::Charset::UTF8, plugin.GetLibraryName()));
+						AddToLog(LogWarning, U_("Plugin not found: ") + plugin.GetLibraryName());
 #endif // MODPLUG_TRACKER
 					}
 				}
@@ -630,21 +646,21 @@ bool CSoundFile::Create(FileReader file, ModLoadingFlags loadFlags)
 	{
 		if(notFoundIDs.size() == 1)
 		{
-			notFoundText = "The following plugin has not been found:\n\n" + notFoundText + "\nDo you want to search for it online?";
+			notFoundText = UL_("The following plugin has not been found:\n\n") + notFoundText + UL_("\nDo you want to search for it online?");
 		} else
 		{
-			notFoundText = "The following plugins have not been found:\n\n" + notFoundText + "\nDo you want to search for them online?";
+			notFoundText = UL_("The following plugins have not been found:\n\n") + notFoundText + UL_("\nDo you want to search for them online?");
 		}
-		if(Reporting::Confirm(mpt::ToUnicode(mpt::Charset::UTF8, notFoundText), U_("OpenMPT - Plugins missing"), false, true) == cnfYes)
+		if(Reporting::Confirm(notFoundText, U_("OpenMPT - Plugins missing"), false, true) == cnfYes)
 		{
-			std::string url = "https://resources.openmpt.org/plugins/search.php?p=";
+			mpt::ustring url = U_("https://resources.openmpt.org/plugins/search.php?p=");
 			for(const auto &id : notFoundIDs)
 			{
-				url += mpt::fmt::HEX0<8>(id->dwPluginId2.get());
-				url += id->szLibraryName;
-				url += "%0a";
+				url += mpt::ufmt::HEX0<8>(id->dwPluginId2.get());
+				url += mpt::ToUnicode(mpt::Charset::UTF8, id->szLibraryName);
+				url += UL_("%0a");
 			}
-			CTrackApp::OpenURL(mpt::PathString::FromUTF8(url));
+			CTrackApp::OpenURL(mpt::PathString::FromUnicode(url));
 		}
 	}
 #endif // MODPLUG_TRACKER
@@ -741,7 +757,7 @@ double CSoundFile::GetCurrentBPM() const
 {
 	double bpm;
 
-	if (m_nTempoMode == tempoModeModern)
+	if (m_nTempoMode == TempoMode::Modern)
 	{
 		// With modern mode, we trust that true bpm is close enough to what user chose.
 		// This avoids oscillation due to tick-to-tick corrections.
@@ -763,7 +779,7 @@ void CSoundFile::ResetPlayPos()
 	for(CHANNELINDEX i = 0; i < MAX_CHANNELS; i++)
 		m_PlayState.Chn[i].Reset(ModChannel::resetSetPosFull, *this, i);
 
-	visitedSongRows.Initialize(true);
+	m_visitedRows.Initialize(true);
 	m_SongFlags.reset(SONG_FADINGSONG | SONG_ENDREACHED);
 
 	m_PlayState.m_nGlobalVolume = m_nDefaultGlobalVolume;
@@ -775,11 +791,11 @@ void CSoundFile::ResetPlayPos()
 
 	m_PlayState.m_nNextOrder = 0;
 	m_PlayState.m_nNextRow = 0;
-	m_PlayState.m_nTickCount = m_PlayState.m_nMusicSpeed;
+	m_PlayState.m_nTickCount = TICKS_ROW_FINISHED;
 	m_PlayState.m_nBufferCount = 0;
 	m_PlayState.m_nPatternDelay = 0;
 	m_PlayState.m_nFrameDelay = 0;
-	m_PlayState.m_nNextPatStartRow = 0;
+	m_PlayState.m_nextPatStartRow = 0;
 	m_PlayState.m_lTotalSampleCount = 0;
 }
 
@@ -823,11 +839,11 @@ void CSoundFile::SetCurrentOrder(ORDERINDEX nOrder)
 		m_PlayState.m_nNextOrder = nOrder;
 		m_PlayState.m_nRow = m_PlayState.m_nNextRow = 0;
 		m_PlayState.m_nPattern = 0;
-		m_PlayState.m_nTickCount = m_PlayState.m_nMusicSpeed;
+		m_PlayState.m_nTickCount = TICKS_ROW_FINISHED;
 		m_PlayState.m_nBufferCount = 0;
 		m_PlayState.m_nPatternDelay = 0;
 		m_PlayState.m_nFrameDelay = 0;
-		m_PlayState.m_nNextPatStartRow = 0;
+		m_PlayState.m_nextPatStartRow = 0;
 	}
 
 	m_SongFlags.reset(SONG_FADINGSONG | SONG_ENDREACHED);
@@ -953,13 +969,13 @@ void CSoundFile::LoopPattern(PATTERNINDEX nPat, ROWINDEX nRow)
 		if(nRow >= Patterns[nPat].GetNumRows()) nRow = 0;
 		m_PlayState.m_nPattern = nPat;
 		m_PlayState.m_nRow = m_PlayState.m_nNextRow = nRow;
-		m_PlayState.m_nTickCount = m_PlayState.m_nMusicSpeed;
+		m_PlayState.m_nTickCount = TICKS_ROW_FINISHED;
 		m_PlayState.m_nPatternDelay = 0;
 		m_PlayState.m_nFrameDelay = 0;
-		m_PlayState.m_nBufferCount = 0;
-		m_PlayState.m_nNextPatStartRow = 0;
+		m_PlayState.m_nextPatStartRow = 0;
 		m_SongFlags.set(SONG_PATTERNLOOP);
 	}
+	m_PlayState.m_nBufferCount = 0;
 }
 
 
@@ -969,11 +985,11 @@ void CSoundFile::DontLoopPattern(PATTERNINDEX nPat, ROWINDEX nRow)
 	if(nRow >= Patterns[nPat].GetNumRows()) nRow = 0;
 	m_PlayState.m_nPattern = nPat;
 	m_PlayState.m_nRow = m_PlayState.m_nNextRow = nRow;
-	m_PlayState.m_nTickCount = m_PlayState.m_nMusicSpeed;
+	m_PlayState.m_nTickCount = TICKS_ROW_FINISHED;
 	m_PlayState.m_nPatternDelay = 0;
 	m_PlayState.m_nFrameDelay = 0;
 	m_PlayState.m_nBufferCount = 0;
-	m_PlayState.m_nNextPatStartRow = 0;
+	m_PlayState.m_nextPatStartRow = 0;
 	m_SongFlags.reset(SONG_PATTERNLOOP);
 }
 
@@ -1046,6 +1062,7 @@ PlayBehaviourSet CSoundFile::GetSupportedPlaybackBehaviour(MODTYPE type)
 			playBehaviour.set(kOPLFlexibleNoteOff);
 			playBehaviour.set(kOPLwithNNA);
 			playBehaviour.set(kOPLRealRetrig);
+			playBehaviour.set(kOPLNoteOffOnNoteChange);
 		}
 		break;
 
@@ -1085,7 +1102,7 @@ PlayBehaviourSet CSoundFile::GetSupportedPlaybackBehaviour(MODTYPE type)
 		playBehaviour.set(kFT2FinetunePrecision);
 		playBehaviour.set(kFT2NoteOffFlags);
 		playBehaviour.set(kRowDelayWithNoteDelay);
-		playBehaviour.set(kFT2TremoloRampWaveform);
+		playBehaviour.set(kFT2MODTremoloRampWaveform);
 		playBehaviour.set(kFT2PortaUpDownMemory);
 		playBehaviour.set(kFT2PanSustainRelease);
 		playBehaviour.set(kFT2NoteDelayWithoutInstr);
@@ -1106,6 +1123,7 @@ PlayBehaviourSet CSoundFile::GetSupportedPlaybackBehaviour(MODTYPE type)
 		playBehaviour.set(kST3OffsetWithoutInstrument);
 		playBehaviour.set(kST3RetrigAfterNoteCut);
 		playBehaviour.set(kST3SampleSwap);
+		playBehaviour.set(kOPLNoteOffOnNoteChange);
 		break;
 
 	case MOD_TYPE_MOD:
@@ -1116,6 +1134,7 @@ PlayBehaviourSet CSoundFile::GetSupportedPlaybackBehaviour(MODTYPE type)
 		playBehaviour.set(kMODOutOfRangeNoteDelay);
 		playBehaviour.set(kMODTempoOnSecondTick);
 		playBehaviour.set(kRowDelayWithNoteDelay);
+		playBehaviour.set(kFT2MODTremoloRampWaveform);
 		break;
 
 	default:
@@ -1498,7 +1517,7 @@ mpt::ustring CSoundFile::GetNoteName(const ModCommand::NOTE note, const NoteName
 		// cppcheck false-positive
 		// cppcheck-suppress constStatement
 		const mpt::uchar specialNoteNames[][4] = { UL_("PCs"), UL_("PC "), UL_("~~~"), UL_("^^^"), UL_("===") };
-		static_assert(CountOf(specialNoteNames) == NOTE_MAX_SPECIAL - NOTE_MIN_SPECIAL + 1);
+		static_assert(mpt::array_size<decltype(specialNoteNames)>::size == NOTE_MAX_SPECIAL - NOTE_MIN_SPECIAL + 1);
 		return specialNoteNames[note - NOTE_MIN_SPECIAL];
 	} else if(ModCommand::IsNote(note))
 	{
@@ -1567,13 +1586,13 @@ void CSoundFile::SetType(MODTYPE type)
 
 #ifdef MODPLUG_TRACKER
 
-void CSoundFile::ChangeModTypeTo(const MODTYPE newType)
+void CSoundFile::ChangeModTypeTo(const MODTYPE newType, bool adjust)
 {
 	const MODTYPE oldType = GetType();
 	m_nType = newType;
 	SetModSpecsPointer(m_pModSpecs, m_nType);
 
-	if(oldType == newType)
+	if(oldType == newType || !adjust)
 		return;
 
 	SetupMODPanning(); // Setup LRRL panning scheme if needed
@@ -1657,16 +1676,16 @@ void CSoundFile::RecalculateSamplesPerTick()
 {
 	switch(m_nTempoMode)
 	{
-	case tempoModeClassic:
+	case TempoMode::Classic:
 	default:
 		m_PlayState.m_nSamplesPerTick = Util::muldiv(m_MixerSettings.gdwMixingFreq, 5 * TEMPO::fractFact, std::max(TEMPO::store_t(1), m_PlayState.m_nMusicTempo.GetRaw() << 1));
 		break;
 
-	case tempoModeModern:
+	case TempoMode::Modern:
 		m_PlayState.m_nSamplesPerTick = static_cast<uint32>((Util::mul32to64_unsigned(m_MixerSettings.gdwMixingFreq, 60 * TEMPO::fractFact) / std::max(uint64(1),  Util::mul32to64_unsigned(m_PlayState.m_nMusicSpeed, m_PlayState.m_nCurrentRowsPerBeat) * m_PlayState.m_nMusicTempo.GetRaw())));
 		break;
 
-	case tempoModeAlternative:
+	case TempoMode::Alternative:
 		m_PlayState.m_nSamplesPerTick = Util::muldiv(m_MixerSettings.gdwMixingFreq, TEMPO::fractFact, std::max(TEMPO::store_t(1), m_PlayState.m_nMusicTempo.GetRaw()));
 		break;
 	}
@@ -1686,16 +1705,16 @@ uint32 CSoundFile::GetTickDuration(PlayState &playState) const
 	uint32 retval = 0;
 	switch(m_nTempoMode)
 	{
-	case tempoModeClassic:
+	case TempoMode::Classic:
 	default:
 		retval = Util::muldiv(m_MixerSettings.gdwMixingFreq, 5 * TEMPO::fractFact, std::max(TEMPO::store_t(1), playState.m_nMusicTempo.GetRaw() << 1));
 		break;
 
-	case tempoModeAlternative:
+	case TempoMode::Alternative:
 		retval = Util::muldiv(m_MixerSettings.gdwMixingFreq, TEMPO::fractFact, std::max(TEMPO::store_t(1), playState.m_nMusicTempo.GetRaw()));
 		break;
 
-	case tempoModeModern:
+	case TempoMode::Modern:
 		{
 			double accurateBufferCount = static_cast<double>(m_MixerSettings.gdwMixingFreq) * (60.0 / (playState.m_nMusicTempo.ToDouble() * Util::mul32to64_unsigned(playState.m_nMusicSpeed, playState.m_nCurrentRowsPerBeat)));
 			const TempoSwing &swing = (Patterns.IsValidPat(playState.m_nPattern) && Patterns[playState.m_nPattern].HasTempoSwing())
@@ -1740,17 +1759,17 @@ double CSoundFile::GetRowDuration(TEMPO tempo, uint32 speed) const
 {
 	switch(m_nTempoMode)
 	{
-	case tempoModeClassic:
+	case TempoMode::Classic:
 	default:
 		return static_cast<double>(2500 * speed) / tempo.ToDouble();
 
-	case tempoModeModern:
+	case TempoMode::Modern:
 		{
 			// If there are any row delay effects, the row length factor compensates for those.
 			return 60000.0 / tempo.ToDouble() / static_cast<double>(m_PlayState.m_nCurrentRowsPerBeat);
 		}
 
-	case tempoModeAlternative:
+	case TempoMode::Alternative:
 		return static_cast<double>(1000 * speed) / tempo.ToDouble();
 	}
 }
@@ -1761,6 +1780,25 @@ const CModSpecifications& CSoundFile::GetModSpecifications(const MODTYPE type)
 	const CModSpecifications* p = nullptr;
 	SetModSpecsPointer(p, type);
 	return *p;
+}
+
+
+// Resolve note/instrument combination to real sample index. Return value is guaranteed to be in [0, GetNumSamples()].
+SAMPLEINDEX CSoundFile::GetSampleIndex(ModCommand::NOTE note, uint32 instr) const noexcept
+{
+	SAMPLEINDEX smp = 0;
+	if(GetNumInstruments())
+	{
+		if(ModCommand::IsNote(note) && instr <= GetNumInstruments() && Instruments[instr] != nullptr)
+			smp = Instruments[instr]->Keyboard[note - NOTE_MIN];
+	} else
+	{
+		smp = static_cast<SAMPLEINDEX>(instr);
+	}
+	if(smp <= GetNumSamples())
+		return smp;
+	else
+		return 0;
 }
 
 
@@ -1831,22 +1869,14 @@ INSTRUMENTINDEX CSoundFile::GetNextFreeInstrument(INSTRUMENTINDEX start) const
 // Check whether a given sample is used by a given instrument.
 bool CSoundFile::IsSampleReferencedByInstrument(SAMPLEINDEX sample, INSTRUMENTINDEX instr) const
 {
-	ModInstrument *targetIns = nullptr;
-	if(instr > 0 && instr <= GetNumInstruments())
-	{
-		targetIns = Instruments[instr];
-	}
-	if(targetIns != nullptr)
-	{
-		for(size_t note = 0; note < NOTE_MAX /*CountOf(targetIns->Keyboard)*/; note++)
-		{
-			if(targetIns->Keyboard[note] == sample)
-			{
-				return true;
-			}
-		}
-	}
-	return false;
+	if(instr < 1 || instr > GetNumInstruments())
+		return false;
+
+	const ModInstrument *targetIns = Instruments[instr];
+	if(targetIns == nullptr)
+		return false;
+
+	return mpt::contains(mpt::as_span(targetIns->Keyboard).first(NOTE_MAX), sample);
 }
 
 

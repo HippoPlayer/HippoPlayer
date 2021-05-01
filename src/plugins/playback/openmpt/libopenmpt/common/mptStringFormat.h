@@ -12,8 +12,11 @@
 
 #include "BuildSettings.h"
 
+#include <stdexcept>
 
 #include "mptString.h"
+
+#include "FlagSet.h"
 
 
 OPENMPT_NAMESPACE_BEGIN
@@ -46,8 +49,7 @@ OPENMPT_NAMESPACE_BEGIN
 //     basically means, it should work for any 7-bit or 8-bit encoding, including for example ASCII, UTF8 or the current locale encoding.
 //     std::string         std::wstring          mpt::ustring                    mpt::tsrtring                        CString
 //     mpt::fmt            mpt::wfmt             mpt::ufmt                       mpt::tfmt                            mpt::cfmt
-//     mpt::format("%1")   mpt::wformat(L"%1")   mpt::uformat(MPT_ULITERAL(%1)   mpt::tformat(_T("%1"))               mpt::cformat(_T("%1"))
-//     mpt::format("%1")   mpt::format(L"%1")    mpt::format(MPT_USTRING(%1))    mpt::format(mpt::tstring(_T("%1"))   mpt::format(CString(_T("%1"))
+//     MPT_FORMAT("{}")    MPT_WFORMAT("{}")     MPT_UFORMAT("{}")               MPT_TFORMAT("{}")                    MPT_CFORMAT("{}")
 //  5. All functionality here delegates real work outside of the header file so that <sstream> and <locale> do not need to be included when
 //     using this functionality.
 //     Advantages:
@@ -71,9 +73,13 @@ namespace mpt
 
 // fallback to member function ToUString()
 #if MPT_USTRING_MODE_UTF8
-template <typename T> auto ToString(const T & x) -> decltype(mpt::ToCharset(mpt::Charset::UTF8, x.ToUString())) { return mpt::ToCharset(mpt::Charset::UTF8, x.ToUString()); }
+template <typename T> [[deprecated]] auto ToString(const T & x) -> decltype(mpt::ToCharset(mpt::Charset::UTF8, x.ToUString())) { return mpt::ToCharset(mpt::Charset::UTF8, x.ToUString()); } // unknown encoding
 #else
-template <typename T> auto ToString(const T & x) -> decltype(mpt::ToCharset(mpt::CharsetLocaleOrUTF8, x.ToUString())) { return mpt::ToCharset(mpt::CharsetLocaleOrUTF8, x.ToUString()); }
+#if defined(MPT_ENABLE_CHARSET_LOCALE)
+template <typename T> [[deprecated]] auto ToString(const T & x) -> decltype(mpt::ToCharset(mpt::Charset::Locale, x.ToUString())) { return mpt::ToCharset(mpt::Charset::Locale, x.ToUString()); } // unknown encoding
+#else // !MPT_ENABLE_CHARSET_LOCALE
+template <typename T> [[deprecated]] auto ToString(const T & x) -> decltype(mpt::ToCharset(mpt::Charset::UTF8, x.ToUString())) { return mpt::ToCharset(mpt::Charset::UTF8, x.ToUString()); } // unknown encoding
+#endif // MPT_ENABLE_CHARSET_LOCALE
 #endif
 
 inline std::string ToString(const std::string & x) { return x; }
@@ -287,7 +293,7 @@ template <> struct FormatValTFunctor<std::wstring> { template <typename T> inlin
 #if defined(MPT_ENABLE_CHARSET_LOCALE)
 template <> struct FormatValTFunctor<mpt::lstring> { template <typename T> inline mpt::lstring operator() (const T & x, const FormatSpec & f) { return mpt::ToLocale(mpt::Charset::Locale, FormatVal(x, f)); } };
 #endif // MPT_ENABLE_CHARSET_LOCALE
-#if defined(MPT_WITH_MFC )
+#if defined(MPT_WITH_MFC)
 #ifdef UNICODE
 template <> struct FormatValTFunctor<CString> { template <typename T> inline CString operator() (const T & x, const FormatSpec & f) { return mpt::ToCString(FormatValW(x, f)); } };
 #else // !UNICODE
@@ -305,52 +311,52 @@ private:
 	unsigned int group;
 	char group_sep;
 public:
-	MPT_CONSTEXPR11_FUN FormatSpec() noexcept : flags(0), width(0), precision(-1), group(0), group_sep(',') {}
-	MPT_CONSTEXPR11_FUN FormatFlags GetFlags() const noexcept { return flags; }
-	MPT_CONSTEXPR11_FUN std::size_t GetWidth() const noexcept { return width; }
-	MPT_CONSTEXPR11_FUN int GetPrecision() const noexcept { return precision; }
-	MPT_CONSTEXPR11_FUN unsigned int GetGroup() const noexcept { return group; }
-	MPT_CONSTEXPR11_FUN char GetGroupSep() const noexcept { return group_sep; }
-	MPT_CONSTEXPR14_FUN FormatSpec & SetFlags(FormatFlags f) noexcept { flags = f; return *this; }
-	MPT_CONSTEXPR14_FUN FormatSpec & SetWidth(std::size_t w) noexcept { width = w; return *this; }
-	MPT_CONSTEXPR14_FUN FormatSpec & SetPrecision(int p) noexcept { precision = p; return *this; }
-	MPT_CONSTEXPR14_FUN FormatSpec & SetGroup(unsigned int g) noexcept { group = g; return *this; }
-	MPT_CONSTEXPR14_FUN FormatSpec & SetGroupSep(char s) noexcept { group_sep = s; return *this; }
+	MPT_CONSTEXPRINLINE FormatSpec() noexcept : flags(0), width(0), precision(-1), group(0), group_sep(',') {}
+	MPT_CONSTEXPRINLINE FormatFlags GetFlags() const noexcept { return flags; }
+	MPT_CONSTEXPRINLINE std::size_t GetWidth() const noexcept { return width; }
+	MPT_CONSTEXPRINLINE int GetPrecision() const noexcept { return precision; }
+	MPT_CONSTEXPRINLINE unsigned int GetGroup() const noexcept { return group; }
+	MPT_CONSTEXPRINLINE char GetGroupSep() const noexcept { return group_sep; }
+	MPT_CONSTEXPRINLINE FormatSpec & SetFlags(FormatFlags f) noexcept { flags = f; return *this; }
+	MPT_CONSTEXPRINLINE FormatSpec & SetWidth(std::size_t w) noexcept { width = w; return *this; }
+	MPT_CONSTEXPRINLINE FormatSpec & SetPrecision(int p) noexcept { precision = p; return *this; }
+	MPT_CONSTEXPRINLINE FormatSpec & SetGroup(unsigned int g) noexcept { group = g; return *this; }
+	MPT_CONSTEXPRINLINE FormatSpec & SetGroupSep(char s) noexcept { group_sep = s; return *this; }
 public:
-	MPT_CONSTEXPR14_FUN FormatSpec & BaseDec() noexcept { flags &= ~(fmt_base::BaseDec|fmt_base::BaseHex); flags |= fmt_base::BaseDec; return *this; }
-	MPT_CONSTEXPR14_FUN FormatSpec & BaseHex() noexcept { flags &= ~(fmt_base::BaseDec|fmt_base::BaseHex); flags |= fmt_base::BaseHex; return *this; }
-	MPT_CONSTEXPR14_FUN FormatSpec & CaseLow() noexcept { flags &= ~(fmt_base::CaseLow|fmt_base::CaseUpp); flags |= fmt_base::CaseLow; return *this; }
-	MPT_CONSTEXPR14_FUN FormatSpec & CaseUpp() noexcept { flags &= ~(fmt_base::CaseLow|fmt_base::CaseUpp); flags |= fmt_base::CaseUpp; return *this; }
-	MPT_CONSTEXPR14_FUN FormatSpec & FillOff() noexcept { flags &= ~(fmt_base::FillOff|fmt_base::FillNul); flags |= fmt_base::FillOff; return *this; }
-	MPT_CONSTEXPR14_FUN FormatSpec & FillNul() noexcept { flags &= ~(fmt_base::FillOff|fmt_base::FillNul); flags |= fmt_base::FillNul; return *this; }
-	MPT_CONSTEXPR14_FUN FormatSpec & NotaNrm() noexcept { flags &= ~(fmt_base::NotaNrm|fmt_base::NotaFix|fmt_base::NotaSci); flags |= fmt_base::NotaNrm; return *this; }
-	MPT_CONSTEXPR14_FUN FormatSpec & NotaFix() noexcept { flags &= ~(fmt_base::NotaNrm|fmt_base::NotaFix|fmt_base::NotaSci); flags |= fmt_base::NotaFix; return *this; }
-	MPT_CONSTEXPR14_FUN FormatSpec & NotaSci() noexcept { flags &= ~(fmt_base::NotaNrm|fmt_base::NotaFix|fmt_base::NotaSci); flags |= fmt_base::NotaSci; return *this; }
-	MPT_CONSTEXPR14_FUN FormatSpec & Width(std::size_t w) noexcept { width = w; return *this; }
-	MPT_CONSTEXPR14_FUN FormatSpec & Prec(int p) noexcept { precision = p; return *this; }
-	MPT_CONSTEXPR14_FUN FormatSpec & Group(unsigned int g) noexcept { group = g; return *this; }
-	MPT_CONSTEXPR14_FUN FormatSpec & GroupSep(char s) noexcept { group_sep = s; return *this; }
+	MPT_CONSTEXPRINLINE FormatSpec & BaseDec() noexcept { flags &= ~(fmt_base::BaseDec|fmt_base::BaseHex); flags |= fmt_base::BaseDec; return *this; }
+	MPT_CONSTEXPRINLINE FormatSpec & BaseHex() noexcept { flags &= ~(fmt_base::BaseDec|fmt_base::BaseHex); flags |= fmt_base::BaseHex; return *this; }
+	MPT_CONSTEXPRINLINE FormatSpec & CaseLow() noexcept { flags &= ~(fmt_base::CaseLow|fmt_base::CaseUpp); flags |= fmt_base::CaseLow; return *this; }
+	MPT_CONSTEXPRINLINE FormatSpec & CaseUpp() noexcept { flags &= ~(fmt_base::CaseLow|fmt_base::CaseUpp); flags |= fmt_base::CaseUpp; return *this; }
+	MPT_CONSTEXPRINLINE FormatSpec & FillOff() noexcept { flags &= ~(fmt_base::FillOff|fmt_base::FillNul); flags |= fmt_base::FillOff; return *this; }
+	MPT_CONSTEXPRINLINE FormatSpec & FillNul() noexcept { flags &= ~(fmt_base::FillOff|fmt_base::FillNul); flags |= fmt_base::FillNul; return *this; }
+	MPT_CONSTEXPRINLINE FormatSpec & NotaNrm() noexcept { flags &= ~(fmt_base::NotaNrm|fmt_base::NotaFix|fmt_base::NotaSci); flags |= fmt_base::NotaNrm; return *this; }
+	MPT_CONSTEXPRINLINE FormatSpec & NotaFix() noexcept { flags &= ~(fmt_base::NotaNrm|fmt_base::NotaFix|fmt_base::NotaSci); flags |= fmt_base::NotaFix; return *this; }
+	MPT_CONSTEXPRINLINE FormatSpec & NotaSci() noexcept { flags &= ~(fmt_base::NotaNrm|fmt_base::NotaFix|fmt_base::NotaSci); flags |= fmt_base::NotaSci; return *this; }
+	MPT_CONSTEXPRINLINE FormatSpec & Width(std::size_t w) noexcept { width = w; return *this; }
+	MPT_CONSTEXPRINLINE FormatSpec & Prec(int p) noexcept { precision = p; return *this; }
+	MPT_CONSTEXPRINLINE FormatSpec & Group(unsigned int g) noexcept { group = g; return *this; }
+	MPT_CONSTEXPRINLINE FormatSpec & GroupSep(char s) noexcept { group_sep = s; return *this; }
 public:
-	MPT_CONSTEXPR14_FUN FormatSpec & Dec() noexcept { return BaseDec(); }
-	MPT_CONSTEXPR14_FUN FormatSpec & Hex() noexcept { return BaseHex(); }
-	MPT_CONSTEXPR14_FUN FormatSpec & Low() noexcept { return CaseLow(); }
-	MPT_CONSTEXPR14_FUN FormatSpec & Upp() noexcept { return CaseUpp(); }
-	MPT_CONSTEXPR14_FUN FormatSpec & Off() noexcept { return FillOff(); }
-	MPT_CONSTEXPR14_FUN FormatSpec & Nul() noexcept { return FillNul(); }
-	MPT_CONSTEXPR14_FUN FormatSpec & Nrm() noexcept { return NotaNrm(); }
-	MPT_CONSTEXPR14_FUN FormatSpec & Fix() noexcept { return NotaFix(); }
-	MPT_CONSTEXPR14_FUN FormatSpec & Sci() noexcept { return NotaSci(); }
+	MPT_CONSTEXPRINLINE FormatSpec & Dec() noexcept { return BaseDec(); }
+	MPT_CONSTEXPRINLINE FormatSpec & Hex() noexcept { return BaseHex(); }
+	MPT_CONSTEXPRINLINE FormatSpec & Low() noexcept { return CaseLow(); }
+	MPT_CONSTEXPRINLINE FormatSpec & Upp() noexcept { return CaseUpp(); }
+	MPT_CONSTEXPRINLINE FormatSpec & Off() noexcept { return FillOff(); }
+	MPT_CONSTEXPRINLINE FormatSpec & Nul() noexcept { return FillNul(); }
+	MPT_CONSTEXPRINLINE FormatSpec & Nrm() noexcept { return NotaNrm(); }
+	MPT_CONSTEXPRINLINE FormatSpec & Fix() noexcept { return NotaFix(); }
+	MPT_CONSTEXPRINLINE FormatSpec & Sci() noexcept { return NotaSci(); }
 public:
-	MPT_CONSTEXPR14_FUN FormatSpec & Decimal() noexcept { return BaseDec(); }
-	MPT_CONSTEXPR14_FUN FormatSpec & Hexadecimal() noexcept { return BaseHex(); }
-	MPT_CONSTEXPR14_FUN FormatSpec & Lower() noexcept { return CaseLow(); }
-	MPT_CONSTEXPR14_FUN FormatSpec & Upper() noexcept { return CaseUpp(); }
-	MPT_CONSTEXPR14_FUN FormatSpec & FillNone() noexcept { return FillOff(); }
-	MPT_CONSTEXPR14_FUN FormatSpec & FillZero() noexcept { return FillNul(); }
-	MPT_CONSTEXPR14_FUN FormatSpec & FloatNormal() noexcept { return NotaNrm(); }
-	MPT_CONSTEXPR14_FUN FormatSpec & FloatFixed() noexcept { return NotaFix(); }
-	MPT_CONSTEXPR14_FUN FormatSpec & FloatScientific() noexcept { return NotaSci(); }
-	MPT_CONSTEXPR14_FUN FormatSpec & Precision(int p) noexcept { return Prec(p); }
+	MPT_CONSTEXPRINLINE FormatSpec & Decimal() noexcept { return BaseDec(); }
+	MPT_CONSTEXPRINLINE FormatSpec & Hexadecimal() noexcept { return BaseHex(); }
+	MPT_CONSTEXPRINLINE FormatSpec & Lower() noexcept { return CaseLow(); }
+	MPT_CONSTEXPRINLINE FormatSpec & Upper() noexcept { return CaseUpp(); }
+	MPT_CONSTEXPRINLINE FormatSpec & FillNone() noexcept { return FillOff(); }
+	MPT_CONSTEXPRINLINE FormatSpec & FillZero() noexcept { return FillNul(); }
+	MPT_CONSTEXPRINLINE FormatSpec & FloatNormal() noexcept { return NotaNrm(); }
+	MPT_CONSTEXPRINLINE FormatSpec & FloatFixed() noexcept { return NotaFix(); }
+	MPT_CONSTEXPRINLINE FormatSpec & FloatScientific() noexcept { return NotaSci(); }
+	MPT_CONSTEXPRINLINE FormatSpec & Precision(int p) noexcept { return Prec(p); }
 };
 
 template <typename Tdst, typename Tsrc>
@@ -590,6 +596,17 @@ template <typename T, std::size_t N> struct to_string_type<T [N]> { typedef type
 
 } // namespace String
 
+class format_string_syntax_error
+	: public std::domain_error
+{
+public:
+	format_string_syntax_error()
+		: std::domain_error("format string syntax error")
+	{
+		return;
+	}
+};
+
 template<typename Tformat>
 class message_formatter
 {
@@ -604,40 +621,153 @@ private:
 
 private:
 
-	MPT_NOINLINE Tstring do_format(mpt::span<const Tstring> vals) const
+	MPT_NOINLINE Tstring do_format(const mpt::span<const Tstring> vals) const
 	{
-		typedef typename mpt::string_traits<Tstring> traits;
+		using traits = typename mpt::string_traits<Tstring>;
+		using char_type = typename traits::char_type;
+		using size_type = typename traits::size_type;
 		Tstring result;
-		const typename traits::size_type len = traits::length(format);
+		const size_type len = traits::length(format);
 		traits::reserve(result, len);
-		for(typename traits::size_type pos = 0; pos != len; ++pos)
+		std::size_t max_arg = 0;
+		std::size_t args = 0;
+		bool std_style_success = true; 
 		{
-			typename traits::char_type c = format[pos];
-			if(pos + 1 != len && c == typename traits::char_type('%'))
+			enum class state : int {
+				error = -1,
+				text = 0,
+				open_seen = 1,
+				number_seen = 2,
+				close_seen = 3,
+			};
+			state state = state::text;
+			bool numbered_args = false;
+			bool unnumbered_args = false;
+			std::size_t last_arg = 0;
+			std::size_t this_arg = 0;
+			std::size_t current_arg = 0;
+			for(size_type pos = 0; pos != len; ++pos)
 			{
-				pos++;
-				c = format[pos];
-				if(typename traits::char_type('1') <= c && c <= typename traits::char_type('9'))
+				char_type c = format[pos];
+				switch(state)
 				{
-					const std::size_t n = c - typename traits::char_type('0') - 1;
-					if(n < std::size(vals))
+				case state::text:
+					if(c == char_type('{'))
 					{
-						traits::append(result, vals[n]);
+						state = state::open_seen;
+					} else if(c == char_type('}'))
+					{
+						state = state::close_seen;
+					} else
+					{
+						state = state::text;
+						traits::append(result, 1, c);  // output c here
 					}
-					continue;
-				} else if(c != typename traits::char_type('%'))
-				{
-					traits::append(result, 1, typename traits::char_type('%'));
+					break;
+				case state::open_seen:
+					if(c == char_type('{'))
+					{
+						state = state::text;
+						traits::append(result, 1, char_type('{'));  // output { here
+					} else if(c == char_type('}'))
+					{
+						state = state::text;
+						unnumbered_args = true;
+						last_arg++;
+						this_arg = last_arg;
+						{ // output this_arg here
+							const std::size_t n = this_arg - 1;
+							if(n < std::size(vals))
+							{
+								traits::append(result, vals[n]);
+							}
+						}
+						if(this_arg > max_arg)
+						{
+							max_arg = this_arg;
+						}
+						args += 1;
+					} else if(char_type('0') <= c && c <= char_type('9'))
+					{
+						state = state::number_seen;
+						numbered_args = true;
+						current_arg = c - char_type('0');
+					} else
+					{
+						state = state::error;
+					}
+					break;
+				case state::number_seen:
+					if(c == char_type('{'))
+					{
+						state = state::error;
+					} else if(c == char_type('}'))
+					{
+						state = state::text;
+						this_arg = current_arg + 1;
+						{ // output this_arg here
+							const std::size_t n = this_arg - 1;
+							if(n < std::size(vals))
+							{
+								traits::append(result, vals[n]);
+							}
+						}
+						if(this_arg > max_arg)
+						{
+							max_arg = this_arg;
+						}
+						args += 1;
+					} else if(char_type('0') <= c && c <= char_type('9'))
+					{
+						state = state::number_seen;
+						numbered_args = true;
+						current_arg = (current_arg * 10) + (c - char_type('0'));
+					} else
+					{
+						state = state::error;
+					}
+					break;
+				case state::close_seen:
+					if(c == char_type('{'))
+					{
+						state = state::error;
+					} else if(c == char_type('}'))
+					{
+						state = state::text;
+						traits::append(result, 1, char_type('}'));  // output } here
+					} else
+					{
+						state = state::error;
+					}
+					break;
+				case state::error:
+					state = state::error;
+					break;
 				}
 			}
-			traits::append(result, 1, c);
+			if(state == state::error)
+			{
+				std_style_success = false;
+			}
+			if(state != state::text)
+			{
+				std_style_success = false;
+			}
+			if(numbered_args && unnumbered_args)
+			{
+				std_style_success = false;
+			}
+		}
+		if(!std_style_success)
+		{
+			throw format_string_syntax_error();
 		}
 		return result;
 	}
 
 public:
 
-	message_formatter(Tstring format_)
+	MPT_FORCEINLINE message_formatter(Tstring format_)
 		: format(std::move(format_))
 	{
 	}
@@ -645,52 +775,210 @@ public:
 public:
 
 	template<typename ...Ts>
-	Tstring operator() (const Ts&... xs) const
+	MPT_NOINLINE Tstring operator() (Ts&&... xs) const
 	{
-		const std::array<Tstring, sizeof...(xs)> vals{{ToStringTFunctor<Tstring>()(xs)...}};
+		const std::array<Tstring, sizeof...(xs)> vals{{ToStringTFunctor<Tstring>()(std::forward<Ts>(xs))...}};
 		return do_format(mpt::as_span(vals));
 	}
 
 }; // struct message_formatter<Tformat>
 
-template<typename Tformat>
-message_formatter<typename mpt::String::detail::to_string_type<Tformat>::type> format(Tformat format)
+template <std::ptrdiff_t N, typename Tchar, typename Tstring>
+class message_formatter_counted
 {
-	typedef typename mpt::String::detail::to_string_type<Tformat>::type Tstring;
-	return message_formatter<Tstring>(Tstring(std::move(format)));
+
+private:
+
+	message_formatter<Tstring>formatter;
+
+public:
+
+	template <std::size_t literal_length>
+	inline message_formatter_counted(const Tchar (&format)[literal_length])
+		: formatter(Tstring(format))
+	{
+		return;
+	}
+
+public:
+
+	template<typename ...Ts>
+	inline Tstring operator() (Ts&&... xs) const
+	{
+		static_assert(static_cast<std::ptrdiff_t>(sizeof...(xs)) == N);
+		return formatter(std::forward<Ts>(xs)...);
+	}
+
+}; // struct message_formatter_counted<Tformat>
+
+template <typename Tchar>
+MPT_CONSTEXPRINLINE std::ptrdiff_t parse_format_string_argument_count_impl(const Tchar * const format, const std::size_t len)
+{
+	std::size_t max_arg = 0;
+	std::size_t args = 0;
+	bool std_style_success = true; 
+	{
+		enum class state : int {
+			error = -1,
+			text = 0,
+			open_seen = 1,
+			number_seen = 2,
+			close_seen = 3,
+		};
+		state state = state::text;
+		bool numbered_args = false;
+		bool unnumbered_args = false;
+		std::size_t last_arg = 0;
+		std::size_t this_arg = 0;
+		std::size_t current_arg = 0;
+		for(std::size_t pos = 0; pos != len; ++pos)
+		{
+			Tchar c = format[pos];
+			switch(state)
+			{
+			case state::text:
+				if(c == Tchar('{'))
+				{
+					state = state::open_seen;
+				} else if(c == Tchar('}'))
+				{
+					state = state::close_seen;
+				} else
+				{
+					state = state::text;
+					// output c here
+				}
+				break;
+			case state::open_seen:
+				if(c == Tchar('{'))
+				{
+					state = state::text;
+					// output { here
+				} else if(c == Tchar('}'))
+				{
+					state = state::text;
+					unnumbered_args = true;
+					last_arg++;
+					this_arg = last_arg;
+					// output this_arg here
+					if(this_arg > max_arg)
+					{
+						max_arg = this_arg;
+					}
+					args += 1;
+				} else if(Tchar('0') <= c && c <= Tchar('9'))
+				{
+					state = state::number_seen;
+					numbered_args = true;
+					current_arg = c - Tchar('0');
+				} else
+				{
+					state = state::error;
+				}
+				break;
+			case state::number_seen:
+				if(c == Tchar('{'))
+				{
+					state = state::error;
+				} else if(c == Tchar('}'))
+				{
+					state = state::text;
+					this_arg = current_arg + 1;
+					// output this_arg here
+					if(this_arg > max_arg)
+					{
+						max_arg = this_arg;
+					}
+					args += 1;
+				} else if(Tchar('0') <= c && c <= Tchar('9'))
+				{
+					state = state::number_seen;
+					numbered_args = true;
+					current_arg = (current_arg * 10) + (c - Tchar('0'));
+				} else
+				{
+					state = state::error;
+				}
+				break;
+			case state::close_seen:
+				if(c == Tchar('{'))
+				{
+					state = state::error;
+				} else if(c == Tchar('}'))
+				{
+					state = state::text;
+					// output } here
+				} else
+				{
+					state = state::error;
+				}
+				break;
+			case state::error:
+				state = state::error;
+				break;
+			}
+		}
+		if(state == state::error)
+		{
+			std_style_success = false;
+		}
+		if(state != state::text)
+		{
+			std_style_success = false;
+		}
+		if(numbered_args && unnumbered_args)
+		{
+			std_style_success = false;
+		}
+	}
+	if(!std_style_success)
+	{
+		throw format_string_syntax_error();
+	}
+	if(max_arg != args)
+	{
+		throw format_string_syntax_error();
+	}
+	return max_arg;
 }
+
+template <typename Tchar, std::size_t literal_length>
+MPT_CONSTEXPRINLINE std::ptrdiff_t parse_format_string_argument_count(const Tchar (&format)[literal_length])
+{
+	return parse_format_string_argument_count_impl(format, literal_length - 1);
+}
+
+template<std::size_t args, typename Tchar, std::size_t N>
+inline auto format_counted(const Tchar (&format)[N])
+{
+	typedef typename mpt::String::detail::to_string_type<Tchar>::type Tstring;
+	return message_formatter_counted<args, Tchar, Tstring>(format);
+}
+
+template<std::size_t args, typename Tstring, typename Tchar, std::size_t N>
+inline auto format_counted_typed(const Tchar (&format)[N])
+{
+	return message_formatter_counted<args, Tchar, Tstring>(format);
+}
+
+#define MPT_FORMAT(f) mpt::format_counted<mpt::parse_format_string_argument_count(f)>(f)
 
 #if MPT_WSTRING_FORMAT
-static inline message_formatter<std::wstring> wformat(std::wstring format)
-{
-	return message_formatter<std::wstring>(std::move(format));
-}
+#define MPT_WFORMAT(f) mpt::format_counted_typed<mpt::parse_format_string_argument_count( L ## f ), std::wstring>( L ## f )
 #endif
 
-static inline message_formatter<mpt::ustring> uformat(mpt::ustring format)
-{
-	return message_formatter<mpt::ustring>(std::move(format));
-}
+#define MPT_UFORMAT(f) mpt::format_counted_typed<mpt::parse_format_string_argument_count(MPT_ULITERAL(f)), mpt::ustring>(MPT_ULITERAL(f))
 
 #if defined(MPT_ENABLE_CHARSET_LOCALE)
-static inline message_formatter<mpt::lstring> lformat(mpt::lstring format)
-{
-	return message_formatter<mpt::lstring>(std::move(format));
-}
+#define MPT_LFORMAT(f) mpt::format_counted_typed<mpt::parse_format_string_argument_count(f), mpt::lstring>(f)
 #endif // MPT_ENABLE_CHARSET_LOCALE
 
 #if MPT_OS_WINDOWS
-static inline message_formatter<mpt::tstring> tformat(mpt::tstring format)
-{
-	return message_formatter<mpt::tstring>(std::move(format));
-}
+#define MPT_TFORMAT(f) mpt::format_counted_typed<mpt::parse_format_string_argument_count(TEXT(f)), mpt::tstring>(TEXT(f))
 #endif
 
 #if defined(MPT_WITH_MFC)
-static inline message_formatter<CString> cformat(CString format)
-{
-	return message_formatter<CString>(std::move(format));
-}
+#define MPT_CFORMAT(f) mpt::format_counted_typed<mpt::parse_format_string_argument_count(TEXT(f)), CString>(TEXT(f))
 #endif // MPT_WITH_MFC
 
 } // namespace mpt
@@ -731,6 +1019,22 @@ std::string Combine(const std::vector<T> &vals, const std::string &sep=std::stri
 }
 
 } } // namespace mpt::String
+
+
+
+template <typename enum_t, typename store_t>
+mpt::ustring ToUString(FlagSet<enum_t, store_t> flagset)
+{
+	mpt::ustring str(flagset.size_bits(), UC_('0'));
+
+	for(std::size_t x = 0; x < flagset.size_bits(); ++x)
+	{
+		str[flagset.size_bits() - x - 1] = (flagset.value().as_bits() & (static_cast<typename FlagSet<enum_t>::store_type>(1) << x) ? UC_('1') : UC_('0'));
+	}
+
+	return str;
+}
+
 
 
 

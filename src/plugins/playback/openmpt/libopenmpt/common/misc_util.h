@@ -25,11 +25,12 @@
 #include "mptExceptionText.h"
 #include "mptStringFormat.h"
 #include "mptStringParse.h"
-#include "mptCPU.h"
 #include "mptOS.h"
 #include "mptTime.h"
 #include "mptLibrary.h"
 
+#include <stdexcept>
+#include <optional>
 #include <vector>
 
 #include <cstdlib>
@@ -209,11 +210,53 @@ namespace Util
 
 std::vector<std::byte> HexToBin(const mpt::ustring &src);
 mpt::ustring BinToHex(mpt::const_byte_span src);
-
 template <typename T> inline mpt::ustring BinToHex(mpt::span<T> src) { return Util::BinToHex(mpt::byte_cast<mpt::const_byte_span>(src)); }
+
+class base64_parse_error : public std::runtime_error
+{
+public:
+	base64_parse_error()
+		: std::runtime_error("invalid Base64 encoding")
+	{
+	}
+};
+
+std::vector<std::byte> Base64ToBin(const mpt::ustring &src);
+mpt::ustring BinToBase64(mpt::const_byte_span src);
+template <typename T> inline mpt::ustring BinToBase64(mpt::span<T> src) { return Util::BinToBase64(mpt::byte_cast<mpt::const_byte_span>(src)); }
+
+std::vector<std::byte> Base64urlToBin(const mpt::ustring &src);
+mpt::ustring BinToBase64url(mpt::const_byte_span src);
+template <typename T> inline mpt::ustring BinToBase64url(mpt::span<T> src) { return Util::BinToBase64url(mpt::byte_cast<mpt::const_byte_span>(src)); }
 
 } // namespace Util
 
+namespace Util
+{
+
+template <typename T>
+class heap_value
+{
+private:
+	std::unique_ptr<T> m_value{};
+public:
+	template <typename ... Targs>
+	heap_value(Targs && ... args)
+		: m_value(std::make_unique<T>(std::forward<Targs>(args) ...))
+	{
+		return;
+	}
+	const T & value() const
+	{
+		return *m_value;
+	}
+	T & value()
+	{
+		return *m_value;
+	}
+};
+
+} // namespace Util
 
 #if defined(MODPLUG_TRACKER) || (defined(LIBOPENMPT_BUILD) && defined(LIBOPENMPT_BUILD_TEST))
 
@@ -221,13 +264,24 @@ namespace mpt
 {
 
 // Wrapper around std::getenv.
-// Instead of returning null pointer if the environment variable is not set,
-// this wrapper returns the provided default value.
-std::string getenv(const std::string &env_var, const std::string &def = std::string());
+std::optional<mpt::ustring> getenv(const mpt::ustring &env_var);
 
 } // namespace mpt
 
 #endif // MODPLUG_TRACKER || (LIBOPENMPT_BUILD && LIBOPENMPT_BUILD_TEST)
+
+
+#if MPT_OS_WINDOWS
+
+template <typename Tstring, typename Tbuf, typename Tsize>
+Tstring ParseMaybeNullTerminatedStringFromBufferWithSizeInBytes(const Tbuf *buf, Tsize sizeBytes)
+{
+	// REG_SZ may contain a single NUL terminator, multiple NUL terminators, or no NUL terminator at all
+	return Tstring(reinterpret_cast<const typename Tstring::value_type*>(buf), reinterpret_cast<const typename Tstring::value_type*>(buf) + (sizeBytes / sizeof(typename Tstring::value_type))).c_str();
+}
+
+
+#endif // MPT_OS_WINDOWS
 
 
 OPENMPT_NAMESPACE_END

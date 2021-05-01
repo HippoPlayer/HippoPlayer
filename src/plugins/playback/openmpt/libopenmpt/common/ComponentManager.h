@@ -91,7 +91,7 @@ protected:
 
 public:
 
-	virtual ~ComponentBase();
+	~ComponentBase() override;
 
 protected:
 
@@ -182,9 +182,9 @@ protected:
 };
 
 
-#define MPT_COMPONENT_BIND(libName, func) MPT_DO { if(!Bind( func , libName , #func )) { SetBindFailed(); } } MPT_WHILE_0
+#define MPT_COMPONENT_BIND(libName, func) do { if(!Bind( func , libName , #func )) { SetBindFailed(); } } while(0)
 #define MPT_COMPONENT_BIND_OPTIONAL(libName, func) Bind( func , libName , #func )
-#define MPT_COMPONENT_BIND_SYMBOL(libName, symbol, func) MPT_DO { if(!Bind( func , libName , symbol )) { SetBindFailed(); } } MPT_WHILE_0
+#define MPT_COMPONENT_BIND_SYMBOL(libName, symbol, func) do { if(!Bind( func , libName , symbol )) { SetBindFailed(); } } while(0)
 #define MPT_COMPONENT_BIND_SYMBOL_OPTIONAL(libName, symbol, func) Bind( func , libName , symbol )
 
 #if MPT_OS_WINDOWS
@@ -193,9 +193,9 @@ protected:
 #else
 #define MPT_COMPONENT_BINDWIN_SUFFIX "A"
 #endif
-#define MPT_COMPONENT_BINDWIN(libName, func) MPT_DO { if(!Bind( func , libName , #func MPT_COMPONENT_BINDWIN_SUFFIX )) { SetBindFailed(); } } MPT_WHILE_0
+#define MPT_COMPONENT_BINDWIN(libName, func) do { if(!Bind( func , libName , #func MPT_COMPONENT_BINDWIN_SUFFIX )) { SetBindFailed(); } } while(0)
 #define MPT_COMPONENT_BINDWIN_OPTIONAL(libName, func) Bind( func , libName , #func MPT_COMPONENT_BINDWIN_SUFFIX )
-#define MPT_COMPONENT_BINDWIN_SYMBOL(libName, symbol, func) MPT_DO { if(!Bind( func , libName , symbol MPT_COMPONENT_BINDWIN_SUFFIX )) { SetBindFailed(); } } MPT_WHILE_0
+#define MPT_COMPONENT_BINDWIN_SYMBOL(libName, symbol, func) do { if(!Bind( func , libName , symbol MPT_COMPONENT_BINDWIN_SUFFIX )) { SetBindFailed(); } } while(0)
 #define MPT_COMPONENT_BINDWIN_SYMBOL_OPTIONAL(libName, symbol, func) Bind( func , libName , symbol MPT_COMPONENT_BINDWIN_SUFFIX )
 #endif
 
@@ -392,20 +392,29 @@ struct ComponentListEntry
 	ComponentListEntry *next;
 	void (*reg)(ComponentManager &componentManager);
 };
-		
+
 bool ComponentListPush(ComponentListEntry *entry);
 
-#define MPT_DECLARE_COMPONENT_MEMBERS public: static const char * const g_ID; static const char * const g_SettingsKey;
-		
-#define MPT_REGISTERED_COMPONENT(name, settingsKey) \
-	static void RegisterComponent ## name (ComponentManager &componentManager) \
-	{ \
-		componentManager.Register(ComponentFactory< name >()); \
-	} \
-	static ComponentListEntry Component ## name ## ListEntry = { nullptr, & RegisterComponent ## name }; \
-	bool Component ## name ## Registered = ComponentListPush(& Component ## name ## ListEntry ); \
-	const char * const name :: g_ID = #name ; \
-	const char * const name :: g_SettingsKey = settingsKey ; \
+template <typename TComponent>
+struct ComponentRegisterer
+{
+	static inline void RegisterComponent(ComponentManager &componentManager)
+	{
+		componentManager.Register(ComponentFactory<TComponent>());
+	}
+	static inline ComponentListEntry &GetComponentListEntry()
+	{
+		static ComponentListEntry s_ComponentListEntry = {nullptr, &RegisterComponent};
+		return s_ComponentListEntry;
+	}
+	static inline bool g_ComponentRegistered = ComponentListPush(&GetComponentListEntry());
+};
+
+#define MPT_DECLARE_COMPONENT_MEMBERS(name, settingsKey) \
+	public: \
+		static constexpr const char *g_ID = #name ; \
+		static constexpr const char *g_SettingsKey = settingsKey ; \
+		static inline ComponentRegisterer< name > s_ComponentRegisterer; \
 /**/
 
 
@@ -432,9 +441,7 @@ inline mpt::PathString GetComponentPath()
 #else // !MPT_COMPONENT_MANAGER
 
 
-#define MPT_DECLARE_COMPONENT_MEMBERS
-
-#define MPT_REGISTERED_COMPONENT(name, settingsKey)
+#define MPT_DECLARE_COMPONENT_MEMBERS(name, settingsKey)
 
 
 template <typename type>
