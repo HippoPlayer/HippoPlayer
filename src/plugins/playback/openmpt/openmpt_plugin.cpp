@@ -115,8 +115,8 @@ static HSSetting s_settings[] = {
     HSIntValue_DescRange(ID_INTERPOLATION_RANGE, "Interpolation Filter",
                          "The related value represents the interpolation filter length used by the libopenmpt mixer.",
                          0, s_interpolation_filter_ranges),
-    HSFloatValue_Range(ID_TEMPO_FACTOR, "Tempo Factor", "Set the tempo factor. Default value is 1.0", 1.0, 0.0, 2.0f),
-    HSFloatValue_Range(ID_PITCH_FACTOR, "Pitch Factor", "Set the pitch factor. Default value is 1.0", 1.0, 0.0, 2.0f),
+    HSFloatValue_Range(ID_TEMPO_FACTOR, "Tempo Factor", "Set the tempo factor. Default value is 1.0", 1.0, 0.01f, 2.0f),
+    HSFloatValue_Range(ID_PITCH_FACTOR, "Pitch Factor", "Set the pitch factor. Default value is 1.0", 1.0, 0.01f, 2.0f),
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
