@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bimg#license-bsd-2-clause
  */
 
@@ -571,8 +571,8 @@ namespace bimg
 
 		for (uint16_t side = 0; side < numSides; ++side)
 		{
-			bimg::ImageMip mip;
-			bimg::imageGetRawData(*_imageContainer, side, 0, _imageContainer->m_data, _imageContainer->m_size, mip);
+			ImageMip mip;
+			imageGetRawData(*_imageContainer, side, 0, _imageContainer->m_data, _imageContainer->m_size, mip);
 
 			const uint32_t pitch = _imageContainer->m_width*16;
 			const uint32_t slice = _imageContainer->m_height*pitch;
@@ -617,8 +617,8 @@ namespace bimg
 
 		for (uint16_t side = 0; side < numSides; ++side)
 		{
-			bimg::ImageMip mip;
-			bimg::imageGetRawData(*_imageContainer, side, 0, _imageContainer->m_data, _imageContainer->m_size, mip);
+			ImageMip mip;
+			imageGetRawData(*_imageContainer, side, 0, _imageContainer->m_data, _imageContainer->m_size, mip);
 
 			const uint32_t pitch = _imageContainer->m_width*16;
 			const uint32_t slice = _imageContainer->m_height*pitch;
@@ -4724,9 +4724,9 @@ namespace bimg
 		case TextureFormat::ASTC8x5:
 		case TextureFormat::ASTC8x6:
 		case TextureFormat::ASTC10x5:
-		    /*
 			if (BX_ENABLED(BIMG_DECODE_ASTC) )
 			{
+			    /*
 				if (!astc_codec::ASTCDecompressToRGBA(
 					  (const uint8_t*)_src
 					, imageGetSize(NULL, uint16_t(_width), uint16_t(_height), 0, false, false, 1, _srcFormat)
@@ -4745,13 +4745,13 @@ namespace bimg
 				{
 					imageCheckerboard(_dst, _width, _height, 16, UINT32_C(0xff000000), UINT32_C(0xffffff00) );
 				}
+				*/
 			}
 			else
 			{
-			*/
 				BX_WARN(false, "ASTC decoder is disabled (BIMG_DECODE_ASTC).");
 				imageCheckerboard(_dst, _width, _height, 16, UINT32_C(0xff000000), UINT32_C(0xff00ff00) );
-			//}
+			}
 			break;
 
 		default:

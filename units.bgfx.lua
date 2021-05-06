@@ -8,7 +8,6 @@ local native = require('tundra.native')
 local BIMG_DIR = "src/external/bimg/"
 local BX_DIR = "src/external/bx/"
 local BGFX_DIR = "src/external/bgfx/"
-local GLFW_DIR = "src/external/glfw/"
 
 local GLSL_OPTIMIZER = BGFX_DIR  .. "3rdparty/glsl-optimizer/"
 local FCPP_DIR = BGFX_DIR .. "3rdparty/fcpp/"
@@ -111,7 +110,7 @@ StaticLibrary {
 
     Env = {
         CXXOPTS = {
-            { "-fno-strict-aliasing"; Config = { "macosx-*-*", "linux-*-*" } },
+            { "-fno-strict-aliasing"; Config = { "macos-*-*", "linux-*-*" } },
         },
     },
 
@@ -136,7 +135,7 @@ StaticLibrary {
         -- get_c_cpp_src(GLSLANG_DIR .. "glslang/HLSL"),
         get_c_cpp_src(GLSLANG_DIR .. "glslang/CInterface"),
         { get_c_cpp_src(GLSLANG_DIR .. "glslang/OSDependent/Windows") ; Config = "win64-*-*" },
-        { get_c_cpp_src(GLSLANG_DIR .. "glslang/OSDependent/Unix") ; Config = { "linux-*-*", "macosx-*-*" } },
+        { get_c_cpp_src(GLSLANG_DIR .. "glslang/OSDependent/Unix") ; Config = { "linux-*-*", "macos-*-*" } },
     }
 }
 
@@ -148,7 +147,7 @@ StaticLibrary {
 
     Env = {
         CXXOPTS = {
-            { "-fno-strict-aliasing"; Config = { "macosx-*-*", "linux-*-*" } },
+            { "-fno-strict-aliasing"; Config = { "macos-*-*", "linux-*-*" } },
         },
     },
 
@@ -177,14 +176,14 @@ Program {
     Env = {
         CCOPTS = {
             { "/wd4291", "/W3", "-D__STDC__", "-D__STDC_VERSION__=199901L", "-Dstrdup=_strdup", "-Dalloca=_alloca", "-Disascii=__isascii"; Config = "win64-*-*" },
-            { "-Wno-everything"; Config = "macosx-*-*" },
-            { "-fno-strict-aliasing"; Config = { "macosx-*-*", "linux-*-*" } },
+            { "-Wno-everything"; Config = "macos-*-*" },
+            { "-fno-strict-aliasing"; Config = { "macos-*-*", "linux-*-*" } },
         },
 
         CXXOPTS = {
             { "/wd4291", "/W3", "-D__STDC__", "-D__STDC_VERSION__=199901L", "-Dstrdup=_strdup", "-Dalloca=_alloca", "-Disascii=__isascii"; Config = "win64-*-*" },
-            { "-Wno-everything"; Config = "macosx-*-*" },
-            { "-fno-strict-aliasing"; Config = { "macosx-*-*", "linux-*-*" } },
+            { "-Wno-everything"; Config = "macos-*-*" },
+            { "-fno-strict-aliasing"; Config = { "macos-*-*", "linux-*-*" } },
         },
 
         CPPDEFS = {
@@ -214,7 +213,7 @@ Program {
             },
 
             {
-                BX_DIR .. "include/compat/osx" ; Config = "macosx-*-*"
+                BX_DIR .. "include/compat/osx" ; Config = "macos-*-*"
             },
 
             {
@@ -223,7 +222,7 @@ Program {
         },
 
         PROGCOM = {
-            { "-lstdc++"; Config = { "macosx-clang-*", "linux-gcc-*" } },
+            { "-lstdc++"; Config = { "macos-clang-*", "linux-gcc-*" } },
             { "-lm -lpthread -ldl -lX11"; Config = "linux-*-*" },
         },
     },
@@ -239,6 +238,9 @@ Program {
         BGFX_DIR .. "src/vertexlayout.cpp",
         BGFX_DIR .. "src/vertexlayout.h",
         BGFX_DIR .. "src/shader_spirv.cpp",
+        BGFX_DIR .. "src/shader.cpp",
+        BGFX_DIR .. "src/shader_dxbc.cpp",
+        BGFX_DIR .. "src/shader_dx9bc.cpp",
 
         FCPP_DIR .. "cpp1.c",
         FCPP_DIR .. "cpp2.c",
@@ -271,71 +273,6 @@ Program {
 -----------------------------------------------------------------------------------------
 
 StaticLibrary {
-    Name = "glfw",
-
-    Env = {
-        CPPPATH = {
-            GLFW_DIR .. "src",
-            GLFW_DIR .. "include",
-        },
-
-        CPPDEFS = {
-            { "_GLFW_WIN32", "_GLFW_WGL", "WIN32"; Config = "win64-*-*" },
-            { "_GLFW_X11", "_GLFW_GFX", "LINUX"; Config = "linux-*-*" },
-            { "_GLFW_COCOA", "MACOSX"; Config = "macosx-*-*" },
-        },
-    },
-
-    Sources = {
-        GLFW_DIR .. "src/window.c",
-        GLFW_DIR .. "src/context.c",
-        GLFW_DIR .. "src/init.c",
-        GLFW_DIR .. "src/input.c",
-        GLFW_DIR .. "src/monitor.c",
-        GLFW_DIR .. "src/vulkan.c",
-        GLFW_DIR .. "src/osmesa_context.c",
-        GLFW_DIR .. "src/egl_context.c",
-
-        {
-            GLFW_DIR .. "src/cocoa_init.m",
-            GLFW_DIR .. "src/cocoa_joystick.m",
-            GLFW_DIR .. "src/cocoa_monitor.m",
-            GLFW_DIR .. "src/cocoa_time.c",
-            GLFW_DIR .. "src/cocoa_window.m",
-            GLFW_DIR .. "src/posix_thread.c",
-            GLFW_DIR .. "src/nsgl_context.h",
-            GLFW_DIR .. "src/nsgl_context.m" ; Config = "macosx-*-*"
-        },
-
-        {
-            GLFW_DIR .. "src/glx_context.c",
-            -- GLFW_DIR .. "src/wl_init.c",
-            -- GLFW_DIR .. "src/wl_monitor.c",
-            -- GLFW_DIR .. "src/wl_window.c",
-            GLFW_DIR .. "src/x11_init.c",
-            GLFW_DIR .. "src/x11_monitor.c",
-            GLFW_DIR .. "src/x11_window.c",
-            GLFW_DIR .. "src/linux_joystick.c",
-            GLFW_DIR .. "src/posix_thread.c",
-            GLFW_DIR .. "src/posix_time.c",
-            GLFW_DIR .. "src/xkb_unicode.c" ; Config = "linux-*-*",
-        },
-
-        {
-            GLFW_DIR .. "src/wgl_context.c",
-            GLFW_DIR .. "src/win32_init.c",
-            GLFW_DIR .. "src/win32_joystick.c",
-            GLFW_DIR .. "src/win32_monitor.c",
-            GLFW_DIR .. "src/win32_thread.c",
-            GLFW_DIR .. "src/win32_time.c",
-            GLFW_DIR .. "src/win32_window.c" ; Config = "win64-*-*",
-        },
-    },
-}
-
------------------------------------------------------------------------------------------
-
-StaticLibrary {
     Name = "bgfx",
 
     Includes = {
@@ -345,7 +282,7 @@ StaticLibrary {
         },
 
         {
-            BX_DIR .. "include/compat/osx" ; Config = "macosx-*-*"
+            BX_DIR .. "include/compat/osx" ; Config = "macos-*-*"
         },
 
         BGFX_DIR .. "3rdparty/khronos",
@@ -361,7 +298,7 @@ StaticLibrary {
 
     Env = {
         CXXOPTS = {
-            { "-Wno-variadic-macros", "-Wno-everything" ; Config = "macosx-*-*" },
+            { "-Wno-variadic-macros", "-Wno-everything" ; Config = "macos-*-*" },
             { "/EHsc"; Config = "win64-*-*" },
         },
     },
@@ -371,12 +308,12 @@ StaticLibrary {
         "BGFX_CONFIG_RENDERER_GNM=0",
         "BGFX_CONFIG_RENDERER_VULKAN=0",
         { "BGFX_CONFIG_RENDERER_OPENGL=1" ; Config = { "linux-*-*", "win64-*-*" } },
-        { "BGFX_CONFIG_RENDERER_METAL=1" ; Config = "macosx-*-*" },
+        { "BGFX_CONFIG_RENDERER_METAL=1" ; Config = "macos-*-*" },
         { "BGFX_CONFIG_RENDERER_DIRECT3D11=1"  ; Config = "win64-*-*" },
     },
 
     Sources = {
-        get_c_cpp_src("src/external/bimg/src"),
+        get_c_cpp_src(BIMG_DIR .. "/src"),
         BX_DIR .. "src/amalgamated.cpp",
         BGFX_DIR .. "src/bgfx.cpp",
         BGFX_DIR .. "src/vertexlayout.cpp",
@@ -392,9 +329,10 @@ StaticLibrary {
         BGFX_DIR .. "src/renderer_d3d9.cpp",
         BGFX_DIR .. "src/renderer_d3d11.cpp",
         BGFX_DIR .. "src/renderer_d3d12.cpp",
+        -- BGFX_DIR .. "src/shader.cpp",
         {
             BGFX_DIR .. "src/glcontext_nsgl.mm",
-            BGFX_DIR .. "src/renderer_mtl.mm" ; Config = "macosx-*-*"
+            BGFX_DIR .. "src/renderer_mtl.mm" ; Config = "macos-*-*"
         },
         {
             BGFX_DIR .. "src/glcontext_wgl.cpp",
@@ -409,4 +347,4 @@ StaticLibrary {
     IdeGenerationHints = { Msvc = { SolutionFolder = "External" } },
 }
 
--- Default "bgfx_shaderc"
+Default "bgfx_shaderc"
