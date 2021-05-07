@@ -425,7 +425,7 @@ struct OcornutImguiContext
 	void endFrame()
 	{
 		ImGui::Render();
-		render(ImGui::GetDrawData() );
+		render(ImGui::GetDrawData());
 	}
 
 	ImGuiContext*       m_imgui;
@@ -474,6 +474,14 @@ void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll,
 void imguiEndFrame()
 {
 	s_ctx.endFrame();
+}
+
+void imguiRenderDraws(ImDrawData* draw_data, int view) {
+    bgfx::ViewId old_view = s_ctx.m_viewId;
+
+    s_ctx.m_viewId = view;
+    s_ctx.render(draw_data);
+    s_ctx.m_viewId = old_view;
 }
 
 namespace ImGui

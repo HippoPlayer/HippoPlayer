@@ -44,6 +44,7 @@
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
+#include <stdio.h>
 
 // GLFW
 #include <GLFW/glfw3.h>
@@ -181,6 +182,7 @@ static bool ImGui_ImplGlfw_Init(GLFWwindow* window, bool install_callbacks, Glfw
     io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;         // We can honor GetMouseCursor() values (optional)
     io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;          // We can honor io.WantSetMousePos requests (optional, rarely used)
     io.BackendFlags |= ImGuiBackendFlags_PlatformHasViewports;    // We can create multi-viewports on the Platform side (optional)
+    io.BackendFlags |= ImGuiBackendFlags_RendererHasViewports;    //
 #if GLFW_HAS_MOUSE_PASSTHROUGH || (GLFW_HAS_WINDOW_HOVERED && defined(_WIN32))
     io.BackendFlags |= ImGuiBackendFlags_HasMouseHoveredViewport; // We can set io.MouseHoveredViewport correctly (optional, not easy)
 #endif
@@ -583,6 +585,7 @@ static void ImGui_ImplGlfw_CreateWindow(ImGuiViewport* viewport)
     GLFWwindow* share_window = (g_ClientApi == GlfwClientApi_OpenGL) ? g_Window : NULL;
     data->Window = glfwCreateWindow((int)viewport->Size.x, (int)viewport->Size.y, "No Title Yet", NULL, share_window);
     data->WindowOwned = true;
+    printf("created window %p share window %p - error 0x%04x\n", data->Window, share_window, glfwGetError(NULL));
     viewport->PlatformHandle = (void*)data->Window;
 #ifdef _WIN32
     viewport->PlatformHandleRaw = glfwGetWin32Window(data->Window);
