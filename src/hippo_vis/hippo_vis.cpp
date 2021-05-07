@@ -2,6 +2,8 @@
 #include <GLFW/glfw3native.h>
 #include <bgfx/bgfx.h>
 #include <bgfx/platform.h>
+#include "imgui/imgui_impl_glfw.h"
+#include "imgui_bgfx/imgui.h"
 
 #include <stdlib.h>
 #include <stddef.h>
@@ -96,6 +98,23 @@ int main(void) {
         return 0;
     }
 
+    imguiCreate();
+
+#if defined(GLFW_EXPOSE_NATIVE_X11)
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+#endif
+
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
+    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;   // Enable Gamepad Controls
+
+    // Setup style
+    ImGui::StyleColorsDark();
+    //ImGui::StyleColorsClassic();
+
     //Protracker1Display* display = new Protracker1Display();
     //display->init();
 
@@ -110,15 +129,43 @@ int main(void) {
     bgfx::setViewMode(0, bgfx::ViewMode::Sequential);
 
     while (!glfwWindowShouldClose(window)) {
+        glfwPollEvents();
+
         bgfx::setViewRect(0, 0, 0, s_width, s_height);
         bgfx::touch(0);
+
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        {
+            static float f = 0.0f;
+            static int counter = 0;
+
+            ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+
+            ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+            //ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
+            //ImGui::Checkbox("Another Window", &show_another_window);
+
+            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+            //ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+
+            if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+                counter++;
+            ImGui::SameLine();
+            ImGui::Text("counter = %d", counter);
+
+            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            ImGui::End();
+        }
+
+        imguiEndFrame();
 
         //display->render(s_width, s_height);
         //display->m_display->set_playing_row(0);
 
         bgfx::frame();
 
-        glfwPollEvents();
     }
 
     bgfx::shutdown();

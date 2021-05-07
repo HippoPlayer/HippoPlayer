@@ -10,6 +10,7 @@ local native = require('tundra.native')
 -----------------------------------------------------------------------------------------------------------------------
 
 local GLFW_DIR = "src/external/glfw/"
+local BIMG_DIR = "src/external/bimg/"
 local STB_DIR = "src/external/stb/"
 
 -- setup target for shader
@@ -316,9 +317,11 @@ Program {
     Name = "hippo_vis",
 
 	Includes = {
+        BIMG_DIR .. "include",
 		"src/external/bx/include",
 		"src/external/bgfx/include",
 		"src/external/glfw/include",
+		"src/external",
 	},
 
 	Defines = {
