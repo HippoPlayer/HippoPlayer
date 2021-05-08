@@ -254,6 +254,8 @@ static void uade_set_log(struct HippoLogAPI* log) {
     g_hp_log = log;
 }
 
+#if 0
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static HippoPlaybackPlugin g_uade_plugin = {
@@ -281,3 +283,5 @@ static HippoPlaybackPlugin g_uade_plugin = {
 extern "C" HIPPO_EXPORT HippoPlaybackPlugin* hippo_playback_plugin() {
     return &g_uade_plugin;
 }
+
+#endif

@@ -103,11 +103,13 @@ static void memFree(void* _ptr, void* _userData);
 
 struct OcornutImguiContext
 {
-	void render(ImDrawData* _drawData)
+	void render(ImDrawData* _drawData, int width, int height)
 	{
-		const ImGuiIO& io = ImGui::GetIO();
-		const float width  = io.DisplaySize.x;
-		const float height = io.DisplaySize.y;
+		// Avoid rendering when minimized, scale coordinates for retina displays (screen coordinates != framebuffer coordinates)
+		int fb_width = (int)(_drawData->DisplaySize.x * _drawData->FramebufferScale.x);
+		int fb_height = (int)(_drawData->DisplaySize.y * _drawData->FramebufferScale.y);
+		if (fb_width <= 0 || fb_height <= 0)
+			return;
 
 		bgfx::setViewName(m_viewId, "ImGui");
 		bgfx::setViewMode(m_viewId, bgfx::ViewMode::Sequential);
@@ -115,10 +117,33 @@ struct OcornutImguiContext
 		const bgfx::Caps* caps = bgfx::getCaps();
 		{
 			float ortho[16];
-			bx::mtxOrtho(ortho, 0.0f, width, height, 0.0f, 0.0f, 1000.0f, 0.0f, caps->homogeneousDepth);
+			float x = _drawData->DisplayPos.x;
+			float y = _drawData->DisplayPos.y;
+			float width = _drawData->DisplaySize.x;
+			float height = _drawData->DisplaySize.y;
+
+			float L = _drawData->DisplayPos.x;
+			float R = _drawData->DisplayPos.x + _drawData->DisplaySize.x;
+			float T = _drawData->DisplayPos.y;
+			float B = _drawData->DisplayPos.y + _drawData->DisplaySize.y;
+			/*
+			float mvp[4][4] =
+			{
+				{ 2.0f / (R - L),   0.0f,           0.0f,       0.0f },
+				{ 0.0f,         2.0f / (T - B),     0.0f,       0.0f },
+				{ 0.0f,         0.0f,           0.5f,       0.0f },
+				{ (R + L) / (L - R),  (T + B) / (B - T),    0.5f,       1.0f },
+			};
+			*/
+
+			//bx::mtxOrtho(ortho, x, x + width, y + height, y, 0.0f, 1000.0f, 0.0f, caps->homogeneousDepth);
+			bx::mtxOrtho(ortho, x, x + width, y + height, y, 0.0f, 1000.0f, 0.0f, caps->homogeneousDepth);
 			bgfx::setViewTransform(m_viewId, NULL, ortho);
 			bgfx::setViewRect(m_viewId, 0, 0, uint16_t(width), uint16_t(height) );
 		}
+
+		ImVec2 clip_off = _drawData->DisplayPos;         // (0,0) unless using multi-viewports
+		ImVec2 clip_scale = _drawData->FramebufferScale; // (1,1) unless using retina display which are often (2,2)
 
 		// Render command lists
 		for (int32_t ii = 0, num = _drawData->CmdListsCount; ii < num; ++ii)
@@ -183,18 +208,27 @@ struct OcornutImguiContext
 						state |= BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA);
 					}
 
-					const uint16_t xx = uint16_t(bx::max(cmd->ClipRect.x, 0.0f) );
-					const uint16_t yy = uint16_t(bx::max(cmd->ClipRect.y, 0.0f) );
-					bgfx::setScissor(xx, yy
-						, uint16_t(bx::min(cmd->ClipRect.z, 65535.0f)-xx)
-						, uint16_t(bx::min(cmd->ClipRect.w, 65535.0f)-yy)
-						);
+					// Project scissor/clipping rectangles into framebuffer space
+					ImVec4 clip_rect;
+					clip_rect.x = (cmd->ClipRect.x - clip_off.x) * clip_scale.x;
+					clip_rect.y = (cmd->ClipRect.y - clip_off.y) * clip_scale.y;
+					clip_rect.z = (cmd->ClipRect.z - clip_off.x) * clip_scale.x;
+					clip_rect.w = (cmd->ClipRect.w - clip_off.y) * clip_scale.y;
 
-					bgfx::setState(state);
-					bgfx::setTexture(0, s_tex, th);
-					bgfx::setVertexBuffer(0, &tvb, 0, numVertices);
-					bgfx::setIndexBuffer(&tib, offset, cmd->ElemCount);
-					bgfx::submit(m_viewId, program);
+					if (clip_rect.x < fb_width && clip_rect.y < fb_height && clip_rect.z >= 0.0f && clip_rect.w >= 0.0f)
+					{
+						bgfx::setScissor((int)clip_rect.x, (int)clip_rect.y, (int)clip_rect.z, (int)clip_rect.w);
+						bgfx::setState(state);
+						bgfx::setTexture(0, s_tex, th);
+						bgfx::setVertexBuffer(0, &tvb, 0, numVertices);
+						bgfx::setIndexBuffer(&tib, offset, cmd->ElemCount);
+						bgfx::submit(m_viewId, program);
+					}
+					else
+					{
+						int t = 0;
+						(void)t;
+					}
 				}
 
 				offset += cmd->ElemCount;
@@ -424,8 +458,10 @@ struct OcornutImguiContext
 
 	void endFrame()
 	{
-		ImGui::Render();
-		render(ImGui::GetDrawData());
+		const ImGuiIO& io = ImGui::GetIO();
+		const float width  = io.DisplaySize.x;
+		const float height = io.DisplaySize.y;
+		render(ImGui::GetDrawData(), width, height);
 	}
 
 	ImGuiContext*       m_imgui;
@@ -476,11 +512,11 @@ void imguiEndFrame()
 	s_ctx.endFrame();
 }
 
-void imguiRenderDraws(ImDrawData* draw_data, int view) {
+void imguiRenderDraws(ImDrawData* draw_data, int view, int width, int height) {
     bgfx::ViewId old_view = s_ctx.m_viewId;
 
     s_ctx.m_viewId = view;
-    s_ctx.render(draw_data);
+    s_ctx.render(draw_data, width, height);
     s_ctx.m_viewId = old_view;
 }
 

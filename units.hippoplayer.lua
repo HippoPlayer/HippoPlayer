@@ -11,6 +11,7 @@ local native = require('tundra.native')
 
 local GLFW_DIR = "src/external/glfw/"
 local BIMG_DIR = "src/external/bimg/"
+local BX_DIR = "src/external/bx/"
 local STB_DIR = "src/external/stb/"
 
 -- setup target for shader
@@ -322,6 +323,7 @@ Program {
 		"src/external/bgfx/include",
 		"src/external/glfw/include",
 		"src/external",
+        { BX_DIR .. "/include/compat/msvc" ; Config = "win64-*-*" },
 	},
 
 	Defines = {

@@ -101,6 +101,8 @@ static void renderer_destroy_window(ImGuiViewport* vp) {
     // Flush destruction of swap chain before destroying window!
     bgfx::frame();
     bgfx::frame();
+
+    vp->RendererUserData = nullptr;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -155,7 +157,7 @@ static void renderer_render_window(ImGuiViewport* vp, void* render_arg) {
     // Set render states.
     bgfx::setState(BGFX_STATE_DEFAULT);
 
-    imguiRenderDraws(vp->DrawData, 1);
+    imguiRenderDraws(vp->DrawData, 1, display_w, display_h);
 
     bgfx::touch(1);
 }
@@ -224,13 +226,11 @@ int main(void) {
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
-    io.ConfigViewportsNoDecoration = true;
+    //io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    //io.ConfigViewportsNoDecoration = true;
     ImGui::GetStyle().WindowRounding = 0.0f;
 
-#if defined(GLFW_EXPOSE_NATIVE_X11)
-    //ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplGlfw_InitForOther(window, true);
-#endif
 
     ImGuiPlatformIO& platform_io = ImGui::GetPlatformIO();
     platform_io.Renderer_CreateWindow = renderer_create_window;
@@ -326,11 +326,22 @@ int main(void) {
 
     bgfx::setViewMode(0, bgfx::ViewMode::Sequential);
 
+    int old_width = 0;
+    int old_height = 0;
+
+    glfwGetWindowSize(window, &old_width, &old_height);
+
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
         int display_w, display_h;
         glfwGetWindowSize(window, &display_w, &display_h);
+
+        if ((old_width != display_w) || (old_height != display_h)) {
+            bgfx::reset(display_w, display_h);
+            old_width = display_w;
+            old_height = display_h;
+        }
 
         bgfx::setViewRect(0, 0, 0, display_w, display_h);
         bgfx::touch(0);
@@ -344,8 +355,8 @@ int main(void) {
             //ImVec2 pos = ImVec2(0.0f, 0.0f);
             //ImVec2 size = ImVec2((float)display_w, (float)display_h);
 
-            ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
-            ImGui::SetNextWindowSize(ImVec2((float)display_w, (float)display_h));
+            //ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
+            //ImGui::SetNextWindowSize(ImVec2((float)display_w, (float)display_h));
             //ImGui::SetNextWindowSizeConstraints(pos, size);
 
             //ImGui::Begin("HippoPlayer", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse);
@@ -358,10 +369,10 @@ int main(void) {
             }
             ImGui::End();
 
-            ImGui::SetNextWindowSize(ImVec2((float)display_w, (float)display_h));
+            //ImGui::SetNextWindowSize(ImVec2((float)display_w, (float)display_h));
 
-
-            ImGui::Begin("Playlist", nullptr, ImGuiWindowFlags_NoTitleBar);
+            //ImGui::Begin("Playlist", nullptr, ImGuiWindowFlags_NoTitleBar);
+            ImGui::Begin("Playlist");
             ImGui::ProgressBar(0.5f);
             ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
             ImGui::End();
@@ -398,10 +409,8 @@ int main(void) {
         //  For this specific demo app we could also call glfwMakeContextCurrent(window) directly)
         if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
         {
-            //GLFWwindow* backup_current_context = glfwGetCurrentContext();
             ImGui::UpdatePlatformWindows();
             ImGui::RenderPlatformWindowsDefault();
-            //glfwMakeContextCurrent(backup_current_context);
         }
 
         //display->render(s_width, s_height);
