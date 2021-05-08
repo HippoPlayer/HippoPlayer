@@ -160,4 +160,4 @@ SharedLibrary {
 
 }
 
--- Default "uade_plugin"
+Default "uade_plugin"

@@ -1,3 +1,5 @@
+#if 0
+
 #include <HippoPlugin.h>
 #include <stdlib.h>
 #include <string.h>
@@ -119,4 +121,4 @@ HIPPO_EXPORT HippoPlaybackPlugin* hippo_playback_plugin() {
 	return &g_dummy_plugin;
 }
 
-
+#endif
