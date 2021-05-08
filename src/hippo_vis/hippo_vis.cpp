@@ -10,7 +10,7 @@
 #include <stdio.h>
 
 #define WINDOW_WIDTH 640
-#define WINDOW_HEIGHT 480
+#define WINDOW_HEIGHT 400
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -133,6 +133,9 @@ static void renderer_render_window(ImGuiViewport* vp, void* render_arg) {
         return;
     }
 
+    int display_w, display_h;
+    glfwGetWindowSize(data->window, &display_w, &display_h);
+
     //printf("%s:%d\n", __FILE__, __LINE__);
 
     bgfx::FrameBufferHandle handle = { (uint16_t)(uintptr_t)vp->RendererUserData };
@@ -140,7 +143,7 @@ static void renderer_render_window(ImGuiViewport* vp, void* render_arg) {
     //printf("render to new frame buffer %f %f - %d\n", vp->Size.x, vp->Size.y, handle.idx);
 
     bgfx::setViewFrameBuffer(1, handle);
-    bgfx::setViewRect(1, 0, 0, uint16_t(vp->Size.x), uint16_t(vp->Size.y));
+    bgfx::setViewRect(1, 0, 0, uint16_t(display_w), uint16_t(display_h));
 
     bgfx::setViewClear(1
         , BGFX_CLEAR_COLOR
@@ -319,7 +322,7 @@ int main(void) {
     bgfx::setViewRect(0, 0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 
     glfwSetKeyCallback(window, key_callback);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    //glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     bgfx::setViewMode(0, bgfx::ViewMode::Sequential);
 
@@ -341,12 +344,12 @@ int main(void) {
             //ImVec2 pos = ImVec2(0.0f, 0.0f);
             //ImVec2 size = ImVec2((float)display_w, (float)display_h);
 
-            //ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
+            ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
             ImGui::SetNextWindowSize(ImVec2((float)display_w, (float)display_h));
             //ImGui::SetNextWindowSizeConstraints(pos, size);
 
             //ImGui::Begin("HippoPlayer", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse);
-            ImGui::Begin("HippoPlayer", nullptr);
+            ImGui::Begin("HippoPlayer Window", nullptr);
             ImGui::ProgressBar(0.5f);
             ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
 
@@ -355,7 +358,10 @@ int main(void) {
             }
             ImGui::End();
 
-            ImGui::Begin("Playlist");
+            ImGui::SetNextWindowSize(ImVec2((float)display_w, (float)display_h));
+
+
+            ImGui::Begin("Playlist", nullptr, ImGuiWindowFlags_NoTitleBar);
             ImGui::ProgressBar(0.5f);
             ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
             ImGui::End();
@@ -392,10 +398,10 @@ int main(void) {
         //  For this specific demo app we could also call glfwMakeContextCurrent(window) directly)
         if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
         {
-            GLFWwindow* backup_current_context = glfwGetCurrentContext();
+            //GLFWwindow* backup_current_context = glfwGetCurrentContext();
             ImGui::UpdatePlatformWindows();
             ImGui::RenderPlatformWindowsDefault();
-            glfwMakeContextCurrent(backup_current_context);
+            //glfwMakeContextCurrent(backup_current_context);
         }
 
         //display->render(s_width, s_height);
