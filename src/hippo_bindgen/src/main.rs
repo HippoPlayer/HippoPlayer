@@ -57,6 +57,8 @@ struct EntryLine {
     text: String,
     /// line number of the data
     line: usize,
+    /// Comment(s) for the line/belonging lines
+    comment: String,
 }
 
 /// Arugments for functions
@@ -66,10 +68,8 @@ struct FuncArg {
     name_line: EntryLine,
     /// Type of the argument
     type_name: String,
-    /// Comment
-    comment: String,
     /// Table data (such as out and other modifiers)
-    table: TableData,
+    table: Option<TableData>,
 }
 
 /// Holds data for a func.x
@@ -430,10 +430,56 @@ fn get_top_start_comment_lines(gather_com: &mut GatherComments, line_start: usiz
     comment
 }
 
+/// Get comments for the lines. The way this works is that it will search forward
+/// from the current line until it finds a marked codeline or a line that starts
+/// at the pos 1 (which is a function/struct/enum comment)
+fn get_comments(entry: &mut EntryLine, gather_com: &mut GatherComments) {
+	let mut comment = String::new();
+	let mut line = entry.line;
+	let max_len = gather_com.comments.len();
+
+	loop {
+		let entry = &gather_com.comments[line];
+
+		if entry.text != "" {
+			comment.push_str(&entry.text);
+			comment.push('\n');
+		}
+
+		line += 1;
+
+		if line == max_len {
+			break;
+		}
+
+		let entry = &gather_com.comments[line];
+
+		if gather_com.codelines[line] || entry.pos == 1 {
+			break;
+		}
+	}
+
+	entry.comment = comment;
+}
+
 /// Add comments to the function from the comments-prepass
-fn update_comments(func: &mut Func, comments: &mut GatherComments) {
-    // we start with the
-    func.comments = get_top_start_comment_lines(comments, func.name.line);
+fn update_comments(func: &mut Func, gather_com: &mut GatherComments) {
+    // we start with the getting the comments for the function
+    func.comments = get_top_start_comment_lines(gather_com, func.name.line);
+
+	// all the lines that is being used by code so we know the ranges of
+	gather_com.codelines[func.return_type.line] = true;
+
+	for arg in &func.args {
+		gather_com.codelines[arg.name_line.line] = true;
+	}
+
+	// get comments for the lines
+	get_comments(&mut func.return_type, gather_com);
+
+	for arg in &mut func.args {
+		get_comments(&mut arg.name_line, gather_com);
+	}
 }
 
 /// Generate a function. A function can be of the following formats:
@@ -502,8 +548,9 @@ fn generate_func(in_func: &FunctionCall, gather_com: &mut GatherComments) -> Fun
             }
 
             FuncState::MaybeTable => {
-                if let Some(table) = get_table(it) {
-                    arg.table = table;
+				arg.table = get_table(it);
+
+				if arg.table.is_some() {
                     func.args.push(arg);
                     arg = FuncArg::default();
                     state = FuncState::ArgName;
@@ -670,11 +717,19 @@ impl<'ast> Visitor<'ast> for GatherComments {
         };
 
         let pos = token.start_position();
+        dbg!(text);
+        if text.starts_with("- ") {
+			self.comments[pos.line()] = Comment {
+				pos: pos.character(),
+				text: text[2..].to_owned().to_string(),
+			};
 
-        self.comments[pos.line()] = Comment {
-            pos: pos.character(),
-            text: text.to_owned().to_string(),
-        };
+        } else {
+			self.comments[pos.line()] = Comment {
+				pos: pos.character(),
+				text: text.to_owned().to_string(),
+			};
+        }
     }
 }
 
