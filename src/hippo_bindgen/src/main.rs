@@ -491,7 +491,7 @@ fn update_comments(func: &mut Func, gather_com: &mut GatherComments) {
 /// func.<funcname>
 /// "return value"
 ///
-fn generate_func(in_func: &FunctionCall, gather_com: &mut GatherComments) -> Func {
+fn generate_func(in_func: &FunctionCall, gather_com: &mut GatherComments, skip_class_ret: bool) -> Func {
     enum FuncState {
         ReturnType,
         ArgName,
@@ -508,7 +508,7 @@ fn generate_func(in_func: &FunctionCall, gather_com: &mut GatherComments) -> Fun
 
     // If we found an extension name we need to advance the iterator, otherwise assume the current
     // iterator is the return type or attributes for the function
-    if !name.text.is_empty() {
+    if !name.text.is_empty() && !skip_class_ret {
         func.class = name_or_class;
         func.name = name;
         it = iter.next().unwrap();
@@ -528,7 +528,11 @@ fn generate_func(in_func: &FunctionCall, gather_com: &mut GatherComments) -> Fun
     }
 
     let mut arg = FuncArg::default();
-    let mut state = FuncState::ReturnType;
+    let mut state = if skip_class_ret {
+    	FuncState::ArgName
+    } else {
+    	FuncState::ReturnType
+    };
 
     loop {
         match state {
@@ -717,7 +721,7 @@ impl<'ast> Visitor<'ast> for GatherComments {
         };
 
         let pos = token.start_position();
-        dbg!(text);
+
         if text.starts_with("- ") {
 			self.comments[pos.line()] = Comment {
 				pos: pos.character(),
@@ -751,6 +755,7 @@ fn main() -> Result<(), Box<dyn std::error::Error + 'static>> {
 
     // funcs, enums and structs
     let mut funcs = Vec::new();
+    let mut structs = Vec::new();
 
     //let mut funcs = Vec::new();
 
@@ -759,8 +764,8 @@ fn main() -> Result<(), Box<dyn std::error::Error + 'static>> {
             Stmt::FunctionCall(func) => {
                 match get_prefix_identifier(func.prefix()) {
                     //Some("flag") => flags.push(generate_flags(func)),
-                    //Some("enum") => enums.push(generate_flags(func)),
-                    Some("func") => funcs.push(generate_func(func, &mut visitor)),
+                    Some("struct") => structs.push(generate_func(func, &mut visitor, true)),
+                    Some("func") => funcs.push(generate_func(func, &mut visitor, false)),
                     _ => (),
                 }
             }
@@ -770,6 +775,7 @@ fn main() -> Result<(), Box<dyn std::error::Error + 'static>> {
     }
 
     dbg!(funcs);
+    dbg!(structs);
 
     //print_flags(&flags);
     //print_enums(&enums);
