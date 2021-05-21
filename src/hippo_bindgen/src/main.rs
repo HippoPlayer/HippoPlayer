@@ -3,18 +3,19 @@ use full_moon::{ast::punctuated::Pair, ast::*, tokenizer::*, visitors::Visitor};
 use std::fs;
 
 #[derive(Debug, Default)]
-struct TableEntry {
-    line: usize,
-    name: String,
-    str_data: String,
+pub struct TableEntry {
+    pub line: usize,
+    pub name: String,
+    pub str_data: String,
     num: Option<i64>,
 }
 
 #[derive(Debug, Default)]
-struct TableData {
-    entries: Vec<TableEntry>,
+pub struct TableData {
+    pub entries: Vec<TableEntry>,
 }
 
+/*
 #[derive(Debug, Default)]
 struct ParseIndex {
     name: String,
@@ -31,62 +32,112 @@ struct Flag {
     is_const: bool,
     index_list: Vec<ParseIndex>,
 }
+*/
 
 /// Holds an entry and a comment with line and pos start
 #[derive(Debug, Default, Clone)]
-struct Comment {
+pub struct Comment {
     /// Position on the line (starting with 1)
-    pos: usize,
+    pub pos: usize,
     /// The actual data
-    text: String,
+    pub text: String,
 }
 
 /// A visitor that logs every local assignment made
 #[derive(Default)]
-struct GatherComments {
+pub struct GatherComments {
     /// Comments
-    comments: Vec<Comment>,
+    pub comments: Vec<Comment>,
     /// Each line with code will be marked as true
-    codelines: Vec<bool>,
+    pub codelines: Vec<bool>,
 }
 
 /// Holds an entry and a comment for it
 #[derive(Debug, Default)]
-struct EntryLine {
+pub struct EntryLine {
     /// the entry on the line
-    text: String,
+    pub text: String,
     /// line number of the data
-    line: usize,
+    pub line: usize,
     /// Comment(s) for the line/belonging lines
-    comment: String,
+    pub comment: String,
 }
 
-/// Arugments for functions
+/// Arugments for functions/structs
 #[derive(Debug, Default)]
-struct FuncArg {
+pub struct FuncArg {
     /// Name and line
-    name_line: EntryLine,
+    pub name_line: EntryLine,
     /// Type of the argument
-    type_name: String,
+    pub type_name: String,
     /// Table data (such as out and other modifiers)
-    table: Option<TableData>,
+    pub table: Option<TableData>,
 }
 
-/// Holds data for a func.x
+/// Holds data for a func/struct.x
 #[derive(Debug, Default)]
-struct Func {
+pub struct Func {
     /// Comment(s) before the function
-    comments: String,
+    pub comments: String,
     /// name of the function
-    name: EntryLine,
+    pub name: EntryLine,
     /// name of the class (like func.VertexBuffer this would be VertexBuffer)
-    class: EntryLine,
+    pub class: EntryLine,
     /// Table data for "settings" of the function
-    table: TableData,
+    pub table: TableData,
     /// Return type of the function
-    return_type: EntryLine,
+    pub return_type: EntryLine,
     /// function arguments
-    args: Vec<FuncArg>,
+    pub args: Vec<FuncArg>,
+}
+
+/// Arugments for functions/structs
+#[derive(Debug, Default)]
+pub struct FlagArg {
+    /// Name and line
+    pub name_line: EntryLine,
+    /// actual value of the flag. Overriden if there is a table
+    pub value: Option<u64>,
+    /// Table data (such as out and other modifiers)
+    pub table: Option<TableData>,
+}
+
+/// Holds data for a flag/enum
+#[derive(Debug, Default)]
+pub struct Flag {
+    /// Type in bits (such as 64, 32, 16, 8)
+    pub size: usize,
+    /// Comment(s) before the function
+    pub comments: String,
+    /// name of the function
+    pub name: EntryLine,
+    /// Table data for "settings" of the flag
+    pub table: Option<TableData>,
+    /// entries for the flag
+    pub entries: Vec<FlagArg>,
+}
+
+/// Holds all the parsed data
+#[derive(Debug, Default)]
+pub struct Idl {
+	/// Functions
+	pub functions: Vec<Func>,
+	/// Structs
+	pub structs: Vec<Func>,
+	/// Functions
+	pub enums: Vec<Flag>,
+	/// Structs
+	pub flags: Vec<Flag>,
+}
+
+/// Holds flag attributes to calculate the flag values
+#[derive(Debug, Default)]
+struct FlagAttributes {
+    bits: u64,
+    shift: u64,
+    range: u64,
+    base: u64,
+    is_const: bool,
 }
 
 fn get_identifier<'a>(token_ref: &'a TokenReference) -> Option<&'a str> {
@@ -103,21 +154,25 @@ fn get_token_number<'a>(token_ref: &'a TokenReference) -> Option<&'a str> {
     }
 }
 
-/*
-fn get_token_string_temp<'a>(token_ref: &'a TokenReference) -> Option<&'a str> {
-    match token_ref.token().token_type() {
+fn get_token_string(token: &TokenReference) -> EntryLine {
+    let mut entry = EntryLine::default();
+
+    match token.token().token_type() {
         TokenType::StringLiteral {
             literal,
             multi_line: _,
             quote_type: _,
-        } => Some(literal),
-        TokenType::Identifier { identifier } => Some(identifier),
+        } => entry.text = literal.to_owned().to_string(),
+        TokenType::Identifier { identifier } => entry.text = identifier.to_owned().to_string(),
         _ => {
             panic!();
         }
     }
+
+    entry.line = token.token().start_position().line();
+    entry
 }
-*/
+
 
 fn get_token_var_string(var: &Var) -> EntryLine {
     match var {
@@ -372,25 +427,6 @@ fn get_dot_name(s: &Suffix) -> EntryLine {
     }
 }
 
-fn get_token_string(token: &TokenReference) -> EntryLine {
-    let mut entry = EntryLine::default();
-
-    match token.token().token_type() {
-        TokenType::StringLiteral {
-            literal,
-            multi_line: _,
-            quote_type: _,
-        } => entry.text = literal.to_owned().to_string(),
-        TokenType::Identifier { identifier } => entry.text = identifier.to_owned().to_string(),
-        _ => {
-            panic!();
-        }
-    }
-
-    entry.line = token.token().start_position().line();
-    entry
-}
-
 /// Get string as arg
 fn get_arg_string(s: &Suffix) -> EntryLine {
     match s {
@@ -482,7 +518,113 @@ fn update_comments(func: &mut Func, gather_com: &mut GatherComments) {
 	}
 }
 
-/// Generate a function. A function can be of the following formats:
+// get bits from the table useable data
+fn get_bits_from_table(table: &TableData) -> FlagAttributes {
+    let mut attribs = FlagAttributes::default();
+
+	for f in &table.entries {
+		match f.name.as_str() {
+			"const" => attribs.is_const = true,
+			"bits" => attribs.bits = f.num.unwrap() as u64,
+			"base" => attribs.base = f.num.unwrap() as u64,
+			"range" => attribs.range = f.num.unwrap() as u64,
+			"shift" => attribs.shift = f.num.unwrap() as u64,
+			_ => (),
+		}
+	}
+
+	attribs
+}
+
+/// Parse a enum/flag. A function can be of the following formats:
+fn parse_enum_or_flag(in_func: &FunctionCall, gather_com: &mut GatherComments, is_flag: bool) -> Flag {
+    enum State {
+        Name,
+        Table,
+        Arg,
+    }
+
+    let mut flag = Flag::default();
+    let mut state = State::Name;
+    let mut attribs = FlagAttributes::default();
+    let mut value = 0u64;
+    let mut arg = FlagArg::default();
+
+    for s in in_func.suffixes() {
+    	match state {
+    		State::Name => {
+    			flag.name = get_dot_name(s);
+    			state = State::Table;
+    		},
+
+    		State::Table => {
+    			let table = get_table(s);
+    			if is_flag {
+					if let Some(table) = table.as_ref() {
+						attribs = get_bits_from_table(&table);
+					    value = attribs.base << attribs.shift;
+					} else {
+						panic!("flag.{} doesn't have array of bit settings.", flag.name.text);
+					}
+    			}
+
+    			flag.table = table;
+    			state = State::Arg;
+    		},
+
+    		State::Arg => {
+    			let arg_table = get_table(s);
+
+				// check if data is a table and do it's setup
+    			if let Some(table) = arg_table.as_ref() {
+        			if table.entries[0].name == "paran" {
+						let v = table.entries[0].num.unwrap() as u64;
+						let v = if attribs.is_const || v == 0 {
+							v
+						} else {
+							1u64 << (v - 1)
+						};
+
+						arg.value = Some(v);
+					} else {
+						arg.value = None;
+						arg.table = arg_table;
+					}
+					flag.entries.push(arg);
+					arg = FlagArg::default();
+    			} else {
+    				if !arg.name_line.text.is_empty() {
+						flag.entries.push(arg);
+						arg = FlagArg::default();
+					}
+
+					arg.name_line = get_dot_name(s);
+					arg.value = Some(value);
+
+					if attribs.shift != 0 || !is_flag {
+						value += 1u64 << attribs.shift;
+						dbg!(value);
+					} else {
+						value <<= 1;
+
+						if value == 0 {
+							value = 1;
+						}
+					}
+    			}
+    		},
+    	}
+    }
+
+	// make sure to add the last arg if we have any
+    if !arg.name_line.text.is_empty() {
+    	flag.entries.push(arg);
+    }
+
+    flag
+}
+
+/// Parse a function/struct. A function can be of the following formats:
 ///
 /// func.<StructName>.<funcname>
 /// "return value"
@@ -491,8 +633,8 @@ fn update_comments(func: &mut Func, gather_com: &mut GatherComments) {
 /// func.<funcname>
 /// "return value"
 ///
-fn generate_func(in_func: &FunctionCall, gather_com: &mut GatherComments, skip_class_ret: bool) -> Func {
-    enum FuncState {
+fn parse_func_or_struct(in_func: &FunctionCall, gather_com: &mut GatherComments, skip_class_ret: bool) -> Func {
+    enum State {
         ReturnType,
         ArgName,
         ArgType,
@@ -529,41 +671,41 @@ fn generate_func(in_func: &FunctionCall, gather_com: &mut GatherComments, skip_c
 
     let mut arg = FuncArg::default();
     let mut state = if skip_class_ret {
-    	FuncState::ArgName
+    	State::ArgName
     } else {
-    	FuncState::ReturnType
+    	State::ReturnType
     };
 
     loop {
         match state {
-            FuncState::ReturnType => {
+            State::ReturnType => {
                 func.return_type = get_arg_string(it);
-                state = FuncState::ArgName;
+                state = State::ArgName;
             }
-            FuncState::ArgName => {
+            State::ArgName => {
                 arg.name_line = get_dot_name(it);
-                state = FuncState::ArgType;
+                state = State::ArgType;
             }
 
-            FuncState::ArgType => {
+            State::ArgType => {
                 let arg_type = get_arg_string(it);
                 arg.type_name = arg_type.text;
-                state = FuncState::MaybeTable;
+                state = State::MaybeTable;
             }
 
-            FuncState::MaybeTable => {
+            State::MaybeTable => {
 				arg.table = get_table(it);
 
 				if arg.table.is_some() {
                     func.args.push(arg);
                     arg = FuncArg::default();
-                    state = FuncState::ArgName;
+                    state = State::ArgName;
                 } else {
                     // if this wasn't a table its the first arg of the next argument.
                     func.args.push(arg);
                     arg = FuncArg::default();
                     arg.name_line = get_dot_name(it);
-                    state = FuncState::ArgType;
+                    state = State::ArgType;
                 }
             }
         }
@@ -585,16 +727,6 @@ fn generate_func(in_func: &FunctionCall, gather_com: &mut GatherComments, skip_c
 }
 
 /*
-fn handle_func_call(flags: &mut Vec<Flag>, enums: &mut Vec<Flag>, func: &FunctionCall) {
-    match get_prefix_identifier(func.prefix()) {
-        Some("flag") => flags.push(generate_flags(func)),
-        Some("enum") => enums.push(generate_flags(func)),
-        Some("func") => generate_func(func),
-        _ => (),
-    }
-}
-*/
-
 fn gen_bits(f: &Flag) {
     println!("bitflags! {{");
     println!("    struct {}: u{} {{", f.name, f.bits);
@@ -649,7 +781,9 @@ fn gen_bits(f: &Flag) {
     println!("    }}");
     println!("}}\n");
 }
+*/
 
+/*
 /// Generate all the flags
 fn print_flags(flags: &Vec<Flag>) {
     for f in flags {
@@ -667,13 +801,16 @@ fn gen_enums(f: &Flag) {
 
     println!("}}\n");
 }
+*/
 
+/*
 /// Generate enumes
 fn print_enums(enums: &Vec<Flag>) {
     for f in enums {
         gen_enums(&f);
     }
 }
+*/
 
 /*
 struct VertexLayout {
@@ -756,6 +893,8 @@ fn main() -> Result<(), Box<dyn std::error::Error + 'static>> {
     // funcs, enums and structs
     let mut funcs = Vec::new();
     let mut structs = Vec::new();
+    let mut enums = Vec::new();
+    let mut flags = Vec::new();
 
     //let mut funcs = Vec::new();
 
@@ -763,9 +902,10 @@ fn main() -> Result<(), Box<dyn std::error::Error + 'static>> {
         match node {
             Stmt::FunctionCall(func) => {
                 match get_prefix_identifier(func.prefix()) {
-                    //Some("flag") => flags.push(generate_flags(func)),
-                    Some("struct") => structs.push(generate_func(func, &mut visitor, true)),
-                    Some("func") => funcs.push(generate_func(func, &mut visitor, false)),
+                    Some("flag") => flags.push(parse_enum_or_flag(func, &mut visitor, true)),
+                    Some("enum") => enums.push(parse_enum_or_flag(func, &mut visitor, false)),
+                    Some("struct") => structs.push(parse_func_or_struct(func, &mut visitor, true)),
+                    Some("func") => funcs.push(parse_func_or_struct(func, &mut visitor, false)),
                     _ => (),
                 }
             }
@@ -774,8 +914,10 @@ fn main() -> Result<(), Box<dyn std::error::Error + 'static>> {
         //dbg!(node);
     }
 
-    dbg!(funcs);
-    dbg!(structs);
+    dbg!(enums);
+
+    //dbg!(funcs);
+    //dbg!(structs);
 
     //print_flags(&flags);
     //print_enums(&enums);
