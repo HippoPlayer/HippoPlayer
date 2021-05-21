@@ -914,7 +914,8 @@ fn main() -> Result<(), Box<dyn std::error::Error + 'static>> {
         //dbg!(node);
     }
 
-    dbg!(enums);
+    //dbg!(enums);
+    dbg!(flags);
 
     //dbg!(funcs);
     //dbg!(structs);
