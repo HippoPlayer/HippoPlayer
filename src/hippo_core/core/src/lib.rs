@@ -30,6 +30,7 @@ use service_ffi::{PluginService, ServiceApi};
 use std::slice;
 
 use std::io::Read;
+use std::result::Result::{Ok, Err};
 
 type MsgGetCallback =
     extern "C" fn(user_data: *const c_void, index: u32) -> *const ffi::HippoMessageAPI;
