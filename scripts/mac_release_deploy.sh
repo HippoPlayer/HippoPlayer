@@ -25,7 +25,7 @@ mkdir build
 ls HippoPlayer.app/Contents/MacOS
  $QT5_BIN/macdeployqt HippoPlayer.app -executable=HippoPlayer.app/Contents/MacOS/hippo_player
 
-prefix="`grealpath $QT5`";
+prefix="`realpath $QT5`";
 frameworks=(HippoPlayer.app/Contents/Frameworks/Qt*.framework) &&
 frameworks=("${frameworks[@]#HippoPlayer.app/Contents/Frameworks/}") &&
 frameworks=("${frameworks[@]%.framework}") &&
